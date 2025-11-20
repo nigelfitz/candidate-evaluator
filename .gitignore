@@ -9,6 +9,7 @@ venv/
 ENV/
 build/
 dist/
+Backup app copies/
 *.egg-info/
 
 # Streamlit secrets (contains passwords/API keys)
