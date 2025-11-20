@@ -121,6 +121,37 @@ def extract_text_layout_aware(file_bytes: bytes, filename: str) -> str:
         return ""
 
 
+def render_pdf_as_images(file_bytes: bytes, max_pages: int = 10) -> bool:
+    """
+    Render PDF pages as images for preview in Streamlit.
+    Works reliably on all browsers and cloud platforms (no iframe blocking).
+    Returns True if successful, False otherwise.
+    """
+    try:
+        if fitz is None:
+            st.warning("PDF preview requires PyMuPDF. Use download button to view the file.")
+            return False
+        
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            total_pages = len(doc)
+            pages_to_show = min(total_pages, max_pages)
+            
+            if total_pages > max_pages:
+                st.info(f"📄 Showing first {max_pages} of {total_pages} pages. Download the PDF to view all pages.")
+            
+            for page_num in range(pages_to_show):
+                page = doc[page_num]
+                # Render page to image at 150 DPI for good quality
+                pix = page.get_pixmap(matrix=fitz.Matrix(150/72, 150/72))
+                img_bytes = pix.tobytes("png")
+                st.image(img_bytes, caption=f"Page {page_num + 1} of {total_pages}", use_container_width=True)
+            
+            return True
+    except Exception as e:
+        st.error(f"Could not render PDF preview: {str(e)}")
+        return False
+
+
 # -----------------------------
 # Optional / lazy imports
 # -----------------------------
@@ -2345,11 +2376,15 @@ elif current_page == "Job Criteria":
             if jd_obj.file_name.lower().endswith('.pdf'):
                 # PDF viewer in expander
                 with st.expander("📄 View Original PDF File", expanded=False):
-                    import base64
-                    base64_pdf = base64.b64encode(jd_obj.raw_bytes).decode('utf-8')
-                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-                    st.markdown(pdf_display, unsafe_allow_html=True)
-                    st.caption("💡 Use the browser's PDF controls to zoom, navigate pages, or download if needed.")
+                    st.download_button(
+                        "📥 Download PDF",
+                        data=jd_obj.raw_bytes,
+                        file_name=jd_obj.file_name,
+                        mime="application/pdf",
+                        help="Download to view in your PDF reader"
+                    )
+                    st.markdown("**PDF Preview:**")
+                    render_pdf_as_images(jd_obj.raw_bytes, max_pages=5)
             elif jd_obj.file_name.lower().endswith(('.docx', '.doc')):
                 with st.expander("📝 Original DOCX/DOC File", expanded=False):
                     st.info("DOCX/DOC files cannot be previewed inline. View the 'Full Text Extract' below, or download the file to open in Word.", icon="ℹ️")
@@ -3176,11 +3211,15 @@ elif current_page == "Candidate Insights":
             # Show original file if it's a PDF
             if cand_obj.file_name.lower().endswith('.pdf'):
                 with st.expander("📄 View Original PDF File", expanded=False):
-                    import base64
-                    base64_pdf = base64.b64encode(cand_obj.raw_bytes).decode('utf-8')
-                    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-                    st.markdown(pdf_display, unsafe_allow_html=True)
-                    st.caption("💡 Use the browser's PDF controls to zoom, navigate pages, or download if needed.")
+                    st.download_button(
+                        "📥 Download PDF",
+                        data=cand_obj.raw_bytes,
+                        file_name=cand_obj.file_name,
+                        mime="application/pdf",
+                        help="Download to view in your PDF reader"
+                    )
+                    st.markdown("**PDF Preview:**")
+                    render_pdf_as_images(cand_obj.raw_bytes, max_pages=5)
             elif cand_obj.file_name.lower().endswith(('.docx', '.doc')):
                 with st.expander("📥 Original DOCX/DOC File", expanded=False):
                     st.info("DOCX/DOC files cannot be previewed inline. View the 'Extracted Text' below, or download the file to open in Word.", icon="ℹ️")
@@ -3803,10 +3842,15 @@ elif current_page == "Export Reports":
             jd_filename = st.session_state.jd.file_name if st.session_state.get("jd") else "Job Description"
             exec_pdf_preview = to_executive_summary_pdf(covdf, insights, jd_text, cat_map, hi, lo, jd_filename)
             if exec_pdf_preview:
-                import base64
-                base64_pdf = base64.b64encode(exec_pdf_preview).decode('utf-8')
-                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf"></iframe>'
-                st.markdown(pdf_display, unsafe_allow_html=True)
+                st.download_button(
+                    "📥 Download Executive Summary PDF",
+                    data=exec_pdf_preview,
+                    file_name="Executive_Summary.pdf",
+                    mime="application/pdf",
+                    help="Download to view in your PDF reader"
+                )
+                st.markdown("**PDF Preview:**")
+                render_pdf_as_images(exec_pdf_preview, max_pages=10)
             else:
                 st.error("Failed to generate PDF preview")
     
