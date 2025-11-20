@@ -1,0 +1,51 @@
+nigelfitz: The app.py candidate analyser is workign well enough now that I want to go to the next stage of development / testing. Can you make a backup at this point, and put it in the "Backup app copies" folder ("C:\Users\nigel\OneDrive\Documents\Nigels Documents\ChatGPT\candidate-summariser\Backup app copies" ). Then advise me on what to do next. I think we need to get it up on the web somehow, with a user log in system, so that I can ask potential users to start testing it. But you may have a btter suggestion about what to do next, so please feel free to suggest somethign different if you can think of a better idea/s.
+
+GitHub Copilot: I'll create a backup of your current app.py and then provide recommendations for the next steps. 
+
+Ran terminal command: Copy-Item "c:\Users\nigel\OneDrive\Documents\Nigels Documents\ChatGPT\candidate-summariser\app.py" -Destination "c:\Users\nigel\OneDrive\Documents\Nigels Documents\ChatGPT\candidate-summariser\Backup app copies\appv72-pre-deployment.py"
+
+Backup created as `appv72-pre-deployment.py`.
+
+## Recommendations for Next Steps
+
+You're right that getting it on the web is the logical next step, but I'd suggest a **phased approach** rather than jumping straight to full user authentication:
+
+### **Phase 1: Quick User Testing (1-2 weeks) - RECOMMENDED START**
+Deploy to **Streamlit Community Cloud** (free):
+- **Pros**: Zero cost, deploy in ~15 minutes, share via simple URL
+- **Cons**: No built-in auth, limited resources (1GB RAM), public URL
+- **Best for**: Initial user feedback on functionality before investing in infrastructure
+- Users access via shared link, no login needed (you can add password protection if needed)
+
+### **Phase 2: Add Basic Authentication (if Phase 1 successful)**
+Options:
+1. **Streamlit Community Cloud + simple password**: Add `streamlit-authenticator` library for basic multi-user logins
+2. **Upgrade to paid hosting**: Heroku, AWS, or Azure with proper authentication
+
+### **Phase 3: Production Deployment (if you have paying users)**
+- Full authentication system
+- Database for user management
+- Scalable infrastructure
+- Usage tracking & billing
+
+## My Recommendation: **Start with Phase 1**
+
+**Why?**
+- You'll get real user feedback in days, not weeks
+- Avoid over-engineering before validating the product
+- Free to test
+- Easy to migrate later if successful
+
+**Next immediate steps:**
+1. Create a Streamlit Community Cloud account (free, uses GitHub)
+2. Push your code to a GitHub repository
+3. Connect Streamlit Cloud to your repo
+4. Share the URL with testers
+
+**Before deploying, we should:**
+- Add a simple password gate (optional, takes 5 min)
+- Review the requirements.txt to ensure all dependencies are listed
+- Test that your OpenAI API key works via environment variables
+- Add usage limits per session to control costs
+
+Would you like me to help you prepare for Streamlit Community Cloud deployment, or would you prefer a different approach?
