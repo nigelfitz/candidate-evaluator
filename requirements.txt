@@ -12,6 +12,7 @@ python-dotenv
 openai>=1.40.0
 openpyxl>=3.1.0
 PyPDF2>=3.0.0
+PyMuPDF>=1.23.0
 # Optional local model:
 # sentence-transformers
 # torch
