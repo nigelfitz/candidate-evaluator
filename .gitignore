@@ -14,6 +14,7 @@ Devel_Guides_and_Notes/
 CVs_for_testing/
 Reports_exported/
 .logs/
+run-app.bat
 *.egg-info/
 
 # Streamlit secrets (contains passwords/API keys)
