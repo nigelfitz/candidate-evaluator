@@ -197,11 +197,14 @@ sk_cosine = None
 
 def _ensure_sklearn():
     global sklearn, TfidfVectorizer, sk_cosine
-    if sklearn is None:
-        sklearn = _try_import("sklearn")
-        if sklearn:
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            from sklearn.metrics.pairwise import cosine_similarity as sk_cosine
+    if sk_cosine is not None:
+        return  # Already imported
+    sklearn = _try_import("sklearn")
+    if sklearn:
+        from sklearn.feature_extraction.text import TfidfVectorizer as TfVec
+        from sklearn.metrics.pairwise import cosine_similarity
+        TfidfVectorizer = TfVec
+        sk_cosine = cosine_similarity
 
 def _ensure_sentence_transformers():
     global st_models, SentenceTransformer, torch
@@ -754,6 +757,7 @@ def infer_candidate_name(file_name: str, text: str) -> str:
     return (parts[0].capitalize() if parts else "Candidate")
 
 def compute_max_similarity_to_chunks(query_texts, chunk_embs, info, vec_or_meta):
+    _ensure_sklearn()  # Ensure sklearn is loaded
     if info["type"] == "sbert":
         q_embs = embed_sbert(query_texts, info["model"])
         sims = pairwise_cosine(q_embs, chunk_embs)
@@ -763,6 +767,8 @@ def compute_max_similarity_to_chunks(query_texts, chunk_embs, info, vec_or_meta)
         return np.zeros(len(query_texts)), np.zeros(len(query_texts), dtype=int)
     if hasattr(vec_or_meta, "transform"):
         q_mat = vec_or_meta.transform(query_texts)
+        if sk_cosine is None:
+            return np.zeros(len(query_texts)), np.zeros(len(query_texts), dtype=int)
         sims = sk_cosine(q_mat, chunk_embs)
         argmax = np.asarray(sims.argmax(axis=1)).ravel()
         return sims.max(axis=1), argmax
@@ -1403,7 +1409,8 @@ def to_individual_candidate_pdf(
     hi: float = 0.70,
     lo: float = 0.45,
     include_evidence: bool = False,
-    job_title: str = ""
+    job_title: str = "",
+    gpt_candidates: List[str] = None
 ) -> Optional[bytes]:
     """Generate individual candidate report PDF."""
     if reportlab is None:
@@ -1468,24 +1475,53 @@ def to_individual_candidate_pdf(
         story.append(score_table)
         story.append(Spacer(1, 0.5*cm))
         
+        # Check if this candidate has GPT-generated AI insights
+        if gpt_candidates is None:
+            gpt_candidates = []
+        has_ai_insights = candidate_name in gpt_candidates
+        
+        if not has_ai_insights:
+            # Add disclaimer for non-AI analyzed candidates
+            disclaimer_style = ParagraphStyle(
+                'Disclaimer',
+                parent=styles['Normal'],
+                fontSize=10,
+                textColor=colors.HexColor('#856404'),
+                backColor=colors.HexColor('#FFF3CD'),
+                borderColor=colors.HexColor('#856404'),
+                borderWidth=1,
+                borderPadding=10,
+                spaceAfter=15,
+                spaceBefore=5
+            )
+            story.append(Paragraph(
+                "<b>ℹ️ Note:</b> This candidate was not included in the GPT Insights analysis. "
+                "The strengths and development areas shown below are based on scoring analysis only "
+                "(top 3 and bottom 3 criteria by match score). "
+                "To receive AI-generated narrative insights, include this candidate in your 'GPT Insights' "
+                "selection and re-run the analysis.",
+                disclaimer_style
+            ))
+            story.append(Spacer(1, 0.3*cm))
+        
         # Key Strengths
+        strengths = insights.get('top', []) if insights else []
         story.append(Paragraph("Key Strengths", heading_style))
-        strengths = insights.get('top', [])
         if strengths:
             for s in strengths:
                 story.append(Paragraph(f"• {s}", styles['Normal']))
         else:
-            story.append(Paragraph("<i>No strengths identified</i>", styles['Normal']))
+            story.append(Paragraph("<i>No data available</i>", styles['Normal']))
         story.append(Spacer(1, 0.3*cm))
         
         # Development Areas / Gaps
+        gaps = insights.get('gaps', []) if insights else []
         story.append(Paragraph("Development Areas", heading_style))
-        gaps = insights.get('gaps', [])
         if gaps:
             for g in gaps:
                 story.append(Paragraph(f"• {g}", styles['Normal']))
         else:
-            story.append(Paragraph("<i>No significant gaps identified</i>", styles['Normal']))
+            story.append(Paragraph("<i>No data available</i>", styles['Normal']))
         story.append(Spacer(1, 0.3*cm))
         
         # Additional Notes
@@ -1788,7 +1824,8 @@ def to_individual_candidate_docx(
     cat_map: Dict[str, str],
     hi: float = 0.70,
     lo: float = 0.45,
-    job_title: str = ""
+    job_title: str = "",
+    gpt_candidates: List[str] = None
 ) -> Optional[bytes]:
     """Generate editable Word document for individual candidate."""
     if docx is None:
@@ -1828,23 +1865,45 @@ def to_individual_candidate_docx(
         
         doc.add_paragraph()  # Spacing
         
+        # Check if this candidate has GPT-generated AI insights
+        if gpt_candidates is None:
+            gpt_candidates = []
+        has_ai_insights = candidate_name in gpt_candidates
+        
+        if not has_ai_insights:
+            # Add disclaimer for non-AI analyzed candidates
+            disclaimer_para = doc.add_paragraph()
+            disclaimer_para.add_run('ℹ️ Note: ').bold = True
+            disclaimer_para.add_run(
+                'This candidate was not included in the GPT Insights analysis. '
+                'The strengths and development areas shown below are based on scoring analysis only '
+                '(top 3 and bottom 3 criteria by match score). '
+                'To receive AI-generated narrative insights, include this candidate in your '
+                '\'GPT Insights\' selection and re-run the analysis.'
+            )
+            # Style the disclaimer
+            for run in disclaimer_para.runs:
+                run.font.size = Pt(10)
+                run.font.color.rgb = RGBColor(133, 100, 4)
+            doc.add_paragraph()  # Spacing
+        
         # Key Strengths
+        strengths = insights.get('top', []) if insights else []
         doc.add_heading('Key Strengths', 1)
-        strengths = insights.get('top', [])
         if strengths:
             for s in strengths:
                 doc.add_paragraph(s, style='List Bullet')
         else:
-            doc.add_paragraph('No strengths identified', style='Intense Quote')
+            doc.add_paragraph('No data available', style='Intense Quote')
         
         # Development Areas
+        gaps = insights.get('gaps', []) if insights else []
         doc.add_heading('Development Areas', 1)
-        gaps = insights.get('gaps', [])
         if gaps:
             for g in gaps:
                 doc.add_paragraph(g, style='List Bullet')
         else:
-            doc.add_paragraph('No significant gaps identified', style='Intense Quote')
+            doc.add_paragraph('No data available', style='Intense Quote')
         
         # Additional Notes
         notes = insights.get('notes', '')
@@ -3012,9 +3071,11 @@ elif current_page == "Candidate Insights":
     
     if st.session_state.insights_download_trigger == "PDF":
         if reportlab is not None:
+            gpt_list = st.session_state.get("gpt_insights_candidates", [])
             pdf_bytes = to_individual_candidate_pdf(
                 selected_name, selected_row, info, evidence_map,
-                cat_map, hi, lo, include_evidence=False, job_title=job_title
+                cat_map, hi, lo, include_evidence=False, job_title=job_title,
+                gpt_candidates=gpt_list
             )
             if pdf_bytes:
                 with download_col:
@@ -3034,8 +3095,10 @@ elif current_page == "Candidate Insights":
     
     elif st.session_state.insights_download_trigger == "Word":
         if docx is not None:
+            gpt_list = st.session_state.get("gpt_insights_candidates", [])
             docx_bytes = to_individual_candidate_docx(
-                selected_name, selected_row, info, cat_map, hi, lo, job_title=job_title
+                selected_name, selected_row, info, cat_map, hi, lo, job_title=job_title,
+                gpt_candidates=gpt_list
             )
             if docx_bytes:
                 with download_col:
@@ -3949,6 +4012,28 @@ elif current_page == "Export Reports":
     )
     
     if selected_candidates:
+        # Check which candidates have AI analysis
+        analyzed_names = set(insights.keys()) if insights else set()
+        selected_with_ai = [c for c in selected_candidates if c in analyzed_names]
+        selected_without_ai = [c for c in selected_candidates if c not in analyzed_names]
+        
+        if selected_without_ai:
+            st.warning(f"""
+            ⚠️ **AI Analysis Limitation**
+            
+            AI-generated insights are only available for candidates who were included 
+            in your "GPT Insights" selection during analysis.
+            
+            **Reports with AI insights ({len(selected_with_ai)}):** 
+            {', '.join(selected_with_ai) if selected_with_ai else 'None'}
+            
+            **Reports with scores only - no AI insights ({len(selected_without_ai)}):** 
+            {', '.join(selected_without_ai)}
+            
+            💡 *To get AI insights for more candidates, adjust the "GPT Insights" 
+            setting and re-run the analysis.*
+            """)
+        
         st.info(f"📝 Ready to generate reports for **{len(selected_candidates)}** candidate(s)")
         
         col_ind1, col_ind2, col_ind3 = st.columns([2, 1, 1])
@@ -3967,6 +4052,7 @@ elif current_page == "Export Reports":
                         try:
                             from PyPDF2 import PdfMerger
                             merger = PdfMerger()
+                            gpt_list = st.session_state.get("gpt_insights_candidates", [])
                             
                             for cand_name in selected_candidates:
                                 cand_row = covdf[covdf['Candidate'] == cand_name].iloc[0]
@@ -3974,7 +4060,8 @@ elif current_page == "Export Reports":
                                 
                                 pdf_bytes = to_individual_candidate_pdf(
                                     cand_name, cand_row, cand_insights, evidence_map, 
-                                    cat_map, hi, lo, include_evidence, job_title=job_title
+                                    cat_map, hi, lo, include_evidence, job_title=job_title,
+                                    gpt_candidates=gpt_list
                                 )
                                 
                                 if pdf_bytes:
@@ -3995,13 +4082,15 @@ elif current_page == "Export Reports":
                         except ImportError:
                             # Fallback: just generate first candidate if PyPDF2 not available
                             st.warning("Install 'PyPDF2' for combined PDFs. Showing first candidate only.")
+                            gpt_list = st.session_state.get("gpt_insights_candidates", [])
                             cand_name = selected_candidates[0]
                             cand_row = covdf[covdf['Candidate'] == cand_name].iloc[0]
                             cand_insights = insights.get(cand_name, {})
                             
                             pdf_bytes = to_individual_candidate_pdf(
                                 cand_name, cand_row, cand_insights, evidence_map,
-                                cat_map, hi, lo, include_evidence, job_title=job_title
+                                cat_map, hi, lo, include_evidence, job_title=job_title,
+                                gpt_candidates=gpt_list
                             )
                             
                             if pdf_bytes:
@@ -4020,13 +4109,15 @@ elif current_page == "Export Reports":
             if st.button("📝 Word Reports", use_container_width=True):
                 if docx is not None:
                     st.info("💡 Download individual Word documents below (fully editable):")
+                    gpt_list = st.session_state.get("gpt_insights_candidates", [])
                     
                     for cand_name in selected_candidates:
                         cand_row = covdf[covdf['Candidate'] == cand_name].iloc[0]
                         cand_insights = insights.get(cand_name, {})
                         
                         docx_bytes = to_individual_candidate_docx(
-                            cand_name, cand_row, cand_insights, cat_map, hi, lo, job_title=job_title
+                            cand_name, cand_row, cand_insights, cat_map, hi, lo, job_title=job_title,
+                            gpt_candidates=gpt_list
                         )
                         
                         if docx_bytes:
@@ -4193,21 +4284,32 @@ if st.session_state.get("_trigger_analyse", False):
     elif not st.session_state.get("cached_candidates"):
         st.warning("Please upload candidate resumes before running Analyze.")
     else:
-        status_container.info("🔍 Extracting JD & building criteria...")
+        # Initialize analysis running flag
+        if 'analysis_running' not in st.session_state:
+            st.session_state.analysis_running = False
         
-        with st.spinner("Running analysis…"):
-            cov, ins_local, snips, ev_map = analyse_candidates(
-                st.session_state.cached_candidates, criteria, weights,
-                chunk_chars=st.session_state.get("chunk_chars",1200),
-                overlap=st.session_state.get("overlap",150)
-            )
+        # Set flag to indicate analysis is starting
+        st.session_state.analysis_running = True
+        
+        try:
+            status_container.info("🔍 Extracting JD & building criteria...")
             
-            status_container.info("📊 Scoring candidates complete. Preparing insights...")
-            
-            st.session_state.last_coverage = cov
-            st.session_state.last_insights = ins_local
-            st.session_state.last_snippets = snips
-            st.session_state.evidence_map = ev_map
+            with st.spinner("Running analysis… This may take 30-90 seconds. Please wait."):
+                cov, ins_local, snips, ev_map = analyse_candidates(
+                    st.session_state.cached_candidates, criteria, weights,
+                    chunk_chars=st.session_state.get("chunk_chars",1200),
+                    overlap=st.session_state.get("overlap",150)
+                )
+                
+                status_container.info("📊 Scoring candidates complete. Preparing insights...")
+                
+                st.session_state.last_coverage = cov
+                st.session_state.last_insights = ins_local
+                st.session_state.last_snippets = snips
+                st.session_state.evidence_map = ev_map
+        finally:
+            # Reset flag when analysis completes or fails
+            st.session_state.analysis_running = False
 
                         # ---- GPT insight generation (selective) ----
             api_ok = _get_openai_client()[0] is not None
