@@ -1,4 +1,4 @@
-﻿# Candidate Analyser
+﻿# Candidate Evaluator
 from __future__ import annotations
 
 import io, os, re, json, hashlib, textwrap, sys, html
@@ -10,11 +10,93 @@ import pandas as pd
 import streamlit as st
 
 # -----------------------------
+# Landing Page (Before Login)
+# -----------------------------
+if "show_landing" not in st.session_state:
+    st.session_state["show_landing"] = True
+
+if st.session_state["show_landing"]:
+    st.markdown("""
+        <style>
+        .landing-title { font-size:2.5rem; font-weight:700; margin-bottom:0.5em; }
+        .landing-sub { font-size:1.2rem; color:#444; margin-bottom:1.5em; }
+        .benefit-list li { margin-bottom:0.5em; }
+        .usecase-card { background:#f8f9fa; border-radius:8px; padding:1em; margin-bottom:1em; }
+        .price-teaser { font-size:1.1rem; color:#1a7f37; font-weight:600; margin:1em 0; }
+        .faq-q { font-weight:600; margin-top:1em; }
+        .faq-a { margin-bottom:1em; }
+        </style>
+    """, unsafe_allow_html=True)
+    st.markdown('<div class="landing-title"><img src="https://raw.githubusercontent.com/nigelfitz/candidate-evaluator/main/assets/CE_logo_only_grey_45x46.png" width="32" style="vertical-align:middle;margin-right:0.5em;"> Candidate Evaluator</div>', unsafe_allow_html=True)
+    st.markdown('<div class="landing-sub">The fastest way to shortlist, score, and deeply analyse candidates for any job. Save hours, make smarter hiring decisions, and benefit from AI-powered insights.</div>', unsafe_allow_html=True)
+
+    st.markdown("**Key Benefits:**", unsafe_allow_html=True)
+    st.markdown("""
+    <ul class="benefit-list">
+      <li>⚡ Instantly score and rank all candidates against your job criteria</li>
+      <li>🤖 Get AI-generated strengths, gaps, and recommendations for top candidates</li>
+      <li>📄 Export beautiful PDF/Word reports for your team or clients</li>
+      <li>🔒 100% private: your files are never stored after your session</li>
+      <li>💸 Pay only for what you use – no subscriptions required</li>
+    </ul>
+    """, unsafe_allow_html=True)
+
+    st.markdown("**Who is it for?**")
+    cols = st.columns(3)
+    with cols[0]:
+        st.markdown('<div class="usecase-card"><b>Recruiters</b><br>Shortlist faster, impress clients, and win more placements.</div>', unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown('<div class="usecase-card"><b>HR Managers</b><br>Make fair, data-driven hiring decisions and save time on admin.</div>', unsafe_allow_html=True)
+    with cols[2]:
+        st.markdown('<div class="usecase-card"><b>Small Businesses</b><br>Hire like a pro, even without a big HR team or budget.</div>', unsafe_allow_html=True)
+
+    # Pricing section: full width, visually distinct
+    st.markdown("""
+    <div style="background: linear-gradient(90deg, #e3f6ff 0%, #f6fafd 100%); border-radius: 12px; box-shadow: 0 2px 8px rgba(30,64,175,0.04); padding: 1.5em 2em; margin: 2em 0 1em 0;">
+      <div class="price-teaser" style="font-size:1.3rem; color:#1a7f37; font-weight:700; margin-bottom:0.7em;">For <b>$4</b> you get:</div>
+      <ul class="benefit-list" style="font-size:1.08rem;">
+        <li>📝 Job description analysed and assessment criteria extracted</li>
+        <li>✏️ Add, edit, or delete the assessment criteria as much as you want</li>
+        <li>📊 All uploaded candidate resumes analysed and matched against criteria</li>
+        <li>🏆 Ranked scoring of all candidates, including per-criteria scores</li>
+        <li>🤖 AI-powered insights for the top 3 candidates (strengths, gaps, risks, and suitability)</li>
+        <li>📄 Downloadable PDF/Word reports for your own use</li>
+      </ul>
+      <div style="margin-top:1em;font-size:1.08rem;color:#444;">Think about how long it takes to read 20 resumes and shortlist a few. For less than the price of a coffee, Candidate Evaluator does it all for you—thoroughly, fairly, and instantly.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<b>FAQ</b>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="faq-q">How does Candidate Evaluator work?</div>
+    <div class="faq-a">Upload your job description and candidate CVs. The app scores each candidate, then (optionally) generates AI-powered insights for your top picks.</div>
+    <div class="faq-q">Is my data safe?</div>
+    <div class="faq-a">Yes! Your files are never stored after your session ends. All processing is done securely in memory.</div>
+    <div class="faq-q">How much does it cost?</div>
+    <div class="faq-a">As stated above, it costs just $4 per job. <br>That gets the assessment criteria extracted from your job description and <b>all</b> candidate resumes scored and ranked against those criteria. It also gets AI powered insights on your top 3 ranked candidates, plus all of our reports for you to download. 
+                 <br>If you want AI insights for more than the top 3 candidates, No Problem! You can get those insights for any number of candidates you want. It's just $1 per extra candidate. <br>This isn't some hidden scam to try and get you to pay more for the stuff you really need. The simple reason that we only include AI insights for the top 3 candidates in our basic price is because our costs increase the more we use the expensive AI models that are needed to generate those insightful human-like outputs. We include the top 3 in our basic price because that is often enough for many of our clients. But if you want to do a few, or a lot more, at $1 each it's probably not going to break your budget.
+                 <br>There are no hidden costs with us. Just pay for what you use. And if it's too much hassle to pay each time you process a job, you can load up as much credit as you like and we'll deduct each job from your credit balance.</div>
+    <div class="faq-q">What do I get in a report?</div>
+    <div class="faq-a">You get ranked candidates, detailed scoring, and (for selected candidates) AI-generated strengths, gaps, and recommendations. Export as PDF or Word.</div>
+    <div class="faq-q">Can I try it before buying?</div>
+    <div class="faq-a">Unfortunately, No. It costs us money to use the AI models that are needed for every analysis. If we offer free trials, we risk incurring costs that we can't control. Controlling our costs enables us to keep our pricing as low as we can, and at just $4 per job, we encourage you to just give it one go. We're confident that you'll be impressed and will come back again and again.</div>
+    <div class="faq-q">Who is behind this?</div>
+    <div class="faq-a">Built by experienced recruiters and AI engineers. Contact ?@?.com for questions.</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<i>⭐⭐⭐⭐⭐ Social proof coming soon: testimonials from real users will appear here!</i>", unsafe_allow_html=True)
+
+    if st.button("Get Started", key="landing_get_started", use_container_width=True):
+        st.session_state["show_landing"] = False
+        st.rerun()
+    st.stop()
+
+# -----------------------------
 # Page Configuration (must be first)
 # -----------------------------
 st.set_page_config(
-    page_title="Candidate Analyser",
-    page_icon="🎯",
+    page_title="Candidate Evaluator",
+    page_icon="https://raw.githubusercontent.com/nigelfitz/candidate-evaluator/main/assets/CE_logo_only_grey_45x46.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -70,13 +152,23 @@ st.markdown("""
         border-bottom: 2px solid #f0f2f6;
     }
     header[data-testid="stHeader"]::before {
-        content: "🎯 Candidate Analyser";
+        content: "";
+        display: inline-block;
+        vertical-align: middle;
+        width: 32px;
+        height: 32px;
+        background-image: url('https://raw.githubusercontent.com/nigelfitz/candidate-evaluator/main/assets/CE_logo_only_grey_45x46.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        margin-right: 0.5em;
+    }
+    header[data-testid="stHeader"]::after {
+        content: "Candidate Evaluator";
         font-size: 1.5rem;
         font-weight: 700;
-        padding-left: 1rem;
         color: #1f77b4;
         white-space: nowrap;
-        display: inline-block;
+        vertical-align: middle;
         letter-spacing: 0.5px;
     }
     /* Add spacing after header before main content */
