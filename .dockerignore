@@ -18,6 +18,9 @@ env/
 *.db
 *.sqlite
 *.sqlite3
+flask_app/*.db
+flask_app/*.sqlite
+flask_app/*.sqlite3
 
 # Environment files
 .env
