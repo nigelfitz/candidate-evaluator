@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% if is_current_draft_analysis %}
+    <!-- Workflow Progress Indicator (only for current draft) -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <div style="flex: 1; text-align: center; padding: 12px; border-radius: 8px; background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);">
+                <div style="font-size: 24px; color: white;">📊</div>
+                <div style="font-size: 12px; font-weight: 600; color: white;">Results</div>
+            </div>
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
+        </div>
+    </div>
+    {% else %}
+    <!-- Historical Analysis Header -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div class="text-center">
+            <h4 style="color: #1f2937; margin-bottom: 10px;">📊 Historical Analysis Results</h4>
+            <p class="text-muted mb-0">Viewing saved analysis from {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+            <div class="mt-3">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm" 
+                            onclick="return confirm('This will load this analysis into your draft workspace for editing and re-running. If you are in the middle of working on another job, that other job will be lost. After editing your historical job, you will need to \'Run Analysis\' on it, which will create a new job in your Job History list. Continue?');">
+                        ✏️ Edit & Re-run This Analysis
+                    </button>
+                </form>
+                <small class="text-muted ms-2">or <a href="{{ url_for('job_history') }}">Return to Job History</a> | <a href="{{ url_for('analyze', new=1) }}">Start New Analysis</a></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary">
+            📊 Results
+        </a>
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            📊 Export Reports
+        </a>
+        {% if analysis.insights_data %}
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            💡 Candidate Insights
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>📊 Analysis Results</h2>
+                    <p class="text-muted mb-0">{{ analysis.job_title }}</p>
+                    <small class="text-muted">Analyzed {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+                <div class="text-end">
+                    <p class="mb-1"><strong>Cost:</strong> ${{ "%.2f"|format(analysis.cost_usd) }}</p>
+                    <p class="mb-0 text-muted">{{ analysis.num_candidates }} candidates • {{ analysis.num_criteria }} criteria</p>
+                </div>
+            </div>
+
+            <!-- Top Candidates Summary -->
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">🏆 Top 5 Candidates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="topCandidates">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scoring Info Box -->
+            <div class="alert alert-info mb-4">
+                <strong>ℹ️ Understanding Scores:</strong><br>
+                Each score (0.00–1.00) measures how well a candidate's resume matches a criterion. Use "Scores" tickbox to show/hide numeric scores.<br>
+                Icons indicate score strength in 3 ranges: ✅ Strong (≥{{ "%.2f"|format(user_settings.default_hi_threshold / 100) }}) | ⚠️ Moderate ({{ "%.2f"|format(user_settings.default_lo_threshold / 100) }}–{{ "%.2f"|format(user_settings.default_hi_threshold / 100) }}) | ⛔ Weak (<{{ "%.2f"|format(user_settings.default_lo_threshold / 100) }})
+                <small style="margin-left: 1rem;"><a href="{{ url_for('settings') }}" style="color: #0066cc;">⚙️ Adjust thresholds</a></small>
+            </div>
+
+            <!-- Coverage Matrix Controls -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📈 Coverage Matrix</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Control Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="sortBy" class="form-label small">Sort candidates by</label>
+                            <select id="sortBy" class="form-select form-select-sm">
+                                <option value="name">Name (A-Z)</option>
+                                <option value="score-desc" selected>Overall Score (High-Low)</option>
+                                <option value="score-asc">Overall Score (Low-High)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filterBy" class="form-label small">Show</label>
+                            <select id="filterBy" class="form-select form-select-sm">
+                                <option value="all" selected>All Candidates</option>
+                                <option value="top3">Top 3</option>
+                                <option value="top5">Top 5</option>
+                                <option value="top10">Top 10</option>
+                                <option value="custom">Custom Selection</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="expandCategories" checked>
+                                <label class="form-check-label" for="expandCategories">
+                                    Expand all categories
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showScores">
+                                <label class="form-check-label" for="showScores">
+                                    Show numeric scores
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Selection (hidden by default) -->
+                    <div id="customSelectionBox" class="alert alert-info mb-3" style="display: none;">
+                        <strong>👥 Select candidates to compare:</strong>
+                        <div id="customCandidateCheckboxes" class="mt-2">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Download Button -->
+                    <div class="mb-3">
+                        <button id="downloadCSV" class="btn btn-sm btn-outline-primary">
+                            📥 Download CSV
+                        </button>
+                    </div>
+
+                    <p class="text-muted small mb-3">
+                        💡 <em>Hint: Click on the "Average" column header to sort criteria by average score</em>
+                    </p>
+
+                    <!-- Coverage Matrix Table -->
+                    <div class="table-responsive">
+                        <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
+                            <thead class="table-light sticky-top">
+                                <tr id="matrixHeader">
+                                    <!-- Populated by JavaScript -->
+                                </tr>
+                            </thead>
+                            <tbody id="matrixBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evidence Explorer -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">🔍 Evidence Explorer</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Select a candidate and criterion to view the evidence snippet used for scoring</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="evidenceCandidate" class="form-label">👤 Candidate</label>
+                            <select id="evidenceCandidate" class="form-select">
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="evidenceCriterion" class="form-label">📋 Criterion</label>
+                            <select id="evidenceCriterion" class="form-select">
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="evidenceDisplay">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mb-4">
+                <div>
+                    <a href="{{ url_for('job_history') }}" class="btn btn-secondary">
+                        ← Back to Job History
+                    </a>
+                    <a href="{{ url_for('view_criteria', analysis_id=analysis.id) }}" class="btn btn-outline-info">
+                        📋 Edit Criteria
+                    </a>
+                </div>
+                <div>
+                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='pdf') }}" class="btn btn-outline-primary">
+                        📄 Export PDF
+                    </a>
+                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='excel') }}" class="btn btn-outline-success">
+                        📊 Export Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Parse data from Flask
+const coverageData = {{ coverage_data | tojson | safe }};
+const categoryMap = {{ category_map | tojson | safe }};
+const evidenceMap = {{ evidence_map | tojson | safe }};
+const thresholds = { high: {{ user_settings.default_hi_threshold / 100 }}, low: {{ user_settings.default_lo_threshold / 100 }} };
+
+let currentSort = 'score-desc';
+let currentFilter = 'all';
+let showScores = false;
+let expandCategories = true;
+let selectedCandidates = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTopCandidates();
+    initializeCoverageMatrix();
+    initializeEvidenceExplorer();
+    attachEventListeners();
+});
+
+function initializeTopCandidates() {
+    const sorted = [...coverageData].sort((a, b) => b.Overall - a.Overall);
+    const top5 = sorted.slice(0, 5);
+    
+    const html = top5.map((row, idx) => {
+        const score = row.Overall;
+        const icon = getScoreIcon(score);
+        const rank = idx + 1;
+        
+        return `
+            <div class="col-md-2 text-center mb-2">
+                <div class="badge bg-${getScoreColor(score)} fs-6">#${rank}</div>
+                <p class="mb-0 mt-1"><strong>${row.Candidate}</strong></p>
+                <p class="mb-0">${score.toFixed(2)} ${icon}</p>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('topCandidates').innerHTML = html;
+}
+
+function initializeCoverageMatrix() {
+    renderMatrix();
+}
+
+function renderMatrix() {
+    // Get sorted and filtered data
+    let data = [...coverageData];
+    
+    // Apply sorting
+    if (currentSort === 'name') {
+        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+    } else if (currentSort === 'score-desc') {
+        data.sort((a, b) => b.Overall - a.Overall);
+    } else if (currentSort === 'score-asc') {
+        data.sort((a, b) => a.Overall - b.Overall);
+    }
+    
+    // Apply filtering
+    if (currentFilter === 'top3') {
+        data = data.slice(0, 3);
+    } else if (currentFilter === 'top5') {
+        data = data.slice(0, 5);
+    } else if (currentFilter === 'top10') {
+        data = data.slice(0, 10);
+    } else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+        data = data.filter(row => selectedCandidates.includes(row.Candidate));
+    }
+    
+    if (data.length === 0) {
+        document.getElementById('matrixBody').innerHTML = '<tr><td colspan="100" class="text-center text-muted">No candidates to display. Select at least one candidate above.</td></tr>';
+        return;
+    }
+    
+    // Build header
+    const candidates = data.map(row => row.Candidate);
+    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+    
+    let headerHTML = '<th class="text-center">Category / Criterion</th><th class="text-center">Average</th>';
+    candidates.forEach(cand => {
+        headerHTML += `<th class="text-center">${cand}</th>`;
+    });
+    document.getElementById('matrixHeader').innerHTML = headerHTML;
+    
+    // Build body
+    let bodyHTML = '';
+    
+    // Overall row first
+    bodyHTML += '<tr class="table-warning"><td><strong>📊 Overall</strong></td><td></td>';
+    data.forEach(row => {
+        const score = row.Overall;
+        const icon = getScoreIcon(score);
+        const display = showScores ? `${score.toFixed(2)} ${icon}` : icon;
+        bodyHTML += `<td class="text-center">${display}</td>`;
+    });
+    bodyHTML += '</tr>';
+    
+    // Group criteria by category
+    const categorized = {};
+    criteria.forEach(crit => {
+        const cat = categoryMap[crit] || 'Uncategorized';
+        if (!categorized[cat]) categorized[cat] = [];
+        categorized[cat].push(crit);
+    });
+    
+    // Render by category
+    const categories = Object.keys(categorized).sort();
+    categories.forEach(category => {
+        const crits = categorized[category];
+        
+        if (expandCategories) {
+            // Category header
+            bodyHTML += `<tr class="table-secondary"><td colspan="${2 + candidates.length}"><strong>📁 ${category}</strong></td></tr>`;
+            
+            // Criteria rows
+            crits.forEach(crit => {
+                bodyHTML += renderCriterionRow(crit, data, candidates);
+            });
+        } else {
+            // Collapsible category
+            const catId = category.replace(/\s+/g, '_');
+            bodyHTML += `
+                <tr class="table-secondary cursor-pointer" onclick="toggleCategory('${catId}')">
+                    <td colspan="${2 + candidates.length}">
+                        <strong>📁 ${category}</strong>
+                        <span id="toggle_${catId}" class="float-end">▼</span>
+                    </td>
+                </tr>
+            `;
+            bodyHTML += `<tbody id="${catId}" class="collapse show">`;
+            crits.forEach(crit => {
+                bodyHTML += renderCriterionRow(crit, data, candidates);
+            });
+            bodyHTML += `</tbody>`;
+        }
+    });
+    
+    document.getElementById('matrixBody').innerHTML = bodyHTML;
+}
+
+function renderCriterionRow(criterion, data, candidates) {
+    // Calculate average
+    const scores = data.map(row => parseFloat(row[criterion]));
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const avgIcon = getScoreIcon(avg);
+    const avgDisplay = showScores ? `${avg.toFixed(2)} ${avgIcon}` : avgIcon;
+    
+    let html = `<tr><td class="ps-4">${criterion}</td><td class="text-center">${avgDisplay}</td>`;
+    
+    data.forEach(row => {
+        const score = parseFloat(row[criterion]);
+        const icon = getScoreIcon(score);
+        const display = showScores ? `${score.toFixed(2)} ${icon}` : icon;
+        html += `<td class="text-center">${display}</td>`;
+    });
+    
+    html += '</tr>';
+    return html;
+}
+
+function getScoreIcon(score) {
+    if (score >= thresholds.high) return '✅';
+    if (score >= thresholds.low) return '⚠️';
+    return '⛔';
+}
+
+function getScoreColor(score) {
+    if (score >= thresholds.high) return 'success';
+    if (score >= thresholds.low) return 'warning';
+    return 'danger';
+}
+
+function initializeEvidenceExplorer() {
+    const candidates = coverageData.map(row => row.Candidate);
+    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+    
+    // Populate candidate dropdown
+    let candHTML = candidates.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('evidenceCandidate').innerHTML = candHTML;
+    
+    // Populate criterion dropdown
+    let critHTML = criteria.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('evidenceCriterion').innerHTML = critHTML;
+    
+    // Show initial evidence
+    updateEvidenceDisplay();
+}
+
+function updateEvidenceDisplay() {
+    const candidate = document.getElementById('evidenceCandidate').value;
+    const criterion = document.getElementById('evidenceCriterion').value;
+    
+    if (!candidate || !criterion) {
+        document.getElementById('evidenceDisplay').innerHTML = '<p class="text-muted">Select a candidate and criterion above.</p>';
+        return;
+    }
+    
+    const key = `${candidate}|||${criterion}`;
+    const evidence = evidenceMap[key];
+    
+    if (!evidence || evidence.length === 0) {
+        document.getElementById('evidenceDisplay').innerHTML = '<div class="alert alert-info">No cached evidence for this combination. Re-run analysis to refresh evidence.</div>';
+        return;
+    }
+    
+    const snippet = evidence[0];
+    
+    // Get actual score from coverage data
+    const row = coverageData.find(r => r.Candidate === candidate);
+    const score = row ? parseFloat(row[criterion]) : 0;
+    const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
+    
+    const html = `
+        <div class="alert alert-${scoreColor}">
+            <strong>Score:</strong> <span class="fs-5">${score.toFixed(2)}</span> ${getScoreIcon(score)}
+        </div>
+        <div class="card">
+            <div class="card-header">Evidence from resume:</div>
+            <div class="card-body">
+                <pre class="mb-0" style="white-space: pre-wrap;">${snippet}</pre>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('evidenceDisplay').innerHTML = html;
+}
+
+function attachEventListeners() {
+    document.getElementById('sortBy').addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderMatrix();
+    });
+    
+    document.getElementById('filterBy').addEventListener('change', (e) => {
+        currentFilter = e.target.value;
+        
+        if (currentFilter === 'custom') {
+            document.getElementById('customSelectionBox').style.display = 'block';
+            initializeCustomSelection();
+        } else {
+            document.getElementById('customSelectionBox').style.display = 'none';
+        }
+        
+        renderMatrix();
+    });
+    
+    document.getElementById('showScores').addEventListener('change', (e) => {
+        showScores = e.target.checked;
+        renderMatrix();
+        initializeTopCandidates(); // Update top candidates display too
+    });
+    
+    document.getElementById('expandCategories').addEventListener('change', (e) => {
+        expandCategories = e.target.checked;
+        renderMatrix();
+    });
+    
+    document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
+    document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
+    
+    document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
+}
+
+function initializeCustomSelection() {
+    const candidates = coverageData.map(row => row.Candidate);
+    selectedCandidates = candidates.slice(0, 3); // Default to top 3
+    
+    const html = candidates.map(cand => {
+        const checked = selectedCandidates.includes(cand) ? 'checked' : '';
+        return `
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="cust_${cand}" value="${cand}" ${checked} onchange="toggleCustomCandidate('${cand}')">
+                <label class="form-check-label" for="cust_${cand}">${cand}</label>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('customCandidateCheckboxes').innerHTML = html;
+}
+
+function toggleCustomCandidate(candidate) {
+    if (selectedCandidates.includes(candidate)) {
+        selectedCandidates = selectedCandidates.filter(c => c !== candidate);
+    } else {
+        selectedCandidates.push(candidate);
+    }
+    renderMatrix();
+}
+
+function downloadCSV() {
+    // Get current filtered/sorted data
+    let data = [...coverageData];
+    
+    if (currentSort === 'name') {
+        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+    } else if (currentSort === 'score-desc') {
+        data.sort((a, b) => b.Overall - a.Overall);
+    } else if (currentSort === 'score-asc') {
+        data.sort((a, b) => a.Overall - b.Overall);
+    }
+    
+    if (currentFilter === 'top3') data = data.slice(0, 3);
+    else if (currentFilter === 'top5') data = data.slice(0, 5);
+    else if (currentFilter === 'top10') data = data.slice(0, 10);
+    else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+        data = data.filter(row => selectedCandidates.includes(row.Candidate));
+    }
+    
+    // Convert to CSV
+    const headers = Object.keys(data[0]);
+    const csv = [
+        headers.join(','),
+        ...data.map(row => headers.map(h => `"${row[h]}"`).join(','))
+    ].join('\n');
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'coverage_matrix.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function toggleCategory(catId) {
+    const elem = document.getElementById(catId);
+    const toggle = document.getElementById('toggle_' + catId);
+    elem.classList.toggle('show');
+    toggle.textContent = elem.classList.contains('show') ? '▼' : '▶';
+}
+</script>
+
+<style>
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+}
+
+pre {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %}

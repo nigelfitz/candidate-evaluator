@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Buy Credits - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; margin: 0 auto; padding: 40px 20px;">
+    <h1 style="text-align: center; color: #1f2937; margin-bottom: 10px;">Purchase Analysis Credits</h1>
+    <p style="text-align: center; color: #6b7280; margin-bottom: 40px;">
+        Choose a credit package to analyze candidates. Credits never expire.
+    </p>
+    
+    <!-- Current Balance -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                padding: 20px; 
+                border-radius: 12px; 
+                text-align: center; 
+                margin-bottom: 40px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Current Balance</div>
+        <div style="font-size: 36px; font-weight: bold;">{{ current_user.credits }} Credits</div>
+    </div>
+    
+    <!-- Credit Packages Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 40px;">
+        {% for package_id, package in packages.items() %}
+        <div style="border: 2px solid #e5e7eb; 
+                    border-radius: 12px; 
+                    padding: 30px; 
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    {% if package_id == 'standard' %}
+                        border-color: #667eea;
+                        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+                        position: relative;
+                    {% endif %}"
+             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)'"
+             onmouseout="this.style.transform='translateY(0)'; 
+                         {% if package_id == 'standard' %}
+                             this.style.boxShadow='0 8px 16px rgba(102, 126, 234, 0.2)'
+                         {% else %}
+                             this.style.boxShadow='none'
+                         {% endif %}">
+            
+            {% if package_id == 'standard' %}
+            <div style="position: absolute; 
+                        top: -12px; 
+                        left: 50%; 
+                        transform: translateX(-50%);
+                        background: #667eea; 
+                        color: white; 
+                        padding: 4px 16px; 
+                        border-radius: 12px; 
+                        font-size: 12px; 
+                        font-weight: bold;">
+                BEST VALUE
+            </div>
+            {% endif %}
+            
+            <h3 style="color: #1f2937; font-size: 24px; margin-bottom: 10px;">{{ package.name }}</h3>
+            <div style="font-size: 48px; font-weight: bold; color: #667eea; margin: 20px 0;">
+                {{ package.credits }}
+            </div>
+            <div style="color: #6b7280; margin-bottom: 8px;">Credits</div>
+            
+            <div style="font-size: 36px; font-weight: bold; color: #1f2937; margin: 20px 0;">
+                ${{ package.price }}
+            </div>
+            
+            {% if package.get('discount') %}
+            <div style="background: #fef3c7; 
+                        color: #92400e; 
+                        padding: 8px 16px; 
+                        border-radius: 6px; 
+                        font-size: 14px; 
+                        margin-bottom: 20px;">
+                Save {{ package.discount }}%
+            </div>
+            {% else %}
+            <div style="height: 40px;"></div>
+            {% endif %}
+            
+            <form action="{{ url_for('payments.create_checkout_session') }}" method="POST">
+                <input type="hidden" name="package_id" value="{{ package_id }}">
+                <button type="submit" 
+                        style="width: 100%; 
+                               padding: 14px 24px; 
+                               background: {% if package_id == 'standard' %}#667eea{% else %}#1f2937{% endif %}; 
+                               color: white; 
+                               border: none; 
+                               border-radius: 8px; 
+                               font-size: 16px; 
+                               font-weight: 600; 
+                               cursor: pointer;
+                               transition: all 0.2s ease;"
+                        onmouseover="this.style.opacity='0.9'; this.style.transform='scale(1.02)'"
+                        onmouseout="this.style.opacity='1'; this.style.transform='scale(1)'">
+                    Purchase Now
+                </button>
+            </form>
+            
+            <div style="color: #9ca3af; font-size: 13px; margin-top: 12px;">
+                ${{ "%.2f"|format(package.price / package.credits) }} per credit
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Payment Info -->
+    <div style="background: #f9fafb; border-radius: 12px; padding: 30px; margin-bottom: 40px;">
+        <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 18px;">💳 Secure Payment</h3>
+        <ul style="color: #6b7280; line-height: 1.8; padding-left: 20px;">
+            <li>All payments are processed securely through Stripe</li>
+            <li>We never store your credit card information</li>
+            <li>Credits are added to your account instantly</li>
+            <li>Credits never expire</li>
+            <li>Use credits for any analysis size</li>
+        </ul>
+    </div>
+    
+    <!-- Credit Usage Guide -->
+    <div style="background: #eff6ff; border-radius: 12px; padding: 30px;">
+        <h3 style="color: #1e40af; margin-bottom: 20px; font-size: 18px;">📊 How Credits Work</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div>
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 5px;">Small Analysis</div>
+                <div style="color: #6b7280;">1-5 candidates</div>
+                <div style="color: #1e40af; font-weight: bold;">5 credits</div>
+            </div>
+            <div>
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 5px;">Medium Analysis</div>
+                <div style="color: #6b7280;">6-15 candidates</div>
+                <div style="color: #1e40af; font-weight: bold;">10 credits</div>
+            </div>
+            <div>
+                <div style="font-weight: bold; color: #1e40af; margin-bottom: 5px;">Large Analysis</div>
+                <div style="color: #6b7280;">16+ candidates</div>
+                <div style="color: #1e40af; font-weight: bold;">20 credits</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('dashboard') }}" 
+           style="color: #667eea; text-decoration: none; font-weight: 500;"
+           onmouseover="this.style.textDecoration='underline'"
+           onmouseout="this.style.textDecoration='none'">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

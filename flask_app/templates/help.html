@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+
+{% block title %}Help & FAQ - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <h1 style="margin-bottom: 1rem;">❓ Help & FAQ</h1>
+    <p style="color: #666; margin-bottom: 2rem;">Everything you need to know about using Candidate Evaluator</p>
+    
+    <!-- Quick Start Guide -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('quickstart')">
+            <span class="section-icon">🚀</span>
+            <h2>Quick Start Guide</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="quickstart">
+            <h3>Getting Started in 5 Steps</h3>
+            <ol class="guide-steps">
+                <li>
+                    <strong>Upload Job Description</strong>
+                    <p>Go to "Upload & Analyse" and upload your JD (PDF, DOCX, or TXT)</p>
+                </li>
+                <li>
+                    <strong>Review Criteria</strong>
+                    <p>The system extracts criteria automatically. Review and edit them on the "Job Criteria" page</p>
+                </li>
+                <li>
+                    <strong>Upload Candidate Resumes</strong>
+                    <p>Return to "Upload & Analyse" and upload candidate CVs (up to 20 at once)</p>
+                </li>
+                <li>
+                    <strong>Run Analysis</strong>
+                    <p>Click "Analyse Candidates" to score all candidates against the criteria</p>
+                </li>
+                <li>
+                    <strong>Review Results & Export</strong>
+                    <p>View rankings, generate AI insights for top candidates, and export reports</p>
+                </li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Scoring Explained -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('scoring')">
+            <span class="section-icon">📊</span>
+            <h2>Scoring Explained</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="scoring">
+            <h3>What do the scores mean?</h3>
+            <p>
+                Each score is a <strong>semantic similarity</strong> between a JD <strong>criterion</strong> and the 
+                <strong>most relevant snippet</strong> in a candidate's resume. It ranges from <strong>0.00</strong> 
+                (not similar) to <strong>1.00</strong> (nearly identical in meaning).
+            </p>
+            
+            <div class="score-ranges">
+                <div class="score-range high">
+                    <div class="score-label">✅ Strong (≥0.70)</div>
+                    <div class="score-desc">Excellent to good alignment</div>
+                </div>
+                <div class="score-range medium">
+                    <div class="score-label">⚠️ Moderate (0.45–0.70)</div>
+                    <div class="score-desc">Partial or indirect match</div>
+                </div>
+                <div class="score-range low">
+                    <div class="score-label">⛔ Weak (<0.45)</div>
+                    <div class="score-desc">Likely not covered</div>
+                </div>
+            </div>
+            
+            <h3>Quick Reference Ranges</h3>
+            <ul>
+                <li><strong>0.75–1.00:</strong> Excellent alignment</li>
+                <li><strong>0.60–0.74:</strong> Good</li>
+                <li><strong>0.45–0.59:</strong> Moderate (partial/indirect)</li>
+                <li><strong>0.30–0.44:</strong> Weak</li>
+                <li><strong>&lt;0.30:</strong> Likely not covered</li>
+            </ul>
+            
+            <p><strong>Overall</strong> is a weighted average of all criteria scores.</p>
+            
+            <h3>How it's calculated (plain English)</h3>
+            <ol>
+                <li>The resume is split into chunks (approximately 1,200 characters each)</li>
+                <li>For each <strong>criterion</strong>, we compare it to every chunk and keep the <strong>best match</strong></li>
+                <li>The similarity comes from vector math (cosine similarity on embeddings), which captures meaning overlap, not just exact words</li>
+            </ol>
+            
+            <h3>Examples</h3>
+            <div class="example-box">
+                <p><strong>Criterion:</strong> "Project management with Agile/Scrum"</p>
+                <p><strong>Resume:</strong> "Led a 10-person team delivering sprints using Scrum ceremonies"</p>
+                <p class="score-result">→ <strong>Score ≈ 0.75–0.85</strong> (strong, direct alignment)</p>
+            </div>
+            
+            <div class="example-box">
+                <p><strong>Criterion:</strong> "Python data analysis"</p>
+                <p><strong>Resume:</strong> "Automated Excel reports; some VBA macros"</p>
+                <p class="score-result">→ <strong>Score ≈ 0.35–0.50</strong> (partial/weak — tooling mismatch)</p>
+            </div>
+            
+            <h3>How to use the scores</h3>
+            <ul>
+                <li>Treat scores as <strong>evidence strength</strong>, not pass/fail</li>
+                <li>Use the Coverage matrix to spot strengths and gaps</li>
+                <li>Use the Evidence Explorer to view exact resume snippets behind each score</li>
+                <li>Adjust scoring thresholds in <a href="{{ url_for('settings') }}">Settings</a> if you want stricter or more lenient classifications</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Privacy & Data Handling -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('privacy')">
+            <span class="section-icon">🔒</span>
+            <h2>Privacy & Data Handling</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="privacy">
+            <h3>How your data is handled</h3>
+            <p>This application uses OpenAI's <strong>GPT-4o</strong> model for intelligent analysis of job descriptions and candidate resumes.</p>
+            
+            <div class="info-box success">
+                <h4>✅ Your data is NOT used to train AI models</h4>
+                <p>OpenAI does not use data submitted via their API to train or improve their models (unless you explicitly opt in). We have NOT opted in to any training programs.</p>
+            </div>
+            
+            <div class="info-box success">
+                <h4>✅ Limited data retention</h4>
+                <p>API data is retained by OpenAI for up to <strong>30 days</strong> for abuse and misuse monitoring. After 30 days, your data is automatically deleted from OpenAI's servers.</p>
+            </div>
+            
+            <div class="info-box success">
+                <h4>✅ Secure transmission</h4>
+                <p>All data is transmitted securely via HTTPS to OpenAI's API endpoints. No data is stored on external servers by this application.</p>
+            </div>
+            
+            <div class="info-box warning">
+                <h4>⚠️ What this means for you</h4>
+                <ul>
+                    <li>Job descriptions and resumes are temporarily processed by OpenAI's systems</li>
+                    <li>If your organization has strict data privacy requirements, consult your compliance team before use</li>
+                    <li>If this data handling is unacceptable for your use case, do not use this application</li>
+                </ul>
+            </div>
+            
+            <h3>📚 Learn more</h3>
+            <ul>
+                <li><a href="https://openai.com/policies/api-data-usage-policies" target="_blank">OpenAI API Data Usage Policies</a></li>
+                <li><a href="https://openai.com/enterprise-privacy" target="_blank">OpenAI Enterprise Privacy</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Frequently Asked Questions -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('faq')">
+            <span class="section-icon">💬</span>
+            <h2>Frequently Asked Questions</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="faq">
+            <div class="faq-item">
+                <h3 class="faq-q">How does Candidate Evaluator work?</h3>
+                <p class="faq-a">Upload your job description and candidate CVs. The app scores each candidate against extracted criteria, then (optionally) generates AI-powered insights for your top picks.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">How much does it cost?</h3>
+                <p class="faq-a">Analysis costs vary based on the number of candidates and criteria. A typical analysis with 10 candidates costs $0.10-0.20. Generating AI insights for 3 candidates adds approximately $0.10-0.15 per candidate. You'll see a cost estimate before running any analysis.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">How accurate is the scoring?</h3>
+                <p class="faq-a">Scores measure <strong>semantic similarity</strong> based on text analysis. They are good at identifying relevant experience, skills, and qualifications, but not perfect at understanding context or verifying claims. <strong>Best practice:</strong> Use scores as a screening tool to identify strong candidates, then conduct interviews to verify fit.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">Can I edit criteria?</h3>
+                <p class="faq-a">Yes! Visit the "Job Criteria" page to review and edit extracted criteria. You can add, remove, or modify criteria before running analysis.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">What file formats are supported?</h3>
+                <p class="faq-a">
+                    <strong>Job Descriptions:</strong> PDF, DOCX, DOC, TXT<br>
+                    <strong>Resumes:</strong> PDF, DOCX, DOC, TXT<br>
+                    All files are converted to text for analysis.
+                </p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">How do I export results?</h3>
+                <p class="faq-a">After running analysis, click "Export Reports" to download executive summaries, coverage matrices (Excel/CSV), and individual candidate reports (PDF/Word).</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">Can I revisit past analyses?</h3>
+                <p class="faq-a">Yes! All analyses are saved to your account. Visit the "History" page to view and reopen past jobs.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">What happens to my data after I log out?</h3>
+                <p class="faq-a">Your analyses and settings are permanently stored in your account. You can log back in anytime to access them. Job descriptions and resumes processed by OpenAI's API are retained for 30 days, then automatically deleted.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Troubleshooting -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('troubleshooting')">
+            <span class="section-icon">🔧</span>
+            <h2>Troubleshooting</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="troubleshooting">
+            <h3>Analysis not running</h3>
+            <ul>
+                <li>Ensure you've uploaded both a Job Description and at least one candidate resume</li>
+                <li>Check that criteria have been extracted (visible on Job Criteria page)</li>
+                <li>Verify you have sufficient account balance</li>
+            </ul>
+            
+            <h3>PDF text extraction issues</h3>
+            <ul>
+                <li>Some PDFs (especially scanned documents) may not extract text properly</li>
+                <li>Try re-saving the PDF or converting it to DOCX format</li>
+                <li>Very complex multi-column layouts may extract better as DOCX</li>
+            </ul>
+            
+            <h3>Scores seem too low/high</h3>
+            <ul>
+                <li>Adjust scoring thresholds in <a href="{{ url_for('settings') }}">Settings</a> to match your standards</li>
+                <li>Review criteria on Job Criteria page - overly specific criteria may score lower</li>
+                <li>Check the Evidence Explorer to see what text is being matched</li>
+            </ul>
+            
+            <h3>Cost concerns</h3>
+            <ul>
+                <li>Review the cost estimate before running analysis</li>
+                <li>Generate AI insights only for top candidates (not all candidates)</li>
+                <li>Check your <a href="{{ url_for('account') }}">Account</a> page to track spending</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Contact & Support -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('contact')">
+            <span class="section-icon">📧</span>
+            <h2>Contact & Support</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="contact">
+            <h3>Need more help?</h3>
+            <p>If you have questions not covered in this FAQ, please contact:</p>
+            <p><strong>Email:</strong> support@candidateevaluator.com</p>
+            
+            <h3>About This Application</h3>
+            <p><strong>Version:</strong> 2.0 (December 2025)</p>
+            <p><strong>Technology:</strong></p>
+            <ul>
+                <li><strong>AI Model:</strong> OpenAI GPT-4o</li>
+                <li><strong>Embeddings:</strong> Sentence transformers for semantic similarity</li>
+                <li><strong>Framework:</strong> Flask (Python)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .help-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .help-section {
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        cursor: pointer;
+        background: linear-gradient(135deg, #1f77b4 0%, #155a8a 100%);
+        color: white;
+        transition: background 0.3s;
+    }
+    
+    .section-header:hover {
+        background: linear-gradient(135deg, #155a8a 0%, #1f77b4 100%);
+    }
+    
+    .section-icon {
+        font-size: 1.8rem;
+        margin-right: 1rem;
+    }
+    
+    .section-header h2 {
+        flex: 1;
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .toggle-icon {
+        font-size: 1.2rem;
+        transition: transform 0.3s;
+    }
+    
+    .section-header.active .toggle-icon {
+        transform: rotate(180deg);
+    }
+    
+    .section-content {
+        padding: 2rem;
+        display: none;
+    }
+    
+    .section-content.active {
+        display: block;
+    }
+    
+    .section-content h3 {
+        color: #1f77b4;
+        margin-top: 1.5rem;
+        margin-bottom: 0.8rem;
+        font-size: 1.1rem;
+    }
+    
+    .section-content h3:first-child {
+        margin-top: 0;
+    }
+    
+    .guide-steps {
+        list-style: none;
+        counter-reset: step-counter;
+        padding-left: 0;
+    }
+    
+    .guide-steps li {
+        counter-increment: step-counter;
+        position: relative;
+        padding-left: 3rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .guide-steps li::before {
+        content: counter(step-counter);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 2rem;
+        height: 2rem;
+        background: #1f77b4;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .guide-steps li strong {
+        display: block;
+        color: #333;
+        margin-bottom: 0.3rem;
+    }
+    
+    .guide-steps li p {
+        margin: 0;
+        color: #666;
+    }
+    
+    .score-ranges {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .score-range {
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 4px solid;
+    }
+    
+    .score-range.high {
+        background: #e8f5e9;
+        border-color: #28a745;
+    }
+    
+    .score-range.medium {
+        background: #fff3e0;
+        border-color: #ffc107;
+    }
+    
+    .score-range.low {
+        background: #ffebee;
+        border-color: #dc3545;
+    }
+    
+    .score-label {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .score-desc {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .example-box {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-left: 3px solid #1f77b4;
+        margin: 1rem 0;
+    }
+    
+    .example-box p {
+        margin: 0.5rem 0;
+    }
+    
+    .score-result {
+        color: #1f77b4;
+        font-weight: 600;
+        margin-top: 0.5rem !important;
+    }
+    
+    .info-box {
+        padding: 1.2rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+        border-left: 4px solid;
+    }
+    
+    .info-box.success {
+        background: #e8f5e9;
+        border-color: #28a745;
+    }
+    
+    .info-box.warning {
+        background: #fff3e0;
+        border-color: #ffc107;
+    }
+    
+    .info-box h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+        font-size: 1rem;
+    }
+    
+    .info-box p, .info-box ul {
+        margin: 0.5rem 0 0 0;
+        color: #666;
+    }
+    
+    .info-box ul {
+        padding-left: 1.5rem;
+    }
+    
+    .faq-item {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+    
+    .faq-q {
+        color: #1f77b4;
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .faq-a {
+        color: #666;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    a {
+        color: #1f77b4;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<script>
+function toggleSection(sectionId) {
+    const content = document.getElementById(sectionId);
+    const header = content.previousElementSibling;
+    
+    if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        header.classList.remove('active');
+    } else {
+        content.classList.add('active');
+        header.classList.add('active');
+    }
+}
+</script>
+{% endblock %}

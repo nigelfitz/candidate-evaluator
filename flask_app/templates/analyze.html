@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Candidates{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <h1 style="color: #1f2937; margin: 0;">🎯 Analyze Candidates</h1>
+        {% if current_user.balance_usd < 5 %}
+        <div class="alert alert-warning mb-0" style="padding: 0.5rem 1rem;">
+            ⚠️ Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Workflow Progress -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h3 style="margin-bottom: 15px;">📊 Workflow Progress</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Step 1: Upload JD -->
+            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: {% if current_step == 'jd' %}12{% else %}10{% endif %}px; border-radius: 8px; {% if current_step == 'jd' %}background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);{% elif jd_data %}background: #d1fae5; border: 2px solid #10b981; cursor: pointer;{% else %}background: #f3f4f6; border: 2px solid #d1d5db; pointer-events: none;{% endif %} text-decoration: none;" {% if jd_data %}title="View Uploaded JD"{% endif %}>
+                <div style="font-size: 24px; {% if current_step == 'jd' %}color: white;{% elif jd_data %}color: #065f46;{% else %}color: #6b7280;{% endif %}">{% if jd_data %}✅{% elif current_step == 'jd' %}📤{% else %}📤{% endif %}</div>
+                <div style="font-size: 12px; font-weight: 600; {% if current_step == 'jd' %}color: white;{% elif jd_data %}color: #065f46;{% else %}color: #6b7280;{% endif %}">Job Description</div>
+            </a>
+            <div style="font-size: 20px; color: {% if jd_data %}#10b981{% else %}#d1d5db{% endif %};">→</div>
+            
+            <!-- Step 2: Review Criteria -->
+            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; {% if criteria_count > 0 %}background: #d1fae5; border: 2px solid #10b981; cursor: pointer;{% else %}background: #f3f4f6; border: 2px solid #d1d5db; pointer-events: none;{% endif %} text-decoration: none;" {% if criteria_count > 0 %}title="Review Job Criteria"{% endif %}>
+                <div style="font-size: 24px; {% if criteria_count > 0 %}color: #065f46;{% else %}color: #6b7280;{% endif %}">{% if criteria_count > 0 %}✅{% else %}📋{% endif %}</div>
+                <div style="font-size: 12px; font-weight: 600; {% if criteria_count > 0 %}color: #065f46;{% else %}color: #6b7280;{% endif %}">Evaluation Criteria</div>
+            </a>
+            <div style="font-size: 20px; color: {% if criteria_count > 0 %}#10b981{% else %}#d1d5db{% endif %};">→</div>
+            
+            <!-- Step 3: Upload Resumes -->
+            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: {% if current_step == 'resumes' %}12{% else %}10{% endif %}px; border-radius: 8px; {% if current_step == 'resumes' %}background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);{% elif jd_data and criteria_count > 0 %}background: #d1fae5; border: 2px solid #10b981; cursor: pointer;{% else %}background: #f3f4f6; border: 2px solid #d1d5db; pointer-events: none;{% endif %} text-decoration: none;" {% if jd_data and criteria_count > 0 %}title="Upload Resumes"{% endif %}>
+                <div style="font-size: 24px; {% if current_step == 'resumes' %}color: white;{% elif jd_data and criteria_count > 0 %}color: #065f46;{% else %}color: #6b7280;{% endif %}">👥</div>
+                <div style="font-size: 12px; font-weight: 600; {% if current_step == 'resumes' %}color: white;{% elif jd_data and criteria_count > 0 %}color: #065f46;{% else %}color: #6b7280;{% endif %}">Candidate Resumes</div>
+            </a>
+            <div style="font-size: 20px; color: #d1d5db;">→</div>
+            
+            <!-- Step 4: Run Analysis -->
+            {% if uploaded_resumes %}
+            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="Configure & Run Analysis">
+                <div style="font-size: 24px; color: #065f46;">🚀</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
+            </a>
+            {% else %}
+            <div style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db;">
+                <div style="font-size: 24px; color: #6b7280;">🚀</div>
+                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Run Analysis</div>
+            </div>
+            {% endif %}
+            <div style="font-size: 20px; color: #d1d5db;">→</div>
+            
+            <!-- Step 5: Results -->
+            {% if latest_analysis_id %}
+            <a href="{{ url_for('results', analysis_id=latest_analysis_id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="View Latest Results">
+                <div style="font-size: 24px; color: #065f46;">📊</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
+            </a>
+            {% else %}
+            <div style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db;">
+                <div style="font-size: 24px; color: #6b7280;">📊</div>
+                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Results</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- STEP 1: Upload Job Description (only show if step=jd or no JD uploaded) -->
+    {% if current_step == 'jd' %}
+    {% if jd_data and jd_data.filename %}
+    <!-- Show uploaded JD file info with delete option -->
+    <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📝 Uploaded Job Description</h2>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; border: 2px solid #10b981; border-radius: 8px; margin-bottom: 20px; background: #d1fae5;">
+            <div style="flex: 1;">
+                <div style="font-weight: 600; color: #065f46; font-size: 16px;">✅ {{ jd_data.filename }}</div>
+                {% if jd_data.text %}
+                <div style="font-size: 14px; color: #059669; margin-top: 5px;">{{ jd_data.text|length }} characters extracted</div>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('clear_session') }}" style="display: inline;" onsubmit="return confirm('Delete this JD and start over? This will also clear criteria and uploaded resumes.')">
+                <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete JD</button>
+            </form>
+        </div>
+        
+        {% if jd_data.text %}
+        <details style="margin-bottom: 20px;">
+            <summary style="cursor: pointer; color: #1f77b4; font-weight: 600; padding: 10px; background: #f0f9ff; border-radius: 6px;">👁️ Preview JD Text</summary>
+            <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 13px; max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb;">
+                {{ jd_data.text }}{% if jd_data.text|length >= 500 %}...
+                <div style="margin-top: 10px; color: #6b7280; font-style: italic;">(Showing first 500 characters)</div>
+                {% endif %}
+            </div>
+        </details>
+        {% endif %}
+    </div>
+    {% else %}
+    <!-- Show upload form -->
+    <form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="jdForm">
+        <input type="hidden" name="action" value="upload_jd">
+        
+        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📄 Step 1: Upload Job Description</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    Upload JD File (PDF, DOCX, TXT)
+                </label>
+                <input type="file" name="job_description" id="jdFile" accept=".pdf,.docx,.doc,.txt"
+                       style="display: block; width: 100%; padding: 12px; border: 2px dashed #d1d5db; border-radius: 8px; background: #f9fafb; cursor: pointer;">
+            </div>
+
+            <div style="text-align: center; margin: 20px 0; color: #6b7280; font-weight: 500;">OR</div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    Paste JD Text
+                </label>
+                <textarea name="jd_text" id="jdText" rows="10" placeholder="Paste your job description here..."
+                          style="display: block; width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 14px;"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="uploadJdBtn">
+                🚀 Extract Criteria from JD
+            </button>
+        </div>
+    </form>
+    {% endif %}
+    {% endif %}
+
+    <!-- STEP 2: Upload Resumes (only show if step=resumes and JD uploaded) -->
+    {% if current_step == 'resumes' and jd_data %}
+    
+    <!-- Show list of uploaded resumes if any exist -->
+    {% if uploaded_resumes %}
+    <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📁 Uploaded Resumes ({{ uploaded_resumes|length }})</h2>
+        
+        <div style="margin-bottom: 20px;">
+            {% for resume in uploaded_resumes %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; background: #f9fafb;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1f2937;">{{ resume.candidate_name }}</div>
+                    <div style="font-size: 14px; color: #6b7280;">{{ resume.file_name }}</div>
+                </div>
+                <form method="POST" action="{{ url_for('delete_resume', resume_id=resume.id) }}" style="display: inline;" onsubmit="return confirm('Remove this resume?');">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <a href="{{ url_for('run_analysis_route') }}" class="btn btn-success" style="flex: 1;">
+                🚀 Continue to Run Analysis →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Upload more resumes form -->
+    <div id="upload-resumes"></div>
+    <form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="resumeUploadForm">
+        <input type="hidden" name="action" value="upload_resumes">
+        
+        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">👥 {% if uploaded_resumes %}Add More Resumes{% else %}Upload Candidate Resumes{% endif %}</h2>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    Upload Resumes (PDF, DOCX, TXT - Multiple files)
+                </label>
+                <input type="file" name="resumes" id="resumeFiles" accept=".pdf,.docx,.doc,.txt" multiple required
+                       style="display: block; width: 100%; padding: 12px; border: 2px dashed #d1d5db; border-radius: 8px; background: #f9fafb; cursor: pointer;">
+                <div id="resumeFileNames" style="margin-top: 8px; color: #6b7280; font-size: 14px;"></div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="uploadResumesBtn" style="font-size: 18px; padding: 15px 30px;">
+                {% if uploaded_resumes %}➕ Add Resumes{% else %}Continue to Configure Analysis →{% endif %}
+            </button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+// File upload feedback
+document.getElementById('resumeFiles')?.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const display = document.getElementById('resumeFileNames');
+    if (files.length > 0) {
+        display.innerHTML = `📁 ${files.length} file(s) selected: ${files.map(f => f.name).join(', ')}`;
+    }
+});
+
+document.getElementById('jdFile')?.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        const jdText = document.getElementById('jdText');
+        if (jdText) jdText.disabled = true;
+    }
+});
+
+function clearSession() {
+    if (confirm('This will clear the uploaded JD and extracted criteria. Continue?')) {
+        fetch('{{ url_for("clear_session") }}', {
+            method: 'POST'
+        }).then(() => window.location.reload());
+    }
+}
+
+function updateCostEstimate() {
+    const resumeFiles = document.getElementById('resumeFiles')?.files;
+    const insightsMode = document.getElementById('insightsMode')?.value;
+    
+    if (!resumeFiles || resumeFiles.length === 0) {
+        document.getElementById('costEstimate').style.display = 'none';
+        return;
+    }
+    
+    const numCandidates = resumeFiles.length;
+    let totalCost = 4.00;
+    let numInsights = 3;
+    
+    if (insightsMode === 'top5') {
+        numInsights = Math.min(5, numCandidates);
+    } else if (insightsMode === 'top10') {
+        numInsights = Math.min(10, numCandidates);
+    } else if (insightsMode === 'all') {
+        numInsights = numCandidates;
+    } else if (insightsMode === 'none') {
+        numInsights = 0;
+    } else {
+        numInsights = Math.min(3, numCandidates);
+    }
+    
+    const extraInsights = Math.max(0, numInsights - 3);
+    const extraCost = extraInsights * 1.00;
+    totalCost += extraCost;
+    
+    document.getElementById('costEstimate').style.display = 'block';
+    document.getElementById('costAmount').textContent = `$${totalCost.toFixed(2)}`;
+    
+    let breakdown = `Base analysis: $4.00 (JD extraction + scoring ${numCandidates} candidate${numCandidates > 1 ? 's' : ''} + top 3 AI insights + reports)`;
+    
+    if (extraInsights > 0) {
+        breakdown += `<br>Extra AI insights: +$${extraCost.toFixed(2)} (${extraInsights} additional candidate${extraInsights > 1 ? 's' : ''} × $1.00)`;
+    } else if (insightsMode === 'none') {
+        breakdown += `<br>No AI insights: $0.00 (scoring only)`;
+    }
+    
+    breakdown += `<br><strong>Total: $${totalCost.toFixed(2)}</strong>`;
+    
+    document.getElementById('costBreakdown').innerHTML = breakdown;
+    
+    const availableBalance = {{ current_user.balance_usd }};
+    if (totalCost > availableBalance) {
+        document.getElementById('costEstimate').style.background = '#fee2e2';
+        document.getElementById('costEstimate').style.borderColor = '#ef4444';
+        document.getElementById('analyzeBtn').disabled = true;
+        document.getElementById('analyzeBtn').style.opacity = '0.5';
+        document.getElementById('costBreakdown').innerHTML += `<br><strong style="color: #991b1b;">⚠️ Insufficient funds! You need $${(totalCost - availableBalance).toFixed(2)} more.</strong>`;
+    } else {
+        document.getElementById('costEstimate').style.background = '#fef3c7';
+        document.getElementById('costEstimate').style.borderColor = '#f59e0b';
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('analyzeBtn').style.opacity = '1';
+    }
+}
+
+// Show loading state on submit
+document.getElementById('analyzeForm')?.addEventListener('submit', function(e) {
+    const btn = document.getElementById('analyzeBtn');
+    btn.textContent = '⏳ Analyzing... This may take a few minutes';
+    btn.disabled = true;
+    btn.style.cursor = 'wait';
+});
+
+document.getElementById('jdForm')?.addEventListener('submit', function(e) {
+    const btn = document.getElementById('uploadJdBtn');
+    btn.textContent = '⏳ Extracting criteria...';
+    btn.disabled = true;
+});
+</script>
+
+{% endblock %}

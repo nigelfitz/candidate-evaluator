@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Candidate Evaluator{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .analyze-card {
+        background: white;
+        color: #333;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        border: 2px solid #1f77b4;
+    }
+    
+    .analyze-card h2 {
+        color: #1f77b4;
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .analyze-card p {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 1.2rem;
+    }
+    
+    .analyze-card .btn {
+        font-size: 1.1rem;
+        padding: 0.7rem 2rem;
+        background: #1f77b4;
+        color: white;
+        font-weight: 600;
+        border: none;
+    }
+    
+    .analyze-card .btn:hover {
+        background: #1565c0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .info-right {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .info-right h3 {
+        color: #1e7e34;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .info-right p {
+        color: #1e7e34;
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .info-right .whos-it-for {
+        text-align: center;
+    }
+    
+    .usecase-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+    }
+    
+    .usecase-item {
+        background: #f8f9fa;
+        padding: 0.8rem;
+        border-radius: 6px;
+        text-align: center;
+    }
+    
+    .usecase-item strong {
+        color: #1f77b4;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+    
+    .usecase-item span {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .pricing-block {
+        background: #f8fffe;
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 2px solid #e8f4f8;
+    }
+    
+    .pricing-block .price-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .pricing-block .price-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%);
+        color: white;
+        font-size: 2.5rem;
+        font-weight: 800;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 4px 12px rgba(30, 126, 52, 0.25);
+    }
+    
+    .pricing-block .price-subtext {
+        font-size: 1.2rem;
+        color: #555;
+        font-weight: 600;
+    }
+    
+    .pricing-block .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .pricing-block .benefit-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .pricing-block .benefit-item .emoji {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    .pricing-block .benefit-item .text {
+        color: #444;
+        font-size: 1rem;
+        line-height: 1.5;
+        flex: 1;
+    }
+    
+    .pricing-block .closing-text {
+        background: #f0f8ff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        color: #444;
+        line-height: 1.7;
+        text-align: center;
+        border: 1px solid #d4e8f7;
+    }
+    
+    .faq-section {
+        background: #fafafa;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e0e0e0;
+    }
+    
+    .faq-section h2 {
+        color: #333;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .faq-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #1f77b4;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .faq-item h3 {
+        color: #1f77b4;
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .faq-item p {
+        color: #555;
+        line-height: 1.7;
+        margin-bottom: 0.8rem;
+    }
+    
+    .faq-item p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: #f8f9fa;
+        border-left: 4px solid #1f77b4;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+    
+    .info-card h3 {
+        color: #1f77b4;
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-card p {
+        color: #495057;
+        margin: 0;
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if current_user.is_authenticated %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 style="color: #1f77b4; margin: 0;">Welcome back, {{ user.name or user.email }}!</h1>
+    </div>
+    {% if user and user.balance_usd < 5 %}
+    <div class="alert alert-warning mb-0" style="padding: 0.5rem 1rem;">
+        ⚠️ Low balance: ${{ "%.2f"|format(user.balance_usd) }} - <a href="{{ url_for('payments.buy_credits') }}" style="text-decoration: underline;">Add funds</a>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="mb-4">
+    <h1 style="color: #1f77b4; text-align: center; margin: 0;">Welcome to Candidate Evaluator</h1>
+    <p style="text-align: center; color: #666; font-size: 1.1rem; margin-top: 0.5rem;">AI-powered candidate screening made simple</p>
+</div>
+{% endif %}
+
+<!-- Top Section: Analyze Card + Info -->
+<div class="top-section">
+    <div class="analyze-card">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎯</div>
+        <h2>Analyze Candidates</h2>
+        <p>Upload job description and resumes to start screening</p>
+        <a href="{{ url_for('auth.register') if not current_user.is_authenticated else url_for('analyze', new=1) }}" class="btn">Start Here !</a>
+    </div>
+    
+    <div class="info-right">
+        <h3>The fastest way to shortlist, score, and deeply analyse candidates for any job.</h3>
+        <p>Save hours, make smarter hiring decisions, and benefit from AI-powered insights.</p>
+        
+        <strong class="whos-it-for" style="color: #1f77b4; display: block; margin-bottom: 0.8rem;">Who's it for?</strong>
+        <div class="usecase-grid">
+            <div class="usecase-item">
+                <strong>Recruiters</strong>
+                <span>Shortlist faster and win more placements</span>
+            </div>
+            <div class="usecase-item">
+                <strong>HR Managers</strong>
+                <span>Make fair, data-driven decisions</span>
+            </div>
+            <div class="usecase-item">
+                <strong>Small Businesses</strong>
+                <span>Hire like a pro on any budget</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pricing Block: For $4 you get -->
+<div class="pricing-block">
+    <div class="price-header">
+        <div class="price-badge">$5</div>
+        <div class="price-subtext">gets you all of this:</div>
+    </div>
+    
+    <div class="benefits-grid">
+        <div class="benefit-item">
+            <span class="emoji">📝</span>
+            <span class="text">Job description analysed and assessment criteria extracted</span>
+        </div>
+        <div class="benefit-item">
+            <span class="emoji">✏️</span>
+            <span class="text">Add, edit, or delete the assessment criteria as much as you want</span>
+        </div>
+        <div class="benefit-item">
+            <span class="emoji">📊</span>
+            <span class="text">All uploaded candidate resumes analysed and matched against criteria</span>
+        </div>
+        <div class="benefit-item">
+            <span class="emoji">🏆</span>
+            <span class="text">Ranked scoring of all candidates, including per-criteria scores</span>
+        </div>
+        <div class="benefit-item">
+            <span class="emoji">🤖</span>
+            <span class="text">AI-powered insights for the top 3 candidates (strengths, gaps, risks, and suitability)</span>
+        </div>
+        <div class="benefit-item">
+            <span class="emoji">📄</span>
+            <span class="text">Downloadable PDF/Word reports for your own use</span>
+        </div>
+    </div>
+    
+    <div class="closing-text">Think about how long it takes to read 30 resumes and shortlist a few. 
+        For the price of a coffee, Candidate Evaluator does it all for you — thoroughly, fairly, 
+        and instantly. Got 100 resumes to review? With Candidate Evaluator, that'll add just a minute or so to your workload.
+        How long will it take you to read and shortlist them yourself? Does anyone even read all the resumes properly 
+        when you have that many? Candidate Evaluator does!</div>
+</div>
+
+<!-- Key Benefits -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-header" style="color: #1f77b4;">Key Benefits</h2>
+    <div class="info-section">
+        <div class="info-card">
+            <h3><span>⚡</span> Instant Scoring</h3>
+            <p>Automatically score and rank all candidates against your job criteria in seconds</p>
+        </div>
+        <div class="info-card">
+            <h3><span>🤖</span> AI Insights</h3>
+            <p>Get GPT-powered strengths, gaps, and recommendations for top candidates</p>
+        </div>
+        <div class="info-card">
+            <h3><span>📄</span> Professional Reports</h3>
+            <p>Export beautiful PDF/Word reports for your team or clients</p>
+        </div>
+        <div class="info-card">
+            <h3><span>🎯</span> Fair & Consistent</h3>
+            <p>AI-driven scoring ensures fair, bias-free candidate evaluation</p>
+        </div>
+        <div class="info-card">
+            <h3><span>💸</span> Pay As You Go</h3>
+            <p>No subscriptions - pay only for what you use</p>
+        </div>
+        <div class="info-card">
+            <h3><span>🔒</span> 100% Private</h3>
+            <p>Your files are processed securely and are NOT used to train AI models</p>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h2 class="card-header" style="color: #1f77b4;">How It Works</h2>
+    <ol style="line-height: 2; font-size: 1.05rem; padding-left: 2rem;">
+        <li><strong>Upload Job Description:</strong> Start by uploading the job description you're hiring for</li>
+        <li><strong>Review Criteria:</strong> Our AI extracts key criteria - you can edit them as needed</li>
+        <li><strong>Upload Resumes:</strong> Upload candidate CVs/resumes (PDF, DOCX, or TXT)</li>
+        <li><strong>Run Analysis:</strong> Configure analysis options and let AI score all candidates</li>
+        <li><strong>Get Results:</strong> Receive instant scoring, ranking, and AI-powered insights</li>
+        <li><strong>Export Reports:</strong> Download professional reports to share with your team</li>
+    </ol>
+</div>
+
+{% if current_user.is_authenticated and user and user.balance_usd < 5 %}
+<div class="card" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+    <h3 style="color: #856404;">⚠️ Low Balance</h3>
+    <p style="color: #856404;">You have ${{ "%.2f"|format(user.balance_usd) }} remaining. Typical analysis costs $4-$10. 
+        <a href="{{ url_for('payments.buy_credits') }}" style="color: #1f77b4; text-decoration: underline;">Add funds</a> to continue analyzing candidates.</p>
+</div>
+{% endif %}
+
+<!-- FAQ Section -->
+<div class="faq-section">
+    <h2>The Fine Print - We've Got Nothing to Hide</h2>
+    
+    <div class="faq-item">
+        <h3>Is my data safe?</h3>
+        <p>Yes! Your data and uploaded files are stored on our secure server. We store the data and files for each job in case you need to access them again later (e.g. if you get some late resumes and want to re-run the analysis to include them). If you prefer that they are not retained after you have finished, we have a Job History section where you can easily delete any historical jobs. Your data is NOT used to train AI models. Any data transmitted to OpenAI for "AI" analysis is done securely via HTTPS to API endpoints and is only retained by OpenAI for up to 30 days for abuse and misuse monitoring. After 30 days it is automatically deleted from OpenAI's servers. Read our Help & FAQ page (Privacy & Data Handling) for more information.</p>
+    </div>
+    
+    <div class="faq-item">
+        <h3>How much does it cost?</h3>
+        <p>As stated above, it costs just $5 per job.</p>
+        <p>That gets the assessment criteria extracted from your job description and all candidate resumes scored and ranked against those criteria. It also gets AI powered insights on your top 3 ranked candidates, plus all of our reports for you to download.</p>
+        <p>If you want AI insights for more than the top 3 candidates, No Problem! You can get those insights for any number of candidates you want. It's just $1 per extra candidate.</p>
+        <p>This isn't some hidden scam to try and get you to pay more for the stuff you really need. The simple reason that we only include AI insights for the top 3 candidates in our basic price is because our costs increase the more we use the expensive AI models that are needed to generate those insightful human-like outputs. We include the top 3 in our basic price because that is often enough for many of our clients. But if you want to do a few, or a lot more, at $1 each it's probably not going to break your budget.</p>
+        <p>There are no hidden costs with us. Just pay for what you use. And if it's too much hassle to pay each time you process a job, you can load up as much credit as you like and we'll deduct each job from your credit balance.</p>
+    </div>
+    
+    <div class="faq-item">
+        <h3>What do I get in a report?</h3>
+        <p>You get ranked candidates, detailed scoring, and (for selected candidates) AI-generated strengths, gaps, and recommendations. Export as PDF or Word.</p>
+    </div>
+    
+    <div class="faq-item">
+        <h3>Can I try it before buying?</h3>
+        <p>Unfortunately, No. It costs us money to use the AI models that are needed for every analysis. If we offer free trials, we risk incurring costs that we can't control. Controlling our costs enables us to keep our pricing as low as we can, and at just $5 per job, we encourage you to just give it one go. We're confident that you'll be impressed and will come back again and again.</p>
+    </div>
+</div>
+{% endblock %}

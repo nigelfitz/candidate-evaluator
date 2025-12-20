@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}History - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1400px; margin: 0 auto; padding: 40px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: #1f2937; margin: 0;">📊 Analysis History</h1>
+        <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+            ➕ New Analysis
+        </a>
+    </div>
+    
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="historyTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="analyses-tab" data-bs-toggle="tab" data-bs-target="#analyses" type="button" role="tab" aria-controls="analyses" aria-selected="true">
+                📋 Analyses
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" role="tab" aria-controls="transactions" aria-selected="false">
+                💳 Transactions
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="historyTabContent">
+        <!-- Analyses Tab -->
+        <div class="tab-pane fade show active" id="analyses" role="tabpanel" aria-labelledby="analyses-tab">
+            {% if analyses %}
+            
+            <!-- Search and Filter Controls -->
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 15px; align-items: center;">
+                    <div>
+                        <input type="text" 
+                               id="searchInput" 
+                               placeholder="🔍 Search by job title..."
+                               style="width: 100%; padding: 10px 15px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
+                               oninput="filterAnalyses()">
+                    </div>
+                    <div>
+                        <select id="sortBy" 
+                                style="padding: 10px 15px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;"
+                                onchange="sortAnalyses()">
+                            <option value="date-desc">📅 Newest First</option>
+                            <option value="date-asc">📅 Oldest First</option>
+                            <option value="cost-desc">💰 Highest Cost</option>
+                            <option value="cost-asc">💰 Lowest Cost</option>
+                            <option value="candidates-desc">👥 Most Candidates</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="resetFilters()" 
+                                style="padding: 10px 20px; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 14px;"
+                                onmouseover="this.style.background='#f9fafb'"
+                                onmouseout="this.style.background='white'">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+                <div id="resultCount" style="margin-top: 10px; color: #6b7280; font-size: 14px;">
+                    Showing {{ analyses|length }} analyses
+                </div>
+            </div>
+            
+            <!-- Analyses Grid -->
+            <div id="analysesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+                {% for analysis in analyses %}
+                <div class="analysis-card" 
+                     data-date="{{ analysis.created_at.timestamp() }}"
+                     data-cost="{{ analysis.cost_usd }}"
+                     data-candidates="{{ analysis.num_candidates }}"
+                     data-title="{{ analysis.job_title|lower }}"
+                     style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;">
+                    
+                    <!-- Card Header -->
+                    <div style="padding: 20px; border-bottom: 1px solid #f3f4f6;">
+                        <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 10px;">
+                            <h3 style="margin: 0; color: #1f2937; font-size: 16px; font-weight: 600; flex: 1; line-height: 1.4;">
+                                {{ analysis.job_title }}
+                            </h3>
+                        </div>
+                        <div class="local-time" 
+                             data-utc="{{ analysis.created_at|to_local_time }}"
+                             style="color: #6b7280; font-size: 13px;">
+                            {{ analysis.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC
+                        </div>
+                    </div>
+                    
+                    <!-- Card Stats -->
+                    <div style="padding: 20px; background: #f9fafb;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 24px; color: #1f77b4; font-weight: 700;">{{ analysis.num_candidates }}</div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Candidates</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 24px; color: #10b981; font-weight: 700;">{{ analysis.num_criteria }}</div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Criteria</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 24px; color: #dc2626; font-weight: 700;">${{ "%.2f"|format(analysis.cost_usd) }}</div>
+                                <div style="font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Cost</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Actions -->
+                    <div style="padding: 15px 20px; display: flex; gap: 10px;">
+                        <a href="{{ url_for('results', analysis_id=analysis.id) }}" 
+                           class="btn btn-primary"
+                           style="flex: 1; text-align: center; padding: 10px; font-size: 14px;">
+                            📊 View Results
+                        </a>
+                        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" 
+                           class="btn btn-secondary"
+                           style="flex: 1; text-align: center; padding: 10px; font-size: 14px;">
+                            📄 Export
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div id="noResults" style="display: none; text-align: center; padding: 60px 20px; background: #f9fafb; border-radius: 12px; margin-top: 20px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                <h2 style="color: #6b7280; margin-bottom: 10px;">No analyses found</h2>
+                <p style="color: #9ca3af;">Try adjusting your search or filters</p>
+            </div>
+            
+            {% else %}
+            <div style="text-align: center; padding: 60px 20px; background: #f9fafb; border-radius: 12px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
+                <h2 style="color: #6b7280; margin-bottom: 10px;">No analyses yet</h2>
+                <p style="color: #9ca3af; margin-bottom: 30px;">Start analyzing candidates to see your results here</p>
+                <a href="{{ url_for('analyze') }}" class="btn btn-primary" style="display: inline-block;">
+                    Start Analysis
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Transactions Tab -->
+        <div class="tab-pane fade" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+            {% if transactions %}
+            <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                            <th style="padding: 16px; text-align: left; color: #6b7280; font-weight: 600;">Date</th>
+                            <th style="padding: 16px; text-align: left; color: #6b7280; font-weight: 600;">Type</th>
+                            <th style="padding: 16px; text-align: left; color: #6b7280; font-weight: 600;">Description</th>
+                            <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600;">Amount</th>
+                            <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600;">Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 16px; color: #1f2937;" class="local-time" data-utc="{{ transaction.created_at|to_local_time }}">
+                                {{ transaction.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC
+                            </td>
+                            <td style="padding: 16px;">
+                                {% if transaction.transaction_type == 'credit' %}
+                                    <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500;">
+                                        Purchase
+                                    </span>
+                                {% else %}
+                                    <span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500;">
+                                        Usage
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 16px; color: #6b7280;">
+                                {{ transaction.description }}
+                            </td>
+                            <td style="padding: 16px; text-align: right; font-weight: 600;">
+                                {% if transaction.amount_usd > 0 %}
+                                    <span style="color: #059669;">+${{ "%.2f"|format(transaction.amount_usd) }}</span>
+                                {% else %}
+                                    <span style="color: #dc2626;">-${{ "%.2f"|format(transaction.amount_usd|abs) }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 16px; text-align: right; color: #1f2937; font-weight: 600;">
+                                {% if transaction.stripe_amount_cents and transaction.stripe_amount_cents > 0 %}
+                                    ${{ "%.2f"|format(transaction.stripe_amount_cents / 100) }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px;">
+                <div style="background: #eff6ff; padding: 20px; border-radius: 12px;">
+                    <div style="color: #1e40af; font-size: 14px; margin-bottom: 5px;">Total Added</div>
+                    <div style="color: #1e3a8a; font-size: 28px; font-weight: bold;">
+                        ${{ "%.2f"|format(transactions|selectattr('transaction_type', 'equalto', 'credit')|map(attribute='amount_usd')|sum) }}
+                    </div>
+                </div>
+                <div style="background: #fef3c7; padding: 20px; border-radius: 12px;">
+                    <div style="color: #92400e; font-size: 14px; margin-bottom: 5px;">Total Spent</div>
+                    <div style="color: #78350f; font-size: 28px; font-weight: bold;">
+                        ${{ "%.2f"|format((transactions|selectattr('transaction_type', 'equalto', 'debit')|map(attribute='amount_usd')|sum)|abs) }}
+                    </div>
+                </div>
+                <div style="background: #d1fae5; padding: 20px; border-radius: 12px;">
+                    <div style="color: #065f46; font-size: 14px; margin-bottom: 5px;">Current Balance</div>
+                    <div style="color: #064e3b; font-size: 28px; font-weight: bold;">
+                        ${{ "%.2f"|format(current_user.balance_usd) }}
+                    </div>
+                </div>
+            </div>
+            
+            {% else %}
+            <div style="text-align: center; padding: 60px 20px; background: #f9fafb; border-radius: 12px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                <h2 style="color: #6b7280; margin-bottom: 10px;">No transactions yet</h2>
+                <p style="color: #9ca3af; margin-bottom: 30px;">Add funds to start analyzing candidates</p>
+                <a href="{{ url_for('payments.buy_credits') }}" 
+                   style="display: inline-block; 
+                          padding: 12px 24px; 
+                          background: #667eea; 
+                          color: white; 
+                          text-decoration: none; 
+                          border-radius: 8px; 
+                          font-weight: 500;"
+                   onmouseover="this.style.opacity='0.9'"
+                   onmouseout="this.style.opacity='1'">
+                    Add Funds
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{{ url_for('dashboard') }}" 
+           style="color: #1f77b4; text-decoration: none; font-weight: 500;"
+           onmouseover="this.style.textDecoration='underline'"
+           onmouseout="this.style.textDecoration='none'">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+    .analysis-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+</style>
+
+<script>
+// Convert UTC timestamps to user's local timezone
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.local-time').forEach(function(elem) {
+        const utcTime = elem.getAttribute('data-utc');
+        if (utcTime) {
+            const date = new Date(utcTime);
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            };
+            elem.textContent = date.toLocaleString('en-US', options);
+        }
+    });
+});
+
+// Filter analyses by search term
+function filterAnalyses() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.analysis-card');
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+        const title = card.getAttribute('data-title');
+        if (title.includes(searchTerm)) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    updateResultCount(visibleCount);
+}
+
+// Sort analyses
+function sortAnalyses() {
+    const sortBy = document.getElementById('sortBy').value;
+    const grid = document.getElementById('analysesGrid');
+    const cards = Array.from(document.querySelectorAll('.analysis-card'));
+    
+    cards.sort((a, b) => {
+        if (sortBy === 'date-desc') {
+            return parseFloat(b.getAttribute('data-date')) - parseFloat(a.getAttribute('data-date'));
+        } else if (sortBy === 'date-asc') {
+            return parseFloat(a.getAttribute('data-date')) - parseFloat(b.getAttribute('data-date'));
+        } else if (sortBy === 'cost-desc') {
+            return parseFloat(b.getAttribute('data-cost')) - parseFloat(a.getAttribute('data-cost'));
+        } else if (sortBy === 'cost-asc') {
+            return parseFloat(a.getAttribute('data-cost')) - parseFloat(b.getAttribute('data-cost'));
+        } else if (sortBy === 'candidates-desc') {
+            return parseInt(b.getAttribute('data-candidates')) - parseInt(a.getAttribute('data-candidates'));
+        }
+    });
+    
+    cards.forEach(card => grid.appendChild(card));
+}
+
+// Reset filters
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortBy').value = 'date-desc';
+    filterAnalyses();
+    sortAnalyses();
+}
+
+// Update result count
+function updateResultCount(count) {
+    const totalCount = document.querySelectorAll('.analysis-card').length;
+    const resultCount = document.getElementById('resultCount');
+    const noResults = document.getElementById('noResults');
+    
+    if (count === 0) {
+        if (noResults) noResults.style.display = 'block';
+        if (resultCount) resultCount.textContent = 'No analyses found';
+    } else {
+        if (noResults) noResults.style.display = 'none';
+        if (resultCount) {
+            if (count === totalCount) {
+                resultCount.textContent = `Showing ${count} analyses`;
+            } else {
+                resultCount.textContent = `Showing ${count} of ${totalCount} analyses`;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

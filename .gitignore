@@ -9,10 +9,7 @@ venv/
 ENV/
 build/
 dist/
-Backup_app_copies/
-Devel_Guides_and_Notes/
-CVs_for_testing/
-Reports_exported/
+TEMP_NOT_FOR_DEPLOYMENT/
 .logs/
 run-app.bat
 *.egg-info/
@@ -22,6 +19,11 @@ run-app.bat
 
 # Environment variables
 .env
+
+# Database files (don't upload local test data)
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE
 .vscode/

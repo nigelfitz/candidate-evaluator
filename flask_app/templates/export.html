@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Export Reports - {{ analysis.job_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% if is_current_draft_analysis %}
+    <!-- Workflow Progress Indicator -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('results', analysis_id=analysis.id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Results">
+                <div style="font-size: 24px;">📊</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
+            </a>
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
+        </div>
+    </div>
+    {% else %}
+    <!-- Historical Analysis Header -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div class="text-center">
+            <h4 style="color: #1f2937; margin-bottom: 10px;">📊 Historical Analysis - Export Reports</h4>
+            <p class="text-muted mb-0">Viewing saved analysis from {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+            <div class="mt-3">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm" 
+                            onclick="return confirm('This will load this analysis into your draft workspace for editing and re-running. If you are in the middle of working on another job, that other job will be lost. After editing your historical job, you will need to \'Run Analysis\' on it, which will create a new job in your Job History list. Continue?');">
+                        ✏️ Edit & Re-run This Analysis
+                    </button>
+                </form>
+                <small class="text-muted ms-2">or <a href="{{ url_for('job_history') }}">Return to Job History</a> | <a href="{{ url_for('analyze', new=1) }}">Start New Analysis</a></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            📊 Results
+        </a>
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-primary">
+            📊 Export Reports
+        </a>
+        {% if analysis.insights_data %}
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            💡 Candidate Insights
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="mb-4">
+                <h2>📊 Export Reports</h2>
+                <p class="text-muted mb-0">{{ analysis.job_title }}</p>
+                <small class="text-muted">Analysis ID: {{ analysis.id }} | {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+
+            <!-- Pro-tip -->
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-lightbulb"></i> <strong>Pro-tip:</strong> Export in Word if you need to make alterations to reports. e.g. if the extracted candidate name or job description is wrong (in some resumes it can be difficult to identify everything precisely).
+            </div>
+
+            <!-- Export Sections -->
+            <div class="row">
+                <!-- Section 1: Executive Summary -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📄 Executive Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Comprehensive overview with top candidates, key insights, and recommendations.
+                            </p>
+                            <div class="btn-group mb-2" role="group">
+                                <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}" 
+                                   class="btn btn-danger">
+                                    <i class="bi bi-file-pdf"></i> Download PDF
+                                </a>
+                                <a href="{{ url_for('export_executive_docx', analysis_id=analysis.id) }}" 
+                                   class="btn btn-primary">
+                                    <i class="bi bi-file-word"></i> Download Word
+                                </a>
+                                <a href="{{ url_for('preview_executive_pdf', analysis_id=analysis.id) }}" 
+                                   class="btn btn-outline-secondary" target="_blank">
+                                    <i class="bi bi-eye"></i> Preview PDF
+                                </a>
+                            </div>
+                            <p class="text-muted mt-2 mb-0">
+                                <small>💡 Click Preview to see the report before downloading</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Detailed Analysis -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">📊 Detailed Analysis - Coverage Matrix</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Full scoring matrix with color-coded ratings for all candidates and criteria.
+                            </p>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('export_coverage_excel', analysis_id=analysis.id) }}" 
+                                   class="btn btn-success">
+                                    <i class="bi bi-file-excel"></i> Download Excel
+                                </a>
+                                <a href="{{ url_for('export_coverage_csv', analysis_id=analysis.id) }}" 
+                                   class="btn btn-outline-success">
+                                    <i class="bi bi-file-text"></i> Download CSV
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Individual Candidate Reports -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">👤 Individual Candidate Reports</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Detailed reports for individual candidates with AI insights and evidence.
+                            </p>
+
+                            <!-- Selection Controls -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Select Candidates:</label>
+                                <div class="btn-group d-block mb-3" role="group">
+                                    <input type="radio" class="btn-check" name="candidateSelection" id="top3" value="top3" checked>
+                                    <label class="btn btn-outline-info" for="top3">Top 3</label>
+                                    
+                                    <input type="radio" class="btn-check" name="candidateSelection" id="top5" value="top5">
+                                    <label class="btn btn-outline-info" for="top5">Top 5</label>
+                                    
+                                    <input type="radio" class="btn-check" name="candidateSelection" id="all" value="all">
+                                    <label class="btn btn-outline-info" for="all">All Candidates</label>
+                                    
+                                    <input type="radio" class="btn-check" name="candidateSelection" id="custom" value="custom">
+                                    <label class="btn btn-outline-info" for="custom">Custom Selection</label>
+                                </div>
+
+                                <!-- Custom Selection Dropdown (Hidden by default) -->
+                                <div id="customSelectionDiv" style="display: none;">
+                                    <label class="form-label">Choose specific candidates:</label>
+                                    <select id="customCandidates" class="form-select" multiple size="8">
+                                        {% for candidate in coverage['Candidate'] %}
+                                        <option value="{{ candidate }}">{{ candidate }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
+                                </div>
+                            </div>
+
+                            <!-- Include Evidence Option -->
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="includeEvidence" {% if user_settings.include_evidence_by_default %}checked{% endif %}>
+                                <label class="form-check-label" for="includeEvidence">
+                                    Include evidence snippets in reports
+                                </label>
+                            </div>
+
+                            <!-- Export Buttons -->
+                            <div class="btn-group" role="group">
+                                <button id="exportIndividualPDF" class="btn btn-danger">
+                                    <i class="bi bi-file-pdf"></i> Generate PDF Reports
+                                </button>
+                                <button id="exportIndividualDOCX" class="btn btn-primary">
+                                    <i class="bi bi-file-word"></i> Generate Word Reports
+                                </button>
+                            </div>
+                            
+                            <div id="exportProgress" class="mt-3" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 0%">
+                                    </div>
+                                </div>
+                                <small id="progressText" class="text-muted"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Quick Data Exports -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">⚡ Quick Data Exports</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Simple CSV exports for further analysis in Excel or other tools.
+                            </p>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <a href="{{ url_for('export_candidates_csv', analysis_id=analysis.id) }}" 
+                                       class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-people"></i> Candidate List (CSV)
+                                    </a>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <a href="{{ url_for('export_criteria_csv', analysis_id=analysis.id) }}" 
+                                       class="btn btn-outline-secondary w-100">
+                                        <i class="bi bi-list-check"></i> Criteria List (CSV)
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Interactive Controls -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide custom selection dropdown
+    const selectionRadios = document.querySelectorAll('input[name="candidateSelection"]');
+    const customDiv = document.getElementById('customSelectionDiv');
+    
+    selectionRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDiv.style.display = 'block';
+            } else {
+                customDiv.style.display = 'none';
+            }
+        });
+    });
+
+    // Get selected candidates
+    function getSelectedCandidates() {
+        const selection = document.querySelector('input[name="candidateSelection"]:checked').value;
+        const allCandidates = {{ coverage['Candidate'].tolist() | tojson }};
+        
+        if (selection === 'top3') {
+            return allCandidates.slice(0, 3);
+        } else if (selection === 'top5') {
+            return allCandidates.slice(0, 5);
+        } else if (selection === 'all') {
+            return allCandidates;
+        } else { // custom
+            const select = document.getElementById('customCandidates');
+            return Array.from(select.selectedOptions).map(opt => opt.value);
+        }
+    }
+
+    // Export Individual PDFs
+    document.getElementById('exportIndividualPDF').addEventListener('click', function() {
+        const candidates = getSelectedCandidates();
+        const includeEvidence = document.getElementById('includeEvidence').checked;
+        
+        if (candidates.length === 0) {
+            alert('Please select at least one candidate');
+            return;
+        }
+
+        // Show progress
+        const progressDiv = document.getElementById('exportProgress');
+        const progressBar = progressDiv.querySelector('.progress-bar');
+        const progressText = document.getElementById('progressText');
+        
+        progressDiv.style.display = 'block';
+        progressText.textContent = 'Generating PDF reports...';
+
+        // Make request
+        fetch('{{ url_for("export_individual_pdf", analysis_id=analysis.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                candidates: candidates,
+                include_evidence: includeEvidence
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            // Download file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'candidate_reports.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Complete! Download started.';
+            
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 2000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            progressText.textContent = 'Error generating PDFs. Please try again.';
+            progressText.classList.add('text-danger');
+        });
+    });
+
+    // Export Individual Word Docs
+    document.getElementById('exportIndividualDOCX').addEventListener('click', function() {
+        const candidates = getSelectedCandidates();
+        
+        if (candidates.length === 0) {
+            alert('Please select at least one candidate');
+            return;
+        }
+
+        // Show progress
+        const progressDiv = document.getElementById('exportProgress');
+        const progressBar = progressDiv.querySelector('.progress-bar');
+        const progressText = document.getElementById('progressText');
+        
+        progressDiv.style.display = 'block';
+        progressText.textContent = 'Generating Word documents...';
+
+        // Make request
+        fetch('{{ url_for("export_individual_docx", analysis_id=analysis.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                candidates: candidates
+            })
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            // Download file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = candidates.length === 1 ? 
+                `${candidates[0]}_report.docx` : 
+                'candidate_reports.zip';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Complete! Download started.';
+            
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 2000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            progressText.textContent = 'Error generating Word docs. Please try again.';
+            progressText.classList.add('text-danger');
+        });
+    });
+});
+</script>
+{% endblock %}

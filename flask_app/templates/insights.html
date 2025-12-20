@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Candidate Insights - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {% if not has_insights %}
+    <div class="alert alert-info">
+        <h4>📊 Run Analysis First</h4>
+        <p>Please complete an analysis to view candidate insights.</p>
+        <a href="{{ url_for('analyze') }}" class="btn btn-primary">Go to Upload & Analyse</a>
+    </div>
+    {% else %}
+    
+    {% if is_current_draft_analysis %}
+    <!-- Workflow Progress Indicator (only for current draft) -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
+                <div style="font-size: 24px;">✅</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
+            </a>
+            <div style="font-size: 20px; color: #10b981;">→</div>
+            <a href="{{ url_for('results', analysis_id=analysis_id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Results">
+                <div style="font-size: 24px;">📊</div>
+                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
+            </a>
+        </div>
+        <div class="text-center mt-2">
+            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
+        </div>
+    </div>
+    {% else %}
+    <!-- Historical Analysis Header -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div class="text-center">
+            <h4 style="color: #1f2937; margin-bottom: 10px;">💡 Historical Candidate Insights</h4>
+            <p class="text-muted mb-0">Viewing saved insights from a previous analysis</p>
+            <div class="mt-3">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis_id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm" 
+                            onclick="return confirm('This will load this analysis into your draft workspace for editing and re-running. If you are in the middle of working on another job, that other job will be lost. After editing your historical job, you will need to \'Run Analysis\' on it, which will create a new job in your Job History list. Continue?');">
+                        ✏️ Edit & Re-run This Analysis
+                    </button>
+                </form>
+                <small class="text-muted ms-2">or <a href="{{ url_for('job_history') }}">Return to Job History</a> | <a href="{{ url_for('analyze', new=1) }}">Start New Analysis</a></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-outline-primary">
+            📊 Results
+        </a>
+        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary">
+            📊 Export Reports
+        </a>
+        <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary">
+            💡 Candidate Insights
+        </a>
+    </div>
+    
+    <!-- Candidate Selector and Navigation -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Select Candidate</label>
+            <select id="candidateSelect" class="form-select form-select-lg" onchange="selectCandidate(this.value)">
+                {% for candidate in candidates %}
+                <option value="{{ candidate.name }}" {% if candidate.name == current_candidate.name %}selected{% endif %}>
+                    {{ candidate.name }} (Score: {{ "%.2f"|format(candidate.score) }}) ⭐ #{{ candidate.rank }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Navigation & Download</label>
+            <div class="btn-group w-100" role="group">
+                <button class="btn btn-outline-primary" onclick="navigateCandidate(-1)" 
+                        {% if current_idx == 0 %}disabled{% endif %}>
+                    ⬅️ Previous
+                </button>
+                <button class="btn btn-outline-primary" onclick="navigateCandidate(1)"
+                        {% if current_idx == candidates|length - 1 %}disabled{% endif %}>
+                    Next ➡️
+                </button>
+                <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                   class="btn btn-outline-success">
+                    📥 PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Header Card -->
+    <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-body">
+            <h3 class="mb-3">👤 {{ current_candidate.name }} — At a Glance</h3>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Overall Score</div>
+                        <div style="font-size: 2.5rem; font-weight: bold;">{{ "%.2f"|format(current_candidate.score) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Rank</div>
+                        <div style="font-size: 2.5rem; font-weight: bold;">#{{ current_candidate.rank }}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.8;">of {{ candidates|length }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Criteria Breakdown</div>
+                        <div style="font-size: 1.5rem;">
+                            <span class="badge bg-success me-2">✅ {{ current_candidate.strong_count }} Strong</span>
+                            <span class="badge bg-warning text-dark me-2">⚠️ {{ current_candidate.moderate_count }} Moderate</span>
+                            <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }} Weak</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- File Viewing Sections -->
+    {% if current_candidate.file %}
+    <!-- View Original PDF File -->
+    {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <details>
+                <summary style="cursor: pointer; color: #1f77b4; font-size: 1.1rem; font-weight: 500;">
+                    📄 View Original PDF File
+                </summary>
+                <div class="mt-2">
+                    <iframe 
+                        src="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                        width="100%" 
+                        height="600px" 
+                        style="border: 1px solid #ddd; border-radius: 4px;">
+                    </iframe>
+                    <div class="mt-2">
+                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Open in New Tab
+                        </a>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Full Text Extract -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <details>
+                <summary style="cursor: pointer; color: #1f77b4; font-size: 1.1rem; font-weight: 500;">
+                    📄 Full Text Extract - used for AI/GPT analysis
+                </summary>
+                <div class="mt-2">
+                    <textarea 
+                        readonly 
+                        class="form-control" 
+                        style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
+                    <small class="text-muted d-block mt-2">
+                        📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
+                        {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+                        | Method: Layout-aware (PyMuPDF)
+                        {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
+                        | Method: DOCX parser
+                        {% else %}
+                        | Method: Direct text
+                        {% endif %}
+                    </small>
+                </div>
+            </details>
+        </div>
+    </div>
+    {% endif %}
+    <!-- GPT Insights Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">💡 AI-Powered Insights</h4>
+        </div>
+        <div class="card-body">
+            {% if current_candidate.has_gpt_insights %}
+                <!-- Top Strengths -->
+                <h5 class="text-success mb-3">✅ Top Strengths</h5>
+                {% if current_candidate.insights.top %}
+                <ul class="list-group mb-4">
+                    {% for strength in current_candidate.insights.top %}
+                    <li class="list-group-item">{{ strength }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No strengths identified.</p>
+                {% endif %}
+
+                <!-- Gaps & Risks -->
+                <h5 class="text-danger mb-3">⚠️ Gaps & Risks</h5>
+                {% if current_candidate.insights.gaps %}
+                <ul class="list-group mb-4">
+                    {% for gap in current_candidate.insights.gaps %}
+                    <li class="list-group-item">{{ gap }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No significant gaps identified.</p>
+                {% endif %}
+
+                <!-- Overall Notes -->
+                {% if current_candidate.insights.notes %}
+                <h5 class="mb-3">📝 Overall Assessment</h5>
+                <div class="alert alert-info">
+                    {{ current_candidate.insights.notes }}
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <h5>⚠️ GPT Insights Not Generated</h5>
+                    <p>This candidate was scored but didn't receive detailed AI analysis. This happens when:</p>
+                    <ul>
+                        <li>You selected "Top N" and this candidate wasn't in the top group</li>
+                        <li>You used custom selection and didn't include this candidate</li>
+                        <li>You chose "None" for AI insights</li>
+                    </ul>
+                    <p class="mb-0"><strong>To generate insights:</strong> Re-run analysis with this candidate included in the insights selection.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Detailed Scores by Category -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">📊 Detailed Scores by Category</h4>
+        </div>
+        <div class="card-body">
+            {% for category, criteria_list in current_candidate.scores_by_category.items() %}
+            <div class="mb-4">
+                <h5 class="mb-3">{{ category }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60%;">Criterion</th>
+                                <th style="width: 15%; text-align: center;">Score</th>
+                                <th style="width: 25%; text-align: center;">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in criteria_list %}
+                            <tr>
+                                <td>{{ item.criterion }}</td>
+                                <td style="text-align: center;">
+                                    <span style="font-weight: bold; color: {{ item.color }};">{{ "%.2f"|format(item.score) }}</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge" style="background-color: {{ item.color }};">{{ item.rating }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Evidence Snippets -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">🔍 Evidence from Resume</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">Top evidence snippets for each criterion (best matches)</p>
+            <div class="accordion" id="evidenceAccordion">
+                {% for item in current_candidate.evidence %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#evidence{{ loop.index }}">
+                            {{ item.criterion }} 
+                            <span class="badge ms-2" style="background-color: {{ item.color }};">{{ "%.2f"|format(item.score) }}</span>
+                        </button>
+                    </h2>
+                    <div id="evidence{{ loop.index }}" class="accordion-collapse collapse" 
+                         data-bs-parent="#evidenceAccordion">
+                        <div class="accordion-body">
+                            <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">{{ item.snippet }}</pre>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+function selectCandidate(candidateName) {
+    window.location.href = `{{ url_for('insights', analysis_id=analysis_id) }}?candidate=${encodeURIComponent(candidateName)}`;
+}
+
+function navigateCandidate(direction) {
+    const select = document.getElementById('candidateSelect');
+    const newIndex = select.selectedIndex + direction;
+    if (newIndex >= 0 && newIndex < select.options.length) {
+        select.selectedIndex = newIndex;
+        selectCandidate(select.options[newIndex].value);
+    }
+}
+</script>
+{% endblock %}
