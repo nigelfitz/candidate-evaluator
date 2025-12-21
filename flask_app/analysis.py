@@ -33,8 +33,10 @@ except ImportError:
 try:
     from sentence_transformers import SentenceTransformer
     import torch
-except ImportError:
+    print("DEBUG: sentence_transformers and torch imported successfully")
+except ImportError as e:
     SentenceTransformer = torch = None
+    print(f"DEBUG: Failed to import sentence_transformers or torch: {e}")
 
 # ML
 try:
@@ -291,19 +293,32 @@ def load_embedder() -> Dict[str, Any]:
     """Load sentence transformer model (cached)"""
     global _embedder_cache
     
+    print("DEBUG: load_embedder() called")
+    print(f"DEBUG: SentenceTransformer is available: {SentenceTransformer is not None}")
+    print(f"DEBUG: torch is available: {torch is not None}")
+    
     if _embedder_cache is not None:
+        print(f"DEBUG: Returning cached embedder type: {_embedder_cache.get('type')}")
         return _embedder_cache
     
     if SentenceTransformer is not None:
         try:
+            print("DEBUG: Attempting to load SentenceTransformer model...")
             model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
             device = "cuda" if (torch and torch.cuda.is_available()) else "cpu"
+            print(f"DEBUG: Model loaded successfully, using device: {device}")
             model.to(device)
             _embedder_cache = {"type": "sbert", "model": model, "device": device}
+            print("DEBUG: SBERT embedder cached successfully")
             return _embedder_cache
         except Exception as e:
-            print(f"Failed to load sentence transformer: {e}")
+            print(f"DEBUG: Failed to load sentence transformer: {e}")
+            import traceback
+            print(f"DEBUG: Full traceback:\n{traceback.format_exc()}")
+    else:
+        print("DEBUG: SentenceTransformer is None - library not imported")
     
+    print("DEBUG: Falling back to tfidf embedder")
     _embedder_cache = {"type": "tfidf"}
     return _embedder_cache
 
@@ -322,17 +337,26 @@ def pairwise_cosine(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 def prepare_corpus_embeddings(corpus_chunks: List[str], embedder_info: Dict[str, Any]) -> Tuple[np.ndarray, str]:
     """Prepare embeddings for corpus chunks"""
+    print(f"DEBUG: prepare_corpus_embeddings called with {len(corpus_chunks)} chunks")
+    print(f"DEBUG: Embedder type: {embedder_info.get('type')}")
+    
     if embedder_info.get("type") == "sbert" and embedder_info.get("model") is not None:
+        print("DEBUG: Using SBERT embeddings")
         embs = embed_sbert(corpus_chunks, embedder_info["model"])
+        print(f"DEBUG: SBERT embeddings shape: {embs.shape}")
         return embs, "sbert"
     else:
         # Fallback to TF-IDF if sentence transformers not available
+        print("DEBUG: SBERT not available, checking TF-IDF")
         if TfidfVectorizer is not None:
+            print("DEBUG: Using TF-IDF fallback")
             vec = TfidfVectorizer()
             embs = vec.fit_transform(corpus_chunks).toarray()
+            print(f"DEBUG: TF-IDF embeddings shape: {embs.shape}")
             return embs, "tfidf"
         else:
             # No embeddings available, return zeros
+            print("DEBUG: No embeddings available - returning zeros")
             return np.zeros((len(corpus_chunks), 1)), "none"
 
 
