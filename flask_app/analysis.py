@@ -129,6 +129,12 @@ def get_openai_client():
     print(f"DEBUG: OPENAI_API_KEY exists: {bool(api_key)}")
     print(f"DEBUG: OPENAI_API_KEY value (first 10 chars): {api_key[:10] if api_key else 'None'}")
     print(f"DEBUG: OpenAI module available: {OpenAI is not None}")
+    
+    # Check OpenAI library version
+    if OpenAI is not None:
+        import openai
+        print(f"DEBUG: OpenAI library version: {openai.__version__}")
+    
     if not api_key or OpenAI is None:
         print("DEBUG: Returning None - no API key or OpenAI module not available")
         return None
@@ -138,6 +144,8 @@ def get_openai_client():
         return client
     except Exception as e:
         print(f"DEBUG: Failed to create OpenAI client: {e}")
+        import traceback
+        print(f"DEBUG: Full traceback:\n{traceback.format_exc()}")
         return None
 
 
