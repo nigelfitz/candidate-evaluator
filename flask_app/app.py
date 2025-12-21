@@ -63,13 +63,28 @@ def create_app(config_name=None):
     # Main routes
     @app.route('/')
     def landing():
-        """Landing page - redirects to dashboard which handles both logged-in and logged-out users"""
-        return redirect(url_for('dashboard'))
+        """Landing page - shows marketing page for non-logged-in users, redirects to dashboard for logged-in"""
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+        return render_template('landing.html')
     
     @app.route('/dashboard')
+    @login_required
     def dashboard():
-        """Dashboard - serves both logged-out visitors and logged-in users"""
-        return render_template('dashboard.html', user=current_user if current_user.is_authenticated else None)
+        """Dashboard - logged-in users only"""
+        # Get recent analyses for the user
+        recent_analyses = Analysis.query.filter_by(
+            user_id=current_user.id
+        ).filter(
+            Analysis.deleted_at.is_(None)
+        ).order_by(
+            Analysis.created_at.desc()
+        ).limit(5).all()
+        
+        # Get current draft if exists
+        draft = Draft.query.filter_by(user_id=current_user.id).first()
+        
+        return render_template('dashboard.html', user=current_user, recent_analyses=recent_analyses, draft=draft)
     
     @app.route('/analyze', methods=['GET', 'POST'])
     @login_required
