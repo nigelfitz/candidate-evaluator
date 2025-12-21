@@ -164,8 +164,11 @@ def create_app(config_name=None):
                 jd_hash = hash_bytes(jd_bytes)
                 
                 # Extract criteria (no limit - let user uncheck unwanted ones)
+                print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
                 sections = extract_jd_sections_with_gpt(jd_text_content)
+                print(f"DEBUG: Sections extracted: {sections}")
                 criteria, cat_map = build_criteria_from_sections(sections, per_section=999, cap_total=10000)
+                print(f"DEBUG: Criteria extracted: {len(criteria)} items")
                 
                 if not criteria:
                     flash('Could not extract criteria from job description', 'error')
