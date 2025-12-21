@@ -29,6 +29,10 @@ def register():
         return redirect(url_for('dashboard'))
     
     if request.method == 'POST':
+        # Temporarily disable registration during final testing
+        flash('We are in the final stages of development and testing. Please check back soon.', 'info')
+        return render_template('register.html')
+        
         email = request.form.get('email', '').strip().lower()
         name = request.form.get('name', '').strip()
         password = request.form.get('password', '')
