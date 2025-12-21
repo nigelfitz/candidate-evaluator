@@ -543,10 +543,16 @@ def analyse_candidates(
         - insights: Dict[candidate_name, dict] (placeholder for GPT insights)
         - evidence_map: Dict[(candidate, criterion), (snippet, score)]
     """
+    import time
+    start_time = time.time()
+    print(f"DEBUG: analyse_candidates started with {len(candidates)} candidates and {len(criteria)} criteria")
+    
     if weights is None:
         weights = [1.0] * len(criteria)
     
     # Chunk all candidate texts
+    print(f"DEBUG: Starting text chunking...")
+    chunk_start = time.time()
     all_chunk_texts = []
     chunk_index = []  # (candidate_idx, chunk_idx)
     
@@ -556,9 +562,15 @@ def analyse_candidates(
             all_chunk_texts.append(ch)
             chunk_index.append((i, j))
     
+    print(f"DEBUG: Chunking completed in {time.time() - chunk_start:.2f}s - created {len(all_chunk_texts)} chunks")
+    
     # Load embedder and create embeddings
+    print(f"DEBUG: Loading embedder...")
+    embed_start = time.time()
     info = load_embedder()
+    print(f"DEBUG: Embedder loaded in {time.time() - embed_start:.2f}s, creating embeddings...")
     chunk_embs, vec_type = prepare_corpus_embeddings(all_chunk_texts, info)
+    print(f"DEBUG: Embeddings created in {time.time() - embed_start:.2f}s, vec_type={vec_type}")
     
     # Map candidate_idx -> chunk row indices
     cand_to_rows = {i: [] for i in range(len(candidates))}
@@ -585,6 +597,8 @@ def analyse_candidates(
         
         # Score against each criterion
         criterion_scores = []
+        print(f"DEBUG: Scoring candidate {cand_idx+1}/{len(candidates)} against {len(criteria)} criteria...")
+        scoring_start = time.time()
         for crit_idx, crit in enumerate(criteria):
             # Embed criterion
             if vec_type == "sbert":
