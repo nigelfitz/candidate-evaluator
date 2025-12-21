@@ -18,6 +18,13 @@ def buy_credits():
     """Display add funds page"""
     stripe_configured = bool(Config.STRIPE_SECRET_KEY)
     is_dev_mode = os.environ.get('FLASK_ENV') == 'development'
+    
+    # Debug logging
+    print(f"DEBUG: STRIPE_SECRET_KEY exists: {bool(Config.STRIPE_SECRET_KEY)}")
+    print(f"DEBUG: STRIPE_SECRET_KEY value (first 10 chars): {Config.STRIPE_SECRET_KEY[:10] if Config.STRIPE_SECRET_KEY else 'None'}")
+    print(f"DEBUG: stripe_configured: {stripe_configured}")
+    print(f"DEBUG: is_dev_mode: {is_dev_mode}")
+    
     return render_template('add_funds.html', 
                          stripe_configured=stripe_configured,
                          is_dev_mode=is_dev_mode)

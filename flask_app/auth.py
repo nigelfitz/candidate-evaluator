@@ -68,8 +68,10 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('auth.login'))
+        # Log the user in immediately after registration
+        login_user(user)
+        flash('Welcome! Your account has been created.', 'success')
+        return redirect(url_for('dashboard'))
     
     return render_template('register.html')
 
