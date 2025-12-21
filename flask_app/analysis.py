@@ -383,9 +383,9 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
         f"JD:\n{jd_text}"
     )
     
-    # Use gpt-4o-mini for JD extraction - it has 128k context window vs gpt-4o's 30k
+    # Use gpt-4o for JD extraction - better quality, and with PyMuPDF 1.26.6 JDs are clean/small
     print(f"DEBUG: Calling GPT with JD text (first 200 chars): {jd_text[:200]}")
-    data = call_llm_json(system, user, schema, model="gpt-4o-mini")
+    data = call_llm_json(system, user, schema, model="gpt-4o")
     print(f"DEBUG: GPT returned data: {data}")
     
     sections = JDSections(
