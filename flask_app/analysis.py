@@ -384,14 +384,18 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
     )
     
     # Use gpt-4o-mini for JD extraction - it has 128k context window vs gpt-4o's 30k
+    print(f"DEBUG: Calling GPT with JD text (first 200 chars): {jd_text[:200]}")
     data = call_llm_json(system, user, schema, model="gpt-4o-mini")
+    print(f"DEBUG: GPT returned data: {data}")
     
-    return JDSections(
+    sections = JDSections(
         key_skills=normalize_lines(data.get("key_skills", [])),
         responsibilities=normalize_lines(data.get("responsibilities", [])),
         qualifications=normalize_lines(data.get("qualifications", [])),
         experience_required=normalize_lines(data.get("experience_required", [])),
     )
+    print(f"DEBUG: After normalization - key_skills count: {len(sections.key_skills)}, responsibilities: {len(sections.responsibilities)}")
+    return sections
 
 
 def build_criteria_from_sections(sections: JDSections, per_section: int = 6, cap_total: int = 30) -> Tuple[List[str], Dict[str, str]]:
