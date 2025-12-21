@@ -11,6 +11,12 @@ class Config:
     # Fix for Railway PostgreSQL URL (uses postgres:// instead of postgresql://)
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
+    
+    # Debug logging to verify database connection
+    print(f"DEBUG: DATABASE_URL exists: {bool(os.environ.get('DATABASE_URL'))}")
+    print(f"DEBUG: Using database: {'PostgreSQL' if SQLALCHEMY_DATABASE_URI.startswith('postgresql://') else 'SQLite'}")
+    print(f"DEBUG: Database URI (first 30 chars): {SQLALCHEMY_DATABASE_URI[:30]}")
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session
