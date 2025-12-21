@@ -55,9 +55,20 @@
             border-radius: 4px;
         }
         
+        .navbar-menu a.btn-primary,
+        .navbar-menu a.btn-success {
+            color: white;
+        }
+        
         .navbar-menu a:hover {
             color: #1f77b4;
             background-color: #f0f4f8;
+        }
+        
+        .navbar-menu a.btn-primary:hover,
+        .navbar-menu a.btn-success:hover {
+            color: white;
+            background-color: #155a8a;
         }
         
         .navbar-menu a.active {
@@ -200,20 +211,18 @@
         </a>
         <div class="navbar-menu">
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">🏠 Dashboard</a>
-                <a href="{{ url_for('analyze') }}" class="{% if request.endpoint == 'analyze' %}active{% endif %}">🎯 Analyse Candidates</a>
-                <a href="{{ url_for('job_history') }}" class="{% if request.endpoint == 'job_history' %}active{% endif %}">📋 Job History</a>
-                <span style="color: #ccc; margin: 0 0.5rem;">|</span>
-                <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}">⚙️ Settings</a>
+                <a href="{{ url_for('analyze', new=1) }}" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">+ New Analysis</a>
+                <a href="{{ url_for('job_history') }}" class="{% if request.endpoint == 'job_history' %}active{% endif %}">📋 My History</a>
                 <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}">❓ Help</a>
-                <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' %}active{% endif %}" style="color: #059669; font-weight: 600;">💰 ${{ "%.2f"|format(current_user.balance_usd) }}</a>
-                <a href="{{ url_for('payments.buy_credits') }}">💳 Add Funds</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Logout</a>
+                <span style="color: #059669; font-weight: 600; padding: 0.5rem 1rem; background: #d1fae5; border-radius: 6px;">💰 ${{ "%.2f"|format(current_user.balance_usd) }}</span>
+                <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}">👤 Account</a>
+                <a href="{{ url_for('auth.logout') }}" style="color: #666;">Logout</a>
             {% else %}
-                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">🏠 Dashboard</a>
-                <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}">❓ Help</a>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-success">Sign Up</a>
+                <a href="#features">Features</a>
+                <a href="#pricing">Pricing</a>
+                <a href="{{ url_for('help') }}">Help</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-success">Get Started</a>
             {% endif %}
         </div>
     </nav>

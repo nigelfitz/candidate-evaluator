@@ -109,6 +109,12 @@
         font-weight: 600;
         margin: 0;
         flex: 1;
+        line-height: 1.4;
+        height: 3.36rem; /* Exactly 2 lines at 1.2rem font-size * 1.4 line-height */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
     
     .analysis-badge {
@@ -168,10 +174,10 @@
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
-        background: #f8fafc;
-        border-radius: 12px;
-        border: 2px dashed #cbd5e1;
+        padding: 60px 20px;
+        background: #ffffff;
+        border-radius: 16px;
+        border: 2px dashed #e2e8f0;
     }
     
     .empty-state .icon {
@@ -235,6 +241,7 @@
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         border-radius: 16px;
         padding: 2.5rem;
+        margin-top: 3rem;
         margin-bottom: 3rem;
         color: white;
         text-align: center;
@@ -316,7 +323,7 @@
 <!-- Recent Analyses Section -->
 <div class="section-header">
     <h2>📋 Recent Analyses</h2>
-    <a href="{{ url_for('job_history') }}" class="view-all">View All →</a>
+    {% if recent_analyses %}<a href="{{ url_for('job_history') }}" class="view-all">View All →</a>{% endif %}
 </div>
 
 {% if recent_analyses %}
@@ -333,26 +340,26 @@
         <div class="analysis-card-stats">
             <div class="stat-item">
                 <span>👥</span>
-                <span>{{ analysis.coverage_data|length if analysis.coverage_data else 0 }} candidates</span>
+                <span>{{ analysis.num_candidates }} candidate{{ 's' if analysis.num_candidates != 1 else '' }}</span>
             </div>
         </div>
         <div class="analysis-card-actions">
-            <a href="{{ url_for('job_detail', job_id=analysis.id) }}" class="btn-view">View Results</a>
+            <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn-view">View Results</a>
         </div>
     </div>
     {% endfor %}
 </div>
 {% else %}
 <div class="empty-state">
-    <div class="icon">📊</div>
-    <h3>No analyses yet</h3>
+    <div class="icon">📄</div>
+    <h3>Your Analysis History is Empty</h3>
     <p>Start your first analysis to see results here</p>
     <a href="{{ url_for('analyze', new=1) }}" class="btn-hero">Create First Analysis</a>
 </div>
 {% endif %}
 
-<!-- Low Balance Warning -->
-{% if current_user.balance_usd < 5 %}
+<!-- Low Balance Warning (only for returning users) -->
+{% if current_user.balance_usd < 5 and recent_analyses %}
 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
     <strong style="color: #92400e;">⚠️ Low Balance</strong>
     <p style="color: #92400e; margin: 0.5rem 0 0 0;">You have ${{ "%.2f"|format(current_user.balance_usd) }} remaining. 
@@ -367,6 +374,7 @@
     <div class="price">$5</div>
     <p>per job analysis — everything included</p>
     <ul>
+        <li>Job description analyzed and criteria extracted</li>
         <li>Unlimited resumes analyzed and scored</li>
         <li>AI-powered insights for top 3 candidates</li>
         <li>Professional PDF/Word reports</li>
@@ -405,7 +413,7 @@
     <div class="info-card">
         <div class="info-card-icon">🔒</div>
         <h3>100% Private</h3>
-        <p>Your files are processed securely and are NOT used to train AI models</p>
+        <p>Your files are processed securely and are definitely NOT used to train AI models</p>
     </div>
 </div>
 
