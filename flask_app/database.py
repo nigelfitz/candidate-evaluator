@@ -237,4 +237,11 @@ def init_db(app):
     """Initialize database with app context"""
     db.init_app(app)
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            # Handle race condition between gunicorn workers
+            if 'duplicate key value violates unique constraint' in str(e):
+                print(f"DEBUG: Tables already created by another worker, continuing...")
+            else:
+                raise
