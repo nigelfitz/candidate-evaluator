@@ -126,11 +126,18 @@ def hash_text(s: str) -> str:
 def get_openai_client():
     """Get OpenAI client if API key is set"""
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    print(f"DEBUG: OPENAI_API_KEY exists: {bool(api_key)}")
+    print(f"DEBUG: OPENAI_API_KEY value (first 10 chars): {api_key[:10] if api_key else 'None'}")
+    print(f"DEBUG: OpenAI module available: {OpenAI is not None}")
     if not api_key or OpenAI is None:
+        print("DEBUG: Returning None - no API key or OpenAI module not available")
         return None
     try:
-        return OpenAI(api_key=api_key)
-    except Exception:
+        client = OpenAI(api_key=api_key)
+        print("DEBUG: OpenAI client created successfully")
+        return client
+    except Exception as e:
+        print(f"DEBUG: Failed to create OpenAI client: {e}")
         return None
 
 
