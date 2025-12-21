@@ -139,9 +139,9 @@ def get_openai_client():
         print("DEBUG: Returning None - no API key or OpenAI module not available")
         return None
     try:
-        # Explicitly create client without proxy env vars interfering
+        # Explicitly create client without proxies
         import httpx
-        http_client = httpx.Client(timeout=60.0)
+        http_client = httpx.Client(timeout=60.0, proxies={})
         client = OpenAI(api_key=api_key, http_client=http_client)
         print("DEBUG: OpenAI client created successfully")
         return client
