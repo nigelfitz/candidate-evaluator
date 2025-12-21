@@ -383,7 +383,8 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
         f"JD:\n{jd_text}"
     )
     
-    data = call_llm_json(system, user, schema)
+    # Use gpt-4o-mini for JD extraction - it has 128k context window vs gpt-4o's 30k
+    data = call_llm_json(system, user, schema, model="gpt-4o-mini")
     
     return JDSections(
         key_skills=normalize_lines(data.get("key_skills", [])),
