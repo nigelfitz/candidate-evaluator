@@ -49,6 +49,55 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     }
     
+    /* Wallet Bar */
+    .wallet-bar {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .wallet-bar .balance-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .wallet-bar .balance-label {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .wallet-bar .balance-amount {
+        color: #059669;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .wallet-bar .btn-add-funds {
+        background: #2563eb;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .wallet-bar .btn-add-funds:hover {
+        background: #1e40af;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
     /* Recent Analyses Section */
     .section-header {
         display: flex;
@@ -118,13 +167,14 @@
     }
     
     .analysis-badge {
-        background: #dcfce7;
-        color: #166534;
+        background: #16a34a;
+        color: #ffffff;
         padding: 0.25rem 0.75rem;
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 600;
         margin-left: 0.5rem;
+        box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
     }
     
     .analysis-card-meta {
@@ -319,6 +369,17 @@
     </a>
 </div>
 
+<!-- Wallet Bar -->
+{% if current_user.is_authenticated %}
+<div class="wallet-bar">
+    <div class="balance-info">
+        <span class="balance-label">Your Balance:</span>
+        <span class="balance-amount">${{ "%.2f"|format(current_user.balance_usd) }}</span>
+    </div>
+    <a href="{{ url_for('payments.buy_credits') }}" class="btn-add-funds">💳 Add Funds</a>
+</div>
+{% endif %}
+
 {% if current_user.is_authenticated %}
 <!-- Recent Analyses Section -->
 <div class="section-header">
@@ -351,10 +412,10 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <div class="icon">📄</div>
-    <h3>Your Analysis History is Empty</h3>
-    <p>Start your first analysis to see results here</p>
-    <a href="{{ url_for('analyze', new=1) }}" class="btn-hero">Create First Analysis</a>
+    <div class="icon" style="font-size: 5rem; margin-bottom: 1rem;">➕</div>
+    <h3>Start Your First Analysis</h3>
+    <p>Upload a job description and resumes to see AI-powered insights</p>
+    <a href="{{ url_for('analyze', new=1) }}" class="btn-hero">Start Your First Analysis</a>
 </div>
 {% endif %}
 
@@ -367,20 +428,6 @@
 </div>
 {% endif %}
 {% endif %}
-
-<!-- Pricing Highlight -->
-<div class="pricing-block">
-    <h2>Simple, Transparent Pricing</h2>
-    <div class="price">$5</div>
-    <p>per job analysis — everything included</p>
-    <ul>
-        <li>Job description analyzed and criteria extracted</li>
-        <li>Unlimited resumes analyzed and scored</li>
-        <li>AI-powered insights for top 3 candidates</li>
-        <li>Professional PDF/Word reports</li>
-        <li>No subscriptions, pay only for what you use</li>
-    </ul>
-</div>
 
 <!-- Key Benefits -->
 <h2 style="color: #1e293b; font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center;">Why Candidate Evaluator?</h2>

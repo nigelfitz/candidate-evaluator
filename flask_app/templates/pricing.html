@@ -126,32 +126,52 @@
 {% block content %}
 <div class="pricing-container">
     <h1>Simple, Transparent Pricing</h1>
-    <p>Find the right talent without the overhead.</p>
+    <p>Pay only for what you use. No subscriptions, no commitments.</p>
     
     <div class="pricing-grid">
+        <!-- Card 1: Trial -->
         <div class="price-card">
-            <h3>Starter</h3>
+            <h3>The Test Drive</h3>
             <div class="price-value">$0</div>
             <ul class="price-list">
-                <li>3 Candidate Analyses</li>
-                <li>Basic AI Scoring</li>
-                <li>Secure PDF Parsing</li>
+                <li>1 Full Job Analysis</li>
+                <li>5 Deep AI Insights</li>
+                <li>No credit card required</li>
+            </ul>
+            <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Start Free Trial</a>
+        </div>
+
+        <!-- Card 2: Standard (Featured) -->
+        <div class="price-card featured">
+            <div class="price-badge">Most Flexible</div>
+            <h3>Single Job</h3>
+            <div class="price-value">$10</div>
+            <ul class="price-list">
+                <li>1 Full Job Analysis</li>
+                <li>5 Deep AI Insights</li>
+                <li>Unlimited Resume Ranking</li>
             </ul>
             <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Get Started</a>
         </div>
 
-        <div class="price-card featured">
-            <div class="price-badge">Most Popular</div>
-            <h3>Professional</h3>
-            <div class="price-value">$49<span>/mo</span></div>
+        <!-- Card 3: Hiring Sprint -->
+        <div class="price-card">
+            <h3>Hiring Sprint</h3>
+            <div class="price-value">$40</div>
             <ul class="price-list">
-                <li>Unlimited Analyses</li>
-                <li>Priority AI Processing</li>
-                <li>Deep Skill Insights</li>
-                <li>Exportable Reports</li>
+                <li>5 Full Job Analyses</li>
+                <li>25 Deep AI Insights</li>
+                <li>$8.00 per job value</li>
             </ul>
-            <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Choose Pro</a>
+            <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Buy Sprint</a>
         </div>
+    </div>
+    
+    <!-- Footer Text -->
+    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
+        <p style="font-size: 1.1rem; color: #64748b; max-width: 600px; margin: 0 auto;">
+            Need more depth? Unlock extra candidate insights for <strong style="color: #1e293b;">$1.00 each</strong> anytime using your account balance.
+        </p>
     </div>
 </div>
 {% endblock %}

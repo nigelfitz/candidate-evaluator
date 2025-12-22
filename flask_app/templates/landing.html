@@ -29,6 +29,13 @@
         opacity: 0.95;
     }
     
+    .trust-signal {
+        font-size: 0.9rem;
+        margin-top: 1rem;
+        opacity: 0.85;
+        color: white;
+    }
+    
     .features {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -160,6 +167,12 @@
         border-radius: 12px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: all 0.2s;
+    }
+    
+    .use-case-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     }
     
     .use-case-card h3 {
@@ -274,12 +287,14 @@
     
     .tab-link:hover {
         color: #2563eb;
+        background: rgba(37, 99, 235, 0.05);
     }
     
     .tab-link.active {
         color: #2563eb;
         border-bottom-color: #2563eb;
         font-weight: 600;
+        background: rgba(37, 99, 235, 0.05);
     }
     
     .tab-content {
@@ -449,7 +464,8 @@
     <p>The fastest way to shortlist, score, and deeply analyse candidates for any job</p>
     <p>Save hours, make smarter hiring decisions, and benefit from AI-powered insights</p>
     <p>Upload your job description and resumes — we'll hand you results. Instantly!</p>
-    <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="font-size: 1.2rem; padding: 1rem 2rem;">Get Started Free</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="font-size: 1.2rem; padding: 1rem 2rem;">Analyze Your First Job Free</a>
+    <p class="trust-signal">Used by startups and small business owners. GDPR & Privacy Compliant.</p>
 </div>
 
 <div class="card">
@@ -489,15 +505,14 @@
 </div>
 
 <div class="pricing">
-    <h2>Simple, Transparent Pricing</h2>
-    <div class="price">$5</div>
+    <h2>Hire Faster for just $10</h2>
+    <div class="price">$10</div>
     <p>per job analysis — everything included</p>
     <ul>
-        <li>Job description analyzed and criteria extracted</li>
-        <li>Unlimited resumes analyzed and scored</li>
-        <li>AI-powered insights for top 3 candidates</li>
-        <li>Professional PDF/Word reports</li>
-        <li>No subscriptions, pay only for what you use</li>
+        <li>Rank unlimited resumes instantly</li>
+        <li>5 Comprehensive AI Insights included</li>
+        <li>Professional PDF/Word Reports</li>
+        <li>No subscriptions. Pay only for the jobs you post</li>
     </ul>
 </div>
 
@@ -666,7 +681,7 @@
 <div class="cta-section">
     <h2>Ready to transform your hiring process?</h2>
     <p style="font-size: 1.2rem; margin-bottom: 2rem;">Join recruiters and HR professionals who save hours every week</p>
-    <a href="{{ url_for('auth.register') }}" class="btn btn-success">Create Free Account</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-success">Analyze Your First Job Free</a>
     <a href="{{ url_for('auth.login') }}" class="btn btn-primary" style="background-color: white; color: #667eea;">Already have an account? Login</a>
 </div>
 {% endblock %}
