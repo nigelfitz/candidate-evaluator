@@ -1237,6 +1237,8 @@ def create_app(config_name=None):
         
         coverage_data = json.loads(analysis.coverage_data)
         insights_data = json.loads(analysis.insights_data)
+        print(f"DEBUG insights.html: insights_data keys = {list(insights_data.keys())}")
+        print(f"DEBUG insights.html: insights_data content = {insights_data}")
         
         # Get candidate name from query parameter or default to first candidate
         selected_candidate = request.args.get('candidate')
@@ -1277,6 +1279,8 @@ def create_app(config_name=None):
         
         # Get insights for current candidate
         candidate_insights = insights_data.get(selected_candidate, {})
+        print(f"DEBUG insights.html: Looking up insights for candidate: '{selected_candidate}'")
+        print(f"DEBUG insights.html: Found insights: {candidate_insights}")
         has_gpt_insights = bool(candidate_insights.get('top') or candidate_insights.get('gaps') or candidate_insights.get('notes'))
         
         # Group scores by category
