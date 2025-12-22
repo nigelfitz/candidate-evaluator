@@ -62,6 +62,21 @@ def load_gpt_settings():
     Returns dict with all settings and their current values.
     """
     settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
+
+
+def load_prompts():
+    """
+    Load AI prompt templates from config/prompts.json
+    
+    This allows admin to adjust prompt wording and instructions without touching code:
+    - JD extraction prompts (how criteria are extracted from job descriptions)
+    - Candidate insights prompts (how strengths/gaps/notes are generated)
+    
+    Returns dict with all prompts and their current values.
+    """
+    prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
+    with open(prompts_path, 'r') as f:
+        return json.load(f)
     
     # Load settings from JSON file
     with open(settings_path, 'r') as f:
@@ -372,16 +387,12 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
         "additionalProperties": False,
     }
     
-    system = (
-        "You extract criteria from job descriptions into clear bullet items. "
-        "Be concise, de-duplicate similar bullets, and keep each item atomic."
-    )
+    # Load prompts from admin-configurable file
+    prompts = load_prompts()
+    jd_extraction = prompts['jd_extraction']
     
-    user = (
-        "Extract the following JD into four sections (key_skills, responsibilities, "
-        "qualifications, experience_required). Return ONLY JSON matching the provided schema.\n\n"
-        f"JD:\n{jd_text}"
-    )
+    system = jd_extraction['system_prompt']['value']
+    user = jd_extraction['user_prompt_template']['value'].format(jd_text=jd_text)
     
     # Use gpt-4o for JD extraction - better quality, and with PyMuPDF 1.26.6 JDs are clean/small
     print(f"DEBUG: Calling GPT with JD text (first 200 chars): {jd_text[:200]}")
@@ -712,26 +723,19 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         "additionalProperties": False,
     }
     
-    # Construct prompt (matching Streamlit version EXACTLY)
-    system_prompt = (
-        "You are a hiring analyst. Produce concise, high-signal insights about a candidate "
-        "relative to the provided Job Description and evidence. Be specific and avoid fluff."
-    )
+    # Load prompts from admin-configurable file
+    prompts = load_prompts()
+    insights_prompts = prompts['candidate_insights']
     
-    # User prompt with admin-configurable text limits for candidate/JD context
-    user_prompt = (
-        f"Job Description (excerpted):\n{jd_text[:settings['jd_text_chars']]}\n\n"
-        f"Candidate: {candidate_name}\n"
-        f"Candidate content (excerpted):\n{candidate_text[:settings['candidate_text_chars']]}\n\n"
-        f"Evidence by criterion (top {settings['top_evidence_items']} by similarity):\n"
-        + ev_lines +
-        "\n\nTask:\n"
-        "- Provide 3–6 bullet **Top strengths** tied to criteria and tangible evidence.\n"
-        "- Provide 3–6 bullet **Gaps / risks** with rationale.\n"
-        "- Provide a short **Notes** paragraph (2–4 sentences) with an overall view.\n\n"
-        "Return ONLY valid JSON that conforms to the provided JSON Schema. "
-        "Do not include backticks or any commentary.\n\n"
-        f"Schema:\n{json.dumps(schema)}"
+    system_prompt = insights_prompts['system_prompt']['value']
+    
+    # Build user prompt from template, replacing placeholders
+    user_prompt = insights_prompts['user_prompt_template']['value'].format(
+        jd_text=jd_text[:settings['jd_text_chars']],
+        candidate_name=candidate_name,
+        candidate_text=candidate_text[:settings['candidate_text_chars']],
+        evidence_lines=ev_lines,
+        top_n=settings['top_evidence_items']
     )
     
     try:

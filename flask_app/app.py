@@ -2221,6 +2221,52 @@ def create_app(config_name=None):
         return redirect(url_for('admin_gpt_settings'))
     
     
+    @app.route('/admin/prompts')
+    @admin_required
+    def admin_prompts():
+        """AI Prompts management panel"""
+        prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
+        
+        with open(prompts_path, 'r') as f:
+            prompts = json.load(f)
+        
+        message = request.args.get('message')
+        return render_template('admin_prompts.html', 
+                             prompts=prompts, 
+                             message=message,
+                             active_tab='prompts')
+    
+    
+    @app.route('/admin/prompts/save', methods=['POST'])
+    @admin_required
+    def admin_prompts_save():
+        """Save updated prompts"""
+        prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
+        
+        # Load current prompts
+        with open(prompts_path, 'r') as f:
+            prompts = json.load(f)
+        
+        # Update JD Extraction prompts
+        prompts['jd_extraction']['system_prompt']['value'] = request.form.get('jd_extraction_system')
+        prompts['jd_extraction']['user_prompt_template']['value'] = request.form.get('jd_extraction_user')
+        
+        # Update Candidate Insights prompts
+        prompts['candidate_insights']['system_prompt']['value'] = request.form.get('candidate_insights_system')
+        prompts['candidate_insights']['user_prompt_template']['value'] = request.form.get('candidate_insights_user')
+        
+        # Update metadata
+        prompts['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        prompts['_metadata']['updated_by'] = 'admin'
+        
+        # Save back to file
+        with open(prompts_path, 'w') as f:
+            json.dump(prompts, f, indent=2)
+        
+        flash('✅ Prompts saved successfully! Changes take effect immediately.', 'success')
+        return redirect(url_for('admin_prompts'))
+    
+    
     @app.route('/admin/users')
     @admin_required
     def admin_users():
