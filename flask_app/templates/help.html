@@ -5,7 +5,12 @@
 {% block content %}
 <div class="help-container">
     <h1 style="margin-bottom: 1rem;">❓ Help & FAQ</h1>
-    <p style="color: #666; margin-bottom: 2rem;">Everything you need to know about using Candidate Evaluator</p>
+    <p style="color: #666; margin-bottom: 1rem;">Everything you need to know about using Candidate Evaluator</p>
+    
+    <!-- Search Bar -->
+    <div class="help-search-bar">
+        <input type="text" id="helpSearch" placeholder="Search help topics..." onkeyup="filterHelpSections()">
+    </div>
     
     <!-- Quick Start Guide -->
     <div class="help-section">
@@ -93,13 +98,13 @@
             <div class="example-box">
                 <p><strong>Criterion:</strong> "Project management with Agile/Scrum"</p>
                 <p><strong>Resume:</strong> "Led a 10-person team delivering sprints using Scrum ceremonies"</p>
-                <p class="score-result">→ <strong>Score ≈ 0.75–0.85</strong> (strong, direct alignment)</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-high">0.75–0.85</span> (strong, direct alignment)</p>
             </div>
             
             <div class="example-box">
                 <p><strong>Criterion:</strong> "Python data analysis"</p>
                 <p><strong>Resume:</strong> "Automated Excel reports; some VBA macros"</p>
-                <p class="score-result">→ <strong>Score ≈ 0.35–0.50</strong> (partial/weak — tooling mismatch)</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-medium">0.35–0.50</span> (partial/weak — tooling mismatch)</p>
             </div>
             
             <h3>How to use the scores</h3>
@@ -170,7 +175,7 @@
             
             <div class="faq-item">
                 <h3 class="faq-q">How much does it cost?</h3>
-                <p class="faq-a">Analysis costs vary based on the number of candidates and criteria. A typical analysis with 10 candidates costs $0.10-0.20. Generating AI insights for 3 candidates adds approximately $0.10-0.15 per candidate. You'll see a cost estimate before running any analysis.</p>
+                <p class="faq-a">Candidate Evaluator works on a simple pay-as-you-go model. Your first job is on us! After that, it is <strong>$10 per job</strong>, which includes a full ranked leaderboard of all your candidates and <strong>5 deep-dive AI insights</strong>. If you need more insights, you can unlock them for <strong>$1.00 each</strong> from your account wallet. No monthly fees, no hidden costs.</p>
             </div>
             
             <div class="faq-item">
@@ -276,6 +281,47 @@
         max-width: 1000px;
         margin: 2rem auto;
         padding: 0 1rem;
+    }
+    
+    .help-search-bar {
+        margin-bottom: 2rem;
+    }
+    
+    .help-search-bar input {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .help-search-bar input:focus {
+        outline: none;
+        border-color: #1f77b4;
+        box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
+    }
+    
+    .score-tag {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+    }
+    
+    .score-tag-high {
+        background-color: #16a34a;
+    }
+    
+    .score-tag-medium {
+        background-color: #eab308;
+        color: #333;
+    }
+    
+    .score-tag-low {
+        background-color: #dc2626;
     }
     
     .help-section {
@@ -514,6 +560,22 @@ function toggleSection(sectionId) {
         content.classList.add('active');
         header.classList.add('active');
     }
+}
+
+function filterHelpSections() {
+    const searchTerm = document.getElementById('helpSearch').value.toLowerCase();
+    const sections = document.querySelectorAll('.help-section');
+    
+    sections.forEach(section => {
+        const header = section.querySelector('.section-header h2').textContent.toLowerCase();
+        const content = section.querySelector('.section-content').textContent.toLowerCase();
+        
+        if (header.includes(searchTerm) || content.includes(searchTerm) || searchTerm === '') {
+            section.style.display = 'block';
+        } else {
+            section.style.display = 'none';
+        }
+    });
 }
 </script>
 {% endblock %}
