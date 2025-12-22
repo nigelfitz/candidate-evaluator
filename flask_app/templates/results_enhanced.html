@@ -2,8 +2,208 @@
 
 {% block title %}Analysis Results{% endblock %}
 
+{% block extra_css %}
+<style>
+    .success-toast {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 2px solid #10b981;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        animation: slideInDown 0.6s ease-out, pulse 0.8s ease-in-out 0.6s;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .success-toast::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        animation: shimmer 2s ease-in-out infinite;
+    }
+    
+    .success-icon {
+        font-size: 3rem;
+        animation: bounce 1s ease-in-out 0.3s;
+        z-index: 1;
+    }
+    
+    .success-msg {
+        flex: 1;
+        z-index: 1;
+    }
+    
+    .success-msg h3 {
+        margin: 0 0 8px 0;
+        color: #064e3b;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .success-msg p {
+        margin: 0;
+        color: #065f46;
+        font-size: 1.05rem;
+        line-height: 1.5;
+    }
+    
+    .success-msg .time-saved {
+        display: inline-block;
+        background: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #059669;
+        margin-top: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .success-actions {
+        display: flex;
+        gap: 12px;
+        z-index: 1;
+    }
+    
+    .btn-view-top {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-view-top:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-dismiss {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.8rem;
+        color: #059669;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+        padding: 0 8px;
+    }
+    
+    .btn-dismiss:hover {
+        opacity: 1;
+    }
+    
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+    
+    @keyframes bounce {
+        0%, 100% {
+            transform: scale(1);
+        }
+        25% {
+            transform: scale(1.2) rotate(-5deg);
+        }
+        75% {
+            transform: scale(1.2) rotate(5deg);
+        }
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+    
+    @keyframes slideOutUp {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .success-toast {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .success-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-view-top {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-4">
+    <!-- Success Toast (shows only on first view after analysis) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'success' and 'Analysis complete' in message %}
+                <div class="success-toast" id="successToast">
+                    <div class="success-icon">🎉</div>
+                    <div class="success-msg">
+                        <h3>Analysis Complete! 🚀</h3>
+                        <p>We've ranked your {{ analysis.num_candidates }} candidates. 
+                            {% if coverage_data|length > 0 %}
+                            Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Average Score'] * 100) }}%</strong>.
+                            {% endif %}
+                        </p>
+                        <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 5) }} minutes of manual screening</div>
+                    </div>
+                    <div class="success-actions">
+                        <button class="btn-view-top" onclick="scrollToTopCandidate()">View Top Match</button>
+                        <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
     {% if is_current_draft_analysis %}
     <!-- Workflow Progress Indicator (only for current draft) -->
     <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -593,4 +793,41 @@ pre {
     font-size: 0.9rem;
 }
 </style>
+
+<script>
+// Success Toast Functions
+function scrollToTopCandidate() {
+    const topCandidatesCard = document.getElementById('topCandidates');
+    if (topCandidatesCard) {
+        topCandidatesCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add a subtle highlight effect
+        const card = topCandidatesCard.closest('.card');
+        if (card) {
+            card.style.transition = 'box-shadow 0.3s ease';
+            card.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+            setTimeout(() => {
+                card.style.boxShadow = '';
+            }, 2000);
+        }
+    }
+}
+
+function dismissToast() {
+    const toast = document.getElementById('successToast');
+    if (toast) {
+        toast.style.animation = 'slideOutUp 0.4s ease-in';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 400);
+    }
+}
+
+// Auto-dismiss after 10 seconds
+setTimeout(() => {
+    const toast = document.getElementById('successToast');
+    if (toast && toast.style.display !== 'none') {
+        dismissToast();
+    }
+}, 10000);
+</script>
 {% endblock %}
