@@ -588,6 +588,15 @@ def analyse_candidates(
     for ridx, (ci, cj) in enumerate(chunk_index):
         cand_to_rows[ci].append(ridx)
     
+    # PRE-COMPUTE: Embed all criteria once (MAJOR PERFORMANCE FIX)
+    print(f"DEBUG: Pre-computing criterion embeddings...")
+    criteria_embed_start = time.time()
+    if vec_type == "sbert":
+        criteria_embs = embed_sbert(criteria, info["model"])
+    else:
+        criteria_embs = np.zeros((len(criteria), chunk_embs.shape[1]))
+    print(f"DEBUG: Criterion embeddings computed in {time.time() - criteria_embed_start:.2f}s")
+    
     # Analyze each candidate
     coverage_records = []
     evidence_map: Dict[Tuple[str, str], Tuple[str, float]] = {}
@@ -611,11 +620,8 @@ def analyse_candidates(
         print(f"DEBUG: Scoring candidate {cand_idx+1}/{len(candidates)} against {len(criteria)} criteria...")
         scoring_start = time.time()
         for crit_idx, crit in enumerate(criteria):
-            # Embed criterion
-            if vec_type == "sbert":
-                crit_emb = embed_sbert([crit], info["model"])
-            else:
-                crit_emb = np.zeros((1, cand_embs.shape[1]))
+            # Use pre-computed criterion embedding (NO MORE REDUNDANT EMBEDDING!)
+            crit_emb = criteria_embs[crit_idx:crit_idx+1]  # Shape: (1, embedding_dim)
             
             # Compute similarity to all candidate chunks
             sims = pairwise_cosine(crit_emb, cand_embs)[0]
