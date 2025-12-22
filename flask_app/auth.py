@@ -9,6 +9,14 @@ import json
 
 auth_bp = Blueprint('auth', __name__)
 
+# Import email utilities
+try:
+    from email_utils import send_welcome_email
+    EMAIL_ENABLED = True
+except ImportError:
+    EMAIL_ENABLED = False
+    print("Warning: email_utils not available - welcome emails disabled")
+
 def load_system_settings():
     """Load system settings from JSON file"""
     settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
@@ -85,6 +93,14 @@ def register():
         
         db.session.add(user)
         db.session.commit()
+        
+        # Send welcome email
+        if EMAIL_ENABLED:
+            try:
+                send_welcome_email(user)
+            except Exception as e:
+                print(f"Failed to send welcome email: {str(e)}")
+                # Don't block registration if email fails
         
         # Log the user in immediately after registration
         login_user(user)

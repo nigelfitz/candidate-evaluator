@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_required, current_user
+from flask_mail import Mail, Message
 from config import config
 from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings
 import os
@@ -15,6 +16,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Initialize Flask-Mail (will be configured in create_app)
+mail = Mail()
+
 # Initialize Flask app
 def create_app(config_name=None):
     """Application factory"""
@@ -26,6 +30,7 @@ def create_app(config_name=None):
     
     # Initialize extensions
     init_db(app)
+    mail.init_app(app)
     
     # Initialize Flask-Login
     login_manager = LoginManager()

@@ -44,6 +44,15 @@ class Config:
     
     # Suggested fund amounts for "Add Funds" page
     SUGGESTED_AMOUNTS = [10, 25, 50, 100]
+    
+    # Email Configuration (Flask-Mail)
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')  # plannedai@gmail.com (for authentication)
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')  # Gmail app password
+    MAIL_DEFAULT_SENDER = ('Candidate Evaluator', 'contact@candidateevaluator.com')  # Send FROM this address
+
 
 class DevelopmentConfig(Config):
     """Development configuration"""
