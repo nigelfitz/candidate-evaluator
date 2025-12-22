@@ -83,6 +83,47 @@ def create_app(config_name=None):
         """Features deep dive page"""
         return render_template('features.html')
     
+    @app.route('/privacy')
+    def privacy():
+        """Privacy Policy page"""
+        return render_template('privacy.html')
+    
+    @app.route('/terms')
+    def terms():
+        """Terms of Service page"""
+        return render_template('terms.html')
+    
+    @app.route('/support', methods=['GET', 'POST'])
+    def support():
+        """Contact Support page with form submission"""
+        if request.method == 'POST':
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip()
+            subject = request.form.get('subject', '').strip()
+            message = request.form.get('message', '').strip()
+            
+            if not all([name, email, subject, message]):
+                flash('Please fill in all fields.', 'error')
+                return render_template('support.html')
+            
+            # Send support email
+            try:
+                from email_utils import send_support_email
+                send_support_email(
+                    user_name=name,
+                    user_email=email,
+                    subject=subject,
+                    message=message
+                )
+                flash('Your message has been sent! We\'ll get back to you within 24 hours.', 'success')
+                return redirect(url_for('support'))
+            except Exception as e:
+                print(f"ERROR: Failed to send support email: {e}")
+                flash('There was an error sending your message. Please try emailing us directly at support@candidateevaluator.com', 'error')
+                return render_template('support.html')
+        
+        return render_template('support.html')
+    
     @app.route('/dashboard')
     @login_required
     def dashboard():

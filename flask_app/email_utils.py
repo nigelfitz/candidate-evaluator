@@ -91,3 +91,64 @@ You received this because you signed up at candidateevaluator.com
         html_body=html_body,
         text_body=text_body
     )
+
+
+def send_support_email(user_name, user_email, subject, message):
+    """
+    Send support request email to admin
+    
+    Args:
+        user_name (str): Name of user submitting request
+        user_email (str): Email address of user
+        subject (str): Subject line of support request
+        message (str): Support message content
+    """
+    # Support emails go to admin
+    admin_email = current_app.config.get('ADMIN_EMAIL', 'support@candidateevaluator.com')
+    
+    html_body = f"""
+    <html>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #1f77b4; border-bottom: 2px solid #1f77b4; padding-bottom: 10px;">
+                    New Support Request
+                </h2>
+                
+                <div style="background: #f5f7fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>From:</strong> {user_name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:{user_email}">{user_email}</a></p>
+                    <p style="margin: 5px 0;"><strong>Subject:</strong> {subject}</p>
+                </div>
+                
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #334155;">Message:</h3>
+                    <p style="white-space: pre-wrap;">{message}</p>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.9rem;">
+                    <p>Reply directly to this email to respond to the user.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    """
+    
+    text_body = f"""New Support Request
+
+From: {user_name}
+Email: {user_email}
+Subject: {subject}
+
+Message:
+{message}
+
+---
+Reply directly to this email to respond to the user.
+"""
+    
+    send_email(
+        subject=f"Support Request: {subject}",
+        recipients=[admin_email],
+        html_body=html_body,
+        text_body=text_body
+    )

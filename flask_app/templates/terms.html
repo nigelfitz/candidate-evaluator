@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<style>
+    .legal-container {
+        max-width: 800px;
+        margin: 60px auto;
+        padding: 0 20px;
+        line-height: 1.8;
+        color: #334155;
+        font-family: Georgia, 'Times New Roman', serif;
+    }
+    
+    .legal-container h1 {
+        font-size: 2.5rem;
+        color: #1e293b;
+        margin-bottom: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .legal-container .last-updated {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+        font-style: italic;
+    }
+    
+    .tldr-box {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 40px;
+    }
+    
+    .tldr-box h3 {
+        margin-top: 0;
+        color: #0369a1;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 15px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .tldr-box ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #0c4a6e;
+    }
+    
+    .tldr-box li {
+        margin-bottom: 10px;
+    }
+    
+    .legal-container h2 {
+        color: #1e293b;
+        font-size: 1.5rem;
+        margin-top: 40px;
+        margin-bottom: 15px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .legal-container p {
+        margin-bottom: 15px;
+    }
+    
+    .legal-container ul {
+        margin-bottom: 15px;
+        padding-left: 30px;
+    }
+    
+    .legal-container li {
+        margin-bottom: 8px;
+    }
+    
+    .legal-container strong {
+        color: #1e293b;
+    }
+</style>
+
+<div class="legal-container">
+    <h1>Terms of Service</h1>
+    <p class="last-updated">Last Updated: December 22, 2025</p>
+    
+    <div class="tldr-box">
+        <h3>TL;DR - Key Highlights</h3>
+        <ul>
+            <li><strong>Decision-Support Tool:</strong> Candidate Evaluator is a decision-support tool. The final hiring decision remains solely with you, the human user.</li>
+            <li><strong>Fair Use Policy:</strong> Users must not use the tool for discriminatory purposes or to scrape/export data for unauthorized use.</li>
+            <li><strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your login credentials.</li>
+            <li><strong>Credits Policy:</strong> Credits are non-refundable but do not expire as long as your account is active.</li>
+        </ul>
+    </div>
+    
+    <h2>1. Acceptance of Terms</h2>
+    <p>By accessing or using Candidate Evaluator, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.</p>
+    
+    <h2>2. Service Description</h2>
+    <p>Candidate Evaluator is an AI-powered decision-support tool designed to assist with candidate screening and evaluation. It provides:</p>
+    <ul>
+        <li>Automated resume analysis against job descriptions</li>
+        <li>Similarity scoring and ranking</li>
+        <li>AI-generated insights about candidate strengths and gaps</li>
+    </ul>
+    <p><strong>Important:</strong> Our service is intended to augment, not replace, human judgment in hiring decisions. All final employment decisions remain the sole responsibility of the user.</p>
+    
+    <h2>3. User Responsibilities</h2>
+    <p>As a user of Candidate Evaluator, you agree to:</p>
+    <ul>
+        <li><strong>Accuracy:</strong> Provide accurate and truthful information in your account registration</li>
+        <li><strong>Security:</strong> Maintain the confidentiality of your password and account credentials</li>
+        <li><strong>Compliance:</strong> Use the service in compliance with all applicable laws, including equal employment opportunity and anti-discrimination laws</li>
+        <li><strong>Fair Use:</strong> Not misuse the service to discriminate, harass, or violate the rights of candidates</li>
+        <li><strong>Data Rights:</strong> Ensure you have the right to upload and analyze all candidate data you submit</li>
+    </ul>
+    
+    <h2>4. Prohibited Uses</h2>
+    <p>You may not use Candidate Evaluator to:</p>
+    <ul>
+        <li>Violate any applicable law or regulation</li>
+        <li>Discriminate against candidates based on protected characteristics (race, gender, age, disability, etc.)</li>
+        <li>Reverse engineer, decompile, or attempt to extract the source code of our service</li>
+        <li>Scrape, harvest, or data mine without authorization</li>
+        <li>Resell or redistribute access to the service</li>
+        <li>Upload malicious code, viruses, or harmful content</li>
+    </ul>
+    
+    <h2>5. Account Management</h2>
+    <p><strong>Registration:</strong> You must create an account to use Candidate Evaluator. You are responsible for all activity that occurs under your account.</p>
+    <p><strong>Termination:</strong> We reserve the right to suspend or terminate accounts that violate these Terms of Service or engage in abusive behavior.</p>
+    <p><strong>Account Closure:</strong> You may close your account at any time through your account settings.</p>
+    
+    <h2>6. Credits and Payment</h2>
+    <p><strong>Credit System:</strong> Our service operates on a credit-based system. Each analysis consumes credits based on its complexity.</p>
+    <p><strong>Pricing:</strong> Current credit pricing is displayed on our pricing page and may be updated from time to time.</p>
+    <p><strong>Refunds:</strong> Credits are non-refundable once purchased. However, credits do not expire as long as your account remains active.</p>
+    <p><strong>Payment Processing:</strong> All payments are processed securely through Stripe.</p>
+    
+    <h2>7. Intellectual Property</h2>
+    <p><strong>Your Content:</strong> You retain all rights to the resumes and job descriptions you upload. We only use this data to provide our service.</p>
+    <p><strong>Our Service:</strong> Candidate Evaluator, including its design, code, algorithms, and analysis outputs, is our intellectual property and is protected by copyright and other laws.</p>
+    <p><strong>AI Outputs:</strong> The insights and analysis results generated by our service are provided to you for your use in your hiring decisions.</p>
+    
+    <h2>8. Disclaimers and Limitations</h2>
+    <p><strong>No Warranty:</strong> Our service is provided "as is" without warranties of any kind. We do not guarantee:</p>
+    <ul>
+        <li>The accuracy, completeness, or reliability of AI-generated insights</li>
+        <li>That the service will be uninterrupted or error-free</li>
+        <li>That all candidate evaluations will be perfect or free from bias</li>
+    </ul>
+    <p><strong>Human Oversight Required:</strong> AI analysis should always be reviewed and validated by qualified human decision-makers.</p>
+    <p><strong>Limitation of Liability:</strong> To the maximum extent permitted by law, Candidate Evaluator shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the service.</p>
+    
+    <h2>9. Compliance with Employment Laws</h2>
+    <p>Users are solely responsible for ensuring their use of Candidate Evaluator complies with all applicable employment laws, including but not limited to:</p>
+    <ul>
+        <li>Equal Employment Opportunity (EEO) laws</li>
+        <li>Americans with Disabilities Act (ADA)</li>
+        <li>Age Discrimination in Employment Act (ADEA)</li>
+        <li>GDPR and other data protection regulations</li>
+    </ul>
+    <p>Our tool is designed as a neutral analysis system, but users must ensure their hiring practices comply with all legal requirements.</p>
+    
+    <h2>10. Service Changes and Termination</h2>
+    <p>We reserve the right to:</p>
+    <ul>
+        <li>Modify or discontinue features of the service with reasonable notice</li>
+        <li>Update pricing with 30 days notice to existing customers</li>
+        <li>Terminate the service entirely (with refunds for unused credits purchased within 90 days)</li>
+    </ul>
+    
+    <h2>11. Governing Law</h2>
+    <p>These Terms of Service are governed by the laws of [Your Jurisdiction], without regard to its conflict of law provisions.</p>
+    
+    <h2>12. Changes to Terms</h2>
+    <p>We may update these Terms of Service from time to time. Continued use of the service after changes constitutes acceptance of the updated terms.</p>
+    
+    <h2>13. Contact Information</h2>
+    <p>For questions about these Terms of Service, please contact us:</p>
+    <ul>
+        <li>Email: <a href="mailto:legal@candidateevaluator.com">legal@candidateevaluator.com</a></li>
+        <li>Support Form: <a href="{{ url_for('support') }}">Contact Support</a></li>
+    </ul>
+</div>
+{% endblock %}
