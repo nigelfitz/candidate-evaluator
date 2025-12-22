@@ -677,6 +677,7 @@ def create_app(config_name=None):
             
             # CRITICAL: Calculate cost and check balance BEFORE running analysis
             num_candidates = len(candidates)
+            print(f"DEBUG: insights_mode='{insights_mode}', num_candidates={num_candidates}")
             if insights_mode == 'top3':
                 num_insights = min(3, num_candidates)
             elif insights_mode == 'top5':
@@ -687,6 +688,7 @@ def create_app(config_name=None):
                 num_insights = num_candidates
             else:
                 num_insights = 0
+            print(f"DEBUG: num_insights calculated={num_insights}")
             
             num_extra_insights = max(0, num_insights - 3)
             estimated_cost = Config.BASE_ANALYSIS_PRICE + (num_extra_insights * Config.EXTRA_INSIGHT_PRICE)
@@ -735,13 +737,16 @@ def create_app(config_name=None):
             insights_data = {}
             gpt_candidates_list = []
             
+            print(f"DEBUG: About to generate GPT insights. num_insights={num_insights}")
             if num_insights > 0:
                 top_candidates = coverage.nlargest(num_insights, 'Overall')
+                print(f"DEBUG: Top {num_insights} candidates selected for insights: {list(top_candidates['Candidate'])}")
                 for idx, row in top_candidates.iterrows():
                     candidate_name = row['Candidate']
                     gpt_candidates_list.append(candidate_name)
                     candidate_obj = next((c for c in candidates if c.name == candidate_name), None)
                     if candidate_obj:
+                        print(f"DEBUG: Generating insights for candidate: {candidate_name}")
                         candidate_scores = {col: row[col] for col in coverage.columns if col not in ['Candidate', 'Overall']}
                         insights = gpt_candidate_insights(
                             candidate_name=candidate_name,
@@ -753,6 +758,9 @@ def create_app(config_name=None):
                             model="gpt-4o"
                         )
                         insights_data[candidate_name] = insights
+                        print(f"DEBUG: Insights generated for {candidate_name}")
+            else:
+                print(f"DEBUG: num_insights is 0, skipping GPT insights generation")
             
             # Build category map
             category_map = {c['criterion']: c.get('category', 'Other Requirements') for c in criteria_list if c.get('use', True)}

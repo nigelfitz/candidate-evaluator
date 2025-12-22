@@ -66,43 +66,25 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
-    .success-actions {
-        display: flex;
-        gap: 12px;
-        z-index: 1;
-    }
-    
-    .btn-view-top {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .btn-view-top:hover {
-        background: #059669;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-    }
-    
     .btn-dismiss {
+        position: absolute;
+        top: 12px;
+        right: 12px;
         background: none;
         border: none;
         cursor: pointer;
-        font-size: 1.8rem;
+        font-size: 2rem;
         color: #059669;
-        opacity: 0.6;
-        transition: opacity 0.3s;
-        padding: 0 8px;
+        opacity: 0.5;
+        transition: opacity 0.3s, transform 0.2s;
+        padding: 4px 8px;
+        line-height: 1;
+        z-index: 2;
     }
     
     .btn-dismiss:hover {
         opacity: 1;
+        transform: scale(1.1);
     }
     
     @keyframes slideInDown {
@@ -184,6 +166,7 @@
             {% for category, message in messages %}
                 {% if category == 'success' and 'Analysis complete' in message %}
                 <div class="success-toast" id="successToast">
+                    <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
                     <div class="success-icon">🎉</div>
                     <div class="success-msg">
                         <h3>Analysis Complete! 🚀</h3>
@@ -193,10 +176,6 @@
                             {% endif %}
                         </p>
                         <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 25) }} minutes of manual screening</div>
-                    </div>
-                    <div class="success-actions">
-                        <button class="btn-view-top" onclick="scrollToTopCandidate()">View Top Match</button>
-                        <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
                     </div>
                 </div>
                 {% endif %}
