@@ -138,10 +138,8 @@
                                 {{ transaction.description }} →
                             </a>
                         {% elif transaction.analysis_deleted_at %}
-                            {# Analysis was deleted - show with deletion timestamp tooltip #}
-                            <span style="color: #6b7280; cursor: help; border-bottom: 1px dotted #9ca3af;" 
-                                  class="local-time"
-                                  data-utc="{{ transaction.analysis_deleted_at|to_local_time }}"
+                            {# Analysis was deleted - show job description with deletion timestamp in tooltip #}
+                            <span style="color: #6b7280; cursor: help; border-bottom: 1px dotted #9ca3af;"
                                   title="Job Deleted on: {{ transaction.analysis_deleted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC">
                                 {{ transaction.description }} <span style="color: #dc2626; font-size: 11px;">(Deleted)</span>
                             </span>
