@@ -693,7 +693,19 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
     # Load current settings from config file (admin-configurable)
-    settings = load_gpt_settings()
+    try:
+        print(f"DEBUG gpt_candidate_insights: Loading GPT settings...")
+        settings = load_gpt_settings()
+        print(f"DEBUG gpt_candidate_insights: GPT settings loaded successfully")
+    except Exception as e:
+        print(f"ERROR gpt_candidate_insights: Failed to load GPT settings: {str(e)}")
+        import traceback
+        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
+        return {
+            "top": [],
+            "gaps": [],
+            "notes": f"Error loading GPT settings: {str(e)}"
+        }
     
     # Use provided model parameter, otherwise use config setting
     model_to_use = model if model != "gpt-4o" else settings['model']
@@ -730,8 +742,20 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     }
     
     # Load prompts from admin-configurable file
-    prompts = load_prompts()
-    insights_prompts = prompts['candidate_insights']
+    try:
+        print(f"DEBUG gpt_candidate_insights: Loading prompts...")
+        prompts = load_prompts()
+        insights_prompts = prompts['candidate_insights']
+        print(f"DEBUG gpt_candidate_insights: Prompts loaded successfully")
+    except Exception as e:
+        print(f"ERROR gpt_candidate_insights: Failed to load prompts: {str(e)}")
+        import traceback
+        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
+        return {
+            "top": [],
+            "gaps": [],
+            "notes": f"Error loading prompts: {str(e)}"
+        }
     
     system_prompt = insights_prompts['system_prompt']['value']
     
