@@ -269,8 +269,31 @@
     }
     
     .info-card-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: #f8fafc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .info-card-icon i {
+        width: 32px;
+        height: 32px;
+        stroke-width: 1.5;
+        color: #64748b;
+        transition: color 0.3s ease;
+    }
+    
+    .info-card:hover .info-card-icon {
+        background: rgba(37, 99, 235, 0.08);
+    }
+    
+    .info-card:hover .info-card-icon i {
+        color: #2563eb;
     }
     
     .info-card h3 {
@@ -433,32 +456,32 @@
 <h2 style="color: #1e293b; font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center;">Why Candidate Evaluator?</h2>
 <div class="info-grid">
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="zap" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="zap"></i></div>
         <h3>Instant Scoring</h3>
         <p>Automatically score and rank all candidates against your job criteria in seconds</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="brain" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="brain"></i></div>
         <h3>AI Insights</h3>
         <p>Get GPT-powered strengths, gaps, and recommendations for top candidates</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="file-text" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="file-text"></i></div>
         <h3>Professional Reports</h3>
         <p>Export beautiful PDF/Word reports for your team or clients</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="target" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="target"></i></div>
         <h3>Fair & Consistent</h3>
         <p>AI-driven scoring ensures fair, bias-free candidate evaluation</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="credit-card" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="credit-card"></i></div>
         <h3>Pay As You Go</h3>
         <p>No subscriptions - pay only for what you use</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon"><i data-lucide="shield-check" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
+        <div class="info-card-icon"><i data-lucide="shield-check"></i></div>
         <h3>100% Private</h3>
         <p>Your files are processed securely and are definitely NOT used to train AI models</p>
     </div>
