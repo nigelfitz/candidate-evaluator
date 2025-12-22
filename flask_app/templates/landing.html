@@ -226,6 +226,137 @@
         padding: 0 1.5rem 1.5rem 1.5rem;
     }
     
+    /* Use Cases Tabbed Section */
+    .use-cases-section {
+        margin-bottom: 3rem;
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .use-cases-section h2 {
+        text-align: center;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+    
+    .use-cases-section > p {
+        text-align: center;
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .use-case-nav {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .tab-link {
+        padding: 12px 24px;
+        cursor: pointer;
+        color: #64748b;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        background: none;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+    
+    .tab-link:hover {
+        color: #2563eb;
+    }
+    
+    .tab-link.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+        font-weight: 600;
+    }
+    
+    .tab-content {
+        display: none;
+        padding: 20px;
+        animation: fadeIn 0.5s;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .persona-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .problem-box, .win-box {
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .problem-box {
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .win-box {
+        background: #f0fdf4;
+        border-left: 4px solid #10b981;
+    }
+    
+    .problem-box h4, .win-box h4 {
+        margin-top: 0;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+    
+    .problem-box h4 {
+        color: #dc2626;
+    }
+    
+    .win-box h4 {
+        color: #059669;
+    }
+    
+    .problem-box p, .win-box p {
+        margin: 0;
+        color: #475569;
+        line-height: 1.6;
+    }
+    
+    .persona-cta {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .use-case-nav {
+            overflow-x: auto;
+            justify-content: flex-start;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-link {
+            white-space: nowrap;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+        }
+    }
+    
     .cta-section {
         text-align: center;
         padding: 3rem 2rem;
@@ -428,6 +559,90 @@
         </tbody>
     </table>
 </div>
+
+<!-- Use Cases Section with Tabs -->
+<div class="use-cases-section">
+    <h2>Is This Tool Made For You?</h2>
+    <p>Find your role below and see how Candidate Evaluator solves your specific hiring challenges</p>
+    
+    <div class="use-case-nav">
+        <button class="tab-link active" onclick="openUseCase(event, 'founders')">👤 For Founders</button>
+        <button class="tab-link" onclick="openUseCase(event, 'recruiters')">📋 For Recruiters</button>
+        <button class="tab-link" onclick="openUseCase(event, 'tech-managers')">💻 For Tech Managers</button>
+    </div>
+    
+    <div id="founders" class="tab-content active">
+        <div class="persona-content">
+            <div class="problem-box">
+                <h4>😓 The Problem</h4>
+                <p>You're wearing 10 hats. You don't have time to read 50 resumes for a single junior dev or sales role, but you can't afford a bad hire that sets you back 6 months.</p>
+            </div>
+            <div class="win-box">
+                <h4>🎯 The Win</h4>
+                <p>Get an instant "Shortlist of 3" from a pile of applications. Spend your time interviewing the best candidates, not sorting through the rest. Make confident hiring decisions without a dedicated HR team.</p>
+            </div>
+            <div class="persona-cta">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-success">Try It Free - No Credit Card</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="recruiters" class="tab-content">
+        <div class="persona-content">
+            <div class="problem-box">
+                <h4>😓 The Problem</h4>
+                <p>High-volume roles are drowning you in "keyword-optimized" resumes that don't actually meet the job requirements. You spend hours manually screening candidates, only to find many don't have the right experience.</p>
+            </div>
+            <div class="win-box">
+                <h4>🎯 The Win</h4>
+                <p>Use AI to objectively score every candidate against your custom criteria. Surface the "hidden gems" who have the skills but maybe not the perfect resume formatting. Transform hours of work into minutes.</p>
+            </div>
+            <div class="persona-cta">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-success">Start Screening Smarter</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tech-managers" class="tab-content">
+        <div class="persona-content">
+            <div class="problem-box">
+                <h4>😓 The Problem</h4>
+                <p>You need specific technical niche skills (e.g., "Experience with Scalable Microservices in AWS") and generic filters aren't picking up the nuances. You waste time interviewing candidates who looked good on paper but lack the depth you need.</p>
+            </div>
+            <div class="win-box">
+                <h4>🎯 The Win</h4>
+                <p>Our AI understands technical context. It identifies deep skill evidence in project descriptions, GitHub contributions, and technical achievements—saving you hours of manual technical screening. Only interview candidates who truly match your requirements.</p>
+            </div>
+            <div class="persona-cta">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-success">Find Technical Talent Faster</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openUseCase(evt, personaName) {
+        var i, tabcontent, tablinks;
+        
+        // Hide all tab contents
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
+        }
+        
+        // Remove active class from all tabs
+        tablinks = document.getElementsByClassName("tab-link");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+        
+        // Show the selected tab content and mark button as active
+        document.getElementById(personaName).style.display = "block";
+        document.getElementById(personaName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+</script>
 
 <div class="faq">
     <h2 style="text-align: center; color: #1e293b; margin-bottom: 2rem;">Frequently Asked Questions: Data Security ~ Pricing ~ Inclusions</h2>
