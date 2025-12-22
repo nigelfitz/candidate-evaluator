@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Candidate Evaluator{% endblock %}</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             margin: 0;
@@ -36,13 +37,20 @@
             display: flex;
             align-items: center;
             font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f77b4;
+            color: #1e293b;
             text-decoration: none;
+            letter-spacing: -0.02em;
         }
         
-        .navbar-brand img {
-            margin-right: 0.5rem;
+        .navbar-brand .brand-bold {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .navbar-brand .brand-light {
+            font-weight: 300;
+            color: #64748b;
+            margin-left: 0.15rem;
         }
         
         .navbar-menu {
@@ -100,6 +108,53 @@
             color: #1f77b4;
             background-color: #e3f2fd;
             font-weight: 600;
+        }
+        
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+        }
+        
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: #1e293b;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+            
+            .navbar-menu {
+                position: fixed;
+                top: 60px;
+                right: -100%;
+                width: 280px;
+                height: calc(100vh - 60px);
+                background: white;
+                flex-direction: column;
+                padding: 1.5rem;
+                box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+                transition: right 0.3s;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .navbar-menu.active {
+                right: 0;
+            }
+            
+            .navbar-menu a {
+                width: 100%;
+                padding: 0.8rem 1rem;
+            }
         }
         
         .btn {
@@ -261,16 +316,22 @@
 <body>
     <nav class="navbar">
         <a href="{{ url_for('landing') if not current_user.is_authenticated else url_for('dashboard') }}" class="navbar-brand">
-            <strong>Candidate Evaluator</strong>
+            <span class="brand-bold">Candidate</span><span class="brand-light">Evaluator</span>
         </a>
-        <div class="navbar-menu">
+        <button class="hamburger" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="navbar-menu" id="navbarMenu">
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('analyze', new=1) }}" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">+ New Analysis</a>
-                <a href="{{ url_for('job_history') }}" class="{% if request.endpoint == 'job_history' %}active{% endif %}">📋 My History</a>
-                <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}">❓ Help</a>
-                <a href="{{ url_for('payments.buy_credits') }}" class="wallet-balance" style="color: #059669; font-weight: 600; padding: 0.5rem 1rem; background: #d1fae5; border-radius: 6px; text-decoration: none;">💰 ${{ "%.2f"|format(current_user.balance_usd) }}</a>
-                <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}">👤 Account</a>
-                <a href="{{ url_for('auth.logout') }}" style="color: #666;">Logout</a>
+                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i data-lucide="layout-dashboard" style="width: 18px; height: 18px; margin-right: 6px;"></i>Dashboard</a>
+                <a href="{{ url_for('analyze', new=1) }}" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="plus" style="width: 16px; height: 16px; margin-right: 4px;"></i>New Analysis</a>
+                <a href="{{ url_for('job_history') }}" class="{% if request.endpoint == 'job_history' %}active{% endif %}"><i data-lucide="folder" style="width: 18px; height: 18px; margin-right: 6px;"></i>My History</a>
+                <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}"><i data-lucide="help-circle" style="width: 18px; height: 18px; margin-right: 6px;"></i>Help</a>
+                <a href="{{ url_for('payments.buy_credits') }}" class="wallet-balance" style="color: #059669; font-weight: 600; padding: 0.5rem 1rem; background: #d1fae5; border-radius: 6px; text-decoration: none;"><i data-lucide="wallet" style="width: 18px; height: 18px; margin-right: 6px;"></i>${{ "%.2f"|format(current_user.balance_usd) }}</a>
+                <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}"><i data-lucide="user" style="width: 18px; height: 18px; margin-right: 6px;"></i>Account</a>
+                <a href="{{ url_for('auth.logout') }}" style="color: #666;"><i data-lucide="log-out" style="width: 18px; height: 18px; margin-right: 6px;"></i>Logout</a>
             {% else %}
                 <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
                 <a href="{{ url_for('features') }}" class="{% if request.endpoint == 'features' %}active{% endif %}">Features</a>
@@ -306,6 +367,26 @@
     </footer>
     
     <script>
+        // Initialize Lucide icons
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+        });
+        
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('navbarMenu');
+            menu.classList.toggle('active');
+        }
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('navbarMenu');
+            const hamburger = document.querySelector('.hamburger');
+            if (menu && !menu.contains(event.target) && !hamburger.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+        
         // Workflow protection - warn users before leaving workflow pages with unsaved work
         {% if in_workflow and has_unsaved_work %}
         function confirmLeaveWorkflow(message) {

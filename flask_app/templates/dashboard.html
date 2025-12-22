@@ -361,11 +361,11 @@
 {% block content %}
 <!-- Hero Section with CTA -->
 <div class="hero-section">
-    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎯</div>
+    <div style="margin-bottom: 0.5rem;"><i data-lucide="target" style="width: 64px; height: 64px; stroke-width: 1.5; color: #2563eb;"></i></div>
     <h1>{% if current_user.is_authenticated %}Welcome back, {{ current_user.name or current_user.email.split('@')[0] }}!{% else %}Welcome to Candidate Evaluator{% endif %}</h1>
     <p>AI-powered candidate screening made simple</p>
     <a href="{{ url_for('auth.register') if not current_user.is_authenticated else url_for('analyze', new=1) }}" class="btn-hero">
-        {% if current_user.is_authenticated %}➕ Start New Analysis{% else %}Get Started Free{% endif %}
+        {% if current_user.is_authenticated %}<i data-lucide="plus" style="width: 18px; height: 18px; margin-right: 6px;"></i>Start New Analysis{% else %}Get Started Free{% endif %}
     </a>
 </div>
 
@@ -376,14 +376,14 @@
         <span class="balance-label">Your Balance:</span>
         <span class="balance-amount">${{ "%.2f"|format(current_user.balance_usd) }}</span>
     </div>
-    <a href="{{ url_for('payments.buy_credits') }}" class="btn-add-funds">💳 Add Funds</a>
+    <a href="{{ url_for('payments.buy_credits') }}" class="btn-add-funds"><i data-lucide="credit-card" style="width: 18px; height: 18px; margin-right: 6px;"></i>Add Funds</a>
 </div>
 {% endif %}
 
 {% if current_user.is_authenticated %}
 <!-- Recent Analyses Section -->
 <div class="section-header">
-    <h2>📋 Recent Analyses</h2>
+    <h2><i data-lucide="folder" style="width: 28px; height: 28px; margin-right: 8px; vertical-align: middle;"></i>Recent Analyses</h2>
     {% if recent_analyses %}<a href="{{ url_for('job_history') }}" class="view-all">View All →</a>{% endif %}
 </div>
 
@@ -396,11 +396,11 @@
             <span class="analysis-badge">Complete</span>
         </div>
         <div class="analysis-card-meta">
-            📅 {{ analysis.created_at.strftime('%b %d, %Y') }}
+            <i data-lucide="calendar" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i>{{ analysis.created_at.strftime('%b %d, %Y') }}
         </div>
         <div class="analysis-card-stats">
             <div class="stat-item">
-                <span>👥</span>
+                <span><i data-lucide="users" style="width: 18px; height: 18px;"></i></span>
                 <span>{{ analysis.num_candidates }} candidate{{ 's' if analysis.num_candidates != 1 else '' }}</span>
             </div>
         </div>
@@ -412,7 +412,7 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <div class="icon" style="font-size: 5rem; margin-bottom: 1rem;">➕</div>
+    <div class="icon" style="margin-bottom: 1rem;"><i data-lucide="plus-circle" style="width: 80px; height: 80px; stroke-width: 1.5; color: #94a3b8;"></i></div>
     <h3>Start Your First Analysis</h3>
     <p>Upload a job description and resumes to see AI-powered insights</p>
     <a href="{{ url_for('analyze', new=1) }}" class="btn-hero">Start Your First Analysis</a>
@@ -422,7 +422,7 @@
 <!-- Low Balance Warning (only for returning users) -->
 {% if current_user.balance_usd < 5 and recent_analyses %}
 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-    <strong style="color: #92400e;">⚠️ Low Balance</strong>
+    <strong style="color: #92400e;"><i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;"></i>Low Balance</strong>
     <p style="color: #92400e; margin: 0.5rem 0 0 0;">You have ${{ "%.2f"|format(current_user.balance_usd) }} remaining. 
         <a href="{{ url_for('payments.buy_credits') }}" style="color: #2563eb; text-decoration: underline;">Add funds</a> to continue analyzing.</p>
 </div>
@@ -433,32 +433,32 @@
 <h2 style="color: #1e293b; font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center;">Why Candidate Evaluator?</h2>
 <div class="info-grid">
     <div class="info-card">
-        <div class="info-card-icon">⚡</div>
+        <div class="info-card-icon"><i data-lucide="zap" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>Instant Scoring</h3>
         <p>Automatically score and rank all candidates against your job criteria in seconds</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon">🤖</div>
+        <div class="info-card-icon"><i data-lucide="brain" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>AI Insights</h3>
         <p>Get GPT-powered strengths, gaps, and recommendations for top candidates</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon">📄</div>
+        <div class="info-card-icon"><i data-lucide="file-text" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>Professional Reports</h3>
         <p>Export beautiful PDF/Word reports for your team or clients</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon">🎯</div>
+        <div class="info-card-icon"><i data-lucide="target" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>Fair & Consistent</h3>
         <p>AI-driven scoring ensures fair, bias-free candidate evaluation</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon">💸</div>
+        <div class="info-card-icon"><i data-lucide="credit-card" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>Pay As You Go</h3>
         <p>No subscriptions - pay only for what you use</p>
     </div>
     <div class="info-card">
-        <div class="info-card-icon">🔒</div>
+        <div class="info-card-icon"><i data-lucide="shield-check" style="width: 40px; height: 40px; stroke-width: 1.5;"></i></div>
         <h3>100% Private</h3>
         <p>Your files are processed securely and are definitely NOT used to train AI models</p>
     </div>
