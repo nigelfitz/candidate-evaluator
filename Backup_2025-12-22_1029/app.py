@@ -68,16 +68,6 @@ def create_app(config_name=None):
             return redirect(url_for('dashboard'))
         return render_template('landing.html')
     
-    @app.route('/pricing')
-    def pricing():
-        """Pricing page"""
-        return render_template('pricing.html')
-    
-    @app.route('/security')
-    def security():
-        """Security and data privacy page"""
-        return render_template('security.html')
-    
     @app.route('/dashboard')
     @login_required
     def dashboard():
@@ -85,6 +75,8 @@ def create_app(config_name=None):
         # Get recent analyses for the user
         recent_analyses = Analysis.query.filter_by(
             user_id=current_user.id
+        ).filter(
+            Analysis.deleted_at.is_(None)
         ).order_by(
             Analysis.created_at.desc()
         ).limit(5).all()
@@ -1482,38 +1474,14 @@ def create_app(config_name=None):
     @login_required
     def job_history():
         """Job analysis history"""
-        analyses = current_user.analyses.order_by(
+        analyses = current_user.analyses.filter(
+            Analysis.deleted_at.is_(None)
+        ).order_by(
             db.desc('created_at')
         ).limit(50).all()
         return render_template('job_history.html', 
                              user=current_user,
                              analyses=analyses)
-    
-    @app.route('/delete-analysis/<int:analysis_id>', methods=['POST'])
-    @login_required
-    def delete_analysis(analysis_id):
-        """Hard delete an analysis and its related data"""
-        analysis = Analysis.query.get_or_404(analysis_id)
-        
-        # Verify ownership
-        if analysis.user_id != current_user.id:
-            flash('Unauthorized', 'error')
-            return redirect(url_for('job_history'))
-        
-        try:
-            # Delete related candidate files (cascade will handle this automatically due to ondelete='CASCADE')
-            # Transaction records will have analysis_id set to NULL (due to ondelete='SET NULL')
-            # This preserves transaction history while removing the analysis
-            
-            db.session.delete(analysis)
-            db.session.commit()
-            
-            flash('✅ Analysis deleted successfully', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error deleting analysis: {str(e)}', 'error')
-        
-        return redirect(url_for('job_history'))
     
     @app.route('/help')
     def help():
@@ -2251,52 +2219,6 @@ def create_app(config_name=None):
         
         flash('✅ Settings saved successfully! Changes take effect immediately.', 'success')
         return redirect(url_for('admin_gpt_settings'))
-    
-    
-    @app.route('/admin/prompts')
-    @admin_required
-    def admin_prompts():
-        """AI Prompts management panel"""
-        prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
-        
-        with open(prompts_path, 'r') as f:
-            prompts = json.load(f)
-        
-        message = request.args.get('message')
-        return render_template('admin_prompts.html', 
-                             prompts=prompts, 
-                             message=message,
-                             active_tab='prompts')
-    
-    
-    @app.route('/admin/prompts/save', methods=['POST'])
-    @admin_required
-    def admin_prompts_save():
-        """Save updated prompts"""
-        prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
-        
-        # Load current prompts
-        with open(prompts_path, 'r') as f:
-            prompts = json.load(f)
-        
-        # Update JD Extraction prompts
-        prompts['jd_extraction']['system_prompt']['value'] = request.form.get('jd_extraction_system')
-        prompts['jd_extraction']['user_prompt_template']['value'] = request.form.get('jd_extraction_user')
-        
-        # Update Candidate Insights prompts
-        prompts['candidate_insights']['system_prompt']['value'] = request.form.get('candidate_insights_system')
-        prompts['candidate_insights']['user_prompt_template']['value'] = request.form.get('candidate_insights_user')
-        
-        # Update metadata
-        prompts['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-        prompts['_metadata']['updated_by'] = 'admin'
-        
-        # Save back to file
-        with open(prompts_path, 'w') as f:
-            json.dump(prompts, f, indent=2)
-        
-        flash('✅ Prompts saved successfully! Changes take effect immediately.', 'success')
-        return redirect(url_for('admin_prompts'))
     
     
     @app.route('/admin/users')

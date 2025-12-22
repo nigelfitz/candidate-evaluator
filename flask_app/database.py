@@ -126,7 +126,6 @@ class Analysis(db.Model):
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
-    deleted_at = db.Column(db.DateTime, nullable=True, index=True)  # Soft delete
     
     def __repr__(self):
         return f'<Analysis {self.id}: {self.job_title}>'

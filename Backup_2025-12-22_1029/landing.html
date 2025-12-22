@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Candidate Evaluator - AI-Powered Candidate Screening{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Blue/Slate Styling - Matches Dashboard */
+    
+    .hero {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        border-radius: 16px;
+        margin-bottom: 3rem;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+    }
+    
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+    
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .feature {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+    
+    .feature:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature h3 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .feature p {
+        color: #64748b;
+        line-height: 1.6;
+    }
+    
+    .pricing {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
+    }
+    
+    .pricing h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+    
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .pricing-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+        color: #1e293b;
+    }
+    
+    .pricing-card h3 {
+        color: #2563eb;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .price {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 1rem 0;
+        color: white;
+    }
+    
+    .pricing p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin-bottom: 1.5rem;
+    }
+    
+    .pricing ul {
+        text-align: left;
+        max-width: 600px;
+        margin: 0 auto 1.5rem;
+        list-style: none;
+        padding: 0;
+    }
+    
+    .pricing li {
+        padding: 0.5rem 0;
+        font-size: 1rem;
+        opacity: 0.95;
+    }
+    
+    .pricing li::before {
+        content: "✓ ";
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .price-per {
+        font-size: 1rem;
+        color: #64748b;
+    }
+    
+    .use-cases {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .use-case-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .use-case-card h3 {
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .use-case-card p {
+        color: #64748b;
+        line-height: 1.6;
+    }
+    
+    .faq {
+        margin-bottom: 3rem;
+    }
+    
+    .faq-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .faq-q {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .faq-a {
+        color: #64748b;
+        line-height: 1.6;
+    }
+    
+    .cta-section {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+    }
+    
+    /* Feature Comparison Table */
+    .comparison-section {
+        padding: 80px 20px;
+        background-color: #ffffff;
+        max-width: 1000px;
+        margin: 0 auto 3rem;
+    }
+    .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .comparison-table th {
+        background-color: #1e293b;
+        color: white;
+        padding: 20px;
+        text-align: left;
+    }
+    .comparison-table td {
+        padding: 18px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #475569;
+    }
+    .feature-name {
+        font-weight: 600;
+        color: #1e293b;
+        width: 30%;
+    }
+    .old-way {
+        background-color: #f8fafc;
+        width: 35%;
+    }
+    .ai-way {
+        background-color: #eff6ff; /* Soft blue tint */
+        width: 35%;
+        font-weight: 500;
+        color: #1e40af;
+    }
+    .check-mark { color: #059669; font-weight: bold; margin-right: 5px; }
+    .x-mark { color: #dc2626; font-weight: bold; margin-right: 5px; }
+    
+    .cta-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        color: white;
+    }
+    
+    .cta-section .btn {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+        margin: 0.5rem;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2rem;
+        }
+        
+        .cta-section h2 {
+            font-size: 1.8rem;
+        }
+        
+        .comparison-table {
+            font-size: 0.85rem;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 12px 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>🚀 Candidate Evaluator</h1>
+    <p>The fastest way to shortlist, score, and deeply analyse candidates for any job</p>
+    <p>Save hours, make smarter hiring decisions, and benefit from AI-powered insights</p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="font-size: 1.2rem; padding: 1rem 2rem;">Get Started Free</a>
+</div>
+
+<div class="card">
+    <h2 style="text-align: center; color: #1f77b4; margin-bottom: 2rem;">Key Benefits</h2>
+    <div class="features">
+        <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>Instant Scoring</h3>
+            <p>Automatically score and rank all candidates against your job criteria in seconds</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🤖</div>
+            <h3>AI Insights</h3>
+            <p>Get GPT-powered strengths, gaps, and recommendations for top candidates</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">📄</div>
+            <h3>Professional Reports</h3>
+            <p>Export beautiful PDF/Word reports for your team or clients</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <h3>100% Private</h3>
+            <p>Your files are processed securely and are definitely NOT used to train AI models</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">💸</div>
+            <h3>Pay As You Go</h3>
+            <p>No subscriptions - pay only for what you use with our credit system</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">🎯</div>
+            <h3>Fair & Consistent</h3>
+            <p>AI-driven scoring ensures fair, bias-free candidate evaluation</p>
+        </div>
+    </div>
+</div>
+
+<div class="pricing">
+    <h2>Simple, Transparent Pricing</h2>
+    <div class="price">$5</div>
+    <p>per job analysis — everything included</p>
+    <ul>
+        <li>Job description analyzed and criteria extracted</li>
+        <li>Unlimited resumes analyzed and scored</li>
+        <li>AI-powered insights for top 3 candidates</li>
+        <li>Professional PDF/Word reports</li>
+        <li>No subscriptions, pay only for what you use</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h2 style="text-align: center; color: #1f77b4; margin-bottom: 2rem;">Who is it for?</h2>
+    <div class="use-cases">
+        <div class="use-case-card">
+            <h3>🎯 Recruiters</h3>
+            <p>Shortlist faster, impress clients with detailed analysis, and win more placements.</p>
+        </div>
+        <div class="use-case-card">
+            <h3>👔 HR Managers</h3>
+            <p>Make fair, data-driven hiring decisions and save hours on resume screening.</p>
+        </div>
+        <div class="use-case-card">
+            <h3>🏢 Small Businesses</h3>
+            <p>Hire like a pro, even without a big HR team or budget.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Comparison Table -->
+<div class="comparison-section">
+    <h2 style="text-align: center; margin-bottom: 40px; color: #1e293b;">Why Upgrade Your Workflow?</h2>
+    <table class="comparison-table">
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Manual Screening</th>
+                <th>Candidate Evaluator</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="feature-name">Speed</td>
+                <td class="old-way"><span class="x-mark">✕</span> Hours per role</td>
+                <td class="ai-way"><span class="check-mark">✓</span> Seconds per role</td>
+            </tr>
+            <tr>
+                <td class="feature-name">Consistency</td>
+                <td class="old-way"><span class="x-mark">✕</span> Subjective / Human Bias</td>
+                <td class="ai-way"><span class="check-mark">✓</span> Objective AI Scoring</td>
+            </tr>
+            <tr>
+                <td class="feature-name">Ranking</td>
+                <td class="old-way"><span class="x-mark">✕</span> Unordered pile of PDFs</td>
+                <td class="ai-way"><span class="check-mark">✓</span> Automatic Leaderboard</td>
+            </tr>
+            <tr>
+                <td class="feature-name">Insights</td>
+                <td class="old-way"><span class="x-mark">✕</span> Surface-level skim</td>
+                <td class="ai-way"><span class="check-mark">✓</span> Deep Skill Analysis</td>
+            </tr>
+            <tr>
+                <td class="feature-name">Cost</td>
+                <td class="old-way"><span class="x-mark">✕</span> High Labor Costs</td>
+                <td class="ai-way"><span class="check-mark">✓</span> Fraction of the price</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="faq">
+    <h2 style="text-align: center; color: #1e293b; margin-bottom: 2rem;">Frequently Asked Questions: Data Security ~ Pricing ~ Inclusions</h2>
+    
+    <div class="faq-item">
+        <div class="faq-q">Is my data safe?</div>
+        <div class="faq-a">Yes! Your data and uploaded files are stored on our secure server. We store the data and files for each job in case you need to access them again later (e.g. if you get some late resumes and want to re-run the analysis to include them). If you prefer that they are not retained after you have finished, we have a Job History section where you can easily delete any historical jobs. Your data is NOT used to train AI models. Any data transmitted to OpenAI for "AI" analysis is done securely via HTTPS to API endpoints and is only retained by OpenAI for up to 30 days for abuse and misuse monitoring. After 30 days it is automatically deleted from OpenAI's servers. Read our Help & FAQ page (Privacy & Data Handling) for more information.</div>
+    </div>
+    
+    <div class="faq-item">
+        <div class="faq-q">How much does it cost?</div>
+        <div class="faq-a">As stated above, it costs just $5 per job.</div>
+        <div class="faq-a">That gets the assessment criteria extracted from your job description and all candidate resumes scored and ranked against those criteria. It also gets AI powered insights on your top 3 ranked candidates, plus all of our reports for you to download.</div>
+        <div class="faq-a">If you want AI insights for more than the top 3 candidates, No Problem! You can get those insights for any number of candidates you want. It's just $1 per extra candidate.</div>
+        <div class="faq-a">This isn't some hidden scam to try and get you to pay more for the stuff you really need. The simple reason that we only include AI insights for the top 3 candidates in our basic price is because our costs increase the more we use the expensive AI models that are needed to generate those insightful human-like outputs. We include the top 3 in our basic price because that is often enough for many of our clients. But if you want to do a few, or a lot more, at $1 each it's probably not going to break your budget.</div>
+        <div class="faq-a">There are no hidden costs with us. Just pay for what you use. And if it's too much hassle to pay each time you process a job, you can load up as much credit as you like and we'll deduct each job from your credit balance.</div>
+    </div>
+    
+    <div class="faq-item">
+        <div class="faq-q">What do I get in a report?</div>
+        <div class="faq-a">You get ranked candidates, detailed scoring, and (for selected candidates) AI-generated strengths, gaps, and recommendations. Export as PDF or Word.</div>
+    </div>
+    
+    <div class="faq-item">
+        <div class="faq-q">Can I try it before buying?</div>
+        <div class="faq-a">Unfortunately, No. It costs us money to use the AI models that are needed for every analysis. If we offer free trials, we risk incurring costs that we can't control. Controlling our costs enables us to keep our pricing as low as we can, and at just $5 per job, we encourage you to just give it one go. We're confident that you'll be impressed and will come back again and again.</div>
+    </div>
+</div>
+
+<div class="cta-section">
+    <h2>Ready to transform your hiring process?</h2>
+    <p style="font-size: 1.2rem; margin-bottom: 2rem;">Join recruiters and HR professionals who save hours every week</p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-success">Create Free Account</a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary" style="background-color: white; color: #667eea;">Already have an account? Login</a>
+</div>
+{% endblock %}
