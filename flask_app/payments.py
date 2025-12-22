@@ -111,6 +111,77 @@ def create_checkout():
         return redirect(url_for('payments.buy_credits'))
 
 
+@payments.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    """Create Stripe Checkout session with custom return URL (for modal quick-pay)"""
+    try:
+        # Check if Stripe is configured
+        if not Config.STRIPE_SECRET_KEY:
+            # In dev mode, add test funds instead
+            if os.environ.get('FLASK_ENV') == 'development':
+                data = request.get_json()
+                amount = Decimal(str(data.get('amount', 0)))
+                
+                if amount < 5:
+                    return jsonify({'error': 'Minimum amount is $5'}), 400
+                
+                # Add test funds directly
+                current_user.add_funds(
+                    amount_usd=amount,
+                    description=f'Test funds added (DEV MODE)'
+                )
+                db.session.commit()
+                
+                # Return the return URL
+                return_url = data.get('return_url', url_for('dashboard', _external=True))
+                return jsonify({'url': return_url})
+            else:
+                return jsonify({'error': 'Stripe not configured'}), 400
+        
+        # Set Stripe API key
+        stripe.api_key = Config.STRIPE_SECRET_KEY
+        
+        data = request.get_json()
+        amount = float(data.get('amount', 0))
+        return_url = data.get('return_url', url_for('dashboard', _external=True))
+        
+        if amount < 5:
+            return jsonify({'error': 'Minimum amount is $5'}), 400
+        
+        # Create Stripe Checkout Session with custom success URL
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': int(amount * 100),
+                    'product_data': {
+                        'name': 'Account Funds',
+                        'description': f"Add ${amount:.2f} to continue analysis",
+                    },
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url=return_url + ('&' if '?' in return_url else '?') + 'session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=return_url,
+            client_reference_id=str(current_user.id),
+            metadata={
+                'user_id': current_user.id,
+                'amount_usd': f"{amount:.2f}"
+            }
+        )
+        
+        return jsonify({'url': checkout_session.url})
+        
+    except Exception as e:
+        print(f"ERROR: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
 @payments.route('/success')
 @login_required
 def success():
@@ -133,6 +204,8 @@ def success():
         except Exception as e:
             flash(f'Payment completed, but verification failed: {str(e)}', 'warning')
     
+    # Check if we should return to a custom URL (from run_analysis modal)
+    # The success_url from Stripe will already have auto_submit parameter
     return redirect(url_for('dashboard'))
 
 

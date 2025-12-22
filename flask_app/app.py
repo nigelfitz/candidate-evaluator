@@ -694,8 +694,20 @@ def create_app(config_name=None):
             
             # Check funds BEFORE running analysis
             if current_user.balance_usd < estimated_cost:
-                flash(f'Insufficient funds. You need ${estimated_cost:.2f} but only have ${current_user.balance_usd:.2f}. Please add funds to continue.', 'error')
-                return redirect(url_for('run_analysis_route'))
+                # Don't redirect - show modal to add funds and continue
+                resume_count = len(candidates)
+                return render_template('run_analysis.html',
+                                     user=current_user,
+                                     resume_count=resume_count,
+                                     latest_analysis_id=None,
+                                     in_workflow=True,
+                                     has_unsaved_work=True,
+                                     analysis_completed=False,
+                                     insufficient_funds=True,
+                                     required_amount=float(estimated_cost),
+                                     current_balance=float(current_user.balance_usd),
+                                     shortfall=float(estimated_cost - current_user.balance_usd),
+                                     selected_insights_mode=insights_mode)
             
             # Run analysis
             coverage, insights, evidence_map = analyse_candidates(

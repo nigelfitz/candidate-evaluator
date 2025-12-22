@@ -108,6 +108,52 @@
     </form>
 </div>
 
+<!-- Insufficient Funds Modal -->
+{% if insufficient_funds %}
+<div id="insufficientFundsModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 40px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div style="font-size: 60px; margin-bottom: 15px;">💳</div>
+            <h2 style="color: #1f2937; margin-bottom: 10px;">Almost There!</h2>
+            <p style="color: #6b7280; font-size: 16px; line-height: 1.5;">
+                You're ready to run your analysis, but need a bit more credit.
+            </p>
+        </div>
+
+        <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="color: #92400e;">Analysis cost:</span>
+                <strong style="color: #78350f;">${{ "%.2f"|format(required_amount) }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="color: #92400e;">Current balance:</span>
+                <strong style="color: #78350f;">${{ "%.2f"|format(current_balance) }}</strong>
+            </div>
+            <div style="border-top: 2px solid #f59e0b; padding-top: 10px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #92400e; font-weight: 600;">You need:</span>
+                    <strong style="color: #dc2626; font-size: 18px;">${{ "%.2f"|format(shortfall) }} more</strong>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <p style="color: #374151; font-weight: 600; margin-bottom: 12px; text-align: center;">Quick Add:</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="quickAddFunds(10)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $10</button>
+                <button onclick="quickAddFunds(25)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $25</button>
+                <button onclick="quickAddFunds(50)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $50</button>
+                <button onclick="quickAddFunds(100)" class="btn btn-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $100</button>
+            </div>
+        </div>
+
+        <button onclick="closeInsufficientFundsModal()" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; background: white; color: #6b7280; font-size: 16px; cursor: pointer;">
+            Cancel
+        </button>
+    </div>
+</div>
+{% endif %}
+
 <script>
 document.getElementById('runAnalysisForm').addEventListener('submit', function(e) {
     const button = document.getElementById('runAnalysisBtn');
@@ -144,6 +190,113 @@ function updateCostEstimate() {
 
 // Initialize cost estimate on page load
 updateCostEstimate();
+
+// Insufficient Funds Modal Functions
+function closeInsufficientFundsModal() {
+    const modal = document.getElementById('insufficientFundsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function quickAddFunds(amount) {
+    // Disable all buttons to prevent double-click
+    const buttons = document.querySelectorAll('#insufficientFundsModal button');
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+    });
+    
+    // Show loading state
+    const clickedBtn = event.target;
+    const originalText = clickedBtn.innerHTML;
+    clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
+    
+    // Create Stripe checkout session
+    fetch('/create-checkout-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            amount: amount,
+            return_url: '{{ url_for("run_analysis_route", _external=True, auto_submit=1) }}'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.url) {
+            // Redirect to Stripe checkout - will return to run_analysis with auto_submit flag
+            window.location.href = data.url;
+        } else {
+            alert('Error creating checkout session. Please try again.');
+            clickedBtn.innerHTML = originalText;
+            buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing payment. Please try again.');
+        clickedBtn.innerHTML = originalText;
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    });
+}
+
+// Auto-submit form if returning from payment with sufficient funds
+{% if request.args.get('auto_submit') == '1' and not insufficient_funds %}
+window.addEventListener('DOMContentLoaded', function() {
+    // Restore selected insights mode if it was saved
+    const savedInsightsMode = sessionStorage.getItem('insights_mode');
+    if (savedInsightsMode) {
+        document.getElementById('insightsMode').value = savedInsightsMode;
+        sessionStorage.removeItem('insights_mode');
+    }
+    
+    // Show brief success message
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; animation: slideIn 0.3s ease-out;';
+    successDiv.innerHTML = '✅ <strong>Payment successful!</strong> Starting your analysis...';
+    document.body.appendChild(successDiv);
+    
+    // Auto-submit after brief delay
+    setTimeout(() => {
+        document.getElementById('runAnalysisForm').submit();
+    }, 1500);
+});
+{% endif %}
+
+// Save insights mode before payment redirect
+{% if insufficient_funds %}
+function saveInsightsModeBeforePayment() {
+    const insightsMode = document.getElementById('insightsMode').value;
+    sessionStorage.setItem('insights_mode', insightsMode);
+}
+
+// Attach to quick-add buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const quickAddButtons = document.querySelectorAll('#insufficientFundsModal button[onclick^="quickAddFunds"]');
+    quickAddButtons.forEach(btn => {
+        btn.addEventListener('click', saveInsightsModeBeforePayment);
+    });
+});
+{% endif %}
 </script>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
 
 {% endblock %}
