@@ -78,6 +78,11 @@ def create_app(config_name=None):
         """Security and data privacy page"""
         return render_template('security.html')
     
+    @app.route('/features')
+    def features():
+        """Features deep dive page"""
+        return render_template('features.html')
+    
     @app.route('/dashboard')
     @login_required
     def dashboard():

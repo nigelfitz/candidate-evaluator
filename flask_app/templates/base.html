@@ -248,7 +248,7 @@
                 <a href="{{ url_for('auth.logout') }}" style="color: #666;">Logout</a>
             {% else %}
                 <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
-                <a href="{{ url_for('how_it_works') }}" class="{% if request.endpoint == 'how_it_works' %}active{% endif %}">How It Works</a>
+                <a href="{{ url_for('features') }}" class="{% if request.endpoint == 'features' %}active{% endif %}">Features</a>
                 <a href="{{ url_for('pricing') }}" class="{% if request.endpoint == 'pricing' %}active{% endif %}">Pricing</a>
                 <a href="{{ url_for('security') }}" class="{% if request.endpoint == 'security' %}active{% endif %}">Security</a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>

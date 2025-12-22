@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Features - Candidate Evaluator{% endblock %}
+
+{% block extra_css %}
+<style>
+    .features-hero {
+        text-align: center;
+        padding: 4rem 2rem 2rem 2rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .features-hero h1 {
+        font-size: 2.5rem;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .features-hero p {
+        font-size: 1.2rem;
+        color: #64748b;
+        line-height: 1.6;
+    }
+    
+    .features-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem 4rem 2rem;
+    }
+    
+    .feature-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 60px 0;
+        gap: 40px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .feature-row:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-row:nth-child(even) { 
+        flex-direction: row-reverse; 
+    }
+    
+    .feature-text { 
+        flex: 1; 
+    }
+    
+    .feature-text h3 {
+        color: #2563eb;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .feature-text p {
+        color: #64748b;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+    }
+    
+    .comparison-box {
+        background: #f8fafc;
+        border-left: 4px solid #cbd5e1;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+    }
+    
+    .comparison-box.old-way {
+        border-left-color: #ef4444;
+    }
+    
+    .comparison-box.ai-way {
+        border-left-color: #10b981;
+    }
+    
+    .comparison-label {
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .comparison-box.old-way .comparison-label {
+        color: #ef4444;
+    }
+    
+    .comparison-box.ai-way .comparison-label {
+        color: #10b981;
+    }
+    
+    .comparison-text {
+        color: #475569;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .feature-visual { 
+        flex: 1; 
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-radius: 16px; 
+        height: 300px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        font-size: 5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .cta-section {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        border-radius: 16px;
+        margin-top: 3rem;
+        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.2);
+    }
+    
+    .cta-section h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: white;
+    }
+    
+    .cta-section p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+    
+    @media (max-width: 768px) {
+        .features-hero h1 {
+            font-size: 2rem;
+        }
+        
+        .feature-row { 
+            flex-direction: column !important; 
+            text-align: center;
+            padding: 40px 0;
+        }
+        
+        .feature-text h3 {
+            font-size: 1.5rem;
+        }
+        
+        .feature-visual {
+            width: 100%;
+            height: 200px;
+            font-size: 4rem;
+        }
+        
+        .comparison-box {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="features-hero">
+    <h1>Deep Dive: How AI Transforms Hiring</h1>
+    <p>Move beyond keyword matching and manual spreadsheets. Our AI evaluator delivers semantic intelligence, deep skill scoring, and instant leaderboards—so you never miss your best candidates.</p>
+</div>
+
+<div class="features-container">
+    <!-- Feature 1: Semantic Intelligence -->
+    <div class="feature-row">
+        <div class="feature-text">
+            <h3>Semantic Intelligence</h3>
+            <p>Stop fighting with keyword filters. Our AI understands the <strong>meaning</strong> behind a candidate's experience, recognizing transferable skills that others miss.</p>
+            
+            <div class="comparison-box old-way">
+                <div class="comparison-label">❌ The Old Way: Keyword Matching</div>
+                <div class="comparison-text">Traditional ATS systems look for exact words (e.g., "Python"). If a candidate writes "Expert in Django and Backend Scripting," they might be missed entirely.</div>
+            </div>
+            
+            <div class="comparison-box ai-way">
+                <div class="comparison-label">✅ The AI Way: Semantic Understanding</div>
+                <div class="comparison-text">Our evaluator understands context. It knows that "Django" implies "Python" and "Backend Scripting" implies high-level engineering, ensuring you never miss a qualified "hidden gem."</div>
+            </div>
+        </div>
+        <div class="feature-visual">🧠</div>
+    </div>
+
+    <!-- Feature 2: Deep Skill Scoring -->
+    <div class="feature-row">
+        <div class="feature-text">
+            <h3>Deep Skill Scoring</h3>
+            <p>Every resume gets a <strong>line-by-line analysis</strong> against your specific job description, with weighted fit scores based on actual evidence—not gut feeling.</p>
+            
+            <div class="comparison-box old-way">
+                <div class="comparison-label">❌ The Old Way: Skimming</div>
+                <div class="comparison-text">Recruiters spend an average of 6 seconds skimming a resume. Complex skills and niche experiences are often overlooked in the rush.</div>
+            </div>
+            
+            <div class="comparison-box ai-way">
+                <div class="comparison-label">✅ The AI Way: Deep Analysis</div>
+                <div class="comparison-text">The system performs a comprehensive analysis of every resume against your criteria, providing a weighted "Fit Score" with detailed explanations for each ranking decision.</div>
+            </div>
+        </div>
+        <div class="feature-visual">🎯</div>
+    </div>
+
+    <!-- Feature 3: Instant Leaderboards -->
+    <div class="feature-row">
+        <div class="feature-text">
+            <h3>Instant Leaderboards</h3>
+            <p>Upload 100+ resumes at once. Within 60 seconds, get a ranked leaderboard of your <strong>top 5% of talent</strong>, ready for interview.</p>
+            
+            <div class="comparison-box old-way">
+                <div class="comparison-label">❌ The Old Way: Manual Sorting</div>
+                <div class="comparison-text">Managing 100+ applications requires manual spreadsheets, dragging files around, and subjective note-taking. Hours of work before you even schedule an interview.</div>
+            </div>
+            
+            <div class="comparison-box ai-way">
+                <div class="comparison-label">✅ The AI Way: Automated Rankings</div>
+                <div class="comparison-text">Upload your entire folder of resumes at once. The AI analyzes all candidates simultaneously and delivers a clear, data-driven leaderboard showing exactly who to call first.</div>
+            </div>
+        </div>
+        <div class="feature-visual">🏆</div>
+    </div>
+
+    <div class="cta-section">
+        <h2>Ready to hire smarter, not harder?</h2>
+        <p>Join recruiters and HR professionals who have transformed their hiring process</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="margin-right: 1rem;">Get Started Free</a>
+        <a href="{{ url_for('pricing') }}" class="btn btn-primary" style="background-color: white; color: #2563eb;">View Pricing</a>
+    </div>
+</div>
+{% endblock %}
