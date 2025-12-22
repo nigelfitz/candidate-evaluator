@@ -2549,6 +2549,52 @@ def create_app(config_name=None):
                              top_analysis_users=top_analysis_users,
                              recent_analyses=recent_analyses)
     
+    @app.route('/admin/feedback')
+    @admin_required
+    def admin_feedback():
+        """View user feedback on AI analysis accuracy"""
+        # Get filter parameters
+        vote_filter = request.args.get('vote', 'all')  # 'all', 'up', 'down'
+        sort_by = request.args.get('sort', 'recent')  # 'recent', 'oldest'
+        
+        # Build query
+        query = Feedback.query
+        
+        if vote_filter != 'all':
+            query = query.filter_by(vote=vote_filter)
+        
+        # Sort
+        if sort_by == 'recent':
+            query = query.order_by(Feedback.created_at.desc())
+        else:
+            query = query.order_by(Feedback.created_at.asc())
+        
+        feedback_list = query.all()
+        
+        # Calculate statistics
+        total_feedback = Feedback.query.count()
+        thumbs_up = Feedback.query.filter_by(vote='up').count()
+        thumbs_down = Feedback.query.filter_by(vote='down').count()
+        satisfaction_rate = (thumbs_up / total_feedback * 100) if total_feedback > 0 else 0
+        
+        # Get feedback with improvement notes
+        feedback_with_notes = Feedback.query.filter(
+            Feedback.vote == 'down',
+            Feedback.improvement_note.isnot(None),
+            Feedback.improvement_note != ''
+        ).count()
+        
+        return render_template('admin_feedback.html',
+                             active_tab='feedback',
+                             feedback_list=feedback_list,
+                             total_feedback=total_feedback,
+                             thumbs_up=thumbs_up,
+                             thumbs_down=thumbs_down,
+                             satisfaction_rate=satisfaction_rate,
+                             feedback_with_notes=feedback_with_notes,
+                             vote_filter=vote_filter,
+                             sort_by=sort_by)
+    
     
     @app.route('/admin/users/<int:user_id>/add-funds', methods=['POST'])
     @admin_required

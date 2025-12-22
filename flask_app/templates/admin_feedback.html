@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; padding: 30px 20px; }
+        .admin-container { max-width: 1400px; margin: 0 auto; }
+        .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .settings-card { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; margin-bottom: 20px; }
+        .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
+        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; }
+        .admin-tabs a:hover { color: #667eea; }
+        .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .stat-card h3 { font-size: 2.5rem; margin: 10px 0; font-weight: 700; }
+        .stat-card p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+        
+        .feedback-item { background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #cbd5e1; }
+        .feedback-item.thumbs-up { border-left-color: #10b981; }
+        .feedback-item.thumbs-down { border-left-color: #ef4444; }
+        
+        .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .vote-badge { padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; }
+        .vote-badge.up { background: #d1fae5; color: #065f46; }
+        .vote-badge.down { background: #fee2e2; color: #991b1b; }
+        
+        .feedback-meta { color: #64748b; font-size: 0.85rem; }
+        .improvement-note { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #e2e8f0; }
+        .improvement-note p { margin: 0; color: #475569; line-height: 1.6; }
+        
+        .filter-bar { background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .filter-bar select { padding: 8px 16px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🔒 Logout</a>
+    
+    <div class="admin-container">
+        <!-- Tab Navigation -->
+        <div class="admin-tabs">
+            <a href="{{ url_for('admin_gpt_settings') }}" class="{% if active_tab == 'gpt' %}active{% endif %}">🤖 GPT Settings</a>
+            <a href="{{ url_for('admin_prompts') }}" class="{% if active_tab == 'prompts' %}active{% endif %}">💬 Prompts</a>
+            <a href="{{ url_for('admin_users') }}" class="{% if active_tab == 'users' %}active{% endif %}">👥 Users</a>
+            <a href="{{ url_for('admin_system') }}" class="{% if active_tab == 'system' %}active{% endif %}">⚙️ System</a>
+            <a href="{{ url_for('admin_stats') }}" class="{% if active_tab == 'stats' %}active{% endif %}">📊 Stats</a>
+            <a href="{{ url_for('admin_feedback') }}" class="{% if active_tab == 'feedback' %}active{% endif %}">💬 Feedback</a>
+        </div>
+        
+        <div class="settings-card">
+            <h1 class="text-center mb-4">💬 User Feedback on AI Analysis</h1>
+            
+            <!-- Statistics Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p>Total Feedback</p>
+                    <h3>{{ total_feedback }}</h3>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <p>👍 Thumbs Up</p>
+                    <h3>{{ thumbs_up }}</h3>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                    <p>👎 Thumbs Down</p>
+                    <h3>{{ thumbs_down }}</h3>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                    <p>Satisfaction Rate</p>
+                    <h3>{{ "%.1f"|format(satisfaction_rate) }}%</h3>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <p>With Notes</p>
+                    <h3>{{ feedback_with_notes }}</h3>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <form method="GET" action="{{ url_for('admin_feedback') }}" class="filter-bar">
+                <div>
+                    <label for="vote" style="margin-right: 8px; font-weight: 500; color: #475569;">Filter:</label>
+                    <select name="vote" id="vote" onchange="this.form.submit()">
+                        <option value="all" {% if vote_filter == 'all' %}selected{% endif %}>All Feedback</option>
+                        <option value="up" {% if vote_filter == 'up' %}selected{% endif %}>👍 Thumbs Up Only</option>
+                        <option value="down" {% if vote_filter == 'down' %}selected{% endif %}>👎 Thumbs Down Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sort" style="margin-right: 8px; font-weight: 500; color: #475569;">Sort:</label>
+                    <select name="sort" id="sort" onchange="this.form.submit()">
+                        <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Most Recent</option>
+                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+                <div style="margin-left: auto;">
+                    <span style="color: #64748b; font-size: 0.9rem;">Showing {{ feedback_list|length }} of {{ total_feedback }} items</span>
+                </div>
+            </form>
+            
+            <!-- Feedback List -->
+            {% if feedback_list %}
+                <div class="feedback-list">
+                    {% for feedback in feedback_list %}
+                    <div class="feedback-item {% if feedback.vote == 'up' %}thumbs-up{% else %}thumbs-down{% endif %}">
+                        <div class="feedback-header">
+                            <div>
+                                <span class="vote-badge {% if feedback.vote == 'up' %}up{% else %}down{% endif %}">
+                                    {% if feedback.vote == 'up' %}👍 Thumbs Up{% else %}👎 Thumbs Down{% endif %}
+                                </span>
+                            </div>
+                            <div class="feedback-meta">
+                                {{ feedback.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </div>
+                        </div>
+                        
+                        <div class="feedback-meta" style="margin-bottom: 10px;">
+                            <strong>User:</strong> {{ feedback.user.name }} ({{ feedback.user.email }}) | 
+                            <strong>Analysis:</strong> {{ feedback.analysis.job_title }} 
+                            ({{ feedback.analysis.num_candidates }} candidates, {{ feedback.analysis.num_criteria }} criteria) |
+                            <strong>Analysis Date:</strong> {{ feedback.analysis.created_at.strftime('%b %d, %Y') }}
+                        </div>
+                        
+                        {% if feedback.improvement_note %}
+                        <div class="improvement-note">
+                            <strong style="color: #1e293b; display: block; margin-bottom: 8px;">💡 Improvement Suggestion:</strong>
+                            <p>{{ feedback.improvement_note }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <h3>No Feedback Yet</h3>
+                    <p>User feedback will appear here once people start rating their analysis results.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
