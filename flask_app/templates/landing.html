@@ -19,8 +19,18 @@
     .hero h1 {
         font-size: 3rem;
         margin-bottom: 1rem;
-        font-weight: 700;
         color: white;
+        letter-spacing: -0.02em;
+    }
+    
+    .hero h1 .hero-brand-bold {
+        font-weight: 700;
+    }
+    
+    .hero h1 .hero-brand-light {
+        font-weight: 300;
+        opacity: 0.95;
+        margin-left: 0.2rem;
     }
     
     .hero p {
@@ -483,7 +493,7 @@
 
 {% block content %}
 <div class="hero">
-    <h1>Candidate Evaluator</h1>
+    <h1><span class="hero-brand-bold">Candidate</span><span class="hero-brand-light">Evaluator</span></h1>
     <p>The fastest way to shortlist, score, and deeply analyse candidates for any job</p>
     <p>Save hours, make smarter hiring decisions, and benefit from AI-powered insights</p>
     <p>Upload your job description and resumes — we'll hand you results. Instantly!</p>
