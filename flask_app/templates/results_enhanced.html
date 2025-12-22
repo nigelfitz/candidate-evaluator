@@ -192,7 +192,7 @@
                             Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
                             {% endif %}
                         </p>
-                        <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 5) }} minutes of manual screening</div>
+                        <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 25) }} minutes of manual screening</div>
                     </div>
                     <div class="success-actions">
                         <button class="btn-view-top" onclick="scrollToTopCandidate()">View Top Match</button>
@@ -891,6 +891,14 @@ async function submitVote(voteType) {
             })
         });
         
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error:', response.status, errorText);
+            alert(`Failed to submit feedback (Error ${response.status}). Please try again or contact support.`);
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.success) {
@@ -907,11 +915,12 @@ async function submitVote(voteType) {
             feedbackBox.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
             feedbackBox.style.borderColor = '#10b981';
         } else {
+            console.error('Feedback error:', data.error);
             alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to submit feedback. Please try again.');
+        console.error('Network error:', error);
+        alert('Failed to submit feedback. Please check your connection and try again.');
     }
 }
 </script>
