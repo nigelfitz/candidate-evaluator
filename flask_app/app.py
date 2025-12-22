@@ -786,7 +786,7 @@ def create_app(config_name=None):
             
             # Update user analytics tracking
             current_user.total_analyses_count += 1
-            current_user.total_revenue_usd += total_cost
+            current_user.total_revenue_usd += estimated_cost
             
             # Store candidate files
             from database import CandidateFile
@@ -802,7 +802,7 @@ def create_app(config_name=None):
             
             db.session.commit()
             
-            flash(f'✅ Analysis complete! Cost: ${total_cost:.2f}. Remaining balance: ${current_user.balance_usd:.2f}', 'success')
+            flash(f'✅ Analysis complete! Cost: ${estimated_cost:.2f}. Remaining balance: ${current_user.balance_usd:.2f}', 'success')
             return redirect(url_for('results', analysis_id=analysis.id))
             
         except Exception as e:
