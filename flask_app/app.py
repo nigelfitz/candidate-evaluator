@@ -1451,17 +1451,12 @@ def create_app(config_name=None):
             db.desc('created_at')
         ).limit(50).all()
         
-        # Check which analysis IDs still exist and get deletion timestamps
+        # Check which analysis IDs still exist (hard delete means missing = deleted)
         analysis_ids = [t.analysis_id for t in transactions if t.analysis_id]
         existing_analyses = set()
-        deleted_analyses = {}  # {analysis_id: deleted_at}
         if analysis_ids:
             all_analyses = Analysis.query.filter(Analysis.id.in_(analysis_ids)).all()
-            for a in all_analyses:
-                if a.deleted_at is None:
-                    existing_analyses.add(a.id)
-                else:
-                    deleted_analyses[a.id] = a.deleted_at
+            existing_analyses = {a.id for a in all_analyses}
         
         # Calculate running balance for each transaction (newest first)
         running_balance = float(current_user.balance_usd)
@@ -1475,8 +1470,7 @@ def create_app(config_name=None):
                              user=current_user,
                              transactions=transactions,
                              balances=balances,
-                             existing_analyses=existing_analyses,
-                             deleted_analyses=deleted_analyses)
+                             existing_analyses=existing_analyses)
     
     @app.route('/job-history')
     @login_required

@@ -137,16 +137,11 @@
                                onmouseout="this.style.color='#2563eb'">
                                 {{ transaction.description }} →
                             </a>
-                        {% elif transaction.analysis_id and transaction.analysis_id not in existing_analyses %}
-                            {# Analysis was deleted - show as non-clickable text with tooltip #}
-                            {% set deleted_date = deleted_analyses.get(transaction.analysis_id) %}
-                            <span style="color: #2563eb; cursor: default;"
-                                  {% if deleted_date %}
-                                  class="deleted-analysis-tooltip local-time" 
-                                  data-utc="{{ deleted_date.isoformat() }}"
-                                  title="This analysis was deleted"
-                                  {% endif %}>
-                                {{ transaction.description }}
+                        {% elif transaction.analysis_id %}
+                            {# Analysis was deleted (hard delete - no longer exists) #}
+                            <span style="color: #6b7280;" 
+                                  title="This analysis was permanently deleted">
+                                {{ transaction.description }} <span style="color: #dc2626; font-size: 11px;">(Deleted)</span>
                             </span>
                         {% else %}
                             {# No analysis (e.g., credit purchase) #}
