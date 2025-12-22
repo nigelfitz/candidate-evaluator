@@ -119,7 +119,7 @@ def create_app(config_name=None):
                 return redirect(url_for('support'))
             except Exception as e:
                 print(f"ERROR: Failed to send support email: {e}")
-                flash('There was an error sending your message. Please try emailing us directly at support@candidateevaluator.com', 'error')
+                flash('There was an error sending your message. Please try emailing us directly at contact@candidateevaluator.com', 'error')
                 return render_template('support.html')
         
         return render_template('support.html')

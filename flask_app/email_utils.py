@@ -104,7 +104,7 @@ def send_support_email(user_name, user_email, subject, message):
         message (str): Support message content
     """
     # Support emails go to admin
-    admin_email = current_app.config.get('ADMIN_EMAIL', 'support@candidateevaluator.com')
+    admin_email = current_app.config.get('ADMIN_EMAIL', 'contact@candidateevaluator.com')
     
     html_body = f"""
     <html>
