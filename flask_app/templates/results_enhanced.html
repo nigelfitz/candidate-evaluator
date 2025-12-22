@@ -189,7 +189,7 @@
                         <h3>Analysis Complete! 🚀</h3>
                         <p>We've ranked your {{ analysis.num_candidates }} candidates. 
                             {% if coverage_data|length > 0 %}
-                            Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Average Score'] * 100) }}%</strong>.
+                            Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
                             {% endif %}
                         </p>
                         <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 5) }} minutes of manual screening</div>

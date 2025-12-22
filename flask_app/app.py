@@ -675,19 +675,8 @@ def create_app(config_name=None):
                 flash('No criteria selected. Please review criteria first.', 'error')
                 return redirect(url_for('review_criteria'))
             
-            # Run analysis
-            coverage, insights, evidence_map = analyse_candidates(
-                candidates=candidates,
-                criteria=criteria,
-                weights=None,
-                chunk_chars=1200,
-                overlap=150
-            )
-            
-            # Calculate cost
-            total_cost = Config.BASE_ANALYSIS_PRICE
+            # CRITICAL: Calculate cost and check balance BEFORE running analysis
             num_candidates = len(candidates)
-            
             if insights_mode == 'top3':
                 num_insights = min(3, num_candidates)
             elif insights_mode == 'top5':
@@ -700,21 +689,30 @@ def create_app(config_name=None):
                 num_insights = 0
             
             num_extra_insights = max(0, num_insights - 3)
-            total_cost += num_extra_insights * Config.EXTRA_INSIGHT_PRICE
-            total_cost = Decimal(str(total_cost))
+            estimated_cost = Config.BASE_ANALYSIS_PRICE + (num_extra_insights * Config.EXTRA_INSIGHT_PRICE)
+            estimated_cost = Decimal(str(estimated_cost))
             
-            # Check funds
-            if current_user.balance_usd < total_cost:
-                flash(f'Insufficient funds. You need ${total_cost:.2f} but only have ${current_user.balance_usd:.2f}.', 'error')
+            # Check funds BEFORE running analysis
+            if current_user.balance_usd < estimated_cost:
+                flash(f'Insufficient funds. You need ${estimated_cost:.2f} but only have ${current_user.balance_usd:.2f}. Please add funds to continue.', 'error')
                 return redirect(url_for('run_analysis_route'))
             
-            # Deduct funds
-            current_user.balance_usd -= total_cost
+            # Run analysis
+            coverage, insights, evidence_map = analyse_candidates(
+                candidates=candidates,
+                criteria=criteria,
+                weights=None,
+                chunk_chars=1200,
+                overlap=150
+            )
+            
+            # Deduct funds (already checked above)
+            current_user.balance_usd -= estimated_cost
             
             # Create transaction
             transaction = Transaction(
                 user_id=current_user.id,
-                amount_usd=-total_cost,
+                amount_usd=-estimated_cost,
                 transaction_type='debit',
                 description=f'Analysis: {len(candidates)} candidates, {len(criteria)} criteria'
             )
@@ -816,7 +814,8 @@ def create_app(config_name=None):
         
         # Parse stored JSON data
         import pandas as pd
-        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
+        from io import StringIO
+        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
