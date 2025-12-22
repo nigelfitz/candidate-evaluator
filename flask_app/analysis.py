@@ -746,6 +746,7 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)
+        print(f"DEBUG gpt_candidate_insights: Calling GPT for {candidate_name}")
         response = client.chat.completions.create(
             model=model_to_use,
             messages=[
@@ -757,7 +758,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
             max_tokens=settings['max_tokens']      # Admin-configurable
         )
         
+        print(f"DEBUG gpt_candidate_insights: GPT response received for {candidate_name}")
         result = json.loads(response.choices[0].message.content)
+        print(f"DEBUG gpt_candidate_insights: Parsed result = {result}")
         # Normalize whitespace
         return {
             "top": [s.strip() for s in result.get("top", []) if s.strip()],
@@ -766,6 +769,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         }
         
     except Exception as e:
+        print(f"ERROR gpt_candidate_insights: Exception for {candidate_name}: {str(e)}")
+        import traceback
+        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
         return {
             "top": [],
             "gaps": [],
