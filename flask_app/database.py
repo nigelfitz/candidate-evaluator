@@ -266,5 +266,23 @@ def init_db(app):
             # Handle race condition between gunicorn workers
             if 'duplicate key value violates unique constraint' in str(e):
                 print(f"DEBUG: Tables already created by another worker, continuing...")
+                
+                # Special handling for feedback table sequence conflict
+                if 'feedback_id_seq' in str(e):
+                    print("🔧 Detected feedback table sequence conflict - attempting auto-fix...")
+                    try:
+                        # Drop and recreate the feedback table
+                        db.session.execute(db.text("DROP TABLE IF EXISTS feedback CASCADE;"))
+                        db.session.execute(db.text("DROP SEQUENCE IF EXISTS feedback_id_seq CASCADE;"))
+                        db.session.commit()
+                        print("✅ Dropped conflicting feedback table and sequence")
+                        
+                        # Recreate just the feedback table
+                        from database import Feedback
+                        Feedback.__table__.create(db.engine, checkfirst=True)
+                        print("✅ Recreated feedback table successfully")
+                    except Exception as fix_error:
+                        print(f"⚠️ Auto-fix failed: {fix_error}")
+                        # Continue anyway - table might already be fixed
             else:
                 raise
