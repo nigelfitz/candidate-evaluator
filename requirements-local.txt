@@ -1,9 +1,12 @@
+# Local Development Requirements (Windows - uses SQLite, no PostgreSQL needed)
+# Install with: pip install -r requirements-local.txt
+
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-WTF==1.2.1
 Werkzeug==3.0.1
-psycopg2-binary==2.9.9
+# psycopg2-binary==2.9.9  # EXCLUDED - only needed for production PostgreSQL
 stripe==14.1.0
 python-dotenv==1.0.0
 openai==1.54.0
@@ -15,8 +18,8 @@ python-docx==1.1.0
 reportlab==4.0.7
 openpyxl==3.1.2
 email-validator==2.1.0
-sendgrid==6.11.0
-gunicorn==21.2.0
+Flask-Mail==0.9.1
+# gunicorn==21.2.0  # EXCLUDED - only needed for production deployment
 numpy==1.26.2
 pandas==2.1.4
 sentence-transformers==2.5.0

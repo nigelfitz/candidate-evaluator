@@ -62,21 +62,6 @@ def load_gpt_settings():
     Returns dict with all settings and their current values.
     """
     settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
-
-
-def load_prompts():
-    """
-    Load AI prompt templates from config/prompts.json
-    
-    This allows admin to adjust prompt wording and instructions without touching code:
-    - JD extraction prompts (how criteria are extracted from job descriptions)
-    - Candidate insights prompts (how strengths/gaps/notes are generated)
-    
-    Returns dict with all prompts and their current values.
-    """
-    prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
-    with open(prompts_path, 'r') as f:
-        return json.load(f)
     
     # Load settings from JSON file
     with open(settings_path, 'r') as f:
@@ -94,6 +79,21 @@ def load_prompts():
         'low_threshold': settings['score_thresholds']['low_threshold']['value'],
         'top_evidence_items': settings['advanced_settings']['top_evidence_items']['value']
     }
+
+
+def load_prompts():
+    """
+    Load AI prompt templates from config/prompts.json
+    
+    This allows admin to adjust prompt wording and instructions without touching code:
+    - JD extraction prompts (how criteria are extracted from job descriptions)
+    - Candidate insights prompts (how strengths/gaps/notes are generated)
+    
+    Returns dict with all prompts and their current values.
+    """
+    prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
+    with open(prompts_path, 'r') as f:
+        return json.load(f)
 
 
 # -----------------------------
