@@ -785,11 +785,71 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         print(f"DEBUG gpt_candidate_insights: GPT response received for {candidate_name}")
         result = json.loads(response.choices[0].message.content)
         print(f"DEBUG gpt_candidate_insights: Parsed result = {result}")
-        # Normalize whitespace
+        
+        # Normalize key names - GPT sometimes returns different variations
+        # Try multiple possible key names for each field
+        top_keys = ['top', 'top_strengths', 'Top strengths', 'strengths']
+        gaps_keys = ['gaps', 'gaps_risks', 'Gaps / risks', 'risks', 'concerns']
+        notes_keys = ['notes', 'overall_notes', 'Overall notes', 'assessment']
+        
+        # Extract top strengths - handle both string arrays and object arrays
+        top_raw = None
+        for key in top_keys:
+            if key in result:
+                top_raw = result[key]
+                break
+        
+        if isinstance(top_raw, list):
+            # Handle array of strings OR array of objects with 'criterion'/'evidence' fields
+            top_items = []
+            for item in top_raw:
+                if isinstance(item, str):
+                    top_items.append(item.strip())
+                elif isinstance(item, dict):
+                    # Extract text from object (e.g., {'criterion': 'X', 'evidence': 'Y'})
+                    text = item.get('evidence', '') or item.get('criterion', '') or str(item)
+                    top_items.append(text.strip())
+            top = [s for s in top_items if s]
+        else:
+            top = []
+        
+        # Extract gaps - handle both string arrays and object arrays
+        gaps_raw = None
+        for key in gaps_keys:
+            if key in result:
+                gaps_raw = result[key]
+                break
+        
+        if isinstance(gaps_raw, list):
+            gaps_items = []
+            for item in gaps_raw:
+                if isinstance(item, str):
+                    gaps_items.append(item.strip())
+                elif isinstance(item, dict):
+                    # Extract text from object (e.g., {'criterion': 'X', 'rationale': 'Y'})
+                    text = item.get('rationale', '') or item.get('criterion', '') or str(item)
+                    gaps_items.append(text.strip())
+            gaps = [s for s in gaps_items if s]
+        else:
+            gaps = []
+        
+        # Extract notes - always a string
+        notes = ''
+        for key in notes_keys:
+            if key in result:
+                notes = result[key]
+                break
+        if isinstance(notes, str):
+            notes = notes.strip()
+        else:
+            notes = str(notes).strip()
+        
+        print(f"DEBUG gpt_candidate_insights: Normalized to top={len(top)} items, gaps={len(gaps)} items, notes={len(notes)} chars")
+        
         return {
-            "top": [s.strip() for s in result.get("top", []) if s.strip()],
-            "gaps": [s.strip() for s in result.get("gaps", []) if s.strip()],
-            "notes": result.get("notes", "").strip(),
+            "top": top,
+            "gaps": gaps,
+            "notes": notes,
         }
         
     except Exception as e:
