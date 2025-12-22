@@ -1,7 +1,14 @@
 import psycopg2
+import os
 
-# Use public database URL for external access
-database_url = "postgresql://postgres:ZJVoxjxKVqgKTncONpctVBPiylvDaAGZ@tramway.proxy.rlwy.net:20561/railway"
+# IMPORTANT: Never hardcode database credentials in files committed to git!
+# Use environment variables instead
+database_url = os.environ.get('DATABASE_URL')
+
+if not database_url:
+    print("❌ ERROR: DATABASE_URL environment variable not set")
+    print("Set it using: railway run python reset_database.py")
+    exit(1)
 
 print("Connecting to postgres database...")
 # Connect to 'postgres' database to drop and recreate 'railway'
