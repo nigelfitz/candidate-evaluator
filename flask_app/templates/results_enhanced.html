@@ -974,13 +974,5 @@ function dismissToast() {
         }, 400);
     }
 }
-
-// Auto-dismiss after 10 seconds
-setTimeout(() => {
-    const toast = document.getElementById('successToast');
-    if (toast && toast.style.display !== 'none') {
-        dismissToast();
-    }
-}, 10000);
 </script>
 {% endblock %}

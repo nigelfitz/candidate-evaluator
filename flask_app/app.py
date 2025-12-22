@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session
+from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import LoginManager, login_required, current_user
 from config import config
 from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback
@@ -1665,7 +1665,8 @@ def create_app(config_name=None):
         
         # Parse coverage data
         import pandas as pd
-        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
+        from io import StringIO
+        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         
         return render_template('export.html', 
                              analysis=analysis, 
