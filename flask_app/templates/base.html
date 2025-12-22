@@ -201,6 +201,25 @@
         footer a:hover {
             text-decoration: underline;
         }
+        
+        /* Mobile Refinement - App-like experience on phones */
+        @media (max-width: 768px) {
+            /* Prevent text from hitting edges */
+            body { font-size: 16px; }
+            .container, section { padding-left: 15px; padding-right: 15px; }
+            
+            /* Stack grid elements */
+            .pricing-grid, .steps-container {
+                grid-template-columns: 1fr !important;
+            }
+            
+            /* Make buttons easy to tap */
+            .cta-button, .btn-hero {
+                width: 100%;
+                text-align: center;
+                padding: 18px;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -218,9 +237,9 @@
                 <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}">👤 Account</a>
                 <a href="{{ url_for('auth.logout') }}" style="color: #666;">Logout</a>
             {% else %}
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="{{ url_for('help') }}">Help</a>
+                <a href="#comparison-table">Features</a>
+                <a href="{{ url_for('pricing') }}">Pricing</a>
+                <a href="{{ url_for('security') }}">Security</a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-success">Get Started</a>
             {% endif %}

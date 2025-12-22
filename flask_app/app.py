@@ -68,6 +68,16 @@ def create_app(config_name=None):
             return redirect(url_for('dashboard'))
         return render_template('landing.html')
     
+    @app.route('/pricing')
+    def pricing():
+        """Pricing page"""
+        return render_template('pricing.html')
+    
+    @app.route('/security')
+    def security():
+        """Security and data privacy page"""
+        return render_template('security.html')
+    
     @app.route('/dashboard')
     @login_required
     def dashboard():

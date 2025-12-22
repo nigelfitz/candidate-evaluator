@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Security & Data Privacy - Candidate Evaluator{% endblock %}
+
+{% block extra_css %}
+<style>
+    .security-content { 
+        max-width: 800px; 
+        margin: 60px auto; 
+        padding: 0 20px; 
+        line-height: 1.8; 
+    }
+    
+    .security-content h1 {
+        font-size: 2.5rem;
+        color: #1e293b;
+        margin-bottom: 1rem;
+    }
+    
+    .security-content > p {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin-bottom: 3rem;
+    }
+    
+    .security-card { 
+        background: #f8fafc; 
+        padding: 30px; 
+        border-radius: 12px; 
+        margin-bottom: 30px; 
+        border-left: 5px solid #2563eb; 
+    }
+    
+    .security-card h2 { 
+        color: #1e293b; 
+        margin-top: 0; 
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .security-card p {
+        color: #475569;
+        margin: 0;
+    }
+    
+    .security-card strong {
+        color: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="security-content">
+    <h1>Security & Data Privacy</h1>
+    <p>We understand that candidate data is sensitive. We treat security as our highest priority.</p>
+
+    <div class="security-card">
+        <h2>We Do Not Train on Your Data</h2>
+        <p>Your resumes and job descriptions are used <strong>exclusively</strong> for your analyses. We do not use your private data to train public AI models or share it with third parties.</p>
+    </div>
+
+    <div class="security-card">
+        <h2>Industry-Standard Encryption</h2>
+        <p>All data is encrypted in transit using TLS 1.2+ and at rest using AES-256 encryption. Your information is stored securely on our PostgreSQL infrastructure.</p>
+    </div>
+
+    <div class="security-card">
+        <h2>GDPR Mindset</h2>
+        <p>We follow strict data minimization principles. You have full control to delete your analysis history and candidate data at any time from your dashboard.</p>
+    </div>
+</div>
+{% endblock %}
