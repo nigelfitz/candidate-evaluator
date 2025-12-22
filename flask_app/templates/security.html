@@ -46,6 +46,39 @@
     .security-card strong {
         color: #1e293b;
     }
+    
+    .trust-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-top: 4rem;
+        text-align: center;
+    }
+    
+    .trust-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .trust-icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .trust-text {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.95rem;
+    }
+    
+    @media (max-width: 768px) {
+        .trust-row {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -67,6 +100,21 @@
     <div class="security-card">
         <h2>GDPR Mindset</h2>
         <p>We follow strict data minimization principles. You have full control to permanently delete your analysis history and candidate data at any time from your Job History page. When you delete an analysis, all associated candidate files and results are permanently removed from our servers. Your transaction history is preserved for accounting purposes, but all candidate-specific data is erased.</p>
+    </div>
+    
+    <div class="trust-row">
+        <div class="trust-item">
+            <div class="trust-icon">🔒</div>
+            <div class="trust-text">SSL Encrypted</div>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">🛡️</div>
+            <div class="trust-text">Data Privacy Guaranteed</div>
+        </div>
+        <div class="trust-item">
+            <div class="trust-icon">☁️</div>
+            <div class="trust-text">Secure PostgreSQL Hosting</div>
+        </div>
     </div>
 </div>
 {% endblock %}

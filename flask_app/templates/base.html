@@ -219,6 +219,16 @@
                 text-align: center;
                 padding: 18px;
             }
+            
+            /* Ensure all interactive elements meet 44px minimum tap target */
+            .navbar-menu a, .btn, a, button, input[type="submit"], 
+            input[type="button"], .faq-item summary {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -237,9 +247,10 @@
                 <a href="{{ url_for('account') }}" class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}">👤 Account</a>
                 <a href="{{ url_for('auth.logout') }}" style="color: #666;">Logout</a>
             {% else %}
-                <a href="#comparison-table">Features</a>
-                <a href="{{ url_for('pricing') }}">Pricing</a>
-                <a href="{{ url_for('security') }}">Security</a>
+                <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('how_it_works') }}" class="{% if request.endpoint == 'how_it_works' %}active{% endif %}">How It Works</a>
+                <a href="{{ url_for('pricing') }}" class="{% if request.endpoint == 'pricing' %}active{% endif %}">Pricing</a>
+                <a href="{{ url_for('security') }}" class="{% if request.endpoint == 'security' %}active{% endif %}">Security</a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-success">Get Started</a>
             {% endif %}

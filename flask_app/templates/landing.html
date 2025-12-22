@@ -179,23 +179,51 @@
     
     .faq-item {
         background: white;
-        padding: 1.5rem;
+        padding: 0;
         border-radius: 12px;
         margin-bottom: 1rem;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
     
-    .faq-q {
+    .faq-item summary {
         font-weight: 600;
         color: #1e293b;
-        margin-bottom: 0.5rem;
         font-size: 1.1rem;
+        padding: 1.5rem;
+        cursor: pointer;
+        list-style: none;
+        position: relative;
+        user-select: none;
+        transition: background-color 0.2s;
+    }
+    
+    .faq-item summary:hover {
+        background-color: #f8fafc;
+    }
+    
+    .faq-item summary::before {
+        content: '+';
+        position: absolute;
+        right: 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: #2563eb;
+        transition: transform 0.3s ease;
+    }
+    
+    .faq-item[open] summary::before {
+        transform: rotate(45deg);
+    }
+    
+    .faq-item summary::-webkit-details-marker {
+        display: none;
     }
     
     .faq-a {
         color: #64748b;
         line-height: 1.6;
+        padding: 0 1.5rem 1.5rem 1.5rem;
     }
     
     .cta-section {
@@ -404,20 +432,20 @@
 <div class="faq">
     <h2 style="text-align: center; color: #1e293b; margin-bottom: 2rem;">Frequently Asked Questions: Data Security ~ Pricing ~ Inclusions</h2>
     
-    <div class="faq-item">
-        <div class="faq-q">Is this legally compliant for hiring?</div>
-        <div class="faq-a">Yes. Candidate Evaluator acts as an objective decision-support tool. Our AI provides data-driven rankings based on your specific criteria, while you retain final decision-making power.</div>
-    </div>
+    <details class="faq-item">
+        <summary>Is this legally compliant for hiring?</summary>
+        <p class="faq-a">Yes. Candidate Evaluator acts as an objective decision-support tool. Our AI provides data-driven rankings based on your specific criteria, while you retain final decision-making power.</p>
+    </details>
     
-    <div class="faq-item">
-        <div class="faq-q">What file types do you support?</div>
-        <div class="faq-a">We currently support PDF and DOCX files. Our parser is optimized to extract data even from complex, multi-column resume layouts.</div>
-    </div>
+    <details class="faq-item">
+        <summary>What file types do you support?</summary>
+        <p class="faq-a">We currently support PDF and DOCX files. Our parser is optimized to extract data even from complex, multi-column resume layouts.</p>
+    </details>
     
-    <div class="faq-item">
-        <div class="faq-q">How long does an analysis take?</div>
-        <div class="faq-a">Most analyses are completed in under 60 seconds, regardless of how many candidates you upload.</div>
-    </div>
+    <details class="faq-item">
+        <summary>How long does an analysis take?</summary>
+        <p class="faq-a">Most analyses are completed in under 60 seconds, regardless of how many candidates you upload.</p>
+    </details>
 </div>
 
 <div class="cta-section">
