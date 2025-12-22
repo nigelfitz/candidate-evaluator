@@ -4,7 +4,7 @@ from config import config
 from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import hashlib
 from werkzeug.utils import secure_filename
@@ -2172,14 +2172,21 @@ def create_app(config_name=None):
     @app.route('/admin')
     @admin_required
     def admin_settings():
-        """Display admin settings panel"""
+        """Display admin settings panel - redirect to GPT settings tab"""
+        return redirect(url_for('admin_gpt_settings'))
+    
+    
+    @app.route('/admin/gpt')
+    @admin_required
+    def admin_gpt_settings():
+        """Display GPT settings tab"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
         
         with open(settings_path, 'r') as f:
             settings = json.load(f)
         
         message = request.args.get('message')
-        return render_template('admin.html', settings=settings, message=message)
+        return render_template('admin_gpt.html', settings=settings, message=message, active_tab='gpt')
     
     
     @app.route('/admin/save', methods=['POST'])
@@ -2211,7 +2218,197 @@ def create_app(config_name=None):
             json.dump(settings, f, indent=2)
         
         flash('✅ Settings saved successfully! Changes take effect immediately.', 'success')
-        return redirect(url_for('admin_settings'))
+        return redirect(url_for('admin_gpt_settings'))
+    
+    
+    @app.route('/admin/users')
+    @admin_required
+    def admin_users():
+        """User management panel - list all users"""
+        search = request.args.get('search', '').strip()
+        sort_by = request.args.get('sort', 'created_at')
+        
+        query = User.query
+        
+        # Search filter
+        if search:
+            query = query.filter(
+                db.or_(
+                    User.email.ilike(f'%{search}%'),
+                    User.name.ilike(f'%{search}%')
+                )
+            )
+        
+        # Sorting
+        if sort_by == 'email':
+            query = query.order_by(User.email)
+        elif sort_by == 'balance':
+            query = query.order_by(User.balance_usd.desc())
+        elif sort_by == 'analyses':
+            query = query.order_by(User.total_analyses_count.desc())
+        elif sort_by == 'revenue':
+            query = query.order_by(User.total_revenue_usd.desc())
+        else:  # created_at
+            query = query.order_by(User.created_at.desc())
+        
+        users = query.all()
+        
+        # Calculate stats
+        total_users = User.query.count()
+        total_revenue = db.session.query(db.func.sum(User.total_revenue_usd)).scalar() or 0
+        total_analyses = db.session.query(db.func.sum(User.total_analyses_count)).scalar() or 0
+        
+        return render_template('admin_users.html', 
+                             users=users, 
+                             search=search,
+                             sort_by=sort_by,
+                             active_tab='users',
+                             total_users=total_users,
+                             total_revenue=total_revenue,
+                             total_analyses=total_analyses)
+    
+    
+    @app.route('/admin/users/<int:user_id>')
+    @admin_required
+    def admin_user_detail(user_id):
+        """View detailed information about a specific user"""
+        user = User.query.get_or_404(user_id)
+        
+        # Get user's analyses
+        analyses = Analysis.query.filter_by(user_id=user_id).order_by(Analysis.created_at.desc()).all()
+        
+        # Get user's transactions
+        transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.desc()).limit(50).all()
+        
+        return render_template('admin_user_detail.html',
+                             user=user,
+                             analyses=analyses,
+                             transactions=transactions,
+                             active_tab='users')
+    
+    
+    @app.route('/admin/system')
+    @admin_required
+    def admin_system():
+        """System controls and settings"""
+        settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
+        
+        with open(settings_path, 'r') as f:
+            settings = json.load(f)
+        
+        message = request.args.get('message')
+        return render_template('admin_system.html', 
+                             settings=settings, 
+                             message=message,
+                             active_tab='system')
+    
+    
+    @app.route('/admin/system/save', methods=['POST'])
+    @admin_required
+    def admin_system_save():
+        """Save system settings"""
+        settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
+        
+        # Load current settings
+        with open(settings_path, 'r') as f:
+            settings = json.load(f)
+        
+        # Update values from form
+        settings['registration_enabled']['value'] = request.form.get('registration_enabled') == 'on'
+        settings['maintenance_mode']['value'] = request.form.get('maintenance_mode') == 'on'
+        settings['max_file_size_mb']['value'] = int(request.form.get('max_file_size_mb', 10))
+        settings['new_user_welcome_credit']['value'] = float(request.form.get('new_user_welcome_credit', 0))
+        
+        # Update metadata
+        settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        settings['_metadata']['updated_by'] = 'admin'
+        
+        # Save back to file
+        with open(settings_path, 'w') as f:
+            json.dump(settings, f, indent=2)
+        
+        flash('✅ System settings saved successfully!', 'success')
+        return redirect(url_for('admin_system'))
+    
+    
+    @app.route('/admin/stats')
+    @admin_required
+    def admin_stats():
+        """Usage statistics and analytics"""
+        # User stats
+        total_users = User.query.count()
+        users_with_analyses = User.query.filter(User.total_analyses_count > 0).count()
+        
+        # Revenue stats
+        total_revenue = db.session.query(db.func.sum(User.total_revenue_usd)).scalar() or 0
+        total_balance = db.session.query(db.func.sum(User.balance_usd)).scalar() or 0
+        
+        # Analysis stats
+        total_analyses = Analysis.query.count()
+        analyses_this_month = Analysis.query.filter(
+            Analysis.created_at >= datetime.now().replace(day=1, hour=0, minute=0, second=0)
+        ).count()
+        
+        # Recent signups (last 30 days)
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_signups = User.query.filter(User.created_at >= thirty_days_ago).count()
+        
+        # Top users by revenue
+        top_revenue_users = User.query.order_by(User.total_revenue_usd.desc()).limit(10).all()
+        
+        # Top users by analyses
+        top_analysis_users = User.query.order_by(User.total_analyses_count.desc()).limit(10).all()
+        
+        # Recent analyses
+        recent_analyses = Analysis.query.order_by(Analysis.created_at.desc()).limit(20).all()
+        
+        return render_template('admin_stats.html',
+                             active_tab='stats',
+                             total_users=total_users,
+                             users_with_analyses=users_with_analyses,
+                             total_revenue=total_revenue,
+                             total_balance=total_balance,
+                             total_analyses=total_analyses,
+                             analyses_this_month=analyses_this_month,
+                             recent_signups=recent_signups,
+                             top_revenue_users=top_revenue_users,
+                             top_analysis_users=top_analysis_users,
+                             recent_analyses=recent_analyses)
+    
+    
+    @app.route('/admin/users/<int:user_id>/add-funds', methods=['POST'])
+    @admin_required
+    def admin_add_funds(user_id):
+        """Manually add funds to a user account"""
+        user = User.query.get_or_404(user_id)
+        amount = float(request.form.get('amount', 0))
+        reason = request.form.get('reason', 'Manual credit adjustment by admin')
+        
+        if amount > 0:
+            user.add_funds(amount, reason)
+            db.session.commit()
+            flash(f'✅ Added ${amount:.2f} to {user.email}', 'success')
+        else:
+            flash('❌ Amount must be positive', 'danger')
+        
+        return redirect(url_for('admin_user_detail', user_id=user_id))
+    
+    
+    @app.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
+    @admin_required
+    def admin_reset_password(user_id):
+        """Reset user password (generate temporary password)"""
+        user = User.query.get_or_404(user_id)
+        
+        # Generate temporary password
+        import secrets
+        temp_password = secrets.token_urlsafe(12)
+        user.set_password(temp_password)
+        db.session.commit()
+        
+        flash(f'✅ Password reset for {user.email}. Temporary password: {temp_password}', 'success')
+        return redirect(url_for('admin_user_detail', user_id=user_id))
+    
     
     return app
 

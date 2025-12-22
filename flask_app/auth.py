@@ -4,8 +4,16 @@ from werkzeug.security import generate_password_hash
 from database import db, User
 from datetime import datetime
 import re
+import os
+import json
 
 auth_bp = Blueprint('auth', __name__)
+
+def load_system_settings():
+    """Load system settings from JSON file"""
+    settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
+    with open(settings_path, 'r') as f:
+        return json.load(f)
 
 def validate_email(email):
     """Validate email format"""
@@ -29,9 +37,11 @@ def register():
         return redirect(url_for('dashboard'))
     
     if request.method == 'POST':
-        # Temporarily disable registration during final testing
-        flash('We are in the final stages of development and testing. Please check back soon.', 'info')
-        return render_template('register.html')
+        # Check if registration is enabled
+        settings = load_system_settings()
+        if not settings['registration_enabled']['value']:
+            flash('We are in the final stages of development and testing. Please check back soon.', 'info')
+            return render_template('register.html')
         
         email = request.form.get('email', '').strip().lower()
         name = request.form.get('name', '').strip()
@@ -61,8 +71,12 @@ def register():
             flash('Email already registered', 'error')
             return render_template('register.html')
         
-        # Create user with $0 starting balance
-        user = User(email=email, name=name, balance_usd=0)
+        # Get welcome credit from system settings
+        settings = load_system_settings()
+        starting_balance = settings['new_user_welcome_credit']['value']
+        
+        # Create user
+        user = User(email=email, name=name, balance_usd=starting_balance)
         user.set_password(password)
         
         # Track signup source (from URL parameter ?ref=)
