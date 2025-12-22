@@ -141,27 +141,15 @@ def hash_text(s: str) -> str:
 def get_openai_client():
     """Get OpenAI client if API key is set"""
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    print(f"DEBUG: OPENAI_API_KEY exists: {bool(api_key)}")
-    print(f"DEBUG: OPENAI_API_KEY value (first 10 chars): {api_key[:10] if api_key else 'None'}")
-    print(f"DEBUG: OpenAI module available: {OpenAI is not None}")
-    
-    # Check OpenAI library version
-    if OpenAI is not None:
-        import openai
-        print(f"DEBUG: OpenAI library version: {openai.__version__}")
     
     if not api_key or OpenAI is None:
-        print("DEBUG: Returning None - no API key or OpenAI module not available")
         return None
     try:
         # Create client with just the API key - let OpenAI handle HTTP client
         client = OpenAI(api_key=api_key, timeout=60.0)
-        print("DEBUG: OpenAI client created successfully")
         return client
     except Exception as e:
-        print(f"DEBUG: Failed to create OpenAI client: {e}")
-        import traceback
-        print(f"DEBUG: Full traceback:\n{traceback.format_exc()}")
+        print(f"ERROR: Failed to create OpenAI client: {e}")
         return None
 
 
@@ -395,9 +383,7 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
     user = jd_extraction['user_prompt_template']['value'].format(jd_text=jd_text)
     
     # Use gpt-4o for JD extraction - better quality, and with PyMuPDF 1.26.6 JDs are clean/small
-    print(f"DEBUG: Calling GPT with JD text (first 200 chars): {jd_text[:200]}")
     data = call_llm_json(system, user, schema, model="gpt-4o")
-    print(f"DEBUG: GPT returned data: {data}")
     
     sections = JDSections(
         key_skills=normalize_lines(data.get("key_skills", [])),
@@ -405,7 +391,6 @@ def extract_jd_sections_with_gpt(jd_text: str) -> JDSections:
         qualifications=normalize_lines(data.get("qualifications", [])),
         experience_required=normalize_lines(data.get("experience_required", [])),
     )
-    print(f"DEBUG: After normalization - key_skills count: {len(sections.key_skills)}, responsibilities: {len(sections.responsibilities)}")
     return sections
 
 
@@ -556,13 +541,11 @@ def analyse_candidates(
     """
     import time
     start_time = time.time()
-    print(f"DEBUG: analyse_candidates started with {len(candidates)} candidates and {len(criteria)} criteria")
     
     if weights is None:
         weights = [1.0] * len(criteria)
     
     # Chunk all candidate texts
-    print(f"DEBUG: Starting text chunking...")
     chunk_start = time.time()
     all_chunk_texts = []
     chunk_index = []  # (candidate_idx, chunk_idx)
@@ -573,15 +556,13 @@ def analyse_candidates(
             all_chunk_texts.append(ch)
             chunk_index.append((i, j))
     
-    print(f"DEBUG: Chunking completed in {time.time() - chunk_start:.2f}s - created {len(all_chunk_texts)} chunks")
+    print(f"Text chunking: {time.time() - chunk_start:.2f}s ({len(all_chunk_texts)} chunks)")
     
     # Load embedder and create embeddings
-    print(f"DEBUG: Loading embedder...")
     embed_start = time.time()
     info = load_embedder()
-    print(f"DEBUG: Embedder loaded in {time.time() - embed_start:.2f}s, creating embeddings...")
     chunk_embs, vec_type = prepare_corpus_embeddings(all_chunk_texts, info)
-    print(f"DEBUG: Embeddings created in {time.time() - embed_start:.2f}s, vec_type={vec_type}")
+    print(f"Embedding generation: {time.time() - embed_start:.2f}s ({vec_type})")
     
     # Map candidate_idx -> chunk row indices
     cand_to_rows = {i: [] for i in range(len(candidates))}
@@ -589,13 +570,12 @@ def analyse_candidates(
         cand_to_rows[ci].append(ridx)
     
     # PRE-COMPUTE: Embed all criteria once (MAJOR PERFORMANCE FIX)
-    print(f"DEBUG: Pre-computing criterion embeddings...")
     criteria_embed_start = time.time()
     if vec_type == "sbert":
         criteria_embs = embed_sbert(criteria, info["model"])
     else:
         criteria_embs = np.zeros((len(criteria), chunk_embs.shape[1]))
-    print(f"DEBUG: Criterion embeddings computed in {time.time() - criteria_embed_start:.2f}s")
+    print(f"Criterion embedding: {time.time() - criteria_embed_start:.2f}s")
     
     # Analyze each candidate
     coverage_records = []
@@ -617,8 +597,6 @@ def analyse_candidates(
         
         # Score against each criterion
         criterion_scores = []
-        print(f"DEBUG: Scoring candidate {cand_idx+1}/{len(candidates)} against {len(criteria)} criteria...")
-        scoring_start = time.time()
         for crit_idx, crit in enumerate(criteria):
             # Use pre-computed criterion embedding (NO MORE REDUNDANT EMBEDDING!)
             crit_emb = criteria_embs[crit_idx:crit_idx+1]  # Shape: (1, embedding_dim)
@@ -694,13 +672,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     # Load current settings from config file (admin-configurable)
     try:
-        print(f"DEBUG gpt_candidate_insights: Loading GPT settings...")
         settings = load_gpt_settings()
-        print(f"DEBUG gpt_candidate_insights: GPT settings loaded successfully")
     except Exception as e:
-        print(f"ERROR gpt_candidate_insights: Failed to load GPT settings: {str(e)}")
-        import traceback
-        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
+        print(f"ERROR: Failed to load GPT settings: {str(e)}")
         return {
             "top": [],
             "gaps": [],
@@ -743,14 +717,10 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     # Load prompts from admin-configurable file
     try:
-        print(f"DEBUG gpt_candidate_insights: Loading prompts...")
         prompts = load_prompts()
         insights_prompts = prompts['candidate_insights']
-        print(f"DEBUG gpt_candidate_insights: Prompts loaded successfully")
     except Exception as e:
-        print(f"ERROR gpt_candidate_insights: Failed to load prompts: {str(e)}")
-        import traceback
-        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
+        print(f"ERROR: Failed to load prompts: {str(e)}")
         return {
             "top": [],
             "gaps": [],
@@ -770,7 +740,6 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)
-        print(f"DEBUG gpt_candidate_insights: Calling GPT for {candidate_name}")
         response = client.chat.completions.create(
             model=model_to_use,
             messages=[
@@ -782,9 +751,7 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
             max_tokens=settings['max_tokens']      # Admin-configurable
         )
         
-        print(f"DEBUG gpt_candidate_insights: GPT response received for {candidate_name}")
         result = json.loads(response.choices[0].message.content)
-        print(f"DEBUG gpt_candidate_insights: Parsed result = {result}")
         
         # Normalize key names - GPT sometimes returns different variations
         # Try multiple possible key names for each field
@@ -844,8 +811,6 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         else:
             notes = str(notes).strip()
         
-        print(f"DEBUG gpt_candidate_insights: Normalized to top={len(top)} items, gaps={len(gaps)} items, notes={len(notes)} chars")
-        
         return {
             "top": top,
             "gaps": gaps,
@@ -853,9 +818,7 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         }
         
     except Exception as e:
-        print(f"ERROR gpt_candidate_insights: Exception for {candidate_name}: {str(e)}")
-        import traceback
-        print(f"ERROR gpt_candidate_insights: Traceback: {traceback.format_exc()}")
+        print(f"ERROR: GPT insights failed for {candidate_name}: {str(e)}")
         return {
             "top": [],
             "gaps": [],
