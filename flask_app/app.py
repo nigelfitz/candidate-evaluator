@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, session
 from flask_login import LoginManager, login_required, current_user
 from config import config
-from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings
+from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback
 import os
 import re
 from datetime import datetime, timezone, timedelta
@@ -862,6 +862,51 @@ def create_app(config_name=None):
                              has_unsaved_work=False,
                              analysis_completed=True,
                              is_current_draft_analysis=is_current_draft_analysis)
+    
+    @app.route('/submit_feedback', methods=['POST'])
+    @login_required
+    def submit_feedback():
+        """Submit user feedback on analysis accuracy"""
+        try:
+            data = request.get_json()
+            analysis_id = data.get('analysis_id')
+            vote = data.get('vote')  # 'up' or 'down'
+            improvement_note = data.get('improvement_note', '')
+            
+            # Verify the analysis belongs to the user
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+            if not analysis:
+                return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+            
+            # Check if feedback already exists for this analysis
+            existing_feedback = Feedback.query.filter_by(
+                analysis_id=analysis_id,
+                user_id=current_user.id
+            ).first()
+            
+            if existing_feedback:
+                # Update existing feedback
+                existing_feedback.vote = vote
+                existing_feedback.improvement_note = improvement_note if improvement_note else None
+                existing_feedback.created_at = datetime.utcnow()  # Update timestamp
+            else:
+                # Create new feedback
+                feedback = Feedback(
+                    analysis_id=analysis_id,
+                    user_id=current_user.id,
+                    vote=vote,
+                    improvement_note=improvement_note if improvement_note else None
+                )
+                db.session.add(feedback)
+            
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Thank you for your feedback!'})
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error submitting feedback: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
     
     @app.route('/export/<int:analysis_id>/<format>')
     @login_required

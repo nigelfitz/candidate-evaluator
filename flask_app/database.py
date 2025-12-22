@@ -233,6 +233,29 @@ class UserSettings(db.Model):
         return settings
 
 
+class Feedback(db.Model):
+    """User feedback on AI analysis accuracy"""
+    __tablename__ = 'feedback'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    analysis_id = db.Column(db.Integer, db.ForeignKey('analyses.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    
+    # Feedback data
+    vote = db.Column(db.String(10), nullable=False)  # 'up' or 'down'
+    improvement_note = db.Column(db.Text, nullable=True)  # Optional text for thumbs down
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # Relationships
+    analysis = db.relationship('Analysis', backref='feedback')
+    user = db.relationship('User', backref='feedback_given')
+    
+    def __repr__(self):
+        return f'<Feedback {self.id}: Analysis {self.analysis_id} - {self.vote}>'
+
+
 def init_db(app):
     """Initialize database with app context"""
     db.init_app(app)

@@ -434,9 +434,102 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- Passive Feedback Section -->
+            <div class="feedback-box" id="feedbackBox">
+                <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
+                <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Your feedback helps us improve the analysis accuracy</p>
+                <div class="feedback-options">
+                    <button class="feedback-btn" onclick="submitVote('up')">
+                        <span style="font-size: 1.5rem;">👍</span><br>
+                        <span>Yes, accurate</span>
+                    </button>
+                    <button class="feedback-btn" onclick="showNote()">
+                        <span style="font-size: 1.5rem;">👎</span><br>
+                        <span>Needs work</span>
+                    </button>
+                </div>
+                
+                <div id="improvement-note">
+                    <textarea id="feedback-text" placeholder="Tell us what could be improved (optional)..." 
+                        style="width:100%; max-width:600px; height:100px; padding:12px; border-radius:8px; 
+                        border:1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; margin-top: 20px;"></textarea>
+                    <br>
+                    <button onclick="submitVote('down')" class="btn btn-primary" style="margin-top:12px; padding:10px 24px;">
+                        Send Feedback
+                    </button>
+                </div>
+                
+                <div id="feedback-thanks" style="display: none;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+                    <h4 style="color: #059669; margin: 0;">Thanks for your feedback!</h4>
+                    <p style="color: #64748b; margin-top: 8px;">Your input helps us improve the AI for everyone.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .feedback-box {
+        margin-top: 60px;
+        padding: 40px 30px;
+        background: #f8fafc;
+        border-radius: 16px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .feedback-options {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .feedback-btn {
+        padding: 20px 30px;
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #475569;
+        min-width: 140px;
+    }
+    
+    .feedback-btn:hover {
+        background: #eff6ff;
+        border-color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    
+    #improvement-note {
+        margin-top: 15px;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 768px) {
+        .feedback-box {
+            padding: 30px 20px;
+        }
+        
+        .feedback-btn {
+            min-width: 120px;
+            padding: 16px 20px;
+        }
+    }
+</style>
 
 <script>
 // Parse data from Flask
@@ -769,6 +862,57 @@ function toggleCategory(catId) {
     const toggle = document.getElementById('toggle_' + catId);
     elem.classList.toggle('show');
     toggle.textContent = elem.classList.contains('show') ? '▼' : '▶';
+}
+
+// Feedback Functions
+function showNote() {
+    document.getElementById('improvement-note').style.display = 'block';
+    // Smooth scroll to textarea
+    setTimeout(() => {
+        document.getElementById('feedback-text').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('feedback-text').focus();
+    }, 100);
+}
+
+async function submitVote(voteType) {
+    const improvementNote = voteType === 'down' ? document.getElementById('feedback-text').value : '';
+    const analysisId = {{ analysis.id }};
+    
+    try {
+        const response = await fetch('/submit_feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                analysis_id: analysisId,
+                vote: voteType,
+                improvement_note: improvementNote
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Hide the feedback form and show thank you message
+            document.querySelector('.feedback-options').style.display = 'none';
+            document.getElementById('improvement-note').style.display = 'none';
+            document.getElementById('feedback-thanks').style.display = 'block';
+            document.querySelector('.feedback-box h4:first-child').style.display = 'none';
+            document.querySelector('.feedback-box p:first-of-type').style.display = 'none';
+            
+            // Add a subtle success animation
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.style.transition = 'all 0.3s ease';
+            feedbackBox.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
+            feedbackBox.style.borderColor = '#10b981';
+        } else {
+            alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to submit feedback. Please try again.');
+    }
 }
 </script>
 
