@@ -1495,9 +1495,15 @@ def create_app(config_name=None):
             return redirect(url_for('job_history'))
         
         try:
+            # Mark deletion timestamp on related transactions BEFORE deleting analysis
+            deletion_time = datetime.now(timezone.utc)
+            Transaction.query.filter_by(analysis_id=analysis_id).update({
+                'analysis_deleted_at': deletion_time
+            })
+            
             # Delete related candidate files (cascade will handle this automatically due to ondelete='CASCADE')
             # Transaction records will have analysis_id set to NULL (due to ondelete='SET NULL')
-            # This preserves transaction history while removing the analysis
+            # But analysis_deleted_at will preserve when it was deleted
             
             db.session.delete(analysis)
             db.session.commit()

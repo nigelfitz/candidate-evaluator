@@ -83,6 +83,7 @@ class Transaction(db.Model):
     
     # Link to analysis (nullable since credit purchases don't have analysis)
     analysis_id = db.Column(db.Integer, db.ForeignKey('analyses.id', ondelete='SET NULL'), nullable=True, index=True)
+    analysis_deleted_at = db.Column(db.DateTime, nullable=True)  # Track when associated analysis was deleted
     
     # Payment details (for purchases)
     stripe_payment_id = db.Column(db.String(100))

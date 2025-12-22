@@ -137,10 +137,12 @@
                                onmouseout="this.style.color='#2563eb'">
                                 {{ transaction.description }} →
                             </a>
-                        {% elif transaction.analysis_id %}
-                            {# Analysis was deleted (hard delete - no longer exists) #}
-                            <span style="color: #6b7280;" 
-                                  title="This analysis was permanently deleted">
+                        {% elif transaction.analysis_deleted_at %}
+                            {# Analysis was deleted - show with deletion timestamp tooltip #}
+                            <span style="color: #6b7280; cursor: help; border-bottom: 1px dotted #9ca3af;" 
+                                  class="local-time"
+                                  data-utc="{{ transaction.analysis_deleted_at|to_local_time }}"
+                                  title="Deleted on {{ transaction.analysis_deleted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC">
                                 {{ transaction.description }} <span style="color: #dc2626; font-size: 11px;">(Deleted)</span>
                             </span>
                         {% else %}

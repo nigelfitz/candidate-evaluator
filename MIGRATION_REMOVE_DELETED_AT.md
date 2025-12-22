@@ -1,7 +1,7 @@
-# Database Migration: Remove deleted_at Column
+# Database Migration: Hard Delete with Deletion Tracking
 
 **Date:** December 22, 2025
-**Migration Type:** Schema Change - Remove Column
+**Migration Type:** Schema Changes - Remove & Add Columns
 **Impact:** Medium (requires database update)
 
 ## Changes Made
@@ -9,13 +9,19 @@
 ### Removed from Analysis Model:
 - `deleted_at` column (DateTime, nullable, indexed)
 
+### Added to Transaction Model:
+- `analysis_deleted_at` column (DateTime, nullable) - Tracks when associated analysis was deleted
+
 ### Reason:
-Switching from soft delete to hard delete for better data privacy compliance.
+Switching from soft delete to hard delete for better data privacy compliance, while preserving deletion timestamp in transaction record for user accountability and audit trail.
 
 ## SQL Migration Commands
 
 ### For PostgreSQL (Production - Railway):
 ```sql
+-- Add deletion tracking to transactions
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS analysis_deleted_at TIMESTAMP;
+
 -- Remove the deleted_at column from analyses table
 ALTER TABLE analyses DROP COLUMN IF EXISTS deleted_at;
 ```
