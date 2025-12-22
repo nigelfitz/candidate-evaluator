@@ -2221,6 +2221,52 @@ def create_app(config_name=None):
         return render_template('admin_gpt.html', settings=settings, message=message, active_tab='gpt')
     
     
+    @app.route('/admin/migrate-db')
+    @admin_required
+    def admin_migrate_db():
+        """Run database migration - add analysis_deleted_at to transactions, remove deleted_at from analyses"""
+        try:
+            from sqlalchemy import text
+            
+            # Add column to transactions
+            db.session.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS analysis_deleted_at TIMESTAMP;"))
+            
+            # Remove column from analyses
+            db.session.execute(text("ALTER TABLE analyses DROP COLUMN IF EXISTS deleted_at;"))
+            
+            db.session.commit()
+            
+            return """
+            <html>
+            <head><title>Migration Complete</title></head>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h1 style="color: #10b981;">✅ Migration Successful!</h1>
+                <p>Database schema updated:</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>Added <code>analysis_deleted_at</code> to transactions table</li>
+                    <li>Removed <code>deleted_at</code> from analyses table</li>
+                </ul>
+                <p style="margin-top: 30px;">
+                    <a href="/admin/gpt" style="color: #2563eb;">← Back to Admin Panel</a>
+                </p>
+            </body>
+            </html>
+            """
+        except Exception as e:
+            db.session.rollback()
+            return f"""
+            <html>
+            <head><title>Migration Error</title></head>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h1 style="color: #dc2626;">❌ Migration Failed</h1>
+                <p>Error: {str(e)}</p>
+                <p style="margin-top: 30px;">
+                    <a href="/admin/gpt" style="color: #2563eb;">← Back to Admin Panel</a>
+                </p>
+            </body>
+            </html>
+            """
+    
     @app.route('/admin/save', methods=['POST'])
     @admin_required
     def admin_save_settings():
