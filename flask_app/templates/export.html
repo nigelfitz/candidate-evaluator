@@ -4,39 +4,10 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+    <!-- Workflow Stepper -->
     {% if is_current_draft_analysis %}
-    <!-- Workflow Progress Indicator -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('results', analysis_id=analysis.id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Results">
-                <div style="font-size: 24px;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
-            </a>
-        </div>
-        <div class="text-center mt-2">
-            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
-        </div>
-    </div>
+    {% set current_step = 5 %}
+    {% include 'workflow_stepper.html' %}
     {% else %}
     <!-- Historical Analysis Header -->
     <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -391,4 +362,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Sticky Bottom Bar -->
+{% if is_current_draft_analysis %}
+{% set show_back_button = True %}
+{% set back_url = url_for('results', analysis_id=analysis.id) %}
+{% set continue_text = 'Start New Analysis' %}
+{% set continue_url = url_for('analyze', new=1) %}
+{% set continue_disabled = false %}
+{% include 'workflow_bottom_bar.html' %}
+{% endif %}
 {% endblock %}

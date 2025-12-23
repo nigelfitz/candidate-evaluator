@@ -39,8 +39,9 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
     # Pricing (in USD)
-    BASE_ANALYSIS_PRICE = 4.00  # Includes JD extraction + all candidates scored/ranked + top 3 AI insights + all reports
-    EXTRA_INSIGHT_PRICE = 1.00  # Per additional AI insight beyond top 3
+    BASE_ANALYSIS_PRICE = 10.00  # Standard tier: Full ranking + Top 5 insights included
+    DEEP_DIVE_PRICE = 10.00  # Additional cost for Deep Dive (Top 15 insights)
+    EXTRA_INSIGHT_PRICE = 1.00  # Per additional candidate insight in Full Radar mode (beyond Top 5)
     
     # Suggested fund amounts for "Add Funds" page
     SUGGESTED_AMOUNTS = [10, 25, 50, 100]

@@ -640,12 +640,19 @@ def create_app(config_name=None):
     @login_required
     def run_analysis_route():
         """Configure and run analysis on uploaded resumes"""
+        from flask import session
+        import secrets
+        
         if request.method == 'GET':
             # Check we have draft with JD, criteria, and resumes
             draft = Draft.query.filter_by(user_id=current_user.id).first()
             if not draft or not draft.criteria_data:
                 flash('Please upload a JD and review criteria first', 'error')
                 return redirect(url_for('analyze'))
+            
+            # Check if returning from payment with auto_submit flag
+            auto_submit = request.args.get('auto_submit') == '1'
+            saved_insights_mode = session.pop('pending_insights_mode', None)
             
             # Get uploaded resumes count
             resume_count = DraftResume.query.filter_by(draft_id=draft.id).count()
@@ -668,18 +675,52 @@ def create_app(config_name=None):
                 if draft.updated_at > latest_analysis.created_at:
                     draft_modified_after_analysis = True
             
+            # Generate a unique form token to prevent duplicate submissions
+            # Only generate a NEW token if we don't already have one (prevents double-charge on payment return)
+            existing_token = session.get('analysis_form_token')
+            if not existing_token:
+                form_token = secrets.token_hex(16)
+                session['analysis_form_token'] = form_token
+                print(f"DEBUG: Generated NEW form token: {form_token}")
+            else:
+                form_token = existing_token
+                print(f"DEBUG: Reusing existing form token: {form_token}")
+            
             return render_template('run_analysis.html', 
                                  user=current_user,
                                  resume_count=resume_count,
                                  latest_analysis_id=current_draft_analysis_id,
                                  in_workflow=True, has_unsaved_work=True,
                                  analysis_completed=analysis_completed,
-                                 draft_modified_after_analysis=draft_modified_after_analysis)
+                                 draft_modified_after_analysis=draft_modified_after_analysis,
+                                 form_token=form_token)
         
         # POST - Run the analysis
         try:
             from analysis import Candidate, analyse_candidates
             from config import Config
+            
+            # CRITICAL: Check form token to prevent duplicate submissions
+            submitted_token = request.form.get('form_token')
+            expected_token = session.get('analysis_form_token')
+            
+            print(f"DEBUG: Submitted token: {submitted_token}")
+            print(f"DEBUG: Expected token: {expected_token}")
+            
+            if not submitted_token or submitted_token != expected_token:
+                # Token missing or invalid - likely duplicate submission
+                print(f"DEBUG: DUPLICATE SUBMISSION BLOCKED! Token mismatch.")
+                flash('This analysis has already been processed. Redirecting to results...', 'info')
+                # Try to find the most recent analysis for this user
+                recent_analysis = Analysis.query.filter_by(user_id=current_user.id).order_by(Analysis.created_at.desc()).first()
+                if recent_analysis:
+                    return redirect(url_for('results', analysis_id=recent_analysis.id))
+                else:
+                    return redirect(url_for('dashboard'))
+            
+            # Consume the token (invalidate it immediately after validation)
+            session.pop('analysis_form_token', None)
+            print(f"DEBUG: Token consumed successfully. Proceeding with analysis.")
             
             # Get configuration
             insights_mode = request.form.get('insights_mode', 'top3')
@@ -720,32 +761,43 @@ def create_app(config_name=None):
             num_candidates = len(candidates)
             print(f"DEBUG: insights_mode='{insights_mode}', num_candidates={num_candidates}")
             
-            # Map form values to number of insights
+            # NEW PRICING MODEL: Calculate cost based on tier
             if insights_mode == 'standard':
-                num_insights = min(5, num_candidates)  # Top 5
+                # Standard: $10 base (includes Top 5 insights)
+                estimated_cost = Decimal('10.00')
+                num_insights = min(5, num_candidates)
             elif insights_mode == 'deep_dive':
-                num_insights = min(15, num_candidates)  # Top 15
+                # Deep Dive: $10 base + $10 extra (includes Top 15 insights)
+                estimated_cost = Decimal('20.00')
+                num_insights = min(15, num_candidates)
             elif insights_mode == 'full_radar':
-                num_insights = num_candidates  # All candidates
-            # Legacy support for old values
-            elif insights_mode == 'top3':
-                num_insights = min(3, num_candidates)
-            elif insights_mode == 'top5':
+                # Full Radar: $10 base + $1 per candidate beyond 5
+                extra_candidates = max(0, num_candidates - 5)
+                estimated_cost = Decimal('10.00') + (Decimal('1.00') * extra_candidates)
+                num_insights = num_candidates
+            # Legacy support for old values (map to new tiers)
+            elif insights_mode in ['top3', 'top5']:
+                estimated_cost = Decimal('10.00')
                 num_insights = min(5, num_candidates)
             elif insights_mode == 'top10':
-                num_insights = min(10, num_candidates)
+                estimated_cost = Decimal('20.00')
+                num_insights = min(15, num_candidates)
             elif insights_mode == 'all':
+                extra_candidates = max(0, num_candidates - 5)
+                estimated_cost = Decimal('10.00') + (Decimal('1.00') * extra_candidates)
                 num_insights = num_candidates
             else:
+                estimated_cost = Decimal('10.00')
                 num_insights = 0
-            print(f"DEBUG: num_insights calculated={num_insights}")
             
-            num_extra_insights = max(0, num_insights - 3)
-            estimated_cost = Config.BASE_ANALYSIS_PRICE + (num_extra_insights * Config.EXTRA_INSIGHT_PRICE)
-            estimated_cost = Decimal(str(estimated_cost))
+            print(f"DEBUG: num_insights={num_insights}, estimated_cost=${estimated_cost}")
             
             # Check funds BEFORE running analysis
             if current_user.balance_usd < estimated_cost:
+                # Save insights mode to session for restoration after payment
+                from flask import session
+                session['pending_insights_mode'] = insights_mode
+                
                 # Don't redirect - show modal to add funds and continue
                 resume_count = len(candidates)
                 return render_template('run_analysis.html',
@@ -761,7 +813,8 @@ def create_app(config_name=None):
                                      shortfall=float(estimated_cost - current_user.balance_usd),
                                      selected_insights_mode=insights_mode)
             
-            # Run analysis
+            # IMPORTANT: Run analysis FIRST, charge AFTER (if analysis fails, no charge)
+            print(f"DEBUG: Starting analysis (NO CHARGE YET)...")
             coverage, insights, evidence_map = analyse_candidates(
                 candidates=candidates,
                 criteria=criteria,
@@ -769,20 +822,9 @@ def create_app(config_name=None):
                 chunk_chars=1200,
                 overlap=150
             )
+            print(f"DEBUG: Coverage analysis complete!")
             
-            # Deduct funds (already checked above)
-            current_user.balance_usd -= estimated_cost
-            
-            # Create transaction
-            transaction = Transaction(
-                user_id=current_user.id,
-                amount_usd=-estimated_cost,
-                transaction_type='debit',
-                description=f'Analysis: {len(candidates)} candidates, {len(criteria)} criteria'
-            )
-            db.session.add(transaction)
-            
-            # Generate GPT insights
+            # Generate GPT insights (can fail with OpenAI API errors)
             from analysis import gpt_candidate_insights
             insights_data = {}
             gpt_candidates_list = []
@@ -837,14 +879,7 @@ def create_app(config_name=None):
                 analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large')
             )
             db.session.add(analysis)
-            db.session.flush()
-            
-            # Link transaction to analysis
-            transaction.analysis_id = analysis.id
-            
-            # Update user analytics tracking
-            current_user.total_analyses_count += 1
-            current_user.total_revenue_usd += estimated_cost
+            db.session.flush()  # Get analysis.id for linking transaction later
             
             # Store candidate files
             from database import CandidateFile
@@ -858,13 +893,36 @@ def create_app(config_name=None):
                 )
                 db.session.add(candidate_file)
             
+            # CRITICAL: Charge user ONLY after all work succeeded
+            # If anything above failed, we never reach this point (exception caught below)
+            print(f"DEBUG: All work complete! NOW charging user ${estimated_cost}...")
+            current_user.balance_usd -= estimated_cost
+            
+            # Create transaction record (linked to analysis)
+            transaction = Transaction(
+                user_id=current_user.id,
+                amount_usd=-estimated_cost,
+                transaction_type='debit',
+                description=f'Analysis: {len(candidates)} candidates, {len(criteria)} criteria',
+                analysis_id=analysis.id
+            )
+            db.session.add(transaction)
+            
+            # Update user analytics tracking
+            current_user.total_analyses_count += 1
+            current_user.total_revenue_usd += estimated_cost
+            
+            # Commit everything atomically (if this fails, EVERYTHING rolls back including charge)
             db.session.commit()
+            print(f"DEBUG: Transaction committed! User charged successfully. New balance: ${current_user.balance_usd}")
             
             flash(f'✅ Analysis complete! Cost: ${estimated_cost:.2f}. Remaining balance: ${current_user.balance_usd:.2f}', 'success')
             return redirect(url_for('results', analysis_id=analysis.id))
             
         except Exception as e:
+            # If ANYTHING fails above, rollback everything (including any charge)
             db.session.rollback()
+            print(f"ERROR: Analysis failed, rolling back transaction. User NOT charged.")
             flash(f'Analysis failed: {str(e)}', 'error')
             import traceback
             traceback.print_exc()

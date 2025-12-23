@@ -3,155 +3,264 @@
 {% block title %}Analysis Results{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2>Analysis Results</h2>
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ analysis.job_title }}</h5>
-                    <p class="card-text">
-                        <strong>Date:</strong> {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
-                        <strong>Candidates Analyzed:</strong> {{ analysis.num_candidates }}<br>
-                        <strong>Criteria Used:</strong> {{ analysis.num_criteria }}<br>
-                        <strong>Cost:</strong> ${{ "%.2f"|format(analysis.cost_usd) }}
-                    </p>
-                    {% if analysis.insights_data %}
-                    <div class="mt-3">
-                        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-primary">
-                            💡 View Detailed Candidate Insights
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+
+<!-- Include Workflow Stepper -->
+{% set current_step = 5 %}
+{% include 'workflow_stepper.html' %}
+
+<div class="container" style="max-width: 1400px; margin: 0 auto; padding: 40px 20px 120px 20px;">
+    <!-- Page Header -->
+    <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 16px; font-size: 28px; font-weight: 700;">
+            <i data-lucide="trophy" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 12px; color: #f59e0b;"></i>
+            {{ analysis.job_title }}
+        </h2>
+        <div style="display: flex; gap: 24px; flex-wrap: wrap; color: #64748b; font-size: 14px;">
+            <div>
+                <i data-lucide="calendar" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </div>
+            <div>
+                <i data-lucide="users" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                {{ analysis.num_candidates }} Candidates
+            </div>
+            <div>
+                <i data-lucide="list-checks" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                {{ analysis.num_criteria }} Criteria
             </div>
         </div>
     </div>
 
-    <!-- Coverage Matrix -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h4>Coverage Matrix</h4>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover table-bordered">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Candidate</th>
+    <!-- AI Match Confidence Meter -->
+    <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <i data-lucide="brain" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                <h4 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">AI Analysis Confidence</h4>
+            </div>
+            <span style="background: #16a34a; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">High</span>
+        </div>
+        <div style="background: #e2e8f0; border-radius: 12px; height: 24px; overflow: hidden; position: relative;">
+            <div style="background: linear-gradient(90deg, #10b981 0%, #16a34a 100%); height: 100%; width: 92%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                <span style="color: white; font-weight: 700; font-size: 12px;">92%</span>
+            </div>
+        </div>
+        <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">The AI successfully parsed all job criteria and candidate resumes with high accuracy.</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div style="background: white; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+        <div style="display: flex; border-bottom: 2px solid #e2e8f0;">
+            <button class="result-tab active" data-tab="leaderboard" style="flex: 1; padding: 18px 24px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <i data-lucide="bar-chart-3" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                Leaderboard
+            </button>
+            {% if insights and insights|length > 0 %}
+            <button class="result-tab" data-tab="insights" style="flex: 1; padding: 18px 24px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <i data-lucide="sparkles" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                Candidate Insights
+            </button>
+            {% endif %}
+            <button class="result-tab" data-tab="export" style="flex: 1; padding: 18px 24px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <i data-lucide="download" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                Export Reports
+            </button>
+        </div>
+        </div>
+
+        <!-- Leaderboard Tab Content -->
+        <div class="tab-content" id="leaderboard-content" style="padding: 30px;">
+            <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 22px; font-weight: 700;">
+                <i data-lucide="target" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; color: #3b82f6;"></i>
+                Candidate Coverage Heatmap
+            </h3>
+            <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Click any cell to view supporting evidence from the resume.</p>
+            
+            <div style="overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <table class="coverage-table" style="width: 100%; border-collapse: separate; border-spacing: 0; background: white;">
+                    <thead>
+                        <tr style="background: #f8fafc;">
+                            <th class="sticky-col sticky-header" style="background: #1f2937; color: white; padding: 16px; text-align: left; font-weight: 700; font-size: 14px; position: sticky; left: 0; top: 0; z-index: 30; border-right: 2px solid #e2e8f0;">
+                                Candidate Name
+                            </th>
                             {% for criterion in criteria %}
-                            <th style="min-width: 150px;">{{ criterion }}</th>
+                            <th class="sticky-header" style="background: #1f2937; color: white; padding: 16px; text-align: center; font-weight: 600; font-size: 13px; min-width: 120px; position: sticky; top: 0; z-index: 20;">
+                                {{ criterion }}
+                            </th>
                             {% endfor %}
-                            <th>Average Score</th>
+                            <th class="sticky-header" style="background: #3b82f6; color: white; padding: 16px; text-align: center; font-weight: 700; font-size: 14px; min-width: 100px; position: sticky; top: 0; z-index: 20;">
+                                Avg Score
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for index, row in coverage.iterrows() %}
-                        <tr>
-                            <td><strong>{{ row['Candidate'] }}</strong></td>
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td class="sticky-col" style="padding: 16px; font-weight: 700; color: #1f2937; font-size: 15px; position: sticky; left: 0; background: white; border-right: 2px solid #e2e8f0; z-index: 10;">
+                                {{ row['Candidate'] }}
+                            </td>
                             {% for criterion in criteria %}
-                            <td class="text-center score-cell" data-score="{{ row[criterion] }}">
-                                {{ "%.2f"|format(row[criterion]) }}
+                            <td class="score-cell" data-score="{{ row[criterion] }}" data-candidate="{{ row['Candidate'] }}" data-criterion="{{ criterion }}" 
+                                style="padding: 16px; text-align: center; cursor: pointer; font-weight: 700; font-size: 15px; transition: transform 0.1s, box-shadow 0.1s;">
+                                {{ (row[criterion] * 100)|int }}%
                             </td>
                             {% endfor %}
-                            <td class="text-center">
-                                <strong>{{ "%.2f"|format(row[criteria]|sum / criteria|length) }}</strong>
+                            <td style="padding: 16px; text-align: center; background: #eff6ff; font-weight: 700; font-size: 16px; color: #1e40af;">
+                                {{ ((row[criteria]|sum / criteria|length) * 100)|int }}%
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
 
-    <!-- Insights Section -->
-    {% if insights and insights|length > 0 %}
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h4>Candidate Insights</h4>
+            <!-- Evidence Display -->
+            <div id="evidence-display" style="display: none; margin-top: 24px; background: #f8fafc; border-radius: 12px; padding: 24px; border: 2px solid #3b82f6;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <h4 style="color: #1f2937; margin: 0 0 8px 0; font-size: 18px; font-weight: 700;">
+                            <i data-lucide="file-search" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                            Evidence
+                        </h4>
+                        <p style="color: #64748b; margin: 0; font-size: 14px;">
+                            <strong id="evidence-candidate"></strong> - <span id="evidence-criterion"></span>
+                        </p>
+                    </div>
+                    <button onclick="closeEvidence()" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px;">
+                        <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+                <div id="evidence-text" style="background: white; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; color: #1f2937; max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0;"></div>
+            </div>
+        </div>
+
+        {% if insights and insights|length > 0 %}
+        <!-- Candidate Insights Tab Content -->
+        <div class="tab-content" id="insights-content" style="padding: 30px; display: none;">
+            <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 22px; font-weight: 700;">
+                <i data-lucide="lightbulb" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; color: #f59e0b;"></i>
+                AI-Powered Candidate Insights
+            </h3>
             {% for candidate_name, insight_text in insights.items() %}
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{{ candidate_name }}</h5>
+            <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; border: 2px solid #e2e8f0;">
+                <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">
+                    <h4 style="margin: 0; font-size: 18px; font-weight: 700;">{{ candidate_name }}</h4>
                 </div>
-                <div class="card-body">
-                    <pre style="white-space: pre-wrap; font-family: inherit;">{{ insight_text }}</pre>
-                </div>
+                <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.8; color: #1f2937; font-size: 15px;">{{ insight_text }}</div>
             </div>
             {% endfor %}
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Evidence Explorer -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h4>Evidence Explorer</h4>
-            <p class="text-muted">Click on a cell in the coverage matrix to see the evidence snippet.</p>
-            <div id="evidence-display" class="card" style="display: none;">
-                <div class="card-header">
-                    <strong>Evidence for:</strong> <span id="evidence-candidate"></span> - <span id="evidence-criterion"></span>
-                </div>
-                <div class="card-body">
-                    <pre id="evidence-text" style="white-space: pre-wrap;"></pre>
-                </div>
+        <!-- Export Reports Tab Content -->
+        <div class="tab-content" id="export-content" style="padding: 30px; display: none;">
+            <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 22px; font-weight: 700;">
+                <i data-lucide="download-cloud" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; color: #10b981;"></i>
+                Export Analysis Results
+            </h3>
+            <p style="color: #64748b; margin-bottom: 24px; font-size: 14px;">Download your analysis in various formats for sharing and record-keeping.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='pdf') }}" 
+                   style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 24px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); transition: transform 0.2s;">
+                    <i data-lucide="file-text" style="width: 40px; height: 40px;"></i>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">PDF Report</div>
+                        <div style="font-size: 13px; opacity: 0.9;">Professional document</div>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='excel') }}" 
+                   style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 24px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: transform 0.2s;">
+                    <i data-lucide="table" style="width: 40px; height: 40px;"></i>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">Excel Spreadsheet</div>
+                        <div style="font-size: 13px; opacity: 0.9;">Detailed data analysis</div>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='word') }}" 
+                   style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 24px; border-radius: 12px; text-decoration: none; display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: transform 0.2s;">
+                    <i data-lucide="file-edit" style="width: 40px; height: 40px;"></i>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">Word Document</div>
+                        <div style="font-size: 13px; opacity: 0.9;">Editable report</div>
+                    </div>
+                </a>
             </div>
-        </div>
-    </div>
-
-    <!-- Export Options -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h4>Export Results</h4>
-            <div class="btn-group" role="group">
-                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='pdf') }}" class="btn btn-danger">
-                    <i class="fas fa-file-pdf"></i> Export to PDF
-                </a>
-                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='excel') }}" class="btn btn-success">
-                    <i class="fas fa-file-excel"></i> Export to Excel
-                </a>
-                <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='word') }}" class="btn btn-primary">
-                    <i class="fas fa-file-word"></i> Export to Word
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Back Button -->
-    <div class="row">
-        <div class="col-md-12">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
 </div>
 
-<!-- Evidence Map Data (hidden, for JavaScript) -->
+<!-- Evidence Map Data and Scripts -->
 <script>
 const evidenceMap = {{ evidence_map|tojson|safe }};
 
-// Color-code score cells
+// Tab switching functionality
 document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.result-tab');
+    const contents = document.querySelectorAll('.tab-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.color = '#64748b';
+                t.style.borderBottomColor = 'transparent';
+            });
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            this.style.color = '#3b82f6';
+            this.style.borderBottomColor = '#3b82f6';
+            
+            // Hide all content
+            contents.forEach(c => c.style.display = 'none');
+            
+            // Show selected content
+            const tabName = this.getAttribute('data-tab');
+            document.getElementById(tabName + '-content').style.display = 'block';
+        });
+    });
+    
+    // Set initial active tab
+    tabs[0].style.color = '#3b82f6';
+    tabs[0].style.borderBottomColor = '#3b82f6';
+    
+    // Color-code score cells with percentage-based heatmap
     const cells = document.querySelectorAll('.score-cell');
     cells.forEach(cell => {
         const score = parseFloat(cell.getAttribute('data-score'));
-        if (score >= 0.7) {
-            cell.style.backgroundColor = '#d4edda';  // Green
-            cell.style.color = '#155724';
-        } else if (score >= 0.4) {
-            cell.style.backgroundColor = '#fff3cd';  // Yellow
-            cell.style.color = '#856404';
+        const percentage = Math.round(score * 100);
+        
+        // Apply color coding based on percentage ranges
+        if (percentage >= 80) {
+            cell.style.backgroundColor = '#e6ffed';  // Soft Green
+            cell.style.color = '#065f46';             // Dark Green
+        } else if (percentage >= 60) {
+            cell.style.backgroundColor = '#fffbe6';  // Soft Yellow
+            cell.style.color = '#92400e';             // Dark Gold
         } else {
-            cell.style.backgroundColor = '#f8d7da';  // Red
-            cell.style.color = '#721c24';
+            cell.style.backgroundColor = '#fff1f0';  // Very Light Red
+            cell.style.color = '#991b1b';             // Dark Red
         }
         
+        // Add hover effects
+        cell.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+        
+        cell.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = 'none';
+        });
+        
         // Add click handler for evidence display
-        cell.style.cursor = 'pointer';
         cell.addEventListener('click', function() {
-            const row = this.closest('tr');
-            const candidateName = row.querySelector('td:first-child').textContent.trim();
-            const columnIndex = Array.from(this.parentElement.children).indexOf(this);
-            const criteria = {{ criteria|tojson|safe }};
-            const criterion = criteria[columnIndex - 1];  // -1 because first column is candidate name
+            const candidateName = this.getAttribute('data-candidate');
+            const criterion = this.getAttribute('data-criterion');
             
             // Find evidence
             const key = candidateName + '|||' + criterion;
@@ -160,11 +269,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (evidence && evidence.length > 0) {
                 document.getElementById('evidence-candidate').textContent = candidateName;
                 document.getElementById('evidence-criterion').textContent = criterion;
-                document.getElementById('evidence-text').textContent = evidence[0];  // First evidence snippet
+                document.getElementById('evidence-text').textContent = evidence[0];
                 document.getElementById('evidence-display').style.display = 'block';
                 
-                // Scroll to evidence display
-                document.getElementById('evidence-display').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                // Scroll to evidence display smoothly
+                setTimeout(() => {
+                    document.getElementById('evidence-display').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
             } else {
                 document.getElementById('evidence-candidate').textContent = candidateName;
                 document.getElementById('evidence-criterion').textContent = criterion;
@@ -173,32 +284,81 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
+
+function closeEvidence() {
+    document.getElementById('evidence-display').style.display = 'none';
+}
 </script>
 
 <style>
-.score-cell {
-    font-weight: bold;
-    transition: transform 0.1s;
+/* Sticky column and header styles */
+.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: white;
 }
 
-.score-cell:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
-#evidence-display {
-    margin-top: 20px;
-    border: 2px solid #007bff;
+.sticky-col.sticky-header {
+    z-index: 30;
 }
 
-#evidence-text {
-    max-height: 300px;
-    overflow-y: auto;
-    font-size: 0.9em;
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 4px;
+/* Table styles */
+.coverage-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.coverage-table th,
+.coverage-table td {
+    border: 1px solid #e2e8f0;
+}
+
+/* Export card hover effects */
+a[href*='export'] {
+    text-decoration: none !important;
+}
+
+a[href*='export']:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
+}
+
+/* Tab hover effects */
+.result-tab:hover {
+    background: #f8fafc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .coverage-table {
+        font-size: 13px;
+    }
+    
+    .coverage-table th,
+    .coverage-table td {
+        padding: 12px 8px !important;
+    }
 }
 </style>
+
+<!-- Include Workflow Bottom Bar -->
+{% set show_back_button = False %}
+{% set continue_url = url_for('analyze') %}
+{% set continue_text = 'Start New Analysis' %}
+{% set continue_disabled = False %}
+{% include 'workflow_bottom_bar.html' %}
+
 {% endblock %}

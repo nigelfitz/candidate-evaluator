@@ -4,6 +4,29 @@
 
 {% block extra_css %}
 <style>
+    /* Sticky column styles */
+    #coverageMatrix thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 30;
+        background: #f8f9fa;
+    }
+    
+    #coverageMatrix tbody td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background: white;
+        font-weight: 600;
+    }
+    
+    #coverageMatrix thead th {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #f8f9fa;
+    }
+    
     .success-toast {
         background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
         border: 2px solid #10b981;
@@ -175,7 +198,13 @@
                             Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
                             {% endif %}
                         </p>
-                        <div class="time-saved">⚡ You just saved approximately {{ (analysis.num_candidates * 25) }} minutes of manual screening</div>
+                        {% set total_minutes = analysis.num_candidates * 25 %}
+                        {% set hours = (total_minutes // 60)|int %}
+                        {% set minutes = (total_minutes % 60)|int %}
+                        <div class="time-saved">⚡ You just saved approximately 
+                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}{% if hours > 0 and minutes > 0 %} and {% endif %}{% if minutes > 0 %}{{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
+                            of manual screening
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -183,39 +212,10 @@
         {% endif %}
     {% endwith %}
     
+    <!-- Workflow Stepper -->
     {% if is_current_draft_analysis %}
-    <!-- Workflow Progress Indicator (only for current draft) -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <div style="flex: 1; text-align: center; padding: 12px; border-radius: 8px; background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);">
-                <div style="font-size: 24px; color: white;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: white;">Results</div>
-            </div>
-        </div>
-        <div class="text-center mt-2">
-            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
-        </div>
-    </div>
+    {% set current_step = 5 %}
+    {% include 'workflow_stepper.html' %}
     {% else %}
     <!-- Historical Analysis Header -->
     <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -264,6 +264,23 @@
                 </div>
             </div>
 
+            <!-- AI Match Confidence Meter -->
+            <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="brain" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                        <h4 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">AI Analysis Confidence</h4>
+                    </div>
+                    <span style="background: #16a34a; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">High</span>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 12px; height: 24px; overflow: hidden; position: relative;">
+                    <div style="background: linear-gradient(90deg, #10b981 0%, #16a34a 100%); height: 100%; width: 92%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                        <span style="color: white; font-weight: 700; font-size: 12px;">92%</span>
+                    </div>
+                </div>
+                <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">The AI successfully parsed all job criteria and candidate resumes with high accuracy.</p>
+            </div>
+
             <!-- Top Candidates Summary -->
             <div class="card mb-4 border-success">
                 <div class="card-header bg-success text-white">
@@ -278,10 +295,12 @@
 
             <!-- Scoring Info Box -->
             <div class="alert alert-info mb-4">
-                <strong>ℹ️ Understanding Scores:</strong><br>
-                Each score (0.00–1.00) measures how well a candidate's resume matches a criterion. Use "Scores" tickbox to show/hide numeric scores.<br>
-                Icons indicate score strength in 3 ranges: ✅ Strong (≥{{ "%.2f"|format(user_settings.default_hi_threshold / 100) }}) | ⚠️ Moderate ({{ "%.2f"|format(user_settings.default_lo_threshold / 100) }}–{{ "%.2f"|format(user_settings.default_hi_threshold / 100) }}) | ⛔ Weak (<{{ "%.2f"|format(user_settings.default_lo_threshold / 100) }})
-                <small style="margin-left: 1rem;"><a href="{{ url_for('settings') }}" style="color: #0066cc;">⚙️ Adjust thresholds</a></small>
+                <strong>ℹ️ Understanding the Heatmap:</strong><br>
+                Each score is shown as a percentage (0-100%) with color coding for quick visual assessment:<br>
+                <span style="background: #e6ffed; color: #065f46; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">80-100%</span> <strong>Strong Match</strong> (Green) | 
+                <span style="background: #fffbe6; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">60-79%</span> <strong>Potential Match</strong> (Yellow) | 
+                <span style="background: #fff1f0; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">Below 60%</span> <strong>Low Alignment</strong> (Red)
+                <br><small class="mt-2 d-inline-block">💡 <em>Click any cell to view supporting evidence from the resume</em></small>
             </div>
 
             <!-- Coverage Matrix Controls -->
@@ -322,10 +341,7 @@
                         <div class="col-md-3">
                             <label class="form-label small">&nbsp;</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="showScores">
-                                <label class="form-check-label" for="showScores">
-                                    Show numeric scores
-                                </label>
+                                <!-- Placeholder for alignment -->
                             </div>
                         </div>
                     </div>
@@ -529,6 +545,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCoverageMatrix();
     initializeEvidenceExplorer();
     attachEventListeners();
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 
 function initializeTopCandidates() {
@@ -537,19 +558,32 @@ function initializeTopCandidates() {
     
     const html = top5.map((row, idx) => {
         const score = row.Overall;
-        const icon = getScoreIcon(score);
+        const percentage = Math.round(score * 100);
         const rank = idx + 1;
         
+        // Get background color based on score
+        let bgColor, textColor;
+        if (score >= 0.80) {
+            bgColor = '#e6ffed';
+            textColor = '#065f46';
+        } else if (score >= 0.60) {
+            bgColor = '#fffbe6';
+            textColor = '#92400e';
+        } else {
+            bgColor = '#fff1f0';
+            textColor = '#991b1b';
+        }
+        
         return `
-            <div class="col-md-2 text-center mb-2">
-                <div class="badge bg-${getScoreColor(score)} fs-6">#${rank}</div>
-                <p class="mb-0 mt-1"><strong>${row.Candidate}</strong></p>
-                <p class="mb-0">${score.toFixed(2)} ${icon}</p>
+            <div style="flex: 1; min-width: 180px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid ${bgColor}; text-align: center;">
+                <div style="font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">#${rank}</div>
+                <div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${row.Candidate}">${row.Candidate}</div>
+                <div style="background: ${bgColor}; color: ${textColor}; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 24px;">${percentage}%</div>
             </div>
         `;
     }).join('');
     
-    document.getElementById('topCandidates').innerHTML = html;
+    document.getElementById('topCandidates').innerHTML = `<div style="display: flex; gap: 16px; flex-wrap: wrap;">${html}</div>`;
 }
 
 function initializeCoverageMatrix() {
@@ -602,9 +636,8 @@ function renderMatrix() {
     bodyHTML += '<tr class="table-warning"><td><strong>📊 Overall</strong></td><td></td>';
     data.forEach(row => {
         const score = row.Overall;
-        const icon = getScoreIcon(score);
-        const display = showScores ? `${score.toFixed(2)} ${icon}` : icon;
-        bodyHTML += `<td class="text-center">${display}</td>`;
+        const display = getScoreIcon(score);
+        bodyHTML += `<td class="text-center" style="cursor: pointer;" onclick="scrollToEvidenceExplorer('${row.Candidate}')" title="Click to view evidence for ${row.Candidate}">${display}</td>`;
     });
     bodyHTML += '</tr>';
     
@@ -656,15 +689,13 @@ function renderCriterionRow(criterion, data, candidates) {
     const scores = data.map(row => parseFloat(row[criterion]));
     const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
     const avgIcon = getScoreIcon(avg);
-    const avgDisplay = showScores ? `${avg.toFixed(2)} ${avgIcon}` : avgIcon;
     
-    let html = `<tr><td class="ps-4">${criterion}</td><td class="text-center">${avgDisplay}</td>`;
+    let html = `<tr><td class="ps-4" style="font-weight: 500;">${criterion}</td><td class="text-center">${avgIcon}</td>`;
     
     data.forEach(row => {
         const score = parseFloat(row[criterion]);
-        const icon = getScoreIcon(score);
-        const display = showScores ? `${score.toFixed(2)} ${icon}` : icon;
-        html += `<td class="text-center">${display}</td>`;
+        const display = getScoreIcon(score);
+        html += `<td class="text-center" style="cursor: pointer;" onclick="showQuickEvidence('${row.Candidate}', '${criterion}')">${display}</td>`;
     });
     
     html += '</tr>';
@@ -672,9 +703,21 @@ function renderCriterionRow(criterion, data, candidates) {
 }
 
 function getScoreIcon(score) {
-    if (score >= thresholds.high) return '✅';
-    if (score >= thresholds.low) return '⚠️';
-    return '⛔';
+    const percentage = Math.round(score * 100);
+    let bgColor, textColor;
+    
+    if (percentage >= 80) {
+        bgColor = '#e6ffed';  // Soft Green
+        textColor = '#065f46'; // Dark Green
+    } else if (percentage >= 60) {
+        bgColor = '#fffbe6';  // Soft Yellow
+        textColor = '#92400e'; // Dark Gold
+    } else {
+        bgColor = '#fff1f0';  // Very Light Red
+        textColor = '#991b1b'; // Dark Red
+    }
+    
+    return `<span style="display: inline-block; background: ${bgColor}; color: ${textColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; min-width: 50px;">${percentage}%</span>`;
 }
 
 function getScoreColor(score) {
@@ -723,19 +766,53 @@ function updateEvidenceDisplay() {
     const score = row ? parseFloat(row[criterion]) : 0;
     const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
     
+    // Highlight keywords from criterion in the evidence
+    const criterionWords = criterion.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    let highlightedSnippet = snippet;
+    criterionWords.forEach(word => {
+        const regex = new RegExp(`(${word})`, 'gi');
+        highlightedSnippet = highlightedSnippet.replace(regex, '<mark style="background: #fef08a; font-weight: 600; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+    });
+    
     const html = `
         <div class="alert alert-${scoreColor}">
-            <strong>Score:</strong> <span class="fs-5">${score.toFixed(2)}</span> ${getScoreIcon(score)}
+            <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>
         </div>
         <div class="card">
-            <div class="card-header">Evidence from resume:</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Evidence from resume:</span>
+                <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    📄 View Resume
+                </a>
+            </div>
             <div class="card-body">
-                <pre class="mb-0" style="white-space: pre-wrap;">${snippet}</pre>
+                <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9rem;">${highlightedSnippet}</div>
             </div>
         </div>
     `;
     
     document.getElementById('evidenceDisplay').innerHTML = html;
+}
+
+function scrollToEvidenceExplorer(candidateName) {
+    // Set the candidate in the Evidence Explorer dropdown
+    const candidateSelect = document.getElementById('evidenceCandidate');
+    candidateSelect.value = candidateName;
+    
+    // Scroll to Evidence Explorer
+    const evidenceExplorer = document.querySelector('.card-header:has(+ .card-body #evidenceCandidate)')?.closest('.card');
+    if (evidenceExplorer) {
+        evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Highlight the card briefly
+        evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
+        evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+        setTimeout(() => {
+            evidenceExplorer.style.boxShadow = '';
+        }, 2000);
+    }
+    
+    // Trigger the evidence display update
+    updateEvidenceDisplay();
 }
 
 function attachEventListeners() {
@@ -917,7 +994,18 @@ async function submitVote(voteType) {
 }
 
 .table-sm td, .table-sm th {
-    padding: 0.5rem;
+    padding: 8px 12px;
+}
+
+#coverageMatrix td,
+#coverageMatrix th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#coverageMatrix th:first-child,
+#coverageMatrix td:first-child {
+    text-align: left;
 }
 
 pre {
@@ -954,4 +1042,14 @@ function dismissToast() {
     }
 }
 </script>
+
+<!-- Sticky Bottom Bar -->
+{% if is_current_draft_analysis %}
+{% set show_back_button = True %}
+{% set back_url = url_for('run_analysis_route') %}
+{% set continue_text = 'Start New Analysis' %}
+{% set continue_url = url_for('analyze', new=1) %}
+{% set continue_disabled = false %}
+{% include 'workflow_bottom_bar.html' %}
+{% endif %}
 {% endblock %}

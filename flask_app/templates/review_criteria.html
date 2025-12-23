@@ -3,149 +3,149 @@
 {% block title %}Job Criteria{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Workflow Progress Indicator -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Uploaded JD">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <div style="flex: 1; text-align: center; padding: 12px; border-radius: 8px; background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);">
-                <div style="font-size: 24px; color: white;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: white;">Evaluation Criteria</div>
-            </div>
-            <div style="font-size: 20px; color: #d1d5db;">→</div>
-            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db; text-decoration: none; cursor: pointer;" title="Next: Resumes">
-                <div style="font-size: 24px;">👥</div>
-                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Candidate Resumes</div>
-            </a>
-            <div style="font-size: 20px; color: #d1d5db;">→</div>
-            <div style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db;">
-                <div style="font-size: 24px;">🚀</div>
-                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Run Analysis</div>
-            </div>
-            <div style="font-size: 20px; color: #d1d5db;">→</div>
-            <div style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db;">
-                <div style="font-size: 24px;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Results</div>
-            </div>
-        </div>
+
+<!-- Include Workflow Stepper -->
+{% set current_step = 2 %}
+{% include 'workflow_stepper.html' %}
+
+<div class="container mt-4" style="padding-bottom: 120px;">
+    <!-- Job Title as Page Header -->
+    <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 40px;">
+        <label for="jobTitleInput" class="form-label" style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 12px; display: block;">
+            <i data-lucide="briefcase" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;"></i>
+            Job Title
+        </label>
+        <input type="text" 
+               class="form-control" 
+               id="jobTitleInput" 
+               value="{{ job_title }}"
+               placeholder="Enter job title"
+               style="font-size: 0.95rem; font-weight: 500; color: #1f2937; border: 2px solid #e2e8f0; padding: 12px 16px; width: 100%; max-width: none;">
+        <small class="text-muted" style="font-size: 13px; margin-top: 6px; display: block;">This will appear in Job History and exported reports</small>
     </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2>📋 Job Criteria</h2>
-                    <p class="text-muted mb-0">Extracted from: {{ jd_filename }}</p>
-                </div>
-            </div>
+    <!-- Info Box -->
+    <div class="alert alert-info" style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 32px;">
+        <i data-lucide="lightbulb" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px; color: #1e40af;"></i>
+        <strong>Tip:</strong> Add, remove, or reword criteria or Job Title. Uncheck <em>Use</em> to exclude items. Click 'Save Changes' when done.
+    </div>
 
-            <!-- Job Title Editor -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <label for="jobTitleInput" class="form-label fw-bold">💼 Job Title</label>
-                    <input type="text" 
-                           class="form-control" 
-                           id="jobTitleInput" 
-                           value="{{ job_title }}"
-                           placeholder="Enter job title"
-                           style="font-size: 1.1rem;">
-                    <small class="text-muted">This will be displayed in the Job History table and exported reports.</small>
-                </div>
+    <!-- Action Buttons -->
+    <div class="mb-4" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button id="addCriterion" class="btn btn-success">
+            <i data-lucide="plus" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;"></i>
+            Add New Criterion
+        </button>
+        <button id="saveChanges" class="btn btn-primary">
+            <i data-lucide="save" id="saveIcon" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;"></i>
+            <span id="saveText">Save Changes</span>
+            <span class="spinner-border spinner-border-sm" id="saveSpinner" style="display: none; margin-left: 6px;"></span>
+        </button>
+        
+        <!-- Manage Data Dropdown -->
+        <div class="dropdown-custom" style="display: inline-block; position: relative;">
+            <button class="btn btn-outline-secondary" type="button" id="manageDataDropdown" onclick="toggleManageDropdown(event)">
+                <i data-lucide="settings" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;"></i>
+                Manage Data
+                <i data-lucide="chevron-down" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 4px;"></i>
+            </button>
+            <div class="dropdown-menu-custom" id="manageDataMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 1000;">
+                <a class="dropdown-item-custom" href="{{ url_for('export_criteria') }}" style="display: block; padding: 10px 16px; color: #1f2937; text-decoration: none; transition: background 0.2s;">
+                    <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                    Export to CSV
+                </a>
+                <a class="dropdown-item-custom" href="#" onclick="document.getElementById('importFile').click(); return false;" style="display: block; padding: 10px 16px; color: #1f2937; text-decoration: none; transition: background 0.2s;">
+                    <i data-lucide="upload" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                    Import from CSV
+                </a>
+                <hr style="margin: 4px 0; border: none; border-top: 1px solid #e2e8f0;">
+                <a class="dropdown-item-custom" href="#" id="resetChangesDropdown" style="display: block; padding: 10px 16px; color: #f59e0b; text-decoration: none; transition: background 0.2s;">
+                    <i data-lucide="rotate-ccw" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                    Reset/Clear All
+                </a>
             </div>
+        </div>
+        <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importCriteria(this)">
+    </div>
 
-            <!-- Info Box -->
-            <div class="alert alert-info mb-4">
-                💡 <strong>Tip:</strong> Add, remove, or reword criteria. Uncheck <em>Use</em> to exclude items. Click 'Save Changes' when done, then return to Upload & Analyse to add resumes.
+    <!-- Criteria Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="criteriaTable">
+            <thead style="background-color: #f8f9fa;">
+                <tr>
+                    <th style="width: 60px;">Use</th>
+                    <th style="width: 180px;">Category</th>
+                    <th>Criterion</th>
+                    <th style="width: 80px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="criteriaBody">
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <p class="text-muted">
+            <strong>Total criteria:</strong> <span id="criteriaCount">0</span> |
+            <strong>Active:</strong> <span id="activeCount">0</span>
+        </p>
+    </div>
+
+    <!-- Source Data Accordion (at bottom) -->
+    <div class="accordion-custom mt-5" id="sourceDataAccordion" style="border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+        <div class="accordion-header-custom" onclick="toggleSourceAccordion()" style="background: #f8fafc; font-weight: 600; color: #475569; padding: 16px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <i data-lucide="file-text" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                Review Source JD
             </div>
-
-            <!-- JD Preview (PDF or Text) -->
-            {% if has_pdf %}
-            <div class="mb-4">
-                <details>
-                    <summary style="cursor: pointer; color: #1f77b4; font-weight: 500;">📄 View Original PDF File</summary>
-                    <div class="mt-2">
-                        <iframe src="{{ url_for('view_jd_pdf') }}" width="100%" height="600px" style="border: 1px solid #ddd;"></iframe>
+            <i data-lucide="chevron-down" id="sourceAccordionIcon" style="width: 20px; height: 20px; transition: transform 0.3s;"></i>
+        </div>
+        <div id="collapseSourceData" style="display: none; background: white; padding: 20px;">
+                    
+                    <!-- Original PDF/Text -->
+                    {% if has_pdf %}
+                    <div class="mb-4">
+                        <h5 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">
+                            <i data-lucide="file" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                            Original PDF File
+                        </h5>
+                        <iframe src="{{ url_for('view_jd_pdf') }}" width="100%" height="600px" style="border: 1px solid #ddd; border-radius: 6px;"></iframe>
                         <div class="mt-2">
                             <a href="{{ url_for('view_jd_pdf') }}" download="{{ jd_filename }}" class="btn btn-sm btn-outline-primary">
-                                ⬇️ Download PDF
+                                <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                                Download PDF
                             </a>
                         </div>
                     </div>
-                </details>
-            </div>
-            {% else %}
-            <div class="mb-4">
-                <details>
-                    <summary style="cursor: pointer; color: #1f77b4; font-weight: 500;">📄 View Job Description Text</summary>
-                    <div class="mt-2 p-3" style="background: #f8f9fa; border-radius: 4px; max-height: 300px; overflow-y: auto;">
-                        <pre style="white-space: pre-wrap; font-size: 0.9rem;">{{ jd_text }}...</pre>
+                    {% else %}
+                    <div class="mb-4">
+                        <h5 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">
+                            <i data-lucide="file-text" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                            Job Description Text
+                        </h5>
+                        <div class="p-3" style="background: #f8f9fa; border-radius: 6px; max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                            <pre style="white-space: pre-wrap; font-size: 0.9rem; margin: 0;">{{ jd_text }}...</pre>
+                        </div>
                     </div>
-                </details>
-            </div>
-            {% endif %}
+                    {% endif %}
 
-            <!-- Full Text Extract -->
-            <div class="mb-4">
-                <details>
-                    <summary style="cursor: pointer; color: #1f77b4; font-weight: 500;">📄 Full Text Extract - used for AI/GPT analysis</summary>
-                    <div class="mt-2">
-                        <textarea readonly class="form-control" style="font-family: monospace; font-size: 0.85rem; height: 200px; resize: vertical; width: 100%;">{{ jd_text }}</textarea>
+                    <!-- Full Text Extract -->
+                    <div>
+                        <h5 style="color: #1f2937; font-weight: 600; margin-bottom: 12px;">
+                            <i data-lucide="align-left" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                            Full Text Extract (Used for AI Analysis)
+                        </h5>
+                        <textarea readonly class="form-control" style="font-family: monospace; font-size: 0.85rem; height: 200px; resize: vertical; width: 100%; background: #f8f9fa; border: 1px solid #e2e8f0;">{{ jd_text }}</textarea>
                         <div class="mt-2">
                             <small class="text-muted">
-                                📊 {{ jd_text|length|number_format }} characters extracted 
+                                <i data-lucide="bar-chart" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                                {{ jd_text|length|number_format }} characters extracted 
                                 | Extraction method: {{ 'Layout-aware (PyMuPDF)' if has_pdf else 'Direct text' }}
                             </small>
                         </div>
                     </div>
-                </details>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="mb-3">
-                <button id="addCriterion" class="btn btn-success">
-                    ➕ Add New Criterion
-                </button>
-                <button id="saveChanges" class="btn btn-primary">
-                    💾 Save Changes
-                </button>
-                <button id="resetChanges" class="btn btn-warning">
-                    🔄 Reset
-                </button>
-                <a href="{{ url_for('export_criteria') }}" class="btn btn-info">
-                    📥 Export to CSV
-                </a>
-                <button id="importButton" class="btn btn-secondary" onclick="document.getElementById('importFile').click();">
-                    📤 Import from CSV
-                </button>
-                <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importCriteria(this)">
-            </div>
-
-            <!-- Criteria Table -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="criteriaTable">
-                    <thead style="background-color: #f8f9fa;">
-                        <tr>
-                            <th style="width: 60px;">Use</th>
-                            <th style="width: 180px;">Category</th>
-                            <th>Criterion</th>
-                            <th style="width: 80px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="criteriaBody">
-                        <!-- Populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3">
-                <p class="text-muted">
-                    <strong>Total criteria:</strong> <span id="criteriaCount">0</span> |
-                    <strong>Active:</strong> <span id="activeCount">0</span>
-                </p>
+                </div>
             </div>
         </div>
     </div>
@@ -344,6 +344,16 @@ function markChanged() {
 
 function saveChanges() {
     const jobTitle = document.getElementById('jobTitleInput').value.trim();
+    const saveBtn = document.getElementById('saveChanges');
+    const saveIcon = document.getElementById('saveIcon');
+    const saveText = document.getElementById('saveText');
+    const saveSpinner = document.getElementById('saveSpinner');
+    
+    // Show spinner
+    saveIcon.style.display = 'none';
+    saveSpinner.style.display = 'inline-block';
+    saveText.textContent = 'Saving...';
+    saveBtn.disabled = true;
     
     fetch('{{ url_for("review_criteria") }}', {
         method: 'POST',
@@ -355,6 +365,12 @@ function saveChanges() {
     })
     .then(r => r.json())
     .then(data => {
+        // Hide spinner
+        saveSpinner.style.display = 'none';
+        saveIcon.style.display = 'inline';
+        saveText.textContent = 'Save Changes';
+        saveBtn.disabled = false;
+        
         if (data.success) {
             alert(data.message);
             hasChanges = false;
@@ -365,6 +381,14 @@ function saveChanges() {
         } else {
             alert('Error: ' + data.message);
         }
+    })
+    .catch(err => {
+        // Hide spinner on error
+        saveSpinner.style.display = 'none';
+        saveIcon.style.display = 'inline';
+        saveText.textContent = 'Save Changes';
+        saveBtn.disabled = false;
+        alert('Save failed: ' + err);
     });
 }
 
@@ -380,7 +404,15 @@ function resetChanges() {
 // Event listeners
 document.getElementById('addCriterion').addEventListener('click', addCriterion);
 document.getElementById('saveChanges').addEventListener('click', saveChanges);
-document.getElementById('resetChanges').addEventListener('click', resetChanges);
+document.getElementById('resetChangesDropdown').addEventListener('click', function(e) {
+    e.preventDefault();
+    resetChanges();
+});
+
+// Re-initialize Lucide icons after dropdown is rendered
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
 
 // Warn before leaving with unsaved changes
 window.addEventListener('beforeunload', (e) => {
@@ -392,9 +424,50 @@ window.addEventListener('beforeunload', (e) => {
 
 // Initial render
 renderTable();
+
+// Dropdown menu functionality
+function toggleManageDropdown(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('manageDataMenu');
+    const isVisible = menu.style.display === 'block';
+    menu.style.display = isVisible ? 'none' : 'block';
+    
+    // Re-initialize Lucide icons when dropdown opens
+    if (!isVisible && typeof lucide !== 'undefined') {
+        setTimeout(() => lucide.createIcons(), 10);
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('manageDataMenu');
+    const dropdown = document.querySelector('.dropdown-custom');
+    if (menu && !dropdown.contains(event.target)) {
+        menu.style.display = 'none';
+    }
+});
+
+// Accordion toggle functionality
+function toggleSourceAccordion() {
+    const content = document.getElementById('collapseSourceData');
+    const icon = document.getElementById('sourceAccordionIcon');
+    const isOpen = content.style.display === 'block';
+    
+    content.style.display = isOpen ? 'none' : 'block';
+    icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    
+    // Re-initialize Lucide icons when accordion opens
+    if (!isOpen && typeof lucide !== 'undefined') {
+        setTimeout(() => lucide.createIcons(), 10);
+    }
+}
 </script>
 
 <style>
+.dropdown-item-custom:hover {
+    background-color: #f0f9ff !important;
+}
+
 .table-hover tbody tr:hover {
     background-color: #f0f4f8;
 }
@@ -408,6 +481,28 @@ renderTable();
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 0.5rem;
+}
+
+/* Spinner animation */
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: text-bottom;
+    border: 0.15em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-width: 0.12em;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
 }
 
 .form-label {
@@ -424,5 +519,13 @@ details[open] summary {
     margin-bottom: 0.5rem;
 }
 </style>
+
+<!-- Include Bottom Bar -->
+{% set show_back_button = True %}
+{% set back_url = url_for('analyze', step='jd') %}
+{% set continue_url = url_for('analyze', step='resumes') %}
+{% set continue_text = 'Continue to Upload Resumes' %}
+{% set continue_disabled = False %}
+{% include 'workflow_bottom_bar.html' %}
 
 {% endblock %}

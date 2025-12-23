@@ -3,109 +3,129 @@
 {% block title %}Run Analysis{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px;">
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <h1 style="color: #1f2937; margin: 0;">🚀 Run Analysis</h1>
-        {% if current_user.balance_usd < 5 %}
-        <div class="alert alert-warning mb-0" style="padding: 0.5rem 1rem;">
-            ⚠️ Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
-        </div>
-        {% endif %}
-    </div>
 
-    <!-- Workflow Progress -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <h3 style="margin-bottom: 15px;">📊 Workflow Progress</h3>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <!-- Step 1: Job Description -->
-            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="View Job Description">
-                <div style="font-size: 24px; color: #065f46;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            
-            <!-- Step 2: Evaluation Criteria -->
-            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="Review Evaluation Criteria">
-                <div style="font-size: 24px; color: #065f46;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            
-            <!-- Step 3: Resumes -->
-            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="View Resumes">
-                <div style="font-size: 24px; color: #065f46;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            
-            <!-- Step 4: Run Analysis (Current) -->
-            <div style="flex: 1; text-align: center; padding: 12px; border-radius: 8px; background: #1f77b4; border: 2px solid #1565c0; box-shadow: 0 0 10px rgba(31, 119, 180, 0.3);">
-                <div style="font-size: 24px; color: white;">🚀</div>
-                <div style="font-size: 12px; font-weight: 600; color: white;">Run Analysis</div>
-            </div>
-            <div style="font-size: 20px; color: #d1d5db;">→</div>
-            
-            <!-- Step 5: Results -->
-            {% if latest_analysis_id %}
-            <a href="{{ url_for('results', analysis_id=latest_analysis_id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; cursor: pointer; text-decoration: none;" title="View Latest Results">
-                <div style="font-size: 24px; color: #065f46;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
-            </a>
-            {% else %}
-            <div style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #f3f4f6; border: 2px solid #d1d5db;">
-                <div style="font-size: 24px; color: #6b7280;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: #6b7280;">Results</div>
-            </div>
-            {% endif %}
-        </div>
+<!-- Include Workflow Stepper -->
+{% set current_step = 4 %}
+{% include 'workflow_stepper.html' %}
+
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px 120px 20px;">
+    {% if current_user.balance_usd < 5 %}
+    <div class="alert alert-warning mb-3" style="padding: 1rem;">
+        <i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px;"></i>
+        Low Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
     </div>
+    {% endif %}
 
     <!-- Configure Analysis Form -->
     <form method="POST" action="{{ url_for('run_analysis_route') }}" id="runAnalysisForm">
+        <!-- Hidden form token to prevent duplicate submissions -->
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        
         <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">🤖 Configure AI Insights</h2>
+            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">Step 4: Run Analysis</h2>
             
-            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #3b82f6;">
-                <p style="color: #1e40af; margin: 0; line-height: 1.6;">
-                    <strong>Ready to analyze {{ resume_count }} candidate{{ 's' if resume_count != 1 else '' }}!</strong><br>
-                    Choose how many candidates should receive detailed AI insights with strengths, gaps, and hiring recommendations.
-                </p>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px;">
-                    🤖 AI-Powered Candidate Insights
-                </label>
-                <select name="insights_mode" id="insightsMode" onchange="updateCostEstimate()"
-                        style="display: block; width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; background: white; font-size: 16px;">
-                    <option value="top3" selected>Top 3 candidates (included in base price)</option>
-                    <option value="top5">Top 5 candidates (+$2)</option>
-                    <option value="top10">Top 10 candidates (+$7)</option>
-                    <option value="all">All candidates ({{ resume_count }} insights: +${{ [resume_count - 3, 0]|max }})</option>
-                    <option value="none">No AI insights (scoring only - saves $4)</option>
-                </select>
-                <div style="font-size: 14px; color: #6b7280; margin-top: 8px;">
-                    💡 AI insights include detailed strengths, gaps, and recommendations. Base price ($4) includes top 3 candidates. Extra insights cost $1 each.
-                </div>
-            </div>
-
-            <!-- Cost Estimate -->
-            <div id="costEstimate" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 24px; margin-right: 10px;">💰</span>
+            <div style="background: #eff6ff; padding: 24px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #3b82f6;">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <i data-lucide="check-circle" style="width: 48px; height: 48px; color: #16a34a;"></i>
                     <div>
-                        <div style="font-weight: 600; color: #92400e;">Estimated Cost</div>
-                        <div id="costAmount" style="font-size: 24px; font-weight: bold; color: #78350f;">$4.00</div>
+                        <h3 style="color: #1e40af; margin: 0; font-size: 20px; font-weight: 600;">Ready to Analyze {{ resume_count }} Candidate{{ 's' if resume_count != 1 else '' }}</h3>
+                        <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Job scoring and insights powered by AI</p>
                     </div>
                 </div>
-                <div style="font-size: 14px; color: #92400e;" id="costBreakdown">Base analysis fee: $4.00</div>
             </div>
 
-            <button type="submit" class="btn btn-success" id="runAnalysisBtn" style="font-size: 18px; padding: 15px 30px;">
-                🚀 Run Analysis Now
-            </button>
+            <!-- New Pricing Card -->
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid #f59e0b;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h4 style="color: #78350f; margin: 0; font-size: 16px; font-weight: 600;">Job Cost</h4>
+                        <p style="color: #92400e; margin: 4px 0 0 0; font-size: 13px;">Full ranking of all candidates + Deep Insights based on selected tier</p>
+                    </div>
+                    <div style="text-align: right;">
+                        {% if current_user.is_test_drive %}
+                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$0.00</div>
+                        <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Free Trial</div>
+                        {% else %}
+                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$10.00</div>
+                        <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Base Price</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if current_user.is_test_drive %}
+            <!-- Pro-Tip for First-Time Users -->
+            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 2px solid #10b981;">
+                <div style="display: flex; gap: 16px;">
+                    <i data-lucide="lightbulb" style="width: 40px; height: 40px; color: #065f46; flex-shrink: 0;"></i>
+                    <div>
+                        <h4 style="color: #065f46; margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">🎓 Pro-Tip for Your First Analysis</h4>
+                        <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
+                            Don't worry—we analyze <strong>every single resume</strong> against <strong>every criterion</strong> regardless of the tier you choose. We recommend starting with the <strong>Top 5 Insights</strong> to see your strongest matches immediately. You can always unlock more later!
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- AI Insights Selector -->
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 12px; font-size: 16px;">
+                    <i data-lucide="sparkles" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                    AI-Powered Deep Insights
+                </label>
+                <select name="insights_mode" id="insightsMode" onchange="updateInsightsPrice()"
+                        style="display: block; width: 100%; padding: 14px; border: 2px solid #d1d5db; border-radius: 8px; background: white; font-size: 15px; cursor: pointer; line-height: 1.4;">
+                    <option value="standard" selected>Standard (Included): Full Ranking of all candidates + Deep Insights for Top 5. (Perfect for initial shortlisting)</option>
+                    <option value="deep_dive">Deep Dive (+$10.00): Full Ranking of all candidates + Deep Insights for Top 15. (Best for high-volume roles)</option>
+                    <option value="full_radar">Full Radar (+$1/candidate over 5): Full Ranking + Deep Insights for every single candidate</option>
+                </select>
+                <div style="margin-top: 12px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                    <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.5;">
+                        <i data-lucide="info" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                        <strong>Deep Insights include:</strong> Detailed strengths, skill gaps, cultural fit assessment, and hiring recommendations for each candidate.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Total Cost Display -->
+            <div id="totalCostDisplay" style="background: #16a34a; color: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Cost</div>
+                        <div id="totalCostValue" style="font-size: 36px; font-weight: 700; line-height: 1;">{% if current_user.is_test_drive %}$0.00{% else %}$10.00{% endif %}</div>
+                    </div>
+                    <div style="text-align: right; opacity: 0.9; font-size: 14px;">
+                        <div>Your Balance: <strong>${{ "%.2f"|format(current_user.balance_usd) }}</strong></div>
+                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd - 10) }}</strong></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
+</div>
+
+<!-- Processing Overlay -->
+<div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 20px; padding: 48px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div class="spinner-border text-primary" style="width: 80px; height: 80px; margin-bottom: 24px;"></div>
+            <h2 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Processing Analysis</h2>
+            <p style="color: #64748b; font-size: 16px;">This may take a few minutes...</p>
+        </div>
+        
+        <!-- Live Status Log -->
+        <div id="statusLog" style="background: #f8fafc; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; border: 2px solid #e2e8f0;">
+            <div class="status-item" style="color: #16a34a; margin-bottom: 8px;">
+                <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                <span>Initializing analysis engine...</span>
+            </div>
+        </div>
+        
+        <div style="margin-top: 24px; text-align: center;">
+            <div id="progressText" style="color: #3b82f6; font-weight: 600; font-size: 16px;">Step 1 of 4</div>
+        </div>
+    </div>
 </div>
 
 <!-- Insufficient Funds Modal -->
@@ -155,41 +175,41 @@
 {% endif %}
 
 <script>
-document.getElementById('runAnalysisForm').addEventListener('submit', function(e) {
-    const button = document.getElementById('runAnalysisBtn');
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing Analysis...';
-    button.style.opacity = '0.7';
-    // Let form submit normally
-});
+const resumeCount = {{ resume_count }};
+const userBalance = {{ current_user.balance_usd }};
+const isTestDrive = {{ 'true' if current_user.is_test_drive else 'false' }};
 
-function updateCostEstimate() {
+// Update insights pricing
+function updateInsightsPrice() {
     const insightsMode = document.getElementById('insightsMode').value;
-    const resumeCount = {{ resume_count }};
-    let cost = 4.00;
-    let breakdown = 'Base analysis fee: $4.00';
+    const totalCostDisplay = document.getElementById('totalCostValue');
+    const remainingBalance = document.getElementById('remainingBalance');
     
-    if (insightsMode === 'none') {
-        cost = 0;
-        breakdown = 'Scoring only (no AI insights)';
-    } else if (insightsMode === 'top5') {
-        cost = 6.00;
-        breakdown = 'Base: $4.00 + 2 extra insights: $2.00';
-    } else if (insightsMode === 'top10') {
-        cost = 11.00;
-        breakdown = 'Base: $4.00 + 7 extra insights: $7.00';
-    } else if (insightsMode === 'all' && resumeCount > 3) {
-        const extraInsights = resumeCount - 3;
-        cost = 4.00 + extraInsights;
-        breakdown = `Base: $4.00 + ${extraInsights} extra insights: $${extraInsights.toFixed(2)}`;
+    let totalCost = 0.00;
+    
+    if (!isTestDrive) {
+        totalCost = 10.00; // Base job cost
+        
+        if (insightsMode === 'deep_dive') {
+            totalCost += 10.00; // +$10 for Top 15
+        } else if (insightsMode === 'full_radar' && resumeCount > 5) {
+            const extraCandidates = resumeCount - 5;
+            totalCost += extraCandidates * 1.00; // +$1 per candidate over 5
+        }
     }
     
-    document.getElementById('costAmount').textContent = '$' + cost.toFixed(2);
-    document.getElementById('costBreakdown').textContent = breakdown;
+    totalCostDisplay.textContent = '$' + totalCost.toFixed(2);
+    const remaining = userBalance - totalCost;
+    remainingBalance.innerHTML = 'After: <strong>$' + remaining.toFixed(2) + '</strong>';
 }
 
-// Initialize cost estimate on page load
-updateCostEstimate();
+// Initialize on page load
+updateInsightsPrice();
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
 
 // Insufficient Funds Modal Functions
 function closeInsufficientFundsModal() {
@@ -256,16 +276,53 @@ window.addEventListener('DOMContentLoaded', function() {
         sessionStorage.removeItem('insights_mode');
     }
     
-    // Show brief success message
-    const successDiv = document.createElement('div');
-    successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 20px 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; animation: slideIn 0.3s ease-out;';
-    successDiv.innerHTML = '✅ <strong>Payment successful!</strong> Starting your analysis...';
-    document.body.appendChild(successDiv);
+    // Create full-page loading overlay to prevent any interaction
+    const overlay = document.createElement('div');
+    overlay.id = 'processingOverlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;';
     
-    // Auto-submit after brief delay
-    setTimeout(() => {
-        document.getElementById('runAnalysisForm').submit();
-    }, 1500);
+    const messageBox = document.createElement('div');
+    messageBox.style.cssText = 'background: white; padding: 40px 50px; border-radius: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); max-width: 500px;';
+    messageBox.innerHTML = `
+        <div style="font-size: 3rem; margin-bottom: 20px; animation: spin 1s linear infinite;">⚙️</div>
+        <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 1.8rem;">Payment Successful!</h2>
+        <p style="color: #6b7280; font-size: 1.1rem; margin: 0 0 20px 0;">Starting your analysis now...</p>
+        <div style="width: 100%; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+            <div style="width: 100%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); animation: slideProgress 1.5s ease-in-out infinite;"></div>
+        </div>
+        <p style="color: #9ca3af; font-size: 0.9rem; margin: 15px 0 0 0;">Please wait, do not refresh the page...</p>
+    `;
+    
+    overlay.appendChild(messageBox);
+    document.body.appendChild(overlay);
+    
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes slideProgress {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Disable the Run Analysis button as backup
+    const submitBtn = document.getElementById('runAnalysisBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.display = 'none';
+    }
+    
+    // Auto-submit immediately
+    document.getElementById('runAnalysisForm').submit();
 });
 {% endif %}
 
@@ -298,5 +355,137 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 </style>
+
+<!-- Include Bottom Bar -->
+{% set show_back_button = True %}
+{% set back_url = url_for('analyze', step='resumes') %}
+{% if current_user.is_test_drive %}
+    {% set continue_text = 'Run Your Free Analysis →' %}
+    {% set continue_disabled = False %}
+{% else %}
+    {% set continue_text = 'Run Analysis Now ($10.00)' %}
+    {% set continue_disabled = False %}
+{% endif %}
+{% include 'workflow_bottom_bar.html' %}
+
+<script>
+// Wire sticky button to submit form and show modal
+document.addEventListener('DOMContentLoaded', function() {
+    const continueBtn = document.getElementById('continueButton');
+    const continueBtnText = document.getElementById('continueButtonText');
+    
+    if (continueBtn) {
+        continueBtn.onclick = function(e) {
+            e.preventDefault();
+            
+            // Calculate current total cost
+            const insightsMode = document.getElementById('insightsMode').value;
+            let totalCost = 0.00;
+            
+            if (!isTestDrive) {
+                totalCost = 10.00;
+                
+                if (insightsMode === 'deep_dive') {
+                    totalCost += 10.00;
+                } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
+                    totalCost += ({{ resume_count }} - 5) * 1.00;
+                }
+            }
+            
+            // Check if user has sufficient funds (skip check for test drive)
+            if (!isTestDrive && {{ current_user.balance_usd }} < totalCost) {
+                // Redirect to top-up page with return_to parameter
+                window.location.href = '{{ url_for("payments.buy_credits") }}?return_to=run_analysis';
+                return;
+            }
+            
+            // Show processing overlay
+            const overlay = document.getElementById('processingOverlay');
+            overlay.style.display = 'flex';
+            
+            // Simulate live status updates
+            const statusLog = document.getElementById('statusLog');
+            const progressText = document.getElementById('progressText');
+            const resumeCount = {{ resume_count }};
+            
+            const statusUpdates = [
+                { delay: 500, text: 'Validating job criteria...', step: '1 of 4' },
+                { delay: 1500, text: `Reading Resume 1 of ${resumeCount}...`, step: '2 of 4' },
+                { delay: 2500, text: `Reading Resume ${Math.min(3, resumeCount)} of ${resumeCount}...`, step: '2 of 4' },
+                { delay: 3500, text: `Reading Resume ${Math.min(5, resumeCount)} of ${resumeCount}...`, step: '2 of 4' },
+                { delay: 4500, text: 'Extracting candidate information...', step: '2 of 4' },
+                { delay: 5500, text: 'Scoring against criteria...', step: '3 of 4' },
+                { delay: 6500, text: 'Calculating match percentages...', step: '3 of 4' },
+                { delay: 7500, text: 'Generating AI insights...', step: '4 of 4' },
+                { delay: 8500, text: 'Analyzing strengths and gaps...', step: '4 of 4' },
+                { delay: 9500, text: 'Creating recommendations...', step: '4 of 4' },
+                { delay: 10500, text: 'Finalizing results...', step: '4 of 4' }
+            ];
+            
+            statusUpdates.forEach(update => {
+                setTimeout(() => {
+                    const statusItem = document.createElement('div');
+                    statusItem.className = 'status-item';
+                    statusItem.style.color = '#16a34a';
+                    statusItem.style.marginBottom = '8px';
+                    statusItem.innerHTML = `
+                        <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                        <span>${update.text}</span>
+                    `;
+                    statusLog.appendChild(statusItem);
+                    statusLog.scrollTop = statusLog.scrollHeight;
+                    progressText.textContent = `Step ${update.step}`;
+                    
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }, update.delay);
+            });
+            
+            // Submit the form after showing overlay
+            setTimeout(() => {
+                document.getElementById('runAnalysisForm').submit();
+            }, 1000);
+        };
+    }
+    
+    // Update sticky button text when insights selection changes
+    const insightsSelect = document.getElementById('insightsMode');
+    if (insightsSelect) {
+        insightsSelect.addEventListener('change', function() {
+            updateStickyButtonPrice();
+        });
+    }
+    
+    function updateStickyButtonPrice() {
+        const insightsMode = document.getElementById('insightsMode').value;
+        let totalCost = 0.00;
+        
+        if (isTestDrive) {
+            if (continueBtnText) {
+                continueBtnText.textContent = 'Run Your Free Analysis →';
+            }
+            return;
+        }
+        
+        totalCost = 10.00;
+        
+        if (insightsMode === 'deep_dive') {
+            totalCost += 10.00;
+        } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
+            totalCost += ({{ resume_count }} - 5) * 1.00;
+        }
+        
+        // Check if insufficient funds
+        if (userBalance < totalCost) {
+            if (continueBtnText) {
+                continueBtnText.textContent = 'Top Up Credits to Run';
+            }
+        } else {
+            if (continueBtnText) {
+                continueBtnText.textContent = `Run Analysis Now ($${totalCost.toFixed(2)})`;
+            }
+        }
+    }
+});
+</script>
 
 {% endblock %}

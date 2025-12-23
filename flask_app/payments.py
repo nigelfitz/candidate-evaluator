@@ -18,16 +18,19 @@ def buy_credits():
     """Display add funds page"""
     stripe_configured = bool(Config.STRIPE_SECRET_KEY)
     is_dev_mode = os.environ.get('FLASK_ENV') == 'development'
+    return_to = request.args.get('return_to', 'dashboard')  # Where to return after payment
     
     # Debug logging
     print(f"DEBUG: STRIPE_SECRET_KEY exists: {bool(Config.STRIPE_SECRET_KEY)}")
     print(f"DEBUG: STRIPE_SECRET_KEY value (first 10 chars): {Config.STRIPE_SECRET_KEY[:10] if Config.STRIPE_SECRET_KEY else 'None'}")
     print(f"DEBUG: stripe_configured: {stripe_configured}")
     print(f"DEBUG: is_dev_mode: {is_dev_mode}")
+    print(f"DEBUG: return_to: {return_to}")
     
     return render_template('add_funds.html', 
                          stripe_configured=stripe_configured,
-                         is_dev_mode=is_dev_mode)
+                         is_dev_mode=is_dev_mode,
+                         return_to=return_to)
 
 
 @payments.route('/add-test-funds', methods=['POST'])
@@ -37,10 +40,11 @@ def add_test_funds():
     try:
         amount_str = request.form.get('amount', '0')
         amount = Decimal(amount_str)
+        return_to = request.form.get('return_to', 'dashboard')
         
         if amount < 5:
             flash('Minimum amount is $5', 'error')
-            return redirect(url_for('payments.buy_credits'))
+            return redirect(url_for('payments.buy_credits', return_to=return_to))
         
         # Add funds directly to user account
         current_user.add_funds(
@@ -50,7 +54,12 @@ def add_test_funds():
         db.session.commit()
         
         flash(f'Successfully added ${amount:.2f} to your account!', 'success')
-        return redirect(url_for('dashboard'))
+        
+        # Return to where they came from
+        if return_to == 'run_analysis':
+            return redirect(url_for('run_analysis_route', auto_submit=1))
+        else:
+            return redirect(url_for('dashboard'))
         
     except Exception as e:
         flash(f'Error adding funds: {str(e)}', 'error')
@@ -77,6 +86,9 @@ def create_checkout():
             flash('Minimum amount is $5', 'error')
             return redirect(url_for('payments.buy_credits'))
         
+        # Get return_to parameter for redirect after payment
+        return_to = request.form.get('return_to', 'dashboard')
+        
         # Create Stripe Checkout Session
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -92,8 +104,8 @@ def create_checkout():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=url_for('payments.success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('payments.buy_credits', _external=True),
+            success_url=url_for('payments.success', return_to=return_to, _external=True) + '&session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('payments.buy_credits', return_to=return_to, _external=True),
             client_reference_id=str(current_user.id),
             metadata={
                 'user_id': current_user.id,
@@ -187,6 +199,7 @@ def create_checkout_session():
 def success():
     """Handle successful payment redirect"""
     session_id = request.args.get('session_id')
+    return_to = request.args.get('return_to', 'dashboard')
     
     if session_id:
         try:
@@ -204,9 +217,11 @@ def success():
         except Exception as e:
             flash(f'Payment completed, but verification failed: {str(e)}', 'warning')
     
-    # Check if we should return to a custom URL (from run_analysis modal)
-    # The success_url from Stripe will already have auto_submit parameter
-    return redirect(url_for('dashboard'))
+    # Return to the page they came from (run_analysis, dashboard, etc.)
+    if return_to == 'run_analysis':
+        return redirect(url_for('run_analysis_route', auto_submit=1))
+    else:
+        return redirect(url_for('dashboard'))
 
 
 @payments.route('/webhook', methods=['POST'])

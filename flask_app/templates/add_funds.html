@@ -6,7 +6,7 @@
 <div class="container" style="max-width: 900px; margin: 0 auto; padding: 40px 20px;">
     <h1 style="text-align: center; color: #1f2937; margin-bottom: 10px;">Add Funds to Your Account</h1>
     <p style="text-align: center; color: #6b7280; margin-bottom: 40px;">
-        Add funds once, use whenever you need. $4 per analysis (includes all candidates + top 3 AI insights).
+        Add funds once, use whenever you need.
     </p>
     
     <!-- Current Balance -->
@@ -53,6 +53,7 @@
         <!-- Stripe Payment -->
         <form action="{{ url_for('payments.create_checkout') }}" method="POST" id="checkoutForm">
             <input type="hidden" name="amount" id="selectedAmount" value="">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
             <button type="submit" 
                     id="checkoutBtn"
                     disabled
@@ -89,6 +90,7 @@
         {% endif %}
         <form action="{{ url_for('payments.add_test_funds') }}" method="POST" id="testFundsForm">
             <input type="hidden" name="amount" id="testSelectedAmount" value="">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
             <button type="submit" 
                     id="testFundsBtn"
                     disabled
