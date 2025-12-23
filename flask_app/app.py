@@ -719,7 +719,16 @@ def create_app(config_name=None):
             # CRITICAL: Calculate cost and check balance BEFORE running analysis
             num_candidates = len(candidates)
             print(f"DEBUG: insights_mode='{insights_mode}', num_candidates={num_candidates}")
-            if insights_mode == 'top3':
+            
+            # Map form values to number of insights
+            if insights_mode == 'standard':
+                num_insights = min(5, num_candidates)  # Top 5
+            elif insights_mode == 'deep_dive':
+                num_insights = min(15, num_candidates)  # Top 15
+            elif insights_mode == 'full_radar':
+                num_insights = num_candidates  # All candidates
+            # Legacy support for old values
+            elif insights_mode == 'top3':
                 num_insights = min(3, num_candidates)
             elif insights_mode == 'top5':
                 num_insights = min(5, num_candidates)
@@ -1266,6 +1275,8 @@ def create_app(config_name=None):
     @login_required
     def insights(analysis_id):
         """View detailed insights for candidates from an analysis"""
+        import json
+        
         analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
         if not analysis:
             flash('Analysis not found', 'error')
@@ -1321,8 +1332,24 @@ def create_app(config_name=None):
         # Get insights for current candidate
         candidate_insights = insights_data.get(selected_candidate, {})
         print(f"DEBUG insights.html: Looking up insights for candidate: '{selected_candidate}'")
+        print(f"DEBUG insights.html: All insights_data keys: {list(insights_data.keys())}")
         print(f"DEBUG insights.html: Found insights: {candidate_insights}")
-        has_gpt_insights = bool(candidate_insights.get('top') or candidate_insights.get('gaps') or candidate_insights.get('notes'))
+        
+        # Check if insights exist (be flexible with the structure)
+        has_gpt_insights = False
+        if candidate_insights:
+            # Check for any of the expected insight fields
+            has_gpt_insights = bool(
+                candidate_insights.get('top') or 
+                candidate_insights.get('gaps') or 
+                candidate_insights.get('notes') or
+                candidate_insights.get('strengths') or  # Alternative field name
+                candidate_insights.get('weaknesses') or  # Alternative field name
+                candidate_insights.get('recommendation') or  # Alternative field name
+                len(candidate_insights) > 0  # Any insights data at all
+            )
+        
+        print(f"DEBUG insights.html: has_gpt_insights = {has_gpt_insights}")
         
         # Group scores by category
         cat_map = json.loads(analysis.category_map) if analysis.category_map else {}
@@ -1405,6 +1432,18 @@ def create_app(config_name=None):
         if draft and draft.created_at < analysis.created_at and (not draft.updated_at or draft.updated_at <= analysis.created_at):
             is_current_draft_analysis = True
         
+        # Check if user has Full Radar (all candidates have insights)
+        # If gpt_candidates is not set or contains all candidates, assume Full Radar was used
+        gpt_candidates_list = []
+        if analysis.gpt_candidates:
+            try:
+                gpt_candidates_list = json.loads(analysis.gpt_candidates)
+            except:
+                gpt_candidates_list = []
+        
+        # Full Radar if all candidates have insights or no restriction was set
+        has_full_radar = (len(gpt_candidates_list) == 0 or len(gpt_candidates_list) >= analysis.num_candidates)
+        
         return render_template('insights.html',
                              analysis_id=analysis_id,
                              candidates=candidates_list,
@@ -1414,7 +1453,120 @@ def create_app(config_name=None):
                              in_workflow=is_current_draft_analysis,
                              has_unsaved_work=False,
                              analysis_completed=True,
-                             is_current_draft_analysis=is_current_draft_analysis)
+                             is_current_draft_analysis=is_current_draft_analysis,
+                             has_full_radar=has_full_radar)
+    
+    @app.route('/unlock-candidate/<int:analysis_id>/<candidate_name>', methods=['POST'])
+    @login_required
+    def unlock_candidate(analysis_id, candidate_name):
+        """Unlock insights for a single candidate by generating AI insights and deducting $1.00"""
+        from decimal import Decimal
+        
+        try:
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+            if not analysis:
+                return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+            
+            # Check balance (compare Decimal with Decimal)
+            if current_user.balance_usd < Decimal('1.00'):
+                return jsonify({
+                    'success': False, 
+                    'error': 'Insufficient balance',
+                    'balance': float(current_user.balance_usd),
+                    'redirect': url_for('payments.buy_credits')
+                }), 402
+            
+            # Parse existing insights
+            insights_data = json.loads(analysis.insights_data) if analysis.insights_data else {}
+            
+            # Check if already unlocked
+            if candidate_name in insights_data and insights_data[candidate_name]:
+                return jsonify({
+                    'success': False,
+                    'error': 'Candidate insights already exist',
+                    'insights': insights_data[candidate_name]
+                })
+            
+            # Get candidate data
+            from database import CandidateFile
+            candidate_file = CandidateFile.query.filter_by(
+                analysis_id=analysis_id,
+                candidate_name=candidate_name
+            ).first()
+            
+            if not candidate_file:
+                return jsonify({'success': False, 'error': 'Candidate file not found'}), 404
+            
+            # Get coverage data for scores
+            coverage_data = json.loads(analysis.coverage_data)
+            candidate_row = next((row for row in coverage_data if row['Candidate'] == candidate_name), None)
+            
+            if not candidate_row:
+                return jsonify({'success': False, 'error': 'Candidate scores not found'}), 404
+            
+            # Prepare data for insights generation
+            criteria = json.loads(analysis.criteria_list)
+            evidence_map_raw = json.loads(analysis.evidence_data)
+            
+            # Convert evidence_map keys from strings to tuples
+            evidence_map = {}
+            for key_str, value in evidence_map_raw.items():
+                try:
+                    # Parse string key like "('Candidate Name', 'Criterion')"
+                    key_tuple = eval(key_str)
+                    evidence_map[key_tuple] = value
+                except:
+                    pass
+            
+            # Get scores for this candidate
+            candidate_scores = {col: candidate_row[col] for col in candidate_row.keys() 
+                              if col not in ['Candidate', 'Overall']}
+            
+            # Generate insights using GPT
+            from analysis import gpt_candidate_insights
+            insights = gpt_candidate_insights(
+                candidate_name=candidate_name,
+                candidate_text=candidate_file.extracted_text,
+                jd_text=analysis.jd_full_text,
+                coverage_scores=candidate_scores,
+                criteria=criteria,
+                evidence_map=evidence_map,
+                model="gpt-4o"
+            )
+            
+            # Store insights
+            insights_data[candidate_name] = insights
+            analysis.insights_data = json.dumps(insights_data)
+            
+            # Update gpt_candidates list
+            gpt_candidates_list = []
+            if analysis.gpt_candidates:
+                try:
+                    gpt_candidates_list = json.loads(analysis.gpt_candidates)
+                except:
+                    pass
+            if candidate_name not in gpt_candidates_list:
+                gpt_candidates_list.append(candidate_name)
+            analysis.gpt_candidates = json.dumps(gpt_candidates_list)
+            
+            # Deduct $1.00 from balance (using Decimal type)
+            from decimal import Decimal
+            current_user.balance_usd -= Decimal('1.00')
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'insights': insights,
+                'new_balance': float(current_user.balance_usd),
+                'message': f'Insights unlocked for {candidate_name}'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': str(e)}), 500
     
     @app.route('/download-candidate-pdf/<int:analysis_id>/<candidate_name>')
     @login_required

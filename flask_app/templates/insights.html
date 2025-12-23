@@ -3,6 +3,56 @@
 {% block title %}Candidate Insights - Candidate Evaluator{% endblock %}
 
 {% block content %}
+<!-- Custom Confirmation Modal -->
+<div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 480px; width: 90%; overflow: hidden;">
+        <!-- Header with gradient -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px 32px 24px; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">🔓</div>
+            <h3 style="color: white; margin: 0; font-weight: 700; font-size: 24px;">Unlock Insights?</h3>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 32px;">
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="color: #64748b; font-size: 14px;">Current Balance</span>
+                    <span id="modalCurrentBalance" style="color: #059669; font-weight: 700; font-size: 20px;">$24.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="color: #64748b; font-size: 14px;">Unlock Cost</span>
+                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- $1.00</span>
+                </div>
+                <div style="border-top: 2px solid #e2e8f0; margin: 12px 0; padding-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #1f2937; font-weight: 600;">New Balance</span>
+                        <span id="modalNewBalance" style="color: #1f2937; font-weight: 700; font-size: 20px;">$23.00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                    <strong>AI will generate for <span id="modalCandidateName">candidate</span>:</strong><br>
+                    ✓ Top Strengths matching the role<br>
+                    ✓ Gaps & Risk areas to consider<br>
+                    ✓ Overall Assessment & Recommendation
+                </p>
+            </div>
+            
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeUnlockModal()" style="flex: 1; padding: 14px 24px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
+                    Cancel
+                </button>
+                <button id="confirmUnlockBtn" onclick="confirmUnlock()" style="flex: 1; padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.2s;">
+                    🔓 Unlock Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid mt-4">
     {% if not has_insights %}
     <div class="alert alert-info">
@@ -12,39 +62,10 @@
     </div>
     {% else %}
     
+    <!-- Workflow Stepper -->
     {% if is_current_draft_analysis %}
-    <!-- Workflow Progress Indicator (only for current draft) -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="{{ url_for('analyze', step='jd') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Job Description">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Job Description</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('review_criteria') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Review Evaluation Criteria">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Evaluation Criteria</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('analyze', step='resumes') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Resumes Page">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Candidate Resumes</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('run_analysis_route') }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="Configure Analysis">
-                <div style="font-size: 24px;">✅</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Run Analysis</div>
-            </a>
-            <div style="font-size: 20px; color: #10b981;">→</div>
-            <a href="{{ url_for('results', analysis_id=analysis_id) }}" style="flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: #d1fae5; border: 2px solid #10b981; text-decoration: none; cursor: pointer;" title="View Results">
-                <div style="font-size: 24px;">📊</div>
-                <div style="font-size: 12px; font-weight: 600; color: #065f46;">Results</div>
-            </a>
-        </div>
-        <div class="text-center mt-2">
-            <small class="text-muted">💾 Analysis saved - access anytime from <a href="{{ url_for('job_history') }}">Job History</a></small>
-        </div>
-    </div>
+    {% set current_step = 5 %}
+    {% include 'workflow_stepper.html' %}
     {% else %}
     <!-- Historical Analysis Header -->
     <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -212,9 +233,9 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-muted">No strengths identified.</p>
+                <p class="text-muted">No specific strengths identified.</p>
                 {% endif %}
-
+                
                 <!-- Gaps & Risks -->
                 <h5 class="text-danger mb-3">⚠️ Gaps & Risks</h5>
                 {% if current_candidate.insights.gaps %}
@@ -224,16 +245,45 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-muted">No significant gaps identified.</p>
+                <p class="text-muted">No specific gaps identified.</p>
                 {% endif %}
-
-                <!-- Overall Notes -->
+                
+                <!-- Overall Assessment -->
+                <h5 class="text-info mb-3">📝 Overall Assessment</h5>
                 {% if current_candidate.insights.notes %}
-                <h5 class="mb-3">📝 Overall Assessment</h5>
-                <div class="alert alert-info">
-                    {{ current_candidate.insights.notes }}
-                </div>
+                <div class="alert alert-light">{{ current_candidate.insights.notes }}</div>
+                {% else %}
+                <p class="text-muted">No overall assessment available.</p>
                 {% endif %}
+            {% elif current_candidate.rank > 5 and not has_full_radar %}
+            <!-- Locked State for Rank 6+ without Full Radar -->
+            <div style="position: relative;" class="unlock-overlay">
+                <!-- Blurred Content -->
+                <div style="filter: blur(8px); pointer-events: none; user-select: none; opacity: 0.4;">
+                    <h5 class="text-success mb-3">✅ Top Strengths</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item">Lorem ipsum dolor sit amet consectetur adipisicing elit</li>
+                        <li class="list-group-item">Sed do eiusmod tempor incididunt ut labore et dolore magna</li>
+                        <li class="list-group-item">Ut enim ad minim veniam quis nostrud exercitation ullamco</li>
+                    </ul>
+                    <h5 class="text-danger mb-3">⚠️ Gaps & Risks</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item">Duis aute irure dolor in reprehenderit in voluptate velit</li>
+                        <li class="list-group-item">Excepteur sint occaecat cupidatat non proident sunt in culpa</li>
+                    </ul>
+                </div>
+                
+                <!-- Unlock Overlay -->
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; background: white; padding: 32px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 400px; width: 90%;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+                    <h4 style="color: #1f2937; margin-bottom: 12px; font-weight: 700;">Deep Insights Locked</h4>
+                    <p style="color: #64748b; margin-bottom: 24px; font-size: 15px;">This candidate ranked #{{ current_candidate.rank }}. Detailed AI summaries are available for Top 5 candidates only.</p>
+                    <button onclick="unlockCandidate({{ analysis_id }}, '{{ current_candidate.name }}', {{ '%.2f' % current_user.balance_usd }})" class="btn btn-lg unlock-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 32px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                        🔓 Unlock Deep Insight - $1.00
+                    </button>
+                    <p style="margin-top: 16px; font-size: 13px; color: #94a3b8;">Or upgrade to Full Radar to unlock all candidates</p>
+                </div>
+            </div>
             {% else %}
                 <div class="alert alert-warning">
                     <h5>⚠️ GPT Insights Not Generated</h5>
@@ -320,6 +370,9 @@
 </div>
 
 <script>
+// Global variables for unlock flow
+let unlockAnalysisId, unlockCandidateName, unlockUserBalance;
+
 function selectCandidate(candidateName) {
     window.location.href = `{{ url_for('insights', analysis_id=analysis_id) }}?candidate=${encodeURIComponent(candidateName)}`;
 }
@@ -332,5 +385,127 @@ function navigateCandidate(direction) {
         selectCandidate(select.options[newIndex].value);
     }
 }
+
+// Show custom unlock modal
+function unlockCandidate(analysisId, candidateName, userBalance) {
+    // Convert balance to number and check
+    userBalance = parseFloat(userBalance);
+    
+    if (userBalance < 1.00) {
+        // Redirect to top-up page
+        window.location.href = "{{ url_for('payments.buy_credits') }}";
+        return;
+    }
+    
+    // Store data for later use
+    unlockAnalysisId = analysisId;
+    unlockCandidateName = candidateName;
+    unlockUserBalance = parseFloat(userBalance); // Convert to number
+    
+    // Update modal content
+    document.getElementById('modalCurrentBalance').textContent = `$${unlockUserBalance.toFixed(2)}`;
+    document.getElementById('modalNewBalance').textContent = `$${(unlockUserBalance - 1.00).toFixed(2)}`;
+    document.getElementById('modalCandidateName').textContent = candidateName;
+    
+    // Show modal with animation
+    const modal = document.getElementById('unlockModal');
+    modal.style.display = 'block';
+    modal.style.opacity = '0';
+    setTimeout(() => {
+        modal.style.transition = 'opacity 0.3s ease';
+        modal.style.opacity = '1';
+    }, 10);
+}
+
+// Close modal
+function closeUnlockModal() {
+    const modal = document.getElementById('unlockModal');
+    modal.style.opacity = '0';
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+// Confirm unlock and proceed
+function confirmUnlock() {
+    // Find the unlock button and show loading state
+    const confirmBtn = document.getElementById('confirmUnlockBtn');
+    const originalText = confirmBtn.innerHTML;
+    
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    confirmBtn.disabled = true;
+    
+    // Make AJAX request to unlock
+    fetch(`/unlock-candidate/${unlockAnalysisId}/${encodeURIComponent(unlockCandidateName)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update balance in header
+            const balanceEl = document.querySelector('.balance-amount');
+            if (balanceEl) {
+                balanceEl.textContent = `$${data.new_balance.toFixed(2)}`;
+            }
+            
+            // Show success message in modal
+            confirmBtn.innerHTML = '✓ Success! Reloading...';
+            confirmBtn.style.background = '#10b981';
+            
+            // Reload the page to show new insights (maintains scroll position)
+            const scrollPos = window.scrollY;
+            sessionStorage.setItem('scrollPosition', scrollPos);
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        } else if (data.error === 'Insufficient balance') {
+            closeUnlockModal();
+            alert('Insufficient balance. Redirecting to top-up page...');
+            window.location.href = data.redirect;
+        } else {
+            closeUnlockModal();
+            alert(`Error: ${data.error}\n\nPlease check the browser console for details or try again.`);
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error unlocking candidate:', error);
+        closeUnlockModal();
+        alert('Failed to unlock insights. Please try again.\n\nMake sure Flask server is running and check browser console for details.');
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    });
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('unlockModal');
+    if (e.target === modal) {
+        closeUnlockModal();
+    }
+});
+
+// Restore scroll position after reload
+window.addEventListener('load', function() {
+    const scrollPos = sessionStorage.getItem('scrollPosition');
+    if (scrollPos) {
+        window.scrollTo(0, parseInt(scrollPos));
+        sessionStorage.removeItem('scrollPosition');
+    }
+});
 </script>
+
+<!-- Sticky Bottom Bar -->
+{% if is_current_draft_analysis %}
+{% set show_back_button = True %}
+{% set back_url = url_for('results', analysis_id=analysis_id) %}
+{% set continue_text = 'Start New Analysis' %}
+{% set continue_url = url_for('analyze', new=1) %}
+{% set continue_disabled = false %}
+{% include 'workflow_bottom_bar.html' %}
+{% endif %}
 {% endblock %}
