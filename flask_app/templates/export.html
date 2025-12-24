@@ -2,6 +2,144 @@
 
 {% block title %}Export Reports - {{ analysis.job_title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Executive Dashboard - Export Cards */
+    .export-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .export-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .export-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .export-card-header {
+        padding: 24px 28px;
+        border-bottom: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .export-card-header h5 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .export-card-body {
+        padding: 28px;
+    }
+    
+    .export-card-body p.text-muted {
+        color: #6b7280;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    
+    /* Button Hierarchy */
+    .btn-export-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-export-primary:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+        color: white;
+    }
+    
+    .btn-export-secondary {
+        background: white;
+        border: 2px solid #3b82f6;
+        color: #3b82f6;
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-export-secondary:hover {
+        background: #eff6ff;
+        border-color: #2563eb;
+        color: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-export-preview {
+        background: white;
+        border: 1px solid #d1d5db;
+        color: #6b7280;
+        padding: 12px 24px;
+        font-weight: 500;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-export-preview:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #374151;
+    }
+    
+    /* Preview Container */
+    .preview-container {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+        }
+        to {
+            opacity: 1;
+            max-height: 700px;
+            padding: 20px;
+        }
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .export-card-header h5 {
+            font-size: 1.1rem;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-4">
     <!-- Workflow Stepper -->
@@ -27,29 +165,40 @@
     </div>
     {% endif %}
     
-    <!-- Quick Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
-            📊 Results
+    <!-- Unified Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row;">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
+            Results
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-primary">
-            📊 Export Reports
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+            Export Reports
         </a>
         {% if analysis.insights_data %}
-        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
-            💡 Candidate Insights
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
+            Candidate Insights
         </a>
         {% endif %}
     </div>
     
+    <!-- Unified Metadata Bar -->
+    <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
+        <div class="card-body py-2">
+            <p class="mb-0" style="font-size: 15px; color: #6b7280;">
+                <strong style="color: #1f2937;">Job Title:</strong> {{ analysis.job_title }} | 
+                <strong style="color: #1f2937;">Analyzed:</strong> {{ analysis.created_at.strftime('%B %d, %Y') }} | 
+                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates | 
+                <strong style="color: #1f2937;">{{ analysis.num_criteria }}</strong> Criteria
+            </p>
+        </div>
+    </div>
+    
+    <!-- Export Container -->
+    <div class="export-container">
     <div class="row">
         <div class="col-12">
-            <!-- Header -->
-            <div class="mb-4">
-                <h2>📊 Export Reports</h2>
-                <p class="text-muted mb-0">{{ analysis.job_title }}</p>
-                <small class="text-muted">Analysis ID: {{ analysis.id }} | {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-            </div>
 
             <!-- Pro-tip -->
             <div class="alert alert-info mb-4">
@@ -60,52 +209,64 @@
             <div class="row">
                 <!-- Section 1: Executive Summary -->
                 <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">📄 Executive Summary</h5>
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <h5>📄 Executive Summary</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="export-card-body">
                             <p class="text-muted">
                                 Comprehensive overview with top candidates, key insights, and recommendations.
                             </p>
                             <div class="btn-group mb-2" role="group">
                                 <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}" 
-                                   class="btn btn-danger">
+                                   class="btn btn-export-primary">
                                     <i class="bi bi-file-pdf"></i> Download PDF
                                 </a>
                                 <a href="{{ url_for('export_executive_docx', analysis_id=analysis.id) }}" 
-                                   class="btn btn-primary">
+                                   class="btn btn-export-secondary">
                                     <i class="bi bi-file-word"></i> Download Word
                                 </a>
-                                <a href="{{ url_for('preview_executive_pdf', analysis_id=analysis.id) }}" 
-                                   class="btn btn-outline-secondary" target="_blank">
+                                <button class="btn btn-export-preview" onclick="togglePreview('executivePreview', '{{ url_for('preview_executive_pdf', analysis_id=analysis.id) }}')">
                                     <i class="bi bi-eye"></i> Preview PDF
-                                </a>
+                                </button>
                             </div>
                             <p class="text-muted mt-2 mb-0">
                                 <small>💡 Click Preview to see the report before downloading</small>
                             </p>
+                            
+                            <!-- Collapsible Preview Area -->
+                            <div id="executivePreview" class="preview-container mt-3" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0" style="color: #6b7280;">Executive Summary Preview</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="togglePreview('executivePreview')">
+                                        ✕ Close Preview
+                                    </button>
+                                </div>
+                                <iframe id="executivePreviewFrame" src="" width="100%" height="600px" 
+                                        style="border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+                                </iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Section 2: Detailed Analysis -->
                 <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0">📊 Detailed Analysis - Coverage Matrix</h5>
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <h5>📊 Detailed Analysis - Coverage Matrix</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="export-card-body">
                             <p class="text-muted">
                                 Full scoring matrix with color-coded ratings for all candidates and criteria.
                             </p>
                             <div class="btn-group" role="group">
                                 <a href="{{ url_for('export_coverage_excel', analysis_id=analysis.id) }}" 
-                                   class="btn btn-success">
+                                   class="btn btn-export-primary">
                                     <i class="bi bi-file-excel"></i> Download Excel
                                 </a>
                                 <a href="{{ url_for('export_coverage_csv', analysis_id=analysis.id) }}" 
-                                   class="btn btn-outline-success">
+                                   class="btn btn-export-secondary">
                                     <i class="bi bi-file-text"></i> Download CSV
                                 </a>
                             </div>
@@ -115,11 +276,11 @@
 
                 <!-- Section 3: Individual Candidate Reports -->
                 <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="mb-0">👤 Individual Candidate Reports</h5>
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <h5>👤 Individual Candidate Reports</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="export-card-body">
                             <p class="text-muted">
                                 Detailed reports for individual candidates with AI insights and evidence.
                             </p>
@@ -163,10 +324,10 @@
 
                             <!-- Export Buttons -->
                             <div class="btn-group" role="group">
-                                <button id="exportIndividualPDF" class="btn btn-danger">
+                                <button id="exportIndividualPDF" class="btn btn-export-primary">
                                     <i class="bi bi-file-pdf"></i> Generate PDF Reports
                                 </button>
-                                <button id="exportIndividualDOCX" class="btn btn-primary">
+                                <button id="exportIndividualDOCX" class="btn btn-export-secondary">
                                     <i class="bi bi-file-word"></i> Generate Word Reports
                                 </button>
                             </div>
@@ -185,27 +346,23 @@
 
                 <!-- Section 4: Quick Data Exports -->
                 <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0">⚡ Quick Data Exports</h5>
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <h5>⚡ Quick Data Exports</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="export-card-body">
                             <p class="text-muted">
                                 Simple CSV exports for further analysis in Excel or other tools.
                             </p>
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <a href="{{ url_for('export_candidates_csv', analysis_id=analysis.id) }}" 
-                                       class="btn btn-outline-secondary w-100">
-                                        <i class="bi bi-people"></i> Candidate List (CSV)
-                                    </a>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <a href="{{ url_for('export_criteria_csv', analysis_id=analysis.id) }}" 
-                                       class="btn btn-outline-secondary w-100">
-                                        <i class="bi bi-list-check"></i> Criteria List (CSV)
-                                    </a>
-                                </div>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <a href="{{ url_for('export_candidates_csv', analysis_id=analysis.id) }}" 
+                                   class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
+                                    <i class="bi bi-people"></i> Candidate List (CSV)
+                                </a>
+                                <a href="{{ url_for('export_criteria_csv', analysis_id=analysis.id) }}" 
+                                   class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
+                                    <i class="bi bi-list-check"></i> Criteria List (CSV)
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -213,10 +370,32 @@
             </div>
         </div>
     </div>
+    </div><!-- Close export-container -->
 </div>
 
 <!-- JavaScript for Interactive Controls -->
 <script>
+// Toggle PDF preview
+function togglePreview(previewId, pdfUrl) {
+    const previewDiv = document.getElementById(previewId);
+    const iframe = document.getElementById(previewId + 'Frame');
+    
+    if (previewDiv.style.display === 'none') {
+        // Show preview
+        previewDiv.style.display = 'block';
+        if (pdfUrl && iframe.src === '') {
+            iframe.src = pdfUrl;
+        }
+        // Smooth scroll to preview
+        setTimeout(() => {
+            previewDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    } else {
+        // Hide preview
+        previewDiv.style.display = 'none';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Show/hide custom selection dropdown
     const selectionRadios = document.querySelectorAll('input[name="candidateSelection"]');
@@ -360,6 +539,11 @@ document.addEventListener('DOMContentLoaded', function() {
             progressText.classList.add('text-danger');
         });
     });
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 </script>
 
