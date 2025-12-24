@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Candidates{% endblock %}
+
+{% block content %}
+
+<!-- Include Workflow Stepper -->
+{% set step_name = current_step %}
+{% set current_step = 1 if step_name == 'jd' else 3 %}
+{% include 'workflow_stepper.html' %}
+
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px 120px 20px;">
+    {% if current_user.balance_usd < 5 %}
+    <div class="alert alert-warning mb-3" style="padding: 1rem;">
+        <i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px;"></i>
+        Low Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+    </div>
+    {% endif %}
+
+    <!-- STEP 1: Upload Job Description (only show if step=jd or no JD uploaded) -->
+    {% if step_name == 'jd' %}
+    {% if jd_data and jd_data.filename %}
+    <!-- Show uploaded JD file info with delete option -->
+    <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📝 Uploaded Job Description</h2>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; border: 2px solid #10b981; border-radius: 8px; margin-bottom: 20px; background: #d1fae5;">
+            <div style="flex: 1;">
+                <div style="font-weight: 600; color: #065f46; font-size: 16px;">✅ {{ jd_data.filename }}</div>
+                {% if jd_data.text %}
+                <div style="font-size: 14px; color: #059669; margin-top: 5px;">{{ jd_data.text|length }} characters extracted</div>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('clear_session') }}" style="display: inline;" onsubmit="return confirm('Delete this JD and start over? This will also clear criteria and uploaded resumes.')">
+                <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete JD</button>
+            </form>
+        </div>
+        
+        {% if jd_data.text %}
+        <details style="margin-bottom: 20px;">
+            <summary style="cursor: pointer; color: #1f77b4; font-weight: 600; padding: 10px; background: #f0f9ff; border-radius: 6px;">👁️ Preview JD Text</summary>
+            <div style="background: #f9fafb; padding: 15px; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 13px; max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb;">
+                {{ jd_data.text }}{% if jd_data.text|length >= 500 %}...
+                <div style="margin-top: 10px; color: #6b7280; font-style: italic;">(Showing first 500 characters)</div>
+                {% endif %}
+            </div>
+        </details>
+        {% endif %}
+    </div>
+    {% else %}
+    <!-- Show upload form -->
+    <form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="jdForm">
+        <input type="hidden" name="action" value="upload_jd">
+        
+        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">Step 1: Job Description</h2>
+            
+            <!-- Large Dashed Dropzone -->
+            <div id="dropzone" style="margin-bottom: 20px; padding: 60px 30px; border: 3px dashed #3b82f6; border-radius: 12px; background: #f0f9ff; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                <input type="file" name="job_description" id="jdFile" accept=".pdf,.docx,.doc,.txt" style="display: none;">
+                <div id="dropzoneContent">
+                    <i data-lucide="upload-cloud" style="width: 64px; height: 64px; color: #3b82f6; margin-bottom: 16px;"></i>
+                    <h3 style="color: #1e40af; font-size: 20px; margin-bottom: 8px; font-weight: 600;">Drop your Job Description here</h3>
+                    <p style="color: #64748b; font-size: 16px; margin-bottom: 16px;">or click to browse</p>
+                    <p style="color: #94a3b8; font-size: 14px;">Supports PDF, DOCX, DOC, TXT files</p>
+                </div>
+                <div id="fileSelectedInfo" style="display: none;">
+                    <i data-lucide="file-check" style="width: 48px; height: 48px; color: #16a34a; margin-bottom: 12px;"></i>
+                    <p id="selectedFileName" style="color: #16a34a; font-size: 18px; font-weight: 600; margin: 0;"></p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0; color: #6b7280; font-weight: 500; font-size: 16px;">OR</div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px; font-size: 16px;">
+                    <i data-lucide="file-text" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                    Paste JD Text
+                </label>
+                <textarea name="jd_text" id="jdText" rows="10" placeholder="Paste your job description here..."
+                          style="display: block; width: 100%; padding: 16px; border: 2px solid #d1d5db; border-radius: 8px; font-family: monospace; font-size: 14px; line-height: 1.6;"></textarea>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+    {% endif %}
+
+    <!-- STEP 2: Upload Resumes (only show if step=resumes and JD uploaded) -->
+    {% if step_name == 'resumes' and jd_data %}
+    
+    <!-- Show list of uploaded resumes if any exist -->
+    {% if uploaded_resumes %}
+    <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📁 Uploaded Resumes ({{ uploaded_resumes|length }})</h2>
+        
+        <div style="margin-bottom: 20px;">
+            {% for resume in uploaded_resumes %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; background: #f9fafb;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1f2937;">{{ resume.candidate_name }}</div>
+                    <div style="font-size: 14px; color: #6b7280;">{{ resume.file_name }}</div>
+                </div>
+                <form method="POST" action="{{ url_for('delete_resume', resume_id=resume.id) }}" style="display: inline;" onsubmit="return confirm('Remove this resume?');">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑️ Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Upload more resumes form -->
+    <div id="upload-resumes"></div>
+    <form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="resumeUploadForm">
+        <input type="hidden" name="action" value="upload_resumes">
+        
+        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">{% if uploaded_resumes %}Add More Resumes{% else %}Step 3: Upload Resumes{% endif %}</h2>
+            
+            <!-- Large Dashed Dropzone for Resumes -->
+            <div id="resumeDropzone" style="margin-bottom: 20px; padding: 60px 30px; border: 3px dashed #3b82f6; border-radius: 12px; background: #f0f9ff; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                <input type="file" name="resumes" id="resumeFiles" accept=".pdf,.docx,.doc,.txt" multiple style="display: none;">
+                <div id="resumeDropzoneContent">
+                    <i data-lucide="users" style="width: 64px; height: 64px; color: #3b82f6; margin-bottom: 16px;"></i>
+                    <h3 style="color: #1e40af; font-size: 20px; margin-bottom: 8px; font-weight: 600;">Drop candidate resumes here</h3>
+                    <p style="color: #64748b; font-size: 16px; margin-bottom: 16px;">or click to select multiple files</p>
+                    <p style="color: #94a3b8; font-size: 14px;">Supports PDF, DOCX, DOC, TXT • Select multiple files at once</p>
+                </div>
+            </div>
+            <div id="selectedResumesList" style="margin-top: 20px;"></div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+// ===== JD Dropzone Functionality =====
+const dropzone = document.getElementById('dropzone');
+const jdFileInput = document.getElementById('jdFile');
+const dropzoneContent = document.getElementById('dropzoneContent');
+const fileSelectedInfo = document.getElementById('fileSelectedInfo');
+const selectedFileName = document.getElementById('selectedFileName');
+const jdText = document.getElementById('jdText');
+
+if (dropzone && jdFileInput) {
+    // Click to browse
+    dropzone.addEventListener('click', () => jdFileInput.click());
+    
+    // File input change
+    jdFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            selectedFileName.textContent = file.name;
+            dropzoneContent.style.display = 'none';
+            fileSelectedInfo.style.display = 'block';
+            dropzone.style.borderColor = '#16a34a';
+            dropzone.style.background = '#d1fae5';
+            if (jdText) jdText.disabled = true;
+            
+            // Enable and update button text
+            updateContinueButton(true);
+            updateContinueButtonText('Extract Criteria with AI');
+        }
+    });
+    
+    // Drag and drop
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#2563eb';
+        dropzone.style.background = '#dbeafe';
+    });
+    
+    dropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#3b82f6';
+        dropzone.style.background = '#f0f9ff';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#3b82f6';
+        dropzone.style.background = '#f0f9ff';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            jdFileInput.files = files;
+            jdFileInput.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+// JD Text area
+if (jdText) {
+    jdText.addEventListener('input', (e) => {
+        const hasText = e.target.value.trim().length > 0;
+        updateContinueButton(hasText);
+        if (hasText) {
+            updateContinueButtonText('Extract Criteria with AI');
+        }
+    });
+}
+
+// Helper to update button text
+function updateContinueButtonText(text) {
+    const btnText = document.getElementById('continueButtonText');
+    if (btnText) {
+        btnText.textContent = text;
+    }
+}
+
+// ===== Resume Dropzone Functionality =====
+const resumeDropzone = document.getElementById('resumeDropzone');
+const resumeFiles = document.getElementById('resumeFiles');
+const resumeDropzoneContent = document.getElementById('resumeDropzoneContent');
+const selectedResumesList = document.getElementById('selectedResumesList');
+const uploadResumesBtn = document.getElementById('uploadResumesBtn');
+
+let selectedFiles = [];
+
+if (resumeDropzone && resumeFiles) {
+    // Click to browse
+    resumeDropzone.addEventListener('click', () => resumeFiles.click());
+    
+    // File input change
+    resumeFiles.addEventListener('change', (e) => {
+        const newFiles = Array.from(e.target.files);
+        // Additive upload - keep existing files
+        newFiles.forEach(file => {
+            if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                selectedFiles.push(file);
+            }
+        });
+        updateResumesList();
+    });
+    
+    // Drag and drop
+    resumeDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        resumeDropzone.style.borderColor = '#2563eb';
+        resumeDropzone.style.background = '#dbeafe';
+    });
+    
+    resumeDropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        resumeDropzone.style.borderColor = '#3b82f6';
+        resumeDropzone.style.background = '#f0f9ff';
+    });
+    
+    resumeDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        resumeDropzone.style.borderColor = '#3b82f6';
+        resumeDropzone.style.background = '#f0f9ff';
+        
+        const newFiles = Array.from(e.dataTransfer.files);
+        // Additive upload - keep existing files
+        newFiles.forEach(file => {
+            if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                selectedFiles.push(file);
+            }
+        });
+        updateResumesList();
+    });
+}
+
+function updateResumesList() {
+    if (!selectedResumesList) return;
+    
+    if (selectedFiles.length === 0) {
+        selectedResumesList.innerHTML = '';
+        updateContinueButton(false);
+        updateContinueButtonText('Upload Resumes');
+        return;
+    }
+    
+    selectedResumesList.innerHTML = `
+        <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #1e40af; margin-bottom: 12px; font-size: 16px; font-weight: 600;">
+                <i data-lucide="file-check" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                ${selectedFiles.length} file(s) ready to upload
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${selectedFiles.map((file, index) => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: white; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <span style="color: #1f2937; font-size: 14px; flex: 1;">${file.name}</span>
+                        <button type="button" onclick="removeFile(${index})" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 4px;">
+                            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    // Update file input with selected files
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach(file => dataTransfer.items.add(file));
+    resumeFiles.files = dataTransfer.files;
+    
+    // Enable sticky button and update text
+    updateContinueButton(true);
+    updateContinueButtonText('Continue to Run Analysis →');
+    
+    // Update button handler to submit the form
+    updateContinueButtonHandler('resumeUploadForm');
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateResumesList();
+}
+
+// Clear session function
+function clearSession() {
+    if (confirm('This will clear the uploaded JD and extracted criteria. Continue?')) {
+        fetch('{{ url_for("clear_session") }}', {
+            method: 'POST'
+        }).then(() => window.location.reload());
+    }
+}
+</script>
+
+<!-- Include Bottom Bar -->
+{% if step_name == 'jd' %}
+    {% if jd_data %}
+        {% set show_back_button = False %}
+        {% set continue_url = url_for('review_criteria') %}
+        {% set continue_text = 'Continue to Criteria' %}
+        {% set continue_disabled = False %}
+    {% else %}
+        {% set show_back_button = False %}
+        {% set continue_disabled = True %}
+        {% set continue_text = 'Extract Criteria with AI' %}
+        {% set continue_is_submit = True %}
+        {% set submit_form_id = 'jdForm' %}
+    {% endif %}
+{% elif step_name == 'resumes' %}
+    {% set show_back_button = True %}
+    {% set back_url = url_for('review_criteria') %}
+    {% if uploaded_resumes %}
+        {% set continue_url = url_for('run_analysis_route') %}
+        {% set continue_text = 'Continue to Run Analysis →' %}
+        {% set continue_disabled = False %}
+    {% else %}
+        {% set continue_disabled = True %}
+        {% set continue_text = 'Upload Resumes' %}
+        {% set continue_is_submit = True %}
+        {% set submit_form_id = 'resumeUploadForm' %}
+    {% endif %}
+{% endif %}
+{% include 'workflow_bottom_bar.html' %}
+
+{% endblock %}

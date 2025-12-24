@@ -1,0 +1,209 @@
+<!-- Sticky Bottom Navigation Bar -->
+<div class="workflow-bottom-bar">
+    <div class="bottom-bar-container">
+        {% if show_back_button %}
+        <a href="{{ back_url }}" class="btn-workflow btn-back">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px; margin-right: 6px;"></i>
+            Back
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+        
+        <button 
+            id="continueButton" 
+            class="btn-workflow btn-continue"
+            {% if continue_disabled %}disabled{% endif %}
+            {% if continue_is_submit %}
+            type="button"
+            onclick="submitFormWithSpinner('{{ submit_form_id }}')"
+            {% elif continue_url %}
+            onclick="window.location.href='{{ continue_url }}'"
+            {% endif %}
+        >
+            <span id="continueButtonText">{{ continue_text or 'Continue' }}</span>
+            <i data-lucide="arrow-right" id="continueButtonIcon" style="width: 18px; height: 18px; margin-left: 6px;"></i>
+            <span class="spinner-border spinner-border-sm" id="continueButtonSpinner" style="display: none; margin-left: 6px;"></span>
+        </button>
+    </div>
+</div>
+
+<style>
+    /* Make space for fixed bottom bar */
+    body {
+        padding-bottom: 100px;
+    }
+    
+    .workflow-bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+        z-index: 1000;
+        padding: 1.25rem 0;
+    }
+    
+    .bottom-bar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .btn-workflow {
+        padding: 0.9rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        min-height: 48px;
+    }
+    
+    .btn-back {
+        background: white;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .btn-back:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    
+    .btn-continue {
+        background: #2563eb;
+        color: white;
+    }
+    
+    .btn-continue:hover:not(:disabled) {
+        background: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    
+    .btn-continue:disabled {
+        background: #cbd5e1;
+        color: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    /* Spinner animation */
+    .spinner-border {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+    }
+    
+    .spinner-border-sm {
+        width: 0.875rem;
+        height: 0.875rem;
+        border-width: 0.12em;
+    }
+    
+    @keyframes spinner-border {
+        to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+        .bottom-bar-container {
+            padding: 0 1rem;
+        }
+        
+        .btn-workflow {
+            padding: 0.8rem 1.5rem;
+            font-size: 0.95rem;
+        }
+    }
+</style>
+
+<script>
+    // Workflow state management and flash message handling
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Lucide icons in bottom bar
+        lucide.createIcons();
+        
+        // Clear flash messages when navigating between steps
+        const workflowLinks = document.querySelectorAll('a[href*="/analyze"], a[href*="/criteria"], a[href*="/run-analysis"], .btn-back, .btn-continue');
+        workflowLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Clear flash messages
+                const flashContainer = document.querySelector('.flash-messages');
+                if (flashContainer) {
+                    flashContainer.remove();
+                }
+            });
+        });
+        
+        // Auto-clear flash messages after 5 seconds
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash');
+            flashMessages.forEach(flash => {
+                flash.style.transition = 'opacity 0.3s';
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 300);
+            });
+        }, 5000);
+    });
+    
+    // Enable/disable continue button based on form state
+    function updateContinueButton(enabled) {
+        const continueBtn = document.getElementById('continueButton');
+        if (continueBtn) {
+            continueBtn.disabled = !enabled;
+        }
+    }
+    
+    // Update continue button click handler (for dynamic form submission)
+    function updateContinueButtonHandler(formId) {
+        const continueBtn = document.getElementById('continueButton');
+        if (continueBtn && formId) {
+            // Remove any existing onclick
+            continueBtn.onclick = function() {
+                submitFormWithSpinner(formId);
+            };
+        }
+    }
+    
+    // Submit form with loading spinner in continue button
+    function submitFormWithSpinner(formId) {
+        const form = document.getElementById(formId);
+        const continueBtn = document.getElementById('continueButton');
+        const btnText = document.getElementById('continueButtonText');
+        const btnIcon = document.getElementById('continueButtonIcon');
+        const btnSpinner = document.getElementById('continueButtonSpinner');
+        
+        if (form && continueBtn) {
+            // Show spinner, hide icon
+            btnIcon.style.display = 'none';
+            btnSpinner.style.display = 'inline-block';
+            btnText.textContent = 'Processing...';
+            continueBtn.disabled = true;
+            
+            // Submit form
+            form.submit();
+        }
+    }
+    
+    // Helper function to check if file is uploaded
+    function checkFileUploaded(inputId) {
+        const input = document.getElementById(inputId);
+        return input && input.files && input.files.length > 0;
+    }
+</script>

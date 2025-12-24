@@ -1,0 +1,1055 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Sticky column styles */
+    #coverageMatrix thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 30;
+        background: #f8f9fa;
+    }
+    
+    #coverageMatrix tbody td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background: white;
+        font-weight: 600;
+    }
+    
+    #coverageMatrix thead th {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #f8f9fa;
+    }
+    
+    .success-toast {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 2px solid #10b981;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        animation: slideInDown 0.6s ease-out, pulse 0.8s ease-in-out 0.6s;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .success-toast::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        animation: shimmer 2s ease-in-out infinite;
+    }
+    
+    .success-icon {
+        font-size: 3rem;
+        animation: bounce 1s ease-in-out 0.3s;
+        z-index: 1;
+    }
+    
+    .success-msg {
+        flex: 1;
+        z-index: 1;
+    }
+    
+    .success-msg h3 {
+        margin: 0 0 8px 0;
+        color: #064e3b;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .success-msg p {
+        margin: 0;
+        color: #065f46;
+        font-size: 1.05rem;
+        line-height: 1.5;
+    }
+    
+    .success-msg .time-saved {
+        display: inline-block;
+        background: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        color: #059669;
+        margin-top: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn-dismiss {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 2rem;
+        color: #059669;
+        opacity: 0.5;
+        transition: opacity 0.3s, transform 0.2s;
+        padding: 4px 8px;
+        line-height: 1;
+        z-index: 2;
+    }
+    
+    .btn-dismiss:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    @keyframes slideInDown {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+    
+    @keyframes bounce {
+        0%, 100% {
+            transform: scale(1);
+        }
+        25% {
+            transform: scale(1.2) rotate(-5deg);
+        }
+        75% {
+            transform: scale(1.2) rotate(5deg);
+        }
+    }
+    
+    @keyframes shimmer {
+        0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+    
+    @keyframes slideOutUp {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .success-toast {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .success-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .btn-view-top {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Success Toast (shows only on first view after analysis) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'success' and 'Analysis complete' in message %}
+                <div class="success-toast" id="successToast">
+                    <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
+                    <div class="success-icon">🎉</div>
+                    <div class="success-msg">
+                        <h3>Analysis Complete! 🚀</h3>
+                        <p>We've ranked your {{ analysis.num_candidates }} candidates. 
+                            {% if coverage_data|length > 0 %}
+                            Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
+                            {% endif %}
+                        </p>
+                        {% set total_minutes = analysis.num_candidates * 25 %}
+                        {% set hours = (total_minutes // 60)|int %}
+                        {% set minutes = (total_minutes % 60)|int %}
+                        <div class="time-saved">⚡ You just saved approximately 
+                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}{% if hours > 0 and minutes > 0 %} and {% endif %}{% if minutes > 0 %}{{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
+                            of manual screening
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Workflow Stepper -->
+    {% if is_current_draft_analysis %}
+    {% set current_step = 5 %}
+    {% include 'workflow_stepper.html' %}
+    {% else %}
+    <!-- Historical Analysis Header -->
+    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div class="text-center">
+            <h4 style="color: #1f2937; margin-bottom: 10px;">📊 Historical Analysis Results</h4>
+            <p class="text-muted mb-0">Viewing saved analysis from {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+            <div class="mt-3">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm" 
+                            onclick="return confirm('This will load this analysis into your draft workspace for editing and re-running. If you are in the middle of working on another job, that other job will be lost. After editing your historical job, you will need to \'Run Analysis\' on it, which will create a new job in your Job History list. Continue?');">
+                        ✏️ Edit & Re-run This Analysis
+                    </button>
+                </form>
+                <small class="text-muted ms-2">or <a href="{{ url_for('job_history') }}">Return to Job History</a> | <a href="{{ url_for('analyze', new=1) }}">Start New Analysis</a></small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quick Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary">
+            📊 Results
+        </a>
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            📊 Export Reports
+        </a>
+        {% if analysis.insights_data %}
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
+            💡 Candidate Insights
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>📊 Analysis Results</h2>
+                    <p class="text-muted mb-0">{{ analysis.job_title }}</p>
+                    <small class="text-muted">Analyzed {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+                <div class="text-end">
+                    <p class="mb-1"><strong>Cost:</strong> ${{ "%.2f"|format(analysis.cost_usd) }}</p>
+                    <p class="mb-0 text-muted">{{ analysis.num_candidates }} candidates • {{ analysis.num_criteria }} criteria</p>
+                </div>
+            </div>
+
+            <!-- AI Match Confidence Meter -->
+            <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="brain" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                        <h4 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">AI Analysis Confidence</h4>
+                    </div>
+                    <span style="background: #16a34a; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">High</span>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 12px; height: 24px; overflow: hidden; position: relative;">
+                    <div style="background: linear-gradient(90deg, #10b981 0%, #16a34a 100%); height: 100%; width: 92%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                        <span style="color: white; font-weight: 700; font-size: 12px;">92%</span>
+                    </div>
+                </div>
+                <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">The AI successfully parsed all job criteria and candidate resumes with high accuracy.</p>
+            </div>
+
+            <!-- Top Candidates Summary -->
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">🏆 Top 5 Candidates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="topCandidates">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scoring Info Box -->
+            <div class="alert alert-info mb-4">
+                <strong>ℹ️ Understanding the Heatmap:</strong><br>
+                Each score is shown as a percentage (0-100%) with color coding for quick visual assessment:<br>
+                <span style="background: #e6ffed; color: #065f46; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">80-100%</span> <strong>Strong Match</strong> (Green) | 
+                <span style="background: #fffbe6; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">60-79%</span> <strong>Potential Match</strong> (Yellow) | 
+                <span style="background: #fff1f0; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">Below 60%</span> <strong>Low Alignment</strong> (Red)
+                <br><small class="mt-2 d-inline-block">💡 <em>Click any cell to view supporting evidence from the resume</em></small>
+            </div>
+
+            <!-- Coverage Matrix Controls -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📈 Coverage Matrix</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Control Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="sortBy" class="form-label small">Sort candidates by</label>
+                            <select id="sortBy" class="form-select form-select-sm">
+                                <option value="name">Name (A-Z)</option>
+                                <option value="score-desc" selected>Overall Score (High-Low)</option>
+                                <option value="score-asc">Overall Score (Low-High)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filterBy" class="form-label small">Show</label>
+                            <select id="filterBy" class="form-select form-select-sm">
+                                <option value="all" selected>All Candidates</option>
+                                <option value="top3">Top 3</option>
+                                <option value="top5">Top 5</option>
+                                <option value="top10">Top 10</option>
+                                <option value="custom">Custom Selection</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="expandCategories" checked>
+                                <label class="form-check-label" for="expandCategories">
+                                    Expand all categories
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">&nbsp;</label>
+                            <div class="form-check">
+                                <!-- Placeholder for alignment -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Selection (hidden by default) -->
+                    <div id="customSelectionBox" class="alert alert-info mb-3" style="display: none;">
+                        <strong>👥 Select candidates to compare:</strong>
+                        <div id="customCandidateCheckboxes" class="mt-2">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Download Button -->
+                    <div class="mb-3">
+                        <button id="downloadCSV" class="btn btn-sm btn-outline-primary">
+                            📥 Download CSV
+                        </button>
+                    </div>
+
+                    <p class="text-muted small mb-3">
+                        💡 <em>Hint: Click on the "Average" column header to sort criteria by average score</em>
+                    </p>
+
+                    <!-- Coverage Matrix Table -->
+                    <div class="table-responsive">
+                        <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
+                            <thead class="table-light sticky-top">
+                                <tr id="matrixHeader">
+                                    <!-- Populated by JavaScript -->
+                                </tr>
+                            </thead>
+                            <tbody id="matrixBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evidence Explorer -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">🔍 Evidence Explorer</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Select a candidate and criterion to view the evidence snippet used for scoring</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="evidenceCandidate" class="form-label">👤 Candidate</label>
+                            <select id="evidenceCandidate" class="form-select">
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="evidenceCriterion" class="form-label">📋 Criterion</label>
+                            <select id="evidenceCriterion" class="form-select">
+                                <!-- Populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="evidenceDisplay">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mb-4">
+                <div>
+                    <a href="{{ url_for('job_history') }}" class="btn btn-secondary">
+                        ← Back to Job History
+                    </a>
+                    <a href="{{ url_for('view_criteria', analysis_id=analysis.id) }}" class="btn btn-outline-info">
+                        📋 Edit Criteria
+                    </a>
+                </div>
+                <div>
+                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='pdf') }}" class="btn btn-outline-primary">
+                        📄 Export PDF
+                    </a>
+                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='excel') }}" class="btn btn-outline-success">
+                        📊 Export Excel
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Passive Feedback Section -->
+            <div class="feedback-box" id="feedbackBox">
+                <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
+                <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Your feedback helps us improve the analysis accuracy</p>
+                <div class="feedback-options">
+                    <button class="feedback-btn" onclick="submitVote('up')">
+                        <span style="font-size: 1.5rem;">👍</span><br>
+                        <span>Yes, accurate</span>
+                    </button>
+                    <button class="feedback-btn" onclick="showNote()">
+                        <span style="font-size: 1.5rem;">👎</span><br>
+                        <span>Needs work</span>
+                    </button>
+                </div>
+                
+                <div id="improvement-note">
+                    <textarea id="feedback-text" placeholder="Tell us what could be improved (optional)..." 
+                        style="width:100%; max-width:600px; height:100px; padding:12px; border-radius:8px; 
+                        border:1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; margin-top: 20px;"></textarea>
+                    <br>
+                    <button onclick="submitVote('down')" class="btn btn-primary" style="margin-top:12px; padding:10px 24px;">
+                        Send Feedback
+                    </button>
+                </div>
+                
+                <div id="feedback-thanks" style="display: none;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+                    <h4 style="color: #059669; margin: 0;">Thanks for your feedback!</h4>
+                    <p style="color: #64748b; margin-top: 8px;">Your input helps us improve the AI for everyone.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .feedback-box {
+        margin-top: 60px;
+        padding: 40px 30px;
+        background: #f8fafc;
+        border-radius: 16px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    
+    .feedback-options {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .feedback-btn {
+        padding: 20px 30px;
+        border: 2px solid #cbd5e1;
+        border-radius: 12px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #475569;
+        min-width: 140px;
+    }
+    
+    .feedback-btn:hover {
+        background: #eff6ff;
+        border-color: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    
+    #improvement-note {
+        margin-top: 15px;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 768px) {
+        .feedback-box {
+            padding: 30px 20px;
+        }
+        
+        .feedback-btn {
+            min-width: 120px;
+            padding: 16px 20px;
+        }
+    }
+</style>
+
+<script>
+// Parse data from Flask
+const coverageData = {{ coverage_data | tojson | safe }};
+const categoryMap = {{ category_map | tojson | safe }};
+const evidenceMap = {{ evidence_map | tojson | safe }};
+const thresholds = { high: {{ user_settings.default_hi_threshold / 100 }}, low: {{ user_settings.default_lo_threshold / 100 }} };
+
+let currentSort = 'score-desc';
+let currentFilter = 'all';
+let showScores = false;
+let expandCategories = true;
+let selectedCandidates = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTopCandidates();
+    initializeCoverageMatrix();
+    initializeEvidenceExplorer();
+    attachEventListeners();
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+
+function initializeTopCandidates() {
+    const sorted = [...coverageData].sort((a, b) => b.Overall - a.Overall);
+    const top5 = sorted.slice(0, 5);
+    
+    const html = top5.map((row, idx) => {
+        const score = row.Overall;
+        const percentage = Math.round(score * 100);
+        const rank = idx + 1;
+        
+        // Get background color based on score
+        let bgColor, textColor;
+        if (score >= 0.80) {
+            bgColor = '#e6ffed';
+            textColor = '#065f46';
+        } else if (score >= 0.60) {
+            bgColor = '#fffbe6';
+            textColor = '#92400e';
+        } else {
+            bgColor = '#fff1f0';
+            textColor = '#991b1b';
+        }
+        
+        return `
+            <div style="flex: 1; min-width: 180px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid ${bgColor}; text-align: center;">
+                <div style="font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">#${rank}</div>
+                <div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${row.Candidate}">${row.Candidate}</div>
+                <div style="background: ${bgColor}; color: ${textColor}; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 24px;">${percentage}%</div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('topCandidates').innerHTML = `<div style="display: flex; gap: 16px; flex-wrap: wrap;">${html}</div>`;
+}
+
+function initializeCoverageMatrix() {
+    renderMatrix();
+}
+
+function renderMatrix() {
+    // Get sorted and filtered data
+    let data = [...coverageData];
+    
+    // Apply sorting
+    if (currentSort === 'name') {
+        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+    } else if (currentSort === 'score-desc') {
+        data.sort((a, b) => b.Overall - a.Overall);
+    } else if (currentSort === 'score-asc') {
+        data.sort((a, b) => a.Overall - b.Overall);
+    }
+    
+    // Apply filtering
+    if (currentFilter === 'top3') {
+        data = data.slice(0, 3);
+    } else if (currentFilter === 'top5') {
+        data = data.slice(0, 5);
+    } else if (currentFilter === 'top10') {
+        data = data.slice(0, 10);
+    } else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+        data = data.filter(row => selectedCandidates.includes(row.Candidate));
+    }
+    
+    if (data.length === 0) {
+        document.getElementById('matrixBody').innerHTML = '<tr><td colspan="100" class="text-center text-muted">No candidates to display. Select at least one candidate above.</td></tr>';
+        return;
+    }
+    
+    // Build header
+    const candidates = data.map(row => row.Candidate);
+    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+    
+    let headerHTML = '<th class="text-center">Category / Criterion</th><th class="text-center">Average</th>';
+    candidates.forEach(cand => {
+        headerHTML += `<th class="text-center">${cand}</th>`;
+    });
+    document.getElementById('matrixHeader').innerHTML = headerHTML;
+    
+    // Build body
+    let bodyHTML = '';
+    
+    // Overall row first
+    bodyHTML += '<tr class="table-warning"><td><strong>📊 Overall</strong></td><td></td>';
+    data.forEach(row => {
+        const score = row.Overall;
+        const display = getScoreIcon(score);
+        bodyHTML += `<td class="text-center" style="cursor: pointer;" onclick="scrollToEvidenceExplorer('${row.Candidate}')" title="Click to view evidence for ${row.Candidate}">${display}</td>`;
+    });
+    bodyHTML += '</tr>';
+    
+    // Group criteria by category
+    const categorized = {};
+    criteria.forEach(crit => {
+        const cat = categoryMap[crit] || 'Uncategorized';
+        if (!categorized[cat]) categorized[cat] = [];
+        categorized[cat].push(crit);
+    });
+    
+    // Render by category
+    const categories = Object.keys(categorized).sort();
+    categories.forEach(category => {
+        const crits = categorized[category];
+        
+        if (expandCategories) {
+            // Category header
+            bodyHTML += `<tr class="table-secondary"><td colspan="${2 + candidates.length}"><strong>📁 ${category}</strong></td></tr>`;
+            
+            // Criteria rows
+            crits.forEach(crit => {
+                bodyHTML += renderCriterionRow(crit, data, candidates);
+            });
+        } else {
+            // Collapsible category
+            const catId = category.replace(/\s+/g, '_');
+            bodyHTML += `
+                <tr class="table-secondary cursor-pointer" onclick="toggleCategory('${catId}')">
+                    <td colspan="${2 + candidates.length}">
+                        <strong>📁 ${category}</strong>
+                        <span id="toggle_${catId}" class="float-end">▼</span>
+                    </td>
+                </tr>
+            `;
+            bodyHTML += `<tbody id="${catId}" class="collapse show">`;
+            crits.forEach(crit => {
+                bodyHTML += renderCriterionRow(crit, data, candidates);
+            });
+            bodyHTML += `</tbody>`;
+        }
+    });
+    
+    document.getElementById('matrixBody').innerHTML = bodyHTML;
+}
+
+function renderCriterionRow(criterion, data, candidates) {
+    // Calculate average
+    const scores = data.map(row => parseFloat(row[criterion]));
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const avgIcon = getScoreIcon(avg);
+    
+    let html = `<tr><td class="ps-4" style="font-weight: 500;">${criterion}</td><td class="text-center">${avgIcon}</td>`;
+    
+    data.forEach(row => {
+        const score = parseFloat(row[criterion]);
+        const display = getScoreIcon(score);
+        html += `<td class="text-center" style="cursor: pointer;" onclick="showQuickEvidence('${row.Candidate}', '${criterion}')">${display}</td>`;
+    });
+    
+    html += '</tr>';
+    return html;
+}
+
+function getScoreIcon(score) {
+    const percentage = Math.round(score * 100);
+    let bgColor, textColor;
+    
+    if (percentage >= 80) {
+        bgColor = '#e6ffed';  // Soft Green
+        textColor = '#065f46'; // Dark Green
+    } else if (percentage >= 60) {
+        bgColor = '#fffbe6';  // Soft Yellow
+        textColor = '#92400e'; // Dark Gold
+    } else {
+        bgColor = '#fff1f0';  // Very Light Red
+        textColor = '#991b1b'; // Dark Red
+    }
+    
+    return `<span style="display: inline-block; background: ${bgColor}; color: ${textColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; min-width: 50px;">${percentage}%</span>`;
+}
+
+function getScoreColor(score) {
+    if (score >= thresholds.high) return 'success';
+    if (score >= thresholds.low) return 'warning';
+    return 'danger';
+}
+
+function initializeEvidenceExplorer() {
+    const candidates = coverageData.map(row => row.Candidate);
+    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+    
+    // Populate candidate dropdown
+    let candHTML = candidates.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('evidenceCandidate').innerHTML = candHTML;
+    
+    // Populate criterion dropdown
+    let critHTML = criteria.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('evidenceCriterion').innerHTML = critHTML;
+    
+    // Show initial evidence
+    updateEvidenceDisplay();
+}
+
+function updateEvidenceDisplay() {
+    const candidate = document.getElementById('evidenceCandidate').value;
+    const criterion = document.getElementById('evidenceCriterion').value;
+    
+    if (!candidate || !criterion) {
+        document.getElementById('evidenceDisplay').innerHTML = '<p class="text-muted">Select a candidate and criterion above.</p>';
+        return;
+    }
+    
+    const key = `${candidate}|||${criterion}`;
+    const evidence = evidenceMap[key];
+    
+    if (!evidence || evidence.length === 0) {
+        document.getElementById('evidenceDisplay').innerHTML = '<div class="alert alert-info">No cached evidence for this combination. Re-run analysis to refresh evidence.</div>';
+        return;
+    }
+    
+    const snippet = evidence[0];
+    
+    // Get actual score from coverage data
+    const row = coverageData.find(r => r.Candidate === candidate);
+    const score = row ? parseFloat(row[criterion]) : 0;
+    const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
+    
+    // Highlight keywords from criterion in the evidence
+    const criterionWords = criterion.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    let highlightedSnippet = snippet;
+    criterionWords.forEach(word => {
+        const regex = new RegExp(`(${word})`, 'gi');
+        highlightedSnippet = highlightedSnippet.replace(regex, '<mark style="background: #fef08a; font-weight: 600; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+    });
+    
+    const html = `
+        <div class="alert alert-${scoreColor}">
+            <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>
+        </div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Evidence from resume:</span>
+                <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    📄 View Resume
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9rem;">${highlightedSnippet}</div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('evidenceDisplay').innerHTML = html;
+}
+
+function scrollToEvidenceExplorer(candidateName) {
+    // Set the candidate in the Evidence Explorer dropdown
+    const candidateSelect = document.getElementById('evidenceCandidate');
+    candidateSelect.value = candidateName;
+    
+    // Scroll to Evidence Explorer
+    const evidenceExplorer = document.querySelector('.card-header:has(+ .card-body #evidenceCandidate)')?.closest('.card');
+    if (evidenceExplorer) {
+        evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Highlight the card briefly
+        evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
+        evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+        setTimeout(() => {
+            evidenceExplorer.style.boxShadow = '';
+        }, 2000);
+    }
+    
+    // Trigger the evidence display update
+    updateEvidenceDisplay();
+}
+
+function attachEventListeners() {
+    document.getElementById('sortBy').addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderMatrix();
+    });
+    
+    document.getElementById('filterBy').addEventListener('change', (e) => {
+        currentFilter = e.target.value;
+        
+        if (currentFilter === 'custom') {
+            document.getElementById('customSelectionBox').style.display = 'block';
+            initializeCustomSelection();
+        } else {
+            document.getElementById('customSelectionBox').style.display = 'none';
+        }
+        
+        renderMatrix();
+    });
+    
+    document.getElementById('showScores').addEventListener('change', (e) => {
+        showScores = e.target.checked;
+        renderMatrix();
+        initializeTopCandidates(); // Update top candidates display too
+    });
+    
+    document.getElementById('expandCategories').addEventListener('change', (e) => {
+        expandCategories = e.target.checked;
+        renderMatrix();
+    });
+    
+    document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
+    document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
+    
+    document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
+}
+
+function initializeCustomSelection() {
+    const candidates = coverageData.map(row => row.Candidate);
+    selectedCandidates = candidates.slice(0, 3); // Default to top 3
+    
+    const html = candidates.map(cand => {
+        const checked = selectedCandidates.includes(cand) ? 'checked' : '';
+        return `
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="cust_${cand}" value="${cand}" ${checked} onchange="toggleCustomCandidate('${cand}')">
+                <label class="form-check-label" for="cust_${cand}">${cand}</label>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('customCandidateCheckboxes').innerHTML = html;
+}
+
+function toggleCustomCandidate(candidate) {
+    if (selectedCandidates.includes(candidate)) {
+        selectedCandidates = selectedCandidates.filter(c => c !== candidate);
+    } else {
+        selectedCandidates.push(candidate);
+    }
+    renderMatrix();
+}
+
+function downloadCSV() {
+    // Get current filtered/sorted data
+    let data = [...coverageData];
+    
+    if (currentSort === 'name') {
+        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+    } else if (currentSort === 'score-desc') {
+        data.sort((a, b) => b.Overall - a.Overall);
+    } else if (currentSort === 'score-asc') {
+        data.sort((a, b) => a.Overall - b.Overall);
+    }
+    
+    if (currentFilter === 'top3') data = data.slice(0, 3);
+    else if (currentFilter === 'top5') data = data.slice(0, 5);
+    else if (currentFilter === 'top10') data = data.slice(0, 10);
+    else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+        data = data.filter(row => selectedCandidates.includes(row.Candidate));
+    }
+    
+    // Convert to CSV
+    const headers = Object.keys(data[0]);
+    const csv = [
+        headers.join(','),
+        ...data.map(row => headers.map(h => `"${row[h]}"`).join(','))
+    ].join('\n');
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'coverage_matrix.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function toggleCategory(catId) {
+    const elem = document.getElementById(catId);
+    const toggle = document.getElementById('toggle_' + catId);
+    elem.classList.toggle('show');
+    toggle.textContent = elem.classList.contains('show') ? '▼' : '▶';
+}
+
+// Feedback Functions
+function showNote() {
+    document.getElementById('improvement-note').style.display = 'block';
+    // Smooth scroll to textarea
+    setTimeout(() => {
+        document.getElementById('feedback-text').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('feedback-text').focus();
+    }, 100);
+}
+
+async function submitVote(voteType) {
+    const improvementNote = voteType === 'down' ? document.getElementById('feedback-text').value : '';
+    const analysisId = {{ analysis.id }};
+    
+    try {
+        const response = await fetch('/submit_feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                analysis_id: analysisId,
+                vote: voteType,
+                improvement_note: improvementNote
+            })
+        });
+        
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error:', response.status, errorText);
+            alert(`Failed to submit feedback (Error ${response.status}). Please try again or contact support.`);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Hide the feedback form and show thank you message
+            document.querySelector('.feedback-options').style.display = 'none';
+            document.getElementById('improvement-note').style.display = 'none';
+            document.getElementById('feedback-thanks').style.display = 'block';
+            document.querySelector('.feedback-box h4:first-child').style.display = 'none';
+            document.querySelector('.feedback-box p:first-of-type').style.display = 'none';
+            
+            // Add a subtle success animation
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.style.transition = 'all 0.3s ease';
+            feedbackBox.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)';
+            feedbackBox.style.borderColor = '#10b981';
+        } else {
+            console.error('Feedback error:', data.error);
+            alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        alert('Failed to submit feedback. Please check your connection and try again.');
+    }
+}
+</script>
+
+<style>
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.table-sm td, .table-sm th {
+    padding: 8px 12px;
+}
+
+#coverageMatrix td,
+#coverageMatrix th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#coverageMatrix th:first-child,
+#coverageMatrix td:first-child {
+    text-align: left;
+}
+
+pre {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+// Success Toast Functions
+function scrollToTopCandidate() {
+    const topCandidatesCard = document.getElementById('topCandidates');
+    if (topCandidatesCard) {
+        topCandidatesCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add a subtle highlight effect
+        const card = topCandidatesCard.closest('.card');
+        if (card) {
+            card.style.transition = 'box-shadow 0.3s ease';
+            card.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+            setTimeout(() => {
+                card.style.boxShadow = '';
+            }, 2000);
+        }
+    }
+}
+
+function dismissToast() {
+    const toast = document.getElementById('successToast');
+    if (toast) {
+        toast.style.animation = 'slideOutUp 0.4s ease-in';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 400);
+    }
+}
+</script>
+
+<!-- Sticky Bottom Bar -->
+{% if is_current_draft_analysis %}
+{% set show_back_button = True %}
+{% set back_url = url_for('run_analysis_route') %}
+{% set continue_text = 'Start New Analysis' %}
+{% set continue_url = url_for('analyze', new=1) %}
+{% set continue_disabled = false %}
+{% include 'workflow_bottom_bar.html' %}
+{% endif %}
+{% endblock %}

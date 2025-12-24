@@ -78,11 +78,6 @@ def create_app(config_name=None):
         """Security and data privacy page"""
         return render_template('security.html')
     
-    @app.route('/favicon.ico')
-    def favicon():
-        """Return 204 No Content for favicon requests to avoid 404s"""
-        return '', 204
-    
     @app.route('/features')
     def features():
         """Features deep dive page"""
@@ -952,21 +947,8 @@ def create_app(config_name=None):
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
-        # Parse evidence_map and normalize to pipe format for template
-        evidence_map_raw = json.loads(analysis.evidence_data)
-        evidence_map = {}
-        for key_str, value in evidence_map_raw.items():
-            # Handle both formats: pipe "Name|||Criterion" or tuple "('Name', 'Criterion')"
-            if '|||' in key_str:
-                evidence_map[key_str] = value
-            else:
-                # Try parsing as tuple and convert to pipe format
-                try:
-                    key_tuple = eval(key_str)
-                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
-                        evidence_map[f"{key_tuple[0]}|||{key_tuple[1]}"] = value
-                except:
-                    pass
+        # Parse evidence_map (keep as string keys for JSON serialization in template)
+        evidence_map = json.loads(analysis.evidence_data)
         
         # Build category map from criteria (extract from criterion names or use default categories)
         category_map = {}
@@ -1064,8 +1046,7 @@ def create_app(config_name=None):
         
         # Parse stored JSON data
         import pandas as pd
-        from io import StringIO
-        coverage = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
@@ -1456,20 +1437,8 @@ def create_app(config_name=None):
                 'rating': rating
             })
         
-        # Get evidence snippets (handle both tuple and pipe formats)
-        evidence_data_raw = json.loads(analysis.evidence_data) if analysis.evidence_data else {}
-        evidence_data = {}
-        for key_str, value in evidence_data_raw.items():
-            if '|||' in key_str:
-                evidence_data[key_str] = value
-            else:
-                try:
-                    key_tuple = eval(key_str)
-                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
-                        evidence_data[f"{key_tuple[0]}|||{key_tuple[1]}"] = value
-                except:
-                    pass
-        
+        # Get evidence snippets
+        evidence_data = json.loads(analysis.evidence_data) if analysis.evidence_data else {}
         evidence_list = []
         for criterion in criteria_cols:
             key = f"{selected_candidate}|||{criterion}"
@@ -1534,7 +1503,6 @@ def create_app(config_name=None):
         has_full_radar = (len(gpt_candidates_list) == 0 or len(gpt_candidates_list) >= analysis.num_candidates)
         
         return render_template('insights.html',
-                             analysis=analysis,
                              analysis_id=analysis_id,
                              candidates=candidates_list,
                              current_candidate=current_candidate,
@@ -1602,18 +1570,11 @@ def create_app(config_name=None):
             evidence_map = {}
             for key_str, value in evidence_map_raw.items():
                 try:
-                    # Try eval first for tuple format: "('Candidate Name', 'Criterion')"
+                    # Parse string key like "('Candidate Name', 'Criterion')"
                     key_tuple = eval(key_str)
                     evidence_map[key_tuple] = value
                 except:
-                    # Try splitting by ||| for alternate format: "Candidate Name|||Criterion"
-                    if '|||' in key_str:
-                        parts = key_str.split('|||')
-                        if len(parts) == 2:
-                            key_tuple = (parts[0], parts[1])
-                            # Only add if this is the current candidate
-                            if parts[0] == candidate_name:
-                                evidence_map[key_tuple] = value
+                    pass
             
             # Get scores for this candidate
             candidate_scores = {col: candidate_row[col] for col in candidate_row.keys() 
@@ -1686,20 +1647,12 @@ def create_app(config_name=None):
         criteria = json.loads(analysis.criteria_list)
         gpt_candidates_raw = json.loads(analysis.gpt_candidates) if analysis.gpt_candidates else []
         
-        # Convert evidence_map keys to tuples (handle both pipe and tuple formats)
+        # Convert evidence_map keys from "candidate|||criterion" strings back to tuples
         evidence_map = {}
-        for key_str, value in evidence_map_raw.items():
-            if '|||' in key_str:
-                parts = key_str.split('|||', 1)
-                if len(parts) == 2:
-                    evidence_map[(parts[0], parts[1])] = value
-            else:
-                try:
-                    key_tuple = eval(key_str)
-                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
-                        evidence_map[key_tuple] = value
-                except:
-                    pass
+        for k, v in evidence_map_raw.items():
+            parts = k.split('|||', 1)
+            if len(parts) == 2:
+                evidence_map[(parts[0], parts[1])] = v
         
         # Build category map
         category_map = {}
@@ -1997,8 +1950,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
@@ -2067,8 +2019,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
@@ -2127,8 +2078,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
         
@@ -2187,8 +2137,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         criteria = json.loads(analysis.criteria_list)
         
         # Build category map
@@ -2240,8 +2189,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         
         # Convert to CSV
         csv_buffer = io.StringIO()
@@ -2278,27 +2226,18 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
         evidence_map_raw = json.loads(analysis.evidence_data)
         criteria = json.loads(analysis.criteria_list)
         gpt_candidates_raw = json.loads(analysis.gpt_candidates) if analysis.gpt_candidates else []
         
-        # Convert evidence_map keys to tuples (handle both pipe and tuple formats)
+        # Convert evidence_map keys from "candidate|||criterion" strings back to tuples
         evidence_map = {}
-        for key_str, value in evidence_map_raw.items():
-            if '|||' in key_str:
-                parts = key_str.split('|||', 1)
-                if len(parts) == 2:
-                    evidence_map[(parts[0], parts[1])] = value
-            else:
-                try:
-                    key_tuple = eval(key_str)
-                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
-                        evidence_map[key_tuple] = value
-                except:
-                    pass
+        for k, v in evidence_map_raw.items():
+            parts = k.split('|||', 1)  # Split only on first |||
+            if len(parts) == 2:
+                evidence_map[(parts[0], parts[1])] = v
         
         # Build category map
         category_map = {}
@@ -2411,27 +2350,10 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         insights = json.loads(analysis.insights_data)
-        evidence_map_raw = json.loads(analysis.evidence_data)
         criteria = json.loads(analysis.criteria_list)
         gpt_candidates_raw = json.loads(analysis.gpt_candidates) if analysis.gpt_candidates else []
-        
-        # Convert evidence_map keys to tuples (handle both pipe and tuple formats)
-        evidence_map = {}
-        for key_str, value in evidence_map_raw.items():
-            if '|||' in key_str:
-                parts = key_str.split('|||', 1)
-                if len(parts) == 2:
-                    evidence_map[(parts[0], parts[1])] = value
-            else:
-                try:
-                    key_tuple = eval(key_str)
-                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
-                        evidence_map[key_tuple] = value
-                except:
-                    pass
         
         # Build category map
         category_map = {}
@@ -2510,8 +2432,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
-        from io import StringIO
-        coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        coverage_df = pd.read_json(analysis.coverage_data, orient='records')
         
         # Create simple CSV with just Candidate and Overall
         simple_df = coverage_df[['Candidate', 'Overall']].copy()
@@ -2577,8 +2498,6 @@ def create_app(config_name=None):
             
             if password == admin_password:
                 session['admin_logged_in'] = True
-                session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
-                session.permanent = True
                 flash('✅ Admin access granted', 'success')
                 return redirect(url_for('admin_settings'))
             else:
@@ -2591,34 +2510,18 @@ def create_app(config_name=None):
     def admin_logout():
         """Logout from admin panel"""
         session.pop('admin_logged_in', None)
-        session.pop('admin_last_activity', None)
         flash('Logged out from admin panel', 'info')
         return redirect(url_for('admin_login'))
     
     
     def admin_required(f):
-        """Decorator to protect admin routes with 30-minute inactivity timeout"""
+        """Decorator to protect admin routes"""
         from functools import wraps
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not session.get('admin_logged_in'):
                 flash('⚠️ Admin access required', 'warning')
                 return redirect(url_for('admin_login'))
-            
-            # Check for inactivity timeout (30 minutes)
-            last_activity_str = session.get('admin_last_activity')
-            if last_activity_str:
-                last_activity = datetime.fromisoformat(last_activity_str)
-                inactivity = datetime.now(timezone.utc) - last_activity
-                
-                if inactivity > timedelta(minutes=30):
-                    session.pop('admin_logged_in', None)
-                    session.pop('admin_last_activity', None)
-                    flash('⏱️ Session expired due to inactivity. Please login again.', 'warning')
-                    return redirect(url_for('admin_login'))
-            
-            # Update last activity timestamp
-            session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
             return f(*args, **kwargs)
         return decorated_function
     

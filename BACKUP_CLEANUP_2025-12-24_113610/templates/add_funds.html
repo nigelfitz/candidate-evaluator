@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Add Funds - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 40px 20px;">
+    <h1 style="text-align: center; color: #1f2937; margin-bottom: 10px;">Add Funds to Your Account</h1>
+    <p style="text-align: center; color: #6b7280; margin-bottom: 40px;">
+        Add funds once, use whenever you need.
+    </p>
+    
+    <!-- Current Balance -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                padding: 30px; 
+                border-radius: 12px; 
+                text-align: center; 
+                margin-bottom: 40px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Current Balance</div>
+        <div style="font-size: 42px; font-weight: bold;">${{ "%.2f"|format(current_user.balance_usd) }}</div>
+    </div>
+    
+    <!-- Add Funds Form -->
+    <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; text-align: center;">Select Amount</h2>
+        
+        <!-- Quick Amount Buttons -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin-bottom: 30px;">
+            <button type="button" class="amount-btn" data-amount="10">$10</button>
+            <button type="button" class="amount-btn" data-amount="25">$25</button>
+            <button type="button" class="amount-btn" data-amount="50">$50</button>
+            <button type="button" class="amount-btn" data-amount="100">$100</button>
+        </div>
+        
+        <!-- Custom Amount -->
+        <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 8px; color: #374151; font-weight: 500;">Or enter custom amount:</label>
+            <div style="position: relative;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 20px;">$</span>
+                <input type="number" 
+                       id="customAmount" 
+                       min="5" 
+                       step="1" 
+                       placeholder="Enter amount"
+                       style="width: 100%; padding: 12px 12px 12px 32px; font-size: 16px; border: 2px solid #e5e7eb; border-radius: 8px;">
+            </div>
+            <p style="font-size: 13px; color: #6b7280; margin-top: 6px;">Minimum: $5</p>
+        </div>
+        
+        <!-- Checkout Buttons -->
+        {% if stripe_configured %}
+        <!-- Stripe Payment -->
+        <form action="{{ url_for('payments.create_checkout') }}" method="POST" id="checkoutForm">
+            <input type="hidden" name="amount" id="selectedAmount" value="">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <button type="submit" 
+                    id="checkoutBtn"
+                    disabled
+                    style="width: 100%; 
+                           padding: 16px; 
+                           background: #667eea; 
+                           color: white; 
+                           border: none; 
+                           border-radius: 8px; 
+                           font-size: 18px; 
+                           font-weight: 600; 
+                           cursor: pointer;
+                           transition: all 0.2s ease;
+                           margin-bottom: 12px;"
+                    onmouseover="if(!this.disabled) this.style.background='#5568d3'"
+                    onmouseout="this.style.background='#667eea'">
+                💳 Proceed to Stripe Payment
+            </button>
+        </form>
+        {% endif %}
+        
+        {% if is_dev_mode %}
+        <!-- Development Mode: Add Test Funds -->
+        {% if stripe_configured %}
+        <div style="text-align: center; margin: 16px 0; color: #6b7280; font-size: 14px;">
+            — or for faster testing —
+        </div>
+        {% else %}
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+                🧪 <strong>Development Mode:</strong> Stripe is not configured. You can add test funds directly.
+            </p>
+        </div>
+        {% endif %}
+        <form action="{{ url_for('payments.add_test_funds') }}" method="POST" id="testFundsForm">
+            <input type="hidden" name="amount" id="testSelectedAmount" value="">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <button type="submit" 
+                    id="testFundsBtn"
+                    disabled
+                    style="width: 100%; 
+                           padding: 16px; 
+                           background: #f59e0b; 
+                           color: white; 
+                           border: none; 
+                           border-radius: 8px; 
+                           font-size: 18px; 
+                           font-weight: 600; 
+                           cursor: pointer;
+                           transition: all 0.2s ease;"
+                    onmouseover="if(!this.disabled) this.style.background='#d97706'"
+                    onmouseout="this.style.background='#f59e0b'">
+                🧪 Add Test Funds (DEV MODE)
+            </button>
+        </form>
+        {% endif %}
+        
+        <p id="costSummary" style="text-align: center; color: #6b7280; margin-top: 16px; font-size: 14px;"></p>
+    </div>
+    
+    <!-- Pricing Info -->
+    <div style="margin-top: 40px; background: #f9fafb; border-radius: 12px; padding: 30px;">
+        <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">💡 Pricing</h3>
+        <ul style="list-style: none; padding: 0; line-height: 2;">
+            <li style="color: #374151;">✅ <strong>$4 per analysis</strong> – Includes all candidates scored/ranked + top 3 AI insights + all reports</li>
+            <li style="color: #374151;">✅ <strong>$1 per extra insight</strong> – Beyond the top 3 candidates (optional)</li>
+            <li style="color: #374151;">✅ <strong>Funds never expire</strong> – Use them whenever you need to hire</li>
+            <li style="color: #374151;">✅ <strong>No subscriptions</strong> – Pay only for what you use</li>
+        </ul>
+    </div>
+    
+    <!-- Example Cost -->
+    <div style="margin-top: 20px; background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px;">
+        <h4 style="color: #1e40af; margin-bottom: 10px;">Example: Analyzing 20 candidates</h4>
+        <p style="color: #1e40af; margin: 0;">
+            Cost: <strong>$4</strong> (includes all 20 candidates scored + top 3 AI insights + downloadable reports)
+        </p>
+        <p style="color: #1e40af; margin: 8px 0 0 0; font-size: 14px;">
+            Want AI insights for 10 candidates instead of just 3? Add <strong>$7</strong> (7 extra insights × $1)
+        </p>
+    </div>
+</div>
+
+<style>
+.amount-btn {
+    padding: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.amount-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.amount-btn.selected {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+#checkoutBtn:disabled,
+#testFundsBtn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountBtns = document.querySelectorAll('.amount-btn');
+    const customAmountInput = document.getElementById('customAmount');
+    const selectedAmountInput = document.getElementById('selectedAmount');
+    const testSelectedAmountInput = document.getElementById('testSelectedAmount');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const testFundsBtn = document.getElementById('testFundsBtn');
+    const costSummary = document.getElementById('costSummary');
+    
+    function updateSelection(amount) {
+        if (selectedAmountInput) selectedAmountInput.value = amount;
+        if (testSelectedAmountInput) testSelectedAmountInput.value = amount;
+        if (checkoutBtn) checkoutBtn.disabled = amount < 5;
+        if (testFundsBtn) testFundsBtn.disabled = amount < 5;
+        
+        if (amount >= 5) {
+            const analyses = Math.floor(amount / 4);
+            costSummary.textContent = `This will give you enough for ~${analyses} analysis${analyses !== 1 ? 'es' : ''}`;
+        } else {
+            costSummary.textContent = '';
+        }
+    }
+    
+    amountBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const amount = this.getAttribute('data-amount');
+            
+            // Update button selection
+            amountBtns.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Clear custom input
+            customAmountInput.value = '';
+            
+            // Update form
+            updateSelection(amount);
+        });
+    });
+    
+    customAmountInput.addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        
+        // Deselect all buttons
+        amountBtns.forEach(b => b.classList.remove('selected'));
+        
+        // Update form
+        updateSelection(amount);
+    });
+});
+</script>
+{% endblock %}

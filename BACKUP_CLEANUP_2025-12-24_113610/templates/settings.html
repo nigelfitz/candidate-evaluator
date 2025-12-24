@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="content-section">
+    <h1 style="margin-bottom: 1rem;">⚙️ Settings & Preferences</h1>
+    <p style="color: #666; margin-bottom: 2rem;">Customize your experience and set default values for analysis.</p>
+    
+    <form method="POST" action="{{ url_for('settings') }}">
+        
+        <!-- Threshold Preferences -->
+        <div class="settings-section">
+            <h2 style="margin-bottom: 1rem; font-size: 1.3rem; color: #1f77b4;">📊 Threshold Preferences</h2>
+            <p style="color: #666; margin-bottom: 1rem; font-size: 0.9rem;">
+                Set default thresholds for candidate scoring. These values determine the color coding in results:
+                <span style="color: #28a745;">Green (High)</span> ≥ High Threshold,
+                <span style="color: #ffc107;">Yellow (Medium)</span> ≥ Low Threshold,
+                <span style="color: #dc3545;">Red (Low)</span> &lt; Low Threshold
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 600px;">
+                <div class="form-group">
+                    <label for="hi_threshold">High Threshold (%)</label>
+                    <input type="number" 
+                           id="hi_threshold" 
+                           name="hi_threshold" 
+                           min="1" 
+                           max="100" 
+                           value="{{ settings.default_hi_threshold }}"
+                           class="form-control"
+                           required>
+                    <small style="color: #666;">Recommended: 65-75</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lo_threshold">Low Threshold (%)</label>
+                    <input type="number" 
+                           id="lo_threshold" 
+                           name="lo_threshold" 
+                           min="0" 
+                           max="99" 
+                           value="{{ settings.default_lo_threshold }}"
+                           class="form-control"
+                           required>
+                    <small style="color: #666;">Recommended: 40-50</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Display Preferences -->
+        <div class="settings-section">
+            <h2 style="margin-bottom: 1rem; font-size: 1.3rem; color: #1f77b4;">🎨 Display Preferences</h2>
+            
+            <div class="form-group">
+                <label for="results_per_page">History Results Per Page</label>
+                <input type="number" 
+                       id="results_per_page" 
+                       name="results_per_page" 
+                       min="5" 
+                       max="100" 
+                       value="{{ settings.results_per_page }}"
+                       class="form-control"
+                       style="max-width: 300px;">
+                <small style="color: #666;">Number of items to show in history page (5-100)</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" 
+                           id="show_percentages" 
+                           name="show_percentages"
+                           {% if settings.show_percentages %}checked{% endif %}>
+                    Show percentages in results
+                </label>
+                <small style="display: block; margin-left: 1.5rem; color: #666;">
+                    Display coverage scores as percentages (e.g., "75%") instead of raw scores (e.g., "3/4")
+                </small>
+            </div>
+        </div>
+        
+        <!-- Export Preferences -->
+        <div class="settings-section">
+            <h2 style="margin-bottom: 1rem; font-size: 1.3rem; color: #1f77b4;">📄 Export Preferences</h2>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" 
+                           id="include_evidence_by_default" 
+                           name="include_evidence_by_default"
+                           {% if settings.include_evidence_by_default %}checked{% endif %}>
+                    Include evidence snippets by default
+                </label>
+                <small style="display: block; margin-left: 1.5rem; color: #666;">
+                    Pre-check the "Include Evidence" option when generating individual candidate reports
+                </small>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .content-section {
+        max-width: 900px;
+        margin: 2rem auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .settings-section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .settings-section:last-of-type {
+        border-bottom: none;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #1f77b4;
+        box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        margin-right: 0.5rem;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    
+    small {
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 0.3rem;
+    }
+</style>
+{% endblock %}

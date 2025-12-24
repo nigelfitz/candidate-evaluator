@@ -34,14 +34,9 @@
         .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; }
         .admin-tabs a:hover { color: #667eea; }
         .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
-        .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .session-info .timeout { font-weight: 600; color: #667eea; }
     </style>
 </head>
 <body>
-    <div class="session-info">
-        ⏱️ Session timeout: <span class="timeout">30 min inactivity</span>
-    </div>
     <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🔒 Logout</a>
     
     <div class="admin-container">

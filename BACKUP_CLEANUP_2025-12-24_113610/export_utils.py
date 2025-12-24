@@ -371,11 +371,11 @@ def to_executive_summary_pdf(
         story.append(top_table)
         story.append(Spacer(1, 0.5*cm))
         
-        # AI Insights for Top 5 (if available)
+        # AI Insights for Top 3 (if available)
         if insights:
             story.append(Paragraph("Key Insights for Top Candidates", heading_style))
             
-            for idx, candidate_name in enumerate(top5['Candidate'].head(5), 1):
+            for idx, candidate_name in enumerate(top5['Candidate'].head(3), 1):
                 cand_insights = insights.get(candidate_name, {})
                 
                 if cand_insights:

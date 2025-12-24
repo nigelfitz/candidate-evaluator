@@ -55,20 +55,10 @@ def add_test_funds():
         
         flash(f'Successfully added ${amount:.2f} to your account!', 'success')
         
-        # Handle different return destinations
+        # Return to where they came from
         if return_to == 'run_analysis':
             return redirect(url_for('run_analysis_route', auto_submit=1))
-        elif return_to.startswith('http://') or return_to.startswith('https://'):
-            # If it's a full URL (like insights page), redirect directly to it
-            return redirect(return_to)
-        elif return_to != 'dashboard':
-            # If it's a relative path, try to redirect to it
-            try:
-                return redirect(return_to)
-            except:
-                return redirect(url_for('dashboard'))
         else:
-            # Default to dashboard
             return redirect(url_for('dashboard'))
         
     except Exception as e:
@@ -227,20 +217,10 @@ def success():
         except Exception as e:
             flash(f'Payment completed, but verification failed: {str(e)}', 'warning')
     
-    # Handle different return destinations
+    # Return to the page they came from (run_analysis, dashboard, etc.)
     if return_to == 'run_analysis':
         return redirect(url_for('run_analysis_route', auto_submit=1))
-    elif return_to.startswith('http://') or return_to.startswith('https://'):
-        # If it's a full URL (like insights page), redirect directly to it
-        return redirect(return_to)
-    elif return_to != 'dashboard':
-        # If it's a relative path, try to redirect to it
-        try:
-            return redirect(return_to)
-        except:
-            return redirect(url_for('dashboard'))
     else:
-        # Default to dashboard
         return redirect(url_for('dashboard'))
 
 

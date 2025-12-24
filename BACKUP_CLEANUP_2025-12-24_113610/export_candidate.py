@@ -500,11 +500,11 @@ def to_executive_summary_docx(
         
         doc.add_paragraph()
         
-        # AI Insights for Top 5
+        # AI Insights for Top 3
         if insights:
             doc.add_heading('Key Insights for Top Candidates', 1)
             
-            for idx, candidate_name in enumerate(top5['Candidate'].head(5), 1):
+            for idx, candidate_name in enumerate(top5['Candidate'].head(3), 1):
                 cand_insights = insights.get(candidate_name, {})
                 
                 doc.add_heading(f"{idx}. {candidate_name}", 2)
