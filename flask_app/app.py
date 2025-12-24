@@ -514,7 +514,7 @@ def create_app(config_name=None):
                     criteria_list=json.dumps(criteria),
                     category_map=json.dumps(category_map),
                     gpt_candidates=json.dumps(gpt_candidates_list),
-                    cost_usd=estimated_cost,
+                    cost_usd=total_cost,
                     analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large')
                 )
                 db.session.add(analysis)
