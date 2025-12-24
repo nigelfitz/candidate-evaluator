@@ -2067,6 +2067,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
+        from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
@@ -2126,6 +2127,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
+        from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         insights = json.loads(analysis.insights_data)
         criteria = json.loads(analysis.criteria_list)
@@ -2185,6 +2187,7 @@ def create_app(config_name=None):
         
         # Parse data
         import pandas as pd
+        from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         criteria = json.loads(analysis.criteria_list)
         
