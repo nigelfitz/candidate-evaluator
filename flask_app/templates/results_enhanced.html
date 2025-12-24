@@ -4,12 +4,26 @@
 
 {% block extra_css %}
 <style>
-    /* Sticky column styles */
+    /* Executive Dashboard Styling */
+    .results-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Sticky column styles - Enhanced */
+    #coverageMatrix {
+        font-size: 0.9rem;
+    }
+    
     #coverageMatrix thead th:first-child {
         position: sticky;
         left: 0;
         z-index: 30;
         background: #f8f9fa;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        min-width: 280px;
+        max-width: 320px;
+        padding: 12px 16px;
     }
     
     #coverageMatrix tbody td:first-child {
@@ -18,6 +32,10 @@
         z-index: 10;
         background: white;
         font-weight: 600;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+        min-width: 280px;
+        max-width: 320px;
+        padding: 10px 16px;
     }
     
     #coverageMatrix thead th {
@@ -25,6 +43,30 @@
         top: 0;
         z-index: 20;
         background: #f8f9fa;
+        padding: 10px 8px;
+    }
+    
+    #coverageMatrix tbody td {
+        padding: 8px;
+    }
+    
+    /* Enhanced Heatmap Colors - Soft and Professional */
+    .score-high {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        color: #065f46 !important;
+        font-weight: 700 !important;
+    }
+    
+    .score-medium {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+        color: #92400e !important;
+        font-weight: 600 !important;
+    }
+    
+    .score-low {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        color: #991b1b !important;
+        font-weight: 600 !important;
     }
     
     .success-toast {
@@ -235,34 +277,40 @@
     </div>
     {% endif %}
     
-    <!-- Quick Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary">
-            📊 Results
+    <!-- Unified Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row;">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
+            Results
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
-            📊 Export Reports
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+            Export Reports
         </a>
         {% if analysis.insights_data %}
-        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary">
-            💡 Candidate Insights
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
+            Candidate Insights
         </a>
         {% endif %}
     </div>
     
+    <!-- Unified Metadata Bar -->
+    <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
+        <div class="card-body py-2">
+            <p class="mb-0" style="font-size: 15px; color: #6b7280;">
+                <strong style="color: #1f2937;">Job Title:</strong> {{ analysis.job_title }} | 
+                <strong style="color: #1f2937;">Analyzed:</strong> {{ analysis.created_at.strftime('%B %d, %Y') }} | 
+                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates | 
+                <strong style="color: #1f2937;">{{ analysis.num_criteria }}</strong> Criteria
+            </p>
+        </div>
+    </div>
+    
+    <!-- Results Content Container -->
+    <div class="results-container">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2>📊 Analysis Results</h2>
-                    <p class="text-muted mb-0">{{ analysis.job_title }}</p>
-                    <small class="text-muted">Analyzed {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
-                </div>
-                <div class="text-end">
-                    <p class="mb-1"><strong>Cost:</strong> ${{ "%.2f"|format(analysis.cost_usd) }}</p>
-                    <p class="mb-0 text-muted">{{ analysis.num_candidates }} candidates • {{ analysis.num_criteria }} criteria</p>
-                </div>
-            </div>
 
             <!-- AI Match Confidence Meter -->
             <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -294,13 +342,22 @@
             </div>
 
             <!-- Scoring Info Box -->
-            <div class="alert alert-info mb-4">
-                <strong>ℹ️ Understanding the Heatmap:</strong><br>
-                Each score is shown as a percentage (0-100%) with color coding for quick visual assessment:<br>
-                <span style="background: #e6ffed; color: #065f46; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">80-100%</span> <strong>Strong Match</strong> (Green) | 
-                <span style="background: #fffbe6; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">60-79%</span> <strong>Potential Match</strong> (Yellow) | 
-                <span style="background: #fff1f0; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 600; margin: 0 4px;">Below 60%</span> <strong>Low Alignment</strong> (Red)
-                <br><small class="mt-2 d-inline-block">💡 <em>Click any cell to view supporting evidence from the resume</em></small>
+            <div class="alert alert-light mb-4" style="border: 1px solid #e2e8f0; padding: 16px; display: flex; align-items: center; gap: 24px;">
+                <strong style="color: #64748b;">Heatmap Legend:</strong>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                        <span style="color: #065f46; font-weight: 600;">Strong</span>
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                        <span style="color: #92400e; font-weight: 600;">Potential</span>
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                        <span style="color: #991b1b; font-weight: 600;">Low</span>
+                    </span>
+                </div>
             </div>
 
             <!-- Coverage Matrix Controls -->
@@ -312,37 +369,22 @@
                     <!-- Control Row -->
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="sortBy" class="form-label small">Sort candidates by</label>
-                            <select id="sortBy" class="form-select form-select-sm">
+                            <label for="sortBy" class="form-label small fw-semibold" style="color: #374151;">Sort candidates by</label>
+                            <select id="sortBy" class="form-select form-select-sm" style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
                                 <option value="name">Name (A-Z)</option>
                                 <option value="score-desc" selected>Overall Score (High-Low)</option>
                                 <option value="score-asc">Overall Score (Low-High)</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label for="filterBy" class="form-label small">Show</label>
-                            <select id="filterBy" class="form-select form-select-sm">
+                            <label for="filterBy" class="form-label small fw-semibold" style="color: #374151;">Show</label>
+                            <select id="filterBy" class="form-select form-select-sm" style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
                                 <option value="all" selected>All Candidates</option>
                                 <option value="top3">Top 3</option>
                                 <option value="top5">Top 5</option>
                                 <option value="top10">Top 10</option>
                                 <option value="custom">Custom Selection</option>
                             </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">&nbsp;</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="expandCategories" checked>
-                                <label class="form-check-label" for="expandCategories">
-                                    Expand all categories
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">&nbsp;</label>
-                            <div class="form-check">
-                                <!-- Placeholder for alignment -->
-                            </div>
                         </div>
                     </div>
 
@@ -361,12 +403,8 @@
                         </button>
                     </div>
 
-                    <p class="text-muted small mb-3">
-                        💡 <em>Hint: Click on the "Average" column header to sort criteria by average score</em>
-                    </p>
-
                     <!-- Coverage Matrix Table -->
-                    <div class="table-responsive">
+                    <div class="table-responsive" style="max-width: 100%; overflow-x: auto; overflow-y: visible;">
                         <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
                             <thead class="table-light sticky-top">
                                 <tr id="matrixHeader">
@@ -410,26 +448,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-between mb-4">
-                <div>
-                    <a href="{{ url_for('job_history') }}" class="btn btn-secondary">
-                        ← Back to Job History
-                    </a>
-                    <a href="{{ url_for('view_criteria', analysis_id=analysis.id) }}" class="btn btn-outline-info">
-                        📋 Edit Criteria
-                    </a>
-                </div>
-                <div>
-                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='pdf') }}" class="btn btn-outline-primary">
-                        📄 Export PDF
-                    </a>
-                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id, format='excel') }}" class="btn btn-outline-success">
-                        📊 Export Excel
-                    </a>
-                </div>
-            </div>
-            
             <!-- Passive Feedback Section -->
             <div class="feedback-box" id="feedbackBox">
                 <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
@@ -464,6 +482,7 @@
         </div>
     </div>
 </div>
+</div><!-- Close results-container -->
 
 <style>
     .feedback-box {
@@ -524,6 +543,13 @@
             padding: 16px 20px;
         }
     }
+    
+    /* Modern Dropdown Hover Effects */
+    #sortBy:hover, #filterBy:hover, #sortBy:focus, #filterBy:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none;
+    }
 </style>
 
 <script>
@@ -538,6 +564,12 @@ let currentFilter = 'all';
 let showScores = false;
 let expandCategories = true;
 let selectedCandidates = [];
+
+// Navigate to Insights page with candidate pre-selected
+function switchToInsightsTab(candidateName) {
+    const insightsUrl = "{{ url_for('insights', analysis_id=analysis.id) }}";
+    window.location.href = `${insightsUrl}?candidate=${encodeURIComponent(candidateName)}`;
+}
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
@@ -578,7 +610,13 @@ function initializeTopCandidates() {
             <div style="flex: 1; min-width: 180px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid ${bgColor}; text-align: center;">
                 <div style="font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">#${rank}</div>
                 <div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${row.Candidate}">${row.Candidate}</div>
-                <div style="background: ${bgColor}; color: ${textColor}; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 24px;">${percentage}%</div>
+                <div style="background: ${bgColor}; color: ${textColor}; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 24px; margin-bottom: 12px;">${percentage}%</div>
+                <a href="#" onclick="switchToInsightsTab('${row.Candidate}'); return false;" 
+                   style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #3b82f6; text-decoration: none; font-weight: 600; transition: color 0.15s;" 
+                   onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#3b82f6'">
+                    View Insights
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
             </div>
         `;
     }).join('');
@@ -637,7 +675,7 @@ function renderMatrix() {
     data.forEach(row => {
         const score = row.Overall;
         const display = getScoreIcon(score);
-        bodyHTML += `<td class="text-center" style="cursor: pointer;" onclick="scrollToEvidenceExplorer('${row.Candidate}')" title="Click to view evidence for ${row.Candidate}">${display}</td>`;
+        bodyHTML += `<td class="text-center">${display}</td>`;
     });
     bodyHTML += '</tr>';
     
@@ -695,7 +733,10 @@ function renderCriterionRow(criterion, data, candidates) {
     data.forEach(row => {
         const score = parseFloat(row[criterion]);
         const display = getScoreIcon(score);
-        html += `<td class="text-center" style="cursor: pointer;" onclick="showQuickEvidence('${row.Candidate}', '${criterion}')">${display}</td>`;
+        html += `<td class="text-center matrix-cell" style="cursor: pointer; transition: transform 0.15s ease;" 
+                     data-candidate="${row.Candidate}" data-criterion="${criterion}" 
+                     onmouseover="this.style.transform='scale(1.05)'" 
+                     onmouseout="this.style.transform='scale(1)'">${display}</td>`;
     });
     
     html += '</tr>';
@@ -816,6 +857,35 @@ function scrollToEvidenceExplorer(candidateName) {
 }
 
 function attachEventListeners() {
+    // Matrix cell click handler (event delegation)
+    document.getElementById('matrixBody').addEventListener('click', (e) => {
+        const cell = e.target.closest('.matrix-cell');
+        if (cell) {
+            const candidate = cell.dataset.candidate;
+            const criterion = cell.dataset.criterion;
+            if (candidate && criterion) {
+                // Update Evidence Explorer dropdowns
+                document.getElementById('evidenceCandidate').value = candidate;
+                document.getElementById('evidenceCriterion').value = criterion;
+                // Trigger evidence display update
+                updateEvidenceDisplay();
+                // Smooth scroll to Evidence Explorer - use reliable selector
+                const evidenceExplorer = document.getElementById('evidenceCandidate').closest('.card');
+                if (evidenceExplorer) {
+                    evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Brief highlight effect
+                    evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
+                    evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+                    setTimeout(() => { evidenceExplorer.style.boxShadow = ''; }, 2000);
+                }
+            }
+        }
+    });
+    
+    // Evidence Explorer dropdown change listeners
+    document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
+    document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
+    
     document.getElementById('sortBy').addEventListener('change', (e) => {
         currentSort = e.target.value;
         renderMatrix();
@@ -1046,7 +1116,7 @@ function dismissToast() {
 <!-- Sticky Bottom Bar -->
 {% if is_current_draft_analysis %}
 {% set show_back_button = True %}
-{% set back_url = url_for('run_analysis_route') %}
+{% set back_url = url_for('dashboard') %}
 {% set continue_text = 'Start New Analysis' %}
 {% set continue_url = url_for('analyze', new=1) %}
 {% set continue_disabled = false %}

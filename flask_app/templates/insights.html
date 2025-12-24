@@ -2,6 +2,148 @@
 
 {% block title %}Candidate Insights - Candidate Evaluator{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Frosted Glass Effect for Locked Insights */
+    .insights-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .unlock-overlay-container {
+        position: relative;
+        min-height: 400px;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .blurred-insights {
+        filter: blur(12px) saturate(120%);
+        pointer-events: none;
+        user-select: none;
+        opacity: 0.3;
+        padding: 24px;
+    }
+    
+    .frosted-glass-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(248,250,252,0.9) 100%);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    
+    .unlock-card {
+        background: white;
+        padding: 48px 40px;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        text-align: center;
+        max-width: 480px;
+        width: 90%;
+        border: 1px solid rgba(255,255,255,0.5);
+    }
+    
+    .lock-icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));
+    }
+    
+    .unlock-btn-primary {
+        background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
+        border: none;
+        color: #1f2937;
+        padding: 16px 36px;
+        font-weight: 700;
+        font-size: 16px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(212,175,55,0.4);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .unlock-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(212,175,55,0.5);
+        background: linear-gradient(135deg, #f4d03f 0%, #d4af37 50%, #f4d03f 100%);
+    }
+    
+    .balance-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #f0fdf4;
+        color: #15803d;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        margin-top: 16px;
+        border: 1px solid #bbf7d0;
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        /* Navigation bar stays horizontal but wraps if needed */
+        .btn-group {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn-group .btn {
+            flex: 0 1 auto;
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+        
+        /* Slim Executive Summary on Mobile */
+        .card-body .row.align-items-center {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .card-body .row.align-items-center .col-md-8,
+        .card-body .row.align-items-center .col-md-4 {
+            width: 100%;
+            text-align: center !important;
+            margin-bottom: 12px;
+        }
+        
+        /* Keep Prev/Next buttons on same line even on mobile */
+        .col-md-4 > div {
+            justify-content: center !important;
+        }
+        
+        /* Adjust score badges */
+        .badge {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+        
+        /* Ensure text doesn't overflow */
+        h3 {
+            font-size: 1.5rem;
+            word-wrap: break-word;
+        }
+        
+        .text-muted.small {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Custom Confirmation Modal -->
 <div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
@@ -85,138 +227,72 @@
     </div>
     {% endif %}
     
-    <!-- Quick Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-outline-primary">
-            📊 Results
+    <!-- Unified Navigation Bar -->
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row;">
+        <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
+            Results
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary">
-            📊 Export Reports
+        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+            Export Reports
         </a>
-        <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary">
-            💡 Candidate Insights
+        <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
+            Candidate Insights
         </a>
     </div>
     
-    <!-- Candidate Selector and Navigation -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <label class="form-label fw-bold">Select Candidate</label>
-            <select id="candidateSelect" class="form-select form-select-lg" onchange="selectCandidate(this.value)">
-                {% for candidate in candidates %}
-                <option value="{{ candidate.name }}" {% if candidate.name == current_candidate.name %}selected{% endif %}>
-                    {{ candidate.name }} (Score: {{ "%.2f"|format(candidate.score) }}) ⭐ #{{ candidate.rank }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label fw-bold">Navigation & Download</label>
-            <div class="btn-group w-100" role="group">
-                <button class="btn btn-outline-primary" onclick="navigateCandidate(-1)" 
-                        {% if current_idx == 0 %}disabled{% endif %}>
-                    ⬅️ Previous
-                </button>
-                <button class="btn btn-outline-primary" onclick="navigateCandidate(1)"
-                        {% if current_idx == candidates|length - 1 %}disabled{% endif %}>
-                    Next ➡️
-                </button>
-                <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
-                   class="btn btn-outline-success">
-                    📥 PDF
-                </a>
-            </div>
+    <!-- Unified Metadata Bar -->
+    <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
+        <div class="card-body py-2">
+            <p class="mb-0" style="font-size: 15px; color: #6b7280;">
+                <strong style="color: #1f2937;">Job Title:</strong> {{ analysis.job_title if analysis.job_title else 'N/A' }} | 
+                <strong style="color: #1f2937;">Analyzed:</strong> {{ analysis.created_at.strftime('%B %d, %Y') if analysis.created_at else 'N/A' }} | 
+                <strong style="color: #1f2937;">{{ candidates|length }}</strong> Candidates | 
+                <strong style="color: #1f2937;">{{ current_candidate.evidence|length }}</strong> Criteria
+            </p>
         </div>
     </div>
+    
+    <!-- Insights Content Container -->
+    <div class="insights-container">
 
-    <!-- Candidate Header Card -->
-    <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-        <div class="card-body">
-            <h3 class="mb-3">👤 {{ current_candidate.name }} — At a Glance</h3>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="text-center">
-                        <div style="font-size: 0.9rem; opacity: 0.9;">Overall Score</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">{{ "%.2f"|format(current_candidate.score) }}</div>
+    <!-- Slim Executive Summary Header -->
+    <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="mb-1" style="color: #1f2937; font-weight: 700; font-size: 1.75rem;">👤 {{ current_candidate.name }}</h3>
+                    <div class="text-muted small">
+                        <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
+                        <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
+                        <span class="badge bg-success me-1">✅ {{ current_candidate.strong_count }}</span>
+                        <span class="badge bg-warning text-dark me-1">⚠️ {{ current_candidate.moderate_count }}</span>
+                        <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="text-center">
-                        <div style="font-size: 0.9rem; opacity: 0.9;">Rank</div>
-                        <div style="font-size: 2.5rem; font-weight: bold;">#{{ current_candidate.rank }}</div>
-                        <div style="font-size: 0.85rem; opacity: 0.8;">of {{ candidates|length }}</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="text-center">
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Criteria Breakdown</div>
-                        <div style="font-size: 1.5rem;">
-                            <span class="badge bg-success me-2">✅ {{ current_candidate.strong_count }} Strong</span>
-                            <span class="badge bg-warning text-dark me-2">⚠️ {{ current_candidate.moderate_count }} Moderate</span>
-                            <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }} Weak</span>
-                        </div>
+                <div class="col-md-4 text-end">
+                    <!-- Elegant Chevron Navigation on Same Line with 10px gap -->
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
+                                {% if current_idx == 0 %}disabled{% endif %}
+                                style="display: flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            Prev
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(1)"
+                                {% if current_idx == candidates|length - 1 %}disabled{% endif %}
+                                style="display: flex; align-items: center; gap: 6px; padding: 8px 16px;">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- File Viewing Sections -->
-    {% if current_candidate.file %}
-    <!-- View Original PDF File -->
-    {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <details>
-                <summary style="cursor: pointer; color: #1f77b4; font-size: 1.1rem; font-weight: 500;">
-                    📄 View Original PDF File
-                </summary>
-                <div class="mt-2">
-                    <iframe 
-                        src="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
-                        width="100%" 
-                        height="600px" 
-                        style="border: 1px solid #ddd; border-radius: 4px;">
-                    </iframe>
-                    <div class="mt-2">
-                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
-                           target="_blank" 
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-box-arrow-up-right"></i> Open in New Tab
-                        </a>
-                    </div>
-                </div>
-            </details>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Full Text Extract -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <details>
-                <summary style="cursor: pointer; color: #1f77b4; font-size: 1.1rem; font-weight: 500;">
-                    📄 Full Text Extract - used for AI/GPT analysis
-                </summary>
-                <div class="mt-2">
-                    <textarea 
-                        readonly 
-                        class="form-control" 
-                        style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
-                    <small class="text-muted d-block mt-2">
-                        📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
-                        {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
-                        | Method: Layout-aware (PyMuPDF)
-                        {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
-                        | Method: DOCX parser
-                        {% else %}
-                        | Method: Direct text
-                        {% endif %}
-                    </small>
-                </div>
-            </details>
-        </div>
-    </div>
-    {% endif %}
+    
     <!-- GPT Insights Section -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
@@ -227,9 +303,9 @@
                 <!-- Top Strengths -->
                 <h5 class="text-success mb-3">✅ Top Strengths</h5>
                 {% if current_candidate.insights.top %}
-                <ul class="list-group mb-4">
+                <ul class="list-unstyled mb-4" style="list-style-type: none; padding-left: 0; margin-left: 0;">
                     {% for strength in current_candidate.insights.top %}
-                    <li class="list-group-item">{{ strength }}</li>
+                    <li class="mb-2" style="border-left: 3px solid #10b981; padding-left: 16px; margin-left: 0;">• {{ strength }}</li>
                     {% endfor %}
                 </ul>
                 {% else %}
@@ -239,9 +315,9 @@
                 <!-- Gaps & Risks -->
                 <h5 class="text-danger mb-3">⚠️ Gaps & Risks</h5>
                 {% if current_candidate.insights.gaps %}
-                <ul class="list-group mb-4">
+                <ul class="list-unstyled mb-4" style="list-style-type: none; padding-left: 0; margin-left: 0;">
                     {% for gap in current_candidate.insights.gaps %}
-                    <li class="list-group-item">{{ gap }}</li>
+                    <li class="mb-2" style="border-left: 3px solid #ef4444; padding-left: 16px; margin-left: 0;">• {{ gap }}</li>
                     {% endfor %}
                 </ul>
                 {% else %}
@@ -257,9 +333,9 @@
                 {% endif %}
             {% elif current_candidate.rank > 5 and not has_full_radar %}
             <!-- Locked State for Rank 6+ without Full Radar -->
-            <div style="position: relative;" class="unlock-overlay">
-                <!-- Blurred Content -->
-                <div style="filter: blur(8px); pointer-events: none; user-select: none; opacity: 0.4;">
+            <div class="unlock-overlay-container">
+                <!-- Blurred Content with Frosted Glass -->
+                <div class="blurred-insights">
                     <h5 class="text-success mb-3">✅ Top Strengths</h5>
                     <ul class="list-group mb-4">
                         <li class="list-group-item">Lorem ipsum dolor sit amet consectetur adipisicing elit</li>
@@ -273,15 +349,25 @@
                     </ul>
                 </div>
                 
-                <!-- Unlock Overlay -->
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; background: white; padding: 32px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); max-width: 400px; width: 90%;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-                    <h4 style="color: #1f2937; margin-bottom: 12px; font-weight: 700;">Deep Insights Locked</h4>
-                    <p style="color: #64748b; margin-bottom: 24px; font-size: 15px;">This candidate ranked #{{ current_candidate.rank }}. Detailed AI summaries are available for Top 5 candidates only.</p>
-                    <button onclick="unlockCandidate({{ analysis_id }}, '{{ current_candidate.name }}', {{ '%.2f' % current_user.balance_usd }})" class="btn btn-lg unlock-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 32px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-                        🔓 Unlock Deep Insight - $1.00
-                    </button>
-                    <p style="margin-top: 16px; font-size: 13px; color: #94a3b8;">Or upgrade to Full Radar to unlock all candidates</p>
+                <!-- Frosted Glass Overlay with Gold Lock -->
+                <div class="frosted-glass-overlay">
+                    <div class="unlock-card">
+                        <div class="lock-icon">🔐</div>
+                        <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
+                        <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
+                            This candidate ranked <strong>#{{ current_candidate.rank }}</strong>. 
+                            Unlock AI-generated strengths, gaps, and recommendations for just <strong>$1.00</strong>.
+                        </p>
+                        <button onclick="unlockCandidate({{ analysis_id }}, '{{ current_candidate.name }}', {{ '%.2f' % current_user.balance_usd }})" class="unlock-btn-primary">
+                            🔓 Unlock Deep Insight ($1.00)
+                        </button>
+                        <div class="balance-display">
+                            💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+                        </div>
+                        <p style="margin-top: 20px; font-size: 13px; color: #94a3b8;">
+                            <a href="{{ url_for('account') }}" style="color: #3b82f6; text-decoration: none;">Top up balance</a> if needed
+                        </p>
+                    </div>
                 </div>
             </div>
             {% else %}
@@ -305,35 +391,39 @@
             <h4 class="mb-0">📊 Detailed Scores by Category</h4>
         </div>
         <div class="card-body">
-            {% for category, criteria_list in current_candidate.scores_by_category.items() %}
-            <div class="mb-4">
-                <h5 class="mb-3">{{ category }}</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 60%;">Criterion</th>
-                                <th style="width: 15%; text-align: center;">Score</th>
-                                <th style="width: 25%; text-align: center;">Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in criteria_list %}
-                            <tr>
-                                <td>{{ item.criterion }}</td>
-                                <td style="text-align: center;">
-                                    <span style="font-weight: bold; color: {{ item.color }};">{{ "%.2f"|format(item.score) }}</span>
-                                </td>
-                                <td style="text-align: center;">
-                                    <span class="badge" style="background-color: {{ item.color }};">{{ item.rating }}</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60%;">Criterion</th>
+                            <th style="width: 15%; text-align: center;">Score</th>
+                            <th style="width: 25%; text-align: center;">Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category, criteria_list in current_candidate.scores_by_category.items() %}
+                        <!-- Category separator row -->
+                        <tr>
+                            <td colspan="3" style="background-color: #f8f9fa; padding: 12px 16px; border-top: 2px solid #dee2e6; border-bottom: 1px solid #dee2e6;">
+                                <strong style="font-size: 16px; color: #1f2937;">{{ category|replace('_', ' ')|title }}</strong>
+                            </td>
+                        </tr>
+                        <!-- Criteria rows for this category -->
+                        {% for item in criteria_list %}
+                        <tr>
+                            <td>{{ item.criterion }}</td>
+                            <td style="text-align: center;">
+                                <span style="font-weight: bold; color: {{ item.color }}">{{ (item.score * 100)|int }}%</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge" style="background-color: {{ item.color }}">{{ item.rating }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% endfor %}
         </div>
     </div>
 
@@ -351,7 +441,7 @@
                         <button class="accordion-button collapsed" type="button" 
                                 data-bs-toggle="collapse" data-bs-target="#evidence{{ loop.index }}">
                             {{ item.criterion }} 
-                            <span class="badge ms-2" style="background-color: {{ item.color }};">{{ "%.2f"|format(item.score) }}</span>
+                            <span class="badge ms-2" style="background-color: {{ item.color }}">{{ (item.score * 100)|int }}%</span>
                         </button>
                     </h2>
                     <div id="evidence{{ loop.index }}" class="accordion-collapse collapse" 
@@ -366,23 +456,119 @@
         </div>
     </div>
 
+    <!-- Supporting Documents - Collapsed at Bottom -->
+    {% if current_candidate.file %}
+    <div class="card mb-4">
+        <div class="card-header" style="background: #f8fafc;">
+            <h5 class="mb-0" style="color: #64748b; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📁 Supporting Documents</h5>
+        </div>
+        <div class="card-body p-0">
+            <!-- View Original PDF -->
+            {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+            <div class="accordion" id="documentsAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pdfViewer">
+                            📄 View Original PDF File
+                        </button>
+                    </h2>
+                    <div id="pdfViewer" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                        <div class="accordion-body">
+                            <iframe 
+                                src="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                                width="100%" 
+                                height="600px" 
+                                style="border: 1px solid #ddd; border-radius: 4px;">
+                            </iframe>
+                            <div class="mt-2">
+                                <a href="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Open in New Tab
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Full Text Extract -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#textExtract">
+                            📄 Full Text Extract (AI Analysis Input)
+                        </button>
+                    </h2>
+                    <div id="textExtract" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                        <div class="accordion-body">
+                            <textarea 
+                                readonly 
+                                class="form-control" 
+                                style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
+                            <small class="text-muted d-block mt-2">
+                                📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
+                                {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+                                | Method: Layout-aware (PyMuPDF)
+                                {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
+                                | Method: DOCX parser
+                                {% else %}
+                                | Method: Direct text
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- For non-PDF files, just show text extract -->
+            <div class="accordion" id="documentsAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#textExtract">
+                            📄 Full Text Extract (AI Analysis Input)
+                        </button>
+                    </h2>
+                    <div id="textExtract" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                        <div class="accordion-body">
+                            <textarea 
+                                readonly 
+                                class="form-control" 
+                                style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
+                            <small class="text-muted d-block mt-2">
+                                📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
+                                {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+                                | Method: Layout-aware (PyMuPDF)
+                                {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
+                                | Method: DOCX parser
+                                {% else %}
+                                | Method: Direct text
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
     {% endif %}
+
+    {% endif %}
+    </div><!-- Close insights-container -->
 </div>
 
 <script>
 // Global variables for unlock flow
 let unlockAnalysisId, unlockCandidateName, unlockUserBalance;
 
-function selectCandidate(candidateName) {
-    window.location.href = `{{ url_for('insights', analysis_id=analysis_id) }}?candidate=${encodeURIComponent(candidateName)}`;
-}
+// Candidate list from Flask
+const candidates = {{ candidates | tojson | safe }};
+const currentCandidateName = "{{ current_candidate.name }}";
+const currentIdx = candidates.findIndex(c => c.name === currentCandidateName);
 
 function navigateCandidate(direction) {
-    const select = document.getElementById('candidateSelect');
-    const newIndex = select.selectedIndex + direction;
-    if (newIndex >= 0 && newIndex < select.options.length) {
-        select.selectedIndex = newIndex;
-        selectCandidate(select.options[newIndex].value);
+    const newIndex = currentIdx + direction;
+    if (newIndex >= 0 && newIndex < candidates.length) {
+        const nextCandidate = candidates[newIndex];
+        window.location.href = `{{ url_for('insights', analysis_id=analysis_id) }}?candidate=${encodeURIComponent(nextCandidate.name)}`;
     }
 }
 
@@ -392,8 +578,13 @@ function unlockCandidate(analysisId, candidateName, userBalance) {
     userBalance = parseFloat(userBalance);
     
     if (userBalance < 1.00) {
-        // Redirect to top-up page
-        window.location.href = "{{ url_for('payments.buy_credits') }}";
+        // Store the current insights page URL in session storage for return after payment
+        const currentUrl = window.location.href;
+        sessionStorage.setItem('payment_return_url', currentUrl);
+        
+        // Redirect to top-up page with return URL parameter
+        const returnUrl = encodeURIComponent(currentUrl);
+        window.location.href = "{{ url_for('payments.buy_credits') }}?return_to=" + returnUrl;
         return;
     }
     
@@ -495,6 +686,11 @@ window.addEventListener('load', function() {
     if (scrollPos) {
         window.scrollTo(0, parseInt(scrollPos));
         sessionStorage.removeItem('scrollPosition');
+    }
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
     }
 });
 </script>
