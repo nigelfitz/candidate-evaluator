@@ -766,6 +766,9 @@ def create_app(config_name=None):
             num_candidates = len(candidates)
             print(f"DEBUG: insights_mode='{insights_mode}', num_candidates={num_candidates}")
             
+            # Initialize cost variable
+            estimated_cost = Decimal('10.00')  # Default to standard tier
+            
             # NEW PRICING MODEL: Calculate cost based on tier
             if insights_mode == 'standard':
                 # Standard: $10 base (includes Top 5 insights)
