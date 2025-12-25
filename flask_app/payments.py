@@ -114,12 +114,14 @@ def create_checkout():
                 'quantity': 1,
             }],
             mode='payment',
+            currency='usd',  # Explicitly set currency
             success_url=url_for('payments.success', return_to=return_to, _external=True) + '&session_id={CHECKOUT_SESSION_ID}',
             cancel_url=url_for('payments.buy_credits', return_to=return_to, _external=True),
             client_reference_id=str(current_user.id),
             metadata={
                 'user_id': current_user.id,
-                'amount_usd': f"{amount:.2f}"
+                'amount_usd': f"{amount:.2f}",
+                'current_balance': f"{current_user.balance_usd:.2f}"
             }
         )
         
@@ -186,12 +188,14 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='payment',
+            currency='usd',  # Explicitly set currency
             success_url=return_url + ('&' if '?' in return_url else '?') + 'session_id={CHECKOUT_SESSION_ID}',
             cancel_url=return_url,
             client_reference_id=str(current_user.id),
             metadata={
                 'user_id': current_user.id,
-                'amount_usd': f"{amount:.2f}"
+                'amount_usd': f"{amount:.2f}",
+                'current_balance': f"{current_user.balance_usd:.2f}"
             }
         )
         

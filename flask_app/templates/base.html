@@ -430,6 +430,48 @@
             }
         });
         {% endif %}
+        
+        // Update balance after Stripe payment redirect
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we just returned from Stripe (session_id in URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            if (sessionId) {
+                // Fetch updated user balance from server
+                fetch('/api/get-balance', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.balance !== undefined) {
+                        // Update all balance displays on the page
+                        const balanceElements = document.querySelectorAll('.balance-amount');
+                        balanceElements.forEach(el => {
+                            el.textContent = `$${parseFloat(data.balance).toFixed(2)}`;
+                        });
+                        
+                        // Clean URL by removing session_id parameter without reload
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.delete('session_id');
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching balance:', error);
+                    // Fallback: reload page to get updated balance from server
+                    // But only if we haven't already removed the session_id
+                    if (window.location.search.includes('session_id')) {
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.delete('session_id');
+                        window.location.href = newUrl.toString();
+                    }
+                });
+            }
+        });
     </script>
     
     {% block extra_js %}{% endblock %}

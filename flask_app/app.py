@@ -145,6 +145,15 @@ def create_app(config_name=None):
         
         return render_template('dashboard.html', user=current_user, recent_analyses=recent_analyses, draft=draft)
     
+    @app.route('/api/get-balance')
+    @login_required
+    def get_balance():
+        """API endpoint to get current user balance (for updating after Stripe payment)"""
+        return jsonify({
+            'balance': float(current_user.balance_usd),
+            'user_id': current_user.id
+        })
+    
     @app.route('/analyze', methods=['GET', 'POST'])
     @login_required
     def analyze():
