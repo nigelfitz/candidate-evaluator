@@ -294,11 +294,15 @@
     </div>
     
     <!-- GPT Insights Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">💡 AI-Powered Insights</h4>
+    <div class="card mb-4" style="border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);">
+        <div class="card-header text-white" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 20px;">
+            <h4 class="mb-0" style="display: flex; align-items: center; font-weight: 700;">
+                <i data-lucide="sparkles" style="width: 24px; height: 24px; margin-right: 10px;"></i>
+                Deep AI Insights
+            </h4>
+            <p class="mb-0 mt-1" style="font-size: 13px; opacity: 0.95;">AI-powered analysis of strengths, gaps, and recommendations</p>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="padding: 28px;">
             {% if current_candidate.has_gpt_insights %}
                 <!-- Top Strengths -->
                 <h5 class="text-success mb-3">✅ Top Strengths</h5>
@@ -387,8 +391,9 @@
 
     <!-- Detailed Scores by Category -->
     <div class="card mb-4">
-        <div class="card-header">
-            <h4 class="mb-0">📊 Detailed Scores by Category</h4>
+        <div class="card-header" style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+            <h4 class="mb-0" style="color: #475569;">📊 Detailed Scores by Category</h4>
+            <p class="text-muted mb-0 mt-1" style="font-size: 13px;">Objective scoring across all evaluation criteria</p>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -416,7 +421,11 @@
                                 <span style="font-weight: bold; color: {{ item.color }}">{{ (item.score * 100)|int }}%</span>
                             </td>
                             <td style="text-align: center;">
-                                <span class="badge" style="background-color: {{ item.color }}">{{ item.rating }}</span>
+                                {% if item.rating in ['Poor', 'Weak'] %}
+                                <span class="badge" style="background-color: {{ item.color }}; color: white; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">{{ item.rating }}</span>
+                                {% else %}
+                                <span class="badge" style="background-color: {{ item.color }}; color: #1f2937; padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">{{ item.rating }}</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -429,25 +438,35 @@
 
     <!-- Evidence Snippets -->
     <div class="card mb-4">
-        <div class="card-header">
-            <h4 class="mb-0">🔍 Evidence from Resume</h4>
+        <div class="card-header" style="background: #f8fafc;">
+            <h4 class="mb-0" style="color: #475569;">🔍 Evidence from Resume</h4>
+            <p class="text-muted mb-0 mt-1" style="font-size: 13px;">Raw text extracted from resume (not AI-generated)</p>
         </div>
         <div class="card-body">
-            <p class="text-muted mb-3">Top evidence snippets for each criterion (best matches)</p>
             <div class="accordion" id="evidenceAccordion">
                 {% for item in current_candidate.evidence %}
-                <div class="accordion-item">
+                <div class="accordion-item mb-2" style="border: 1px solid #e5e7eb; border-radius: 8px;">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed" type="button" 
-                                data-bs-toggle="collapse" data-bs-target="#evidence{{ loop.index }}">
+                                data-bs-toggle="collapse" data-bs-target="#evidence{{ loop.index }}"
+                                style="background: #f8fafc; font-weight: 600; padding: 14px 18px;">
                             {{ item.criterion }} 
-                            <span class="badge ms-2" style="background-color: {{ item.color }}">{{ (item.score * 100)|int }}%</span>
+                            {% if item.rating in ['Poor', 'Weak'] %}
+                            <span class="badge ms-2" style="background-color: {{ item.color }}; color: white; padding: 4px 10px; border-radius: 10px; font-size: 11px;">{{ (item.score * 100)|int }}%</span>
+                            {% else %}
+                            <span class="badge ms-2" style="background-color: {{ item.color }}; color: #1f2937; padding: 4px 10px; border-radius: 10px; font-size: 11px;">{{ (item.score * 100)|int }}%</span>
+                            {% endif %}
                         </button>
                     </h2>
                     <div id="evidence{{ loop.index }}" class="accordion-collapse collapse" 
                          data-bs-parent="#evidenceAccordion">
                         <div class="accordion-body">
-                            <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">{{ item.snippet }}</pre>
+                            <div class="evidence-text" data-full-text="{{ item.snippet }}" style="position: relative;">
+                                <pre style="background: #fafafa; padding: 16px; border-radius: 6px; white-space: pre-wrap; border: 1px solid #e5e7eb; margin-bottom: 0; line-height: 1.5; max-height: 4.5em; overflow: hidden; transition: max-height 0.3s ease;" class="evidence-snippet">{{ item.snippet }}</pre>
+                                <button class="btn btn-sm btn-link show-more-btn" onclick="toggleEvidence(this)" style="padding: 4px 8px; font-size: 13px; text-decoration: none; color: #3b82f6; margin-top: 8px;">
+                                    Show More
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -459,94 +478,72 @@
     <!-- Supporting Documents - Collapsed at Bottom -->
     {% if current_candidate.file %}
     <div class="card mb-4">
-        <div class="card-header" style="background: #f8fafc;">
+        <div class="card-header" style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
             <h5 class="mb-0" style="color: #64748b; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">📁 Supporting Documents</h5>
         </div>
         <div class="card-body p-0">
+            <div class="accordion" id="documentsAccordion">
             <!-- View Original PDF -->
             {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
-            <div class="accordion" id="documentsAccordion">
-                <div class="accordion-item">
+                <div class="accordion-item border-0">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pdfViewer">
-                            📄 View Original PDF File
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pdfViewer"
+                                style="background: white; padding: 16px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <i data-lucide="file-text" style="width: 18px; height: 18px; margin-right: 10px; color: #64748b;"></i>
+                            <span style="font-weight: 600; color: #475569;">View Original PDF File</span>
+                            <span class="badge bg-secondary ms-2" style="font-size: 11px; padding: 4px 8px;">{{ current_candidate.file.file_name }}</span>
                         </button>
                     </h2>
                     <div id="pdfViewer" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
-                        <div class="accordion-body">
+                        <div class="accordion-body" style="background: #f8fafc; padding: 20px;">
                             <iframe 
                                 src="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
                                 width="100%" 
                                 height="600px" 
-                                style="border: 1px solid #ddd; border-radius: 4px;">
+                                style="border: 2px solid #e5e7eb; border-radius: 8px; background: white;">
                             </iframe>
-                            <div class="mt-2">
+                            <div class="mt-3">
                                 <a href="{{ url_for('view_candidate_file', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
                                    target="_blank" 
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-box-arrow-up-right"></i> Open in New Tab
+                                    <i data-lucide="external-link" style="width: 14px; height: 14px; margin-right: 6px;"></i> Open in New Tab
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- Full Text Extract -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#textExtract">
-                            📄 Full Text Extract (AI Analysis Input)
-                        </button>
-                    </h2>
-                    <div id="textExtract" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
-                        <div class="accordion-body">
-                            <textarea 
-                                readonly 
-                                class="form-control" 
-                                style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
-                            <small class="text-muted d-block mt-2">
-                                📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
-                                {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
-                                | Method: Layout-aware (PyMuPDF)
-                                {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
-                                | Method: DOCX parser
-                                {% else %}
-                                | Method: Direct text
-                                {% endif %}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <!-- For non-PDF files, just show text extract -->
-            <div class="accordion" id="documentsAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#textExtract">
-                            📄 Full Text Extract (AI Analysis Input)
-                        </button>
-                    </h2>
-                    <div id="textExtract" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
-                        <div class="accordion-body">
-                            <textarea 
-                                readonly 
-                                class="form-control" 
-                                style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;">{{ current_candidate.file.extracted_text }}</textarea>
-                            <small class="text-muted d-block mt-2">
-                                📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
-                                {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
-                                | Method: Layout-aware (PyMuPDF)
-                                {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
-                                | Method: DOCX parser
-                                {% else %}
-                                | Method: Direct text
-                                {% endif %}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
             {% endif %}
+                <!-- Full Text Extract -->
+                <div class="accordion-item border-0">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#textExtract"
+                                style="background: white; padding: 16px 20px; {% if current_candidate.file.file_name.lower().endswith('.pdf') %}border-bottom: 1px solid #e5e7eb;{% endif %}">
+                            <i data-lucide="align-left" style="width: 18px; height: 18px; margin-right: 10px; color: #64748b;"></i>
+                            <span style="font-weight: 600; color: #475569;">Full Text Extract (AI Analysis Input)</span>
+                            <span class="badge bg-info ms-2" style="font-size: 11px; padding: 4px 8px;">{{ current_candidate.file.extracted_text|length|number_format }} chars</span>
+                        </button>
+                    </h2>
+                    <div id="textExtract" class="accordion-collapse collapse" data-bs-parent="#documentsAccordion">
+                        <div class="accordion-body" style="background: #f8fafc; padding: 20px;">
+                            <textarea 
+                                readonly 
+                                class="form-control" 
+                                style="width: 100%; height: 300px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical; background: white; border: 2px solid #e5e7eb;">{{ current_candidate.file.extracted_text }}</textarea>
+                            <small class="text-muted d-block mt-2">
+                                <i data-lucide="info" style="width: 14px; height: 14px; margin-right: 4px;"></i>
+                                📊 {{ current_candidate.file.extracted_text|length|number_format }} characters extracted
+                                {% if current_candidate.file.file_name.lower().endswith('.pdf') %}
+                                | Method: Layout-aware (PyMuPDF)
+                                {% elif current_candidate.file.file_name.lower().endswith('.docx') %}
+                                | Method: DOCX parser
+                                {% else %}
+                                | Method: Direct text
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -556,6 +553,21 @@
 </div>
 
 <script>
+// Toggle evidence text expansion
+function toggleEvidence(button) {
+    const container = button.closest('.evidence-text');
+    const pre = container.querySelector('.evidence-snippet');
+    const isExpanded = pre.style.maxHeight !== '4.5em';
+    
+    if (isExpanded) {
+        pre.style.maxHeight = '4.5em';
+        button.textContent = 'Show More';
+    } else {
+        pre.style.maxHeight = 'none';
+        button.textContent = 'Show Less';
+    }
+}
+
 // Global variables for unlock flow
 let unlockAnalysisId, unlockCandidateName, unlockUserBalance;
 
