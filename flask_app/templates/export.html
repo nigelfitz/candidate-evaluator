@@ -384,8 +384,9 @@ function togglePreview(previewId, pdfUrl) {
         // Show preview
         previewDiv.style.display = 'block';
         if (pdfUrl) {
-            // Set or update the iframe src
-            iframe.src = pdfUrl;
+            // Add PDF parameters to fit to width
+            const urlWithParams = pdfUrl + '#view=FitH&toolbar=1&navpanes=0';
+            iframe.src = urlWithParams;
         }
         // Smooth scroll to preview
         setTimeout(() => {
