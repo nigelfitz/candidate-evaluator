@@ -215,7 +215,7 @@ def create_checkout_session():
             }],
             mode='payment',
             currency='usd',  # Explicitly set currency
-            success_url=return_url + ('&' if '?' in return_url else '?') + 'session_id={CHECKOUT_SESSION_ID}',
+            success_url=url_for('payments.success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&return_to={return_url}',
             cancel_url=return_url,
             client_reference_id=str(current_user.id),
             metadata={
