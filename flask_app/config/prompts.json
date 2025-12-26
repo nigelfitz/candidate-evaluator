@@ -1,4 +1,41 @@
 {
+  "_CRITICAL_WARNING": {
+    "DO_NOT_DELETE_THIS_SECTION": "READ THIS BEFORE MODIFYING PROMPTS",
+    "jd_extraction_field_names": {
+      "WARNING": "The field names 'key_skills', 'responsibilities', 'qualifications', and 'experience_required' are HARDCODED in analysis.py (lines 400-403). DO NOT CHANGE THESE NAMES or JD extraction will break!",
+      "SAFE_TO_CHANGE": [
+        "System prompt wording (instructions, tone, style)",
+        "User prompt wording and examples",
+        "Additional instructions or context"
+      ],
+      "CANNOT_CHANGE": [
+        "JSON field names: key_skills, responsibilities, qualifications, experience_required",
+        "The requirement to return JSON matching the schema",
+        "The {jd_text} placeholder"
+      ]
+    },
+    "candidate_insights_field_names": {
+      "WARNING": "The code looks for specific field names in the JSON response. You can use ANY of the variants listed below, but the response MUST include at least one variant for each category.",
+      "ACCEPTED_VARIANTS": {
+        "strengths": ["top", "top_strengths", "Top strengths", "strengths"],
+        "gaps": ["gaps", "gaps_risks", "Gaps / risks", "risks", "concerns"],
+        "notes": ["notes", "overall_notes", "Overall notes", "assessment"]
+      },
+      "RECOMMENDED": "Use 'top', 'gaps', and 'notes' (first in each list) to avoid issues",
+      "SAFE_TO_CHANGE": [
+        "System prompt wording (analyst role, tone, style)",
+        "User prompt instructions and examples",
+        "Number of bullets requested (controlled by GPT settings)",
+        "How you describe strengths/gaps/notes",
+        "Additional context or guidance"
+      ],
+      "CANNOT_CHANGE": [
+        "Must return at least one of the accepted field name variants",
+        "The placeholders: {jd_text}, {candidate_name}, {candidate_text}, {evidence_lines}, {top_n}",
+        "The requirement to return JSON"
+      ]
+    }
+  },
   "jd_extraction": {
     "name": "Job Description Extraction",
     "description": "Extracts criteria from job descriptions into structured categories",
@@ -11,7 +48,8 @@
       "value": "Extract the following JD into four sections (key_skills, responsibilities, qualifications, experience_required). Return ONLY JSON matching the provided schema.\n\nJD:\n{jd_text}",
       "label": "User Prompt Template",
       "description": "Instructions sent to AI. Use {jd_text} as placeholder for job description content.",
-      "placeholders": ["{jd_text}"]
+      "placeholders": ["{jd_text}"],
+      "CRITICAL_REMINDER": "⚠️ DO NOT change field names: key_skills, responsibilities, qualifications, experience_required - they are hardcoded in analysis.py"
     }
   },
   "candidate_insights": {
@@ -26,12 +64,18 @@
       "value": "Job Description (excerpted):\n{jd_text}\n\nCandidate: {candidate_name}\nCandidate content (excerpted):\n{candidate_text}\n\nEvidence by criterion (top {top_n} by similarity):\n{evidence_lines}\n\nTask:\n- Provide 3–6 bullet **Top strengths** tied to criteria and tangible evidence.\n- Provide 3–6 bullet **Gaps / risks** with rationale.\n- Provide 2–4 sentence **Overall notes**.\nReturn JSON matching schema.",
       "label": "User Prompt Template",
       "description": "Instructions sent to AI. Use placeholders: {jd_text}, {candidate_name}, {candidate_text}, {evidence_lines}, {top_n}",
-      "placeholders": ["{jd_text}", "{candidate_name}", "{candidate_text}", "{evidence_lines}", "{top_n}"]
+      "placeholders": ["{jd_text}", "{candidate_name}", "{candidate_text}", "{evidence_lines}", "{top_n}"],
+      "CRITICAL_REMINDER": "⚠️ JSON response must include fields using these accepted variants: 'top'/'top_strengths'/'strengths' for strengths, 'gaps'/'gaps_risks'/'concerns' for gaps, 'notes'/'overall_notes'/'assessment' for notes"
     }
   },
   "_metadata": {
-    "last_updated": "2025-12-22 00:00:00 UTC",
+    "last_updated": "2025-01-19 05:00:00 UTC",
     "updated_by": "system",
-    "version": "1.0"
+    "version": "1.1",
+    "description": "Prompt templates for analysis workflows. READ THE _CRITICAL_WARNING SECTION AT THE TOP BEFORE EDITING!",
+    "changelog": [
+      "v1.1 (2025-01-19): Added comprehensive warnings about hardcoded field names and safe/unsafe modifications",
+      "v1.0 (2025-12-22): Initial prompt structure"
+    ]
   }
 }
