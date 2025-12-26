@@ -331,8 +331,8 @@
     <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
         <div class="card-body py-2">
             <p class="mb-0" style="font-size: 15px; color: #6b7280;">
-                <strong style="color: #1f2937;">Job Title:</strong> {{ analysis.job_title if analysis.job_title else 'N/A' }} | 
-                <strong style="color: #1f2937;">Analyzed:</strong> {{ (analysis.created_at|to_aest).strftime('%B %d, %Y') if analysis.created_at else 'N/A' }} | 
+                <strong style="color: #1f2937;">Job #{{ "%04d"|format(analysis.id) }}:</strong> {{ analysis.job_title if analysis.job_title else 'N/A' }} | 
+                <strong style="color: #1f2937;">Analyzed:</strong> <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y') if analysis.created_at else 'N/A' }}</span> | 
                 <strong style="color: #1f2937;">{{ candidates|length }}</strong> Candidates | 
                 <strong style="color: #1f2937;">{{ current_candidate.evidence|length }}</strong> Criteria
             </p>
@@ -920,6 +920,20 @@ window.addEventListener('load', function() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+    
+    // Convert UTC timestamps to user's local timezone
+    document.querySelectorAll('.local-time').forEach(function(elem) {
+        const utcTime = elem.getAttribute('data-utc');
+        if (utcTime) {
+            const date = new Date(utcTime);
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            elem.textContent = date.toLocaleDateString('en-US', options);
+        }
+    });
 });
 </script>
 

@@ -160,21 +160,38 @@
                         {% for transaction in transactions %}
                         <tr style="border-bottom: 1px solid #f3f4f6;">
                             <td style="padding: 16px; color: #1f2937;" class="local-time" data-utc="{{ transaction.created_at|to_local_time }}">
-                                {{ (transaction.created_at|to_aest).strftime('%b %d, %Y %I:%M %p AEST') }}
+                                {{ transaction.created_at.strftime('%b %d, %Y %I:%M %p') }}
                             </td>
                             <td style="padding: 16px;">
                                 {% if transaction.transaction_type == 'credit' %}
-                                    <span style="background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500;">
-                                        Purchase
+                                    <span style="background: #d1fae5; color: #065f46; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        CREDIT
                                     </span>
                                 {% else %}
-                                    <span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 500;">
-                                        Usage
+                                    <span style="background: #fee2e2; color: #991b1b; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        DEBIT
                                     </span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 16px; color: #6b7280;">
-                                {{ transaction.description }}
+                            <td style="padding: 16px;">
+                                {% if transaction.analysis_id %}
+                                    <!-- Job with link to results -->
+                                    <a href="{{ url_for('results', analysis_id=transaction.analysis_id) }}" 
+                                       style="color: #1f77b4; text-decoration: none; font-weight: 500; display: block; margin-bottom: 4px;"
+                                       onmouseover="this.style.textDecoration='underline'"
+                                       onmouseout="this.style.textDecoration='none'">
+                                        {{ transaction.description }}
+                                    </a>
+                                    {% set analysis = transactions_analyses.get(transaction.analysis_id) %}
+                                    {% if analysis %}
+                                        <div style="color: #9ca3af; font-size: 13px;">
+                                            {{ analysis.num_candidates }} candidates • {{ analysis.num_criteria }} criteria
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Non-analysis transaction (fund purchase, bonus, etc.) -->
+                                    <span style="color: #1f2937;">{{ transaction.description }}</span>
+                                {% endif %}
                             </td>
                             <td style="padding: 16px; text-align: right; font-weight: 600;">
                                 {% if transaction.amount_usd > 0 %}

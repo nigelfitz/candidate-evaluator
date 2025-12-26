@@ -543,8 +543,9 @@ def create_app(config_name=None):
                 # Flush to get analysis.id before linking to transaction
                 db.session.flush()
                 
-                # Link transaction to analysis
+                # Link transaction to analysis and update description with Job#
                 transaction.analysis_id = analysis.id
+                transaction.description = f"[Job #{analysis.id:04d}] - {job_title}"
                 
                 # Store candidate files for viewing
                 from database import CandidateFile
@@ -932,7 +933,7 @@ def create_app(config_name=None):
                 user_id=current_user.id,
                 amount_usd=-estimated_cost,
                 transaction_type='debit',
-                description=f'Analysis: {len(candidates)} candidates, {len(criteria)} criteria',
+                description=f'[Job #{analysis.id:04d}] - {job_title}',
                 analysis_id=analysis.id
             )
             db.session.add(transaction)
@@ -1868,9 +1869,11 @@ def create_app(config_name=None):
         # Check which analysis IDs still exist (hard delete means missing = deleted)
         analysis_ids = [t.analysis_id for t in transactions if t.analysis_id]
         existing_analyses = set()
+        transactions_analyses = {}
         if analysis_ids:
             all_analyses = Analysis.query.filter(Analysis.id.in_(analysis_ids)).all()
             existing_analyses = {a.id for a in all_analyses}
+            transactions_analyses = {a.id: a for a in all_analyses}
         
         # Calculate running balance for each transaction (newest first)
         running_balance = float(current_user.balance_usd)
@@ -1884,7 +1887,8 @@ def create_app(config_name=None):
                              user=current_user,
                              transactions=transactions,
                              balances=balances,
-                             existing_analyses=existing_analyses)
+                             existing_analyses=existing_analyses,
+                             transactions_analyses=transactions_analyses)
     
     @app.route('/delete-account', methods=['POST'])
     @login_required

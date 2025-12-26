@@ -441,7 +441,7 @@
             <span class="analysis-badge">Complete</span>
         </div>
         <div class="analysis-card-meta">
-            <i data-lucide="calendar" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i>{{ (analysis.created_at|to_aest).strftime('%b %d, %Y') }}
+            <i data-lucide="calendar" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i><span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%b %d, %Y') }}</span>
         </div>
         <div class="analysis-card-stats">
             <div class="stat-item">
@@ -521,4 +521,22 @@
         <li><strong>Export Reports:</strong> Download professional reports to share with your team</li>
     </ol>
 </div>
+
+<script>
+// Convert UTC timestamps to user's local timezone
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.local-time').forEach(function(elem) {
+        const utcTime = elem.getAttribute('data-utc');
+        if (utcTime) {
+            const date = new Date(utcTime);
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            };
+            elem.textContent = date.toLocaleDateString('en-US', options);
+        }
+    });
+});
+</script>
 {% endblock %}

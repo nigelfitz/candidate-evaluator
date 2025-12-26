@@ -99,7 +99,7 @@
                         <p>Total Revenue</p>
                     </div>
                     <div class="stat-item">
-                        <h3>{{ (user.created_at|to_aest).strftime('%Y-%m-%d') }}</h3>
+                        <h3 class="local-time" data-utc="{{ user.created_at|to_local_time }}">{{ user.created_at.strftime('%Y-%m-%d') }}</h3>
                         <p>Joined (AEST)</p>
                     </div>
                 </div>
@@ -153,7 +153,7 @@
                     {% for analysis in analyses[:10] %}
                     <li class="analysis-item">
                         <h4>{{ analysis.job_title }}</h4>
-                        <p>{{ analysis.num_candidates }} candidates • {{ (analysis.created_at|to_aest).strftime('%Y-%m-%d %H:%M AEST') }}</p>
+                        <p>{{ analysis.num_candidates }} candidates • <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</span></p>
                     </li>
                     {% endfor %}
                 </ul>
@@ -176,7 +176,7 @@
                     <tbody>
                         {% for txn in transactions %}
                         <tr>
-                            <td>{{ (txn.created_at|to_aest).strftime('%Y-%m-%d %H:%M AEST') }}</td>
+                            <td class="local-time" data-utc="{{ txn.created_at|to_local_time }}">{{ txn.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>
                                 <span style="{% if txn.transaction_type == 'credit' %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 600;">
                                     {{ txn.transaction_type|upper }}
@@ -356,6 +356,43 @@
                     this.classList.remove('active');
                 }
             });
+        });
+        
+        // Convert UTC timestamps to user's local timezone
+        document.querySelectorAll('.local-time').forEach(function(elem) {
+            const utcTime = elem.getAttribute('data-utc');
+            if (utcTime) {
+                const date = new Date(utcTime);
+                // Check if we need time or just date
+                if (elem.tagName === 'H3') {
+                    const options = {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    };
+                    elem.textContent = date.toLocaleDateString('en-US', options);
+                } else if (elem.tagName === 'TD') {
+                    const options = {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    };
+                    elem.textContent = date.toLocaleString('en-US', options).replace(',', '');
+                } else {
+                    const options = {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    };
+                    elem.textContent = date.toLocaleString('en-US', options).replace(',', '');
+                }
+            }
         });
     </script>
 </body>

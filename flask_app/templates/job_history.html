@@ -72,6 +72,7 @@
                     onmouseout="this.style.background='white'">
                     <td style="padding: 16px;">
                         <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                            <span style="color: #6b7280; font-weight: 500; margin-right: 8px;">Job #{{ "%04d"|format(analysis.id) }}</span>
                             {{ analysis.job_title }}
                         </div>
                         {% if analysis.job_description_text %}
@@ -82,10 +83,10 @@
                     </td>
                     <td style="padding: 16px;" class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">
                         <div style="color: #1f2937; font-weight: 500; font-size: 14px;">
-                            {{ (analysis.created_at|to_aest).strftime('%b %d, %Y') }}
+                            {{ analysis.created_at.strftime('%b %d, %Y') }}
                         </div>
                         <div style="color: #9ca3af; font-size: 12px;">
-                            {{ (analysis.created_at|to_aest).strftime('%I:%M %p AEST') }}
+                            {{ analysis.created_at.strftime('%I:%M %p') }}
                         </div>
                     </td>
                     <td style="padding: 16px; text-align: center;">

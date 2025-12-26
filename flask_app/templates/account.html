@@ -115,7 +115,7 @@
                     onmouseover="this.style.background='#f9fafb'"
                     onmouseout="this.style.background='white'">
                     <td style="padding: 16px; color: #1f2937;" class="local-time" data-utc="{{ transaction.created_at|to_local_time }}">
-                        {{ transaction.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC
+                        {{ transaction.created_at.strftime('%b %d, %Y %I:%M %p') }}
                     </td>
                     <td style="padding: 16px;">
                         {% if transaction.transaction_type == 'credit' %}
@@ -128,24 +128,30 @@
                             </span>
                         {% endif %}
                     </td>
-                    <td style="padding: 16px; color: #6b7280;">
+                    <td style="padding: 16px;">
                         {% if transaction.analysis_id and transaction.analysis_id in existing_analyses %}
-                            {# Analysis exists - show clickable link #}
+                            {# Analysis exists - show clickable link with Job# #}
+                            {% set analysis = transactions_analyses.get(transaction.analysis_id) %}
                             <a href="{{ url_for('results', analysis_id=transaction.analysis_id) }}" 
-                               style="color: #2563eb; text-decoration: none; transition: color 0.2s;"
-                               onmouseover="this.style.color='#1e40af'"
-                               onmouseout="this.style.color='#2563eb'">
-                                {{ transaction.description }} →
+                               style="color: #1f77b4; text-decoration: none; font-weight: 500; display: block; margin-bottom: 4px;"
+                               onmouseover="this.style.textDecoration='underline'"
+                               onmouseout="this.style.textDecoration='none'">
+                                Job #{{ "%04d"|format(transaction.analysis_id) }}: {{ analysis.job_title if analysis else 'Analysis' }}
                             </a>
+                            {% if analysis %}
+                                <div style="color: #9ca3af; font-size: 13px;">
+                                    {{ analysis.num_candidates }} candidates • {{ analysis.num_criteria }} criteria
+                                </div>
+                            {% endif %}
                         {% elif transaction.analysis_deleted_at %}
                             {# Analysis was deleted - show job description with deletion timestamp in tooltip #}
                             <span style="color: #6b7280; cursor: help; border-bottom: 1px dotted #9ca3af;"
-                                  title="Job Deleted on: {{ transaction.analysis_deleted_at.strftime('%b %d, %Y at %I:%M %p') }} UTC">
+                                  title="Job Deleted on: {{ transaction.analysis_deleted_at.strftime('%b %d, %Y at %I:%M %p UTC') }}">
                                 {{ transaction.description }} <span style="color: #dc2626; font-size: 11px;">(Deleted)</span>
                             </span>
                         {% else %}
                             {# No analysis (e.g., credit purchase) #}
-                            {{ transaction.description }}
+                            <span style="color: #1f2937;">{{ transaction.description }}</span>
                         {% endif %}
                     </td>
                     <td style="padding: 16px; text-align: right;">
