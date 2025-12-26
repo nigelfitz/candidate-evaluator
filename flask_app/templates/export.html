@@ -242,10 +242,23 @@
                                         ✕ Close Preview
                                     </button>
                                 </div>
-                                <object id="executivePreviewFrame" data="" type="application/pdf" width="100%" height="800px" 
-                                        style="border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
-                                    <p>Unable to display PDF. <a id="executivePreviewLink" href="" target="_blank">Click here to open in new window</a></p>
-                                </object>
+                                <div id="executivePreviewLoading" style="display: none; padding: 40px; text-align: center; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading PDF preview...</p>
+                                </div>
+                                <iframe id="executivePreviewFrame" 
+                                        src="" 
+                                        width="100%" 
+                                        height="800px" 
+                                        style="border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; display: none;"
+                                        onload="document.getElementById('executivePreviewLoading').style.display='none'; this.style.display='block';">
+                                </iframe>
+                                <div id="executivePreviewError" style="display: none; padding: 24px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+                                    <p class="text-danger mb-2">❌ Unable to display PDF preview in browser</p>
+                                    <p class="mb-0"><a id="executivePreviewLink" href="" target="_blank" class="btn btn-sm btn-primary">Open PDF in New Window</a></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -376,21 +389,39 @@
 
 <!-- JavaScript for Interactive Controls -->
 <script>
-// Toggle PDF preview (v2 - using object tag)
+// Toggle PDF preview (v3 - using iframe with loading states)
 function togglePreview(previewId, pdfUrl) {
     const previewDiv = document.getElementById(previewId);
-    const objectElement = document.getElementById(previewId + 'Frame');
+    const iframeElement = document.getElementById(previewId + 'Frame');
+    const loadingDiv = document.getElementById(previewId + 'Loading');
+    const errorDiv = document.getElementById(previewId + 'Error');
     const fallbackLink = document.getElementById(previewId + 'Link');
     
     if (previewDiv.style.display === 'none' || previewDiv.style.display === '') {
         // Show preview
         previewDiv.style.display = 'block';
         if (pdfUrl) {
-            // Set the PDF URL using data attribute for object tag
-            objectElement.data = pdfUrl;
+            // Show loading state
+            loadingDiv.style.display = 'block';
+            iframeElement.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            // Set iframe src
+            iframeElement.src = pdfUrl;
+            
+            // Set fallback link
             if (fallbackLink) {
                 fallbackLink.href = pdfUrl;
             }
+            
+            // Timeout to show error if iframe doesn't load
+            setTimeout(() => {
+                if (loadingDiv.style.display !== 'none') {
+                    loadingDiv.style.display = 'none';
+                    iframeElement.style.display = 'none';
+                    errorDiv.style.display = 'block';
+                }
+            }, 10000); // 10 second timeout
         }
         // Smooth scroll to preview
         setTimeout(() => {
@@ -399,6 +430,11 @@ function togglePreview(previewId, pdfUrl) {
     } else {
         // Hide preview
         previewDiv.style.display = 'none';
+        // Reset states
+        iframeElement.src = '';
+        loadingDiv.style.display = 'none';
+        iframeElement.style.display = 'none';
+        errorDiv.style.display = 'none';
     }
 }
 
