@@ -128,6 +128,17 @@
                     </small>
                 </div>
                 
+                <!-- Environment Warning -->
+                {% if config.get('ENV') == 'production' or config.get('FLASK_ENV') == 'production' %}
+                <div class="alert alert-warning" style="margin: 20px 0; border-left: 4px solid #ff9800;">
+                    <strong>⚠️ Production Environment:</strong> Changes saved here will be stored in the production config file (prompts.json). However, this file may be <strong>overwritten</strong> on the next deployment if the prompts in your development repository are different. To preserve these prompts long-term, make sure to update them in your local development environment and push to GitHub.
+                </div>
+                {% else %}
+                <div class="alert alert-info" style="margin: 20px 0; border-left: 4px solid #2196F3;">
+                    <strong>ℹ️ Development Environment:</strong> Changes saved here will be written to the local prompts.json file and can be committed to your repository. When you push these changes to GitHub, they will <strong>overwrite</strong> the current prompts on production during the next deployment. Test thoroughly before pushing to production.
+                </div>
+                {% endif %}
+                
                 <!-- Save Button -->
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary btn-save">💾 Save Prompts</button>
