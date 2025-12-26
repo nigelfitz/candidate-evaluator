@@ -9,14 +9,14 @@
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .admin-container { max-width: 1200px; margin: 0 auto; }
         .settings-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 30px; margin-bottom: 20px; }
-        .setting-item { border-bottom: 1px solid #e0e0e0; padding: 20px 0; }
+        .setting-item { border-bottom: 1px solid #f0f0f0; padding: 20px 0; }
         .setting-item:last-child { border-bottom: none; }
-        .setting-name { font-weight: 600; color: #333; font-size: 1.1rem; }
-        .setting-value { font-family: 'Courier New', monospace; background: #f8f9fa; padding: 5px 10px; border-radius: 5px; display: inline-block; }
-        .setting-desc { color: #666; margin-top: 8px; font-size: 0.95rem; }
-        .setting-explanation { background: #e3f2fd; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; }
-        .cost-impact { background: #fff3cd; padding: 8px 12px; border-radius: 5px; margin-top: 8px; border-left: 4px solid #ffc107; }
-        .quality-impact { background: #d1ecf1; padding: 8px 12px; border-radius: 5px; margin-top: 8px; border-left: 4px solid #17a2b8; }
+        .setting-name { font-weight: 700; color: #1a1a1a; font-size: 1.15rem; margin-bottom: 12px; }
+        .setting-value { font-family: 'Courier New', monospace; background: #667eea; color: white; padding: 6px 14px; border-radius: 6px; display: inline-block; font-weight: 600; }
+        .setting-desc { color: #555; margin-top: 10px; font-size: 0.95rem; line-height: 1.5; }
+        .setting-explanation { background: #f0f4ff; padding: 14px 16px; border-radius: 8px; margin-top: 12px; font-size: 0.9rem; border-left: 3px solid #667eea; }
+        .cost-impact { background: #fff9e6; padding: 10px 14px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #ffc107; font-size: 0.9rem; }
+        .quality-impact { background: #e8f5f7; padding: 10px 14px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #17a2b8; font-size: 0.9rem; }
         .warning { background: #f8d7da; padding: 12px; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 20px; }
         .success-msg { background: #d4edda; padding: 12px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 20px; }
         .btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 30px; font-size: 1.1rem; }
@@ -26,15 +26,66 @@
         .current-cost { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
         .current-cost h3 { margin: 0; font-size: 1.3rem; }
         .current-cost .cost-value { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
-        .section-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; }
-        .logout-btn { position: fixed; top: 20px; right: 20px; }
+        
+        /* Collapsible Section Headers */
+        .section-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 18px 24px; 
+            border-radius: 12px; 
+            margin-bottom: 0; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .section-header:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); 
+        }
+        .section-header h3 { 
+            margin: 0; 
+            font-size: 1.3rem; 
+            font-weight: 600; 
+        }
+        .section-header .toggle-icon { 
+            font-size: 1.5rem; 
+            transition: transform 0.3s; 
+        }
+        .section-header.collapsed .toggle-icon { 
+            transform: rotate(-90deg); 
+        }
+        .section-content {
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            background: white;
+        }
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        /* Section Badge */
+        .section-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+        
+        .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
         
         /* Tab Navigation */
         .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
         .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; }
         .admin-tabs a:hover { color: #667eea; }
         .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
-        .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
         .session-info .timeout { font-weight: 600; color: #667eea; }
     </style>
 </head>
@@ -79,9 +130,13 @@
         <form method="POST" action="{{ url_for('admin_save_settings') }}">
             <!-- Core GPT Settings -->
             <div class="settings-card">
-                <div class="section-header">
-                    <h3 class="mb-0">🤖 Core GPT Settings</h3>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">🤖 Core GPT Settings<span class="section-badge">4 settings</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
                 </div>
+                <div class="section-content">
                 
                 <!-- Model Selection -->
                 <div class="setting-item">
@@ -199,13 +254,18 @@
                         <strong>💰 Cost Impact:</strong> {{ settings.max_tokens.cost_impact }}
                     </div>
                 </div>
+                </div>
             </div>
             
             <!-- Context Settings -->
             <div class="settings-card">
-                <div class="section-header">
-                    <h3 class="mb-0">📄 Context & Evidence Settings</h3>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">📄 Context & Evidence Settings<span class="section-badge">8 settings</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
                 </div>
+                <div class="section-content">
                 
                 <!-- Evidence Snippet Length -->
                 <div class="setting-item">
@@ -391,13 +451,18 @@
                         <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.chunk_overlap_chars.quality_impact }}
                     </div>
                 </div>
+                </div>
             </div>
             
             <!-- Output Format Settings -->
             <div class="settings-card">
-                <div class="section-header">
-                    <h3 class="mb-0">📝 Output Format Settings</h3>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">📝 Output Format Settings<span class="section-badge">6 settings</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
                 </div>
+                <div class="section-content">
                 
                 <!-- Min Strengths -->
                 <div class="setting-item">
@@ -530,13 +595,18 @@
                         <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.insight_tone.quality_impact }}
                     </div>
                 </div>
+                </div>
             </div>
             
             <!-- Score Thresholds -->
             <div class="settings-card">
-                <div class="section-header">
-                    <h3 class="mb-0">🎯 Score Thresholds</h3>
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">🎯 Score Thresholds<span class="section-badge">2 settings</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
                 </div>
+                <div class="section-content">
                 
                 <!-- High Threshold -->
                 <div class="setting-item">
@@ -577,6 +647,7 @@
                         <strong>Explanation:</strong> {{ settings.score_thresholds.low_threshold.explanation }}
                     </div>
                 </div>
+                </div>
             </div>
             
             <!-- Usage Notes -->
@@ -598,6 +669,20 @@
     </div>
     
     <script>
+        // Toggle section collapse
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+        }
+        
         function updateCostEstimate() {
             // Get current values
             const model = document.querySelector('select[name="gpt_model"]').value;
