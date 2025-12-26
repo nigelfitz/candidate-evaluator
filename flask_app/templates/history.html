@@ -85,7 +85,7 @@
                         <div class="local-time" 
                              data-utc="{{ analysis.created_at|to_local_time }}"
                              style="color: #6b7280; font-size: 13px;">
-                            {{ analysis.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC
+                            {{ (analysis.created_at|to_aest).strftime('%b %d, %Y %I:%M %p AEST') }}
                         </div>
                     </div>
                     
@@ -160,7 +160,7 @@
                         {% for transaction in transactions %}
                         <tr style="border-bottom: 1px solid #f3f4f6;">
                             <td style="padding: 16px; color: #1f2937;" class="local-time" data-utc="{{ transaction.created_at|to_local_time }}">
-                                {{ transaction.created_at.strftime('%b %d, %Y %I:%M %p') }} UTC
+                                {{ (transaction.created_at|to_aest).strftime('%b %d, %Y %I:%M %p AEST') }}
                             </td>
                             <td style="padding: 16px;">
                                 {% if transaction.transaction_type == 'credit' %}

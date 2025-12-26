@@ -89,11 +89,11 @@
                 <!-- Date Range Filter -->
                 <form method="get" class="mb-4" style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
                     <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">From Date:</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">From Date (AEST):</label>
                         <input type="date" name="from_date" value="{{ from_date }}" class="form-control" style="max-width: 200px;">
                     </div>
                     <div>
-                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">To Date:</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">To Date (AEST):</label>
                         <input type="date" name="to_date" value="{{ to_date }}" class="form-control" style="max-width: 200px;">
                     </div>
                     <button type="submit" class="btn btn-primary" style="background: #667eea; border: none;">📊 Update Report</button>
@@ -175,7 +175,7 @@
                             <th>Total Spent</th>
                             <th>Analyses</th>
                             <th>Balance</th>
-                            <th>Joined</th>
+                            <th>Joined (AEST)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,7 +190,7 @@
                             <td style="font-weight: 600; color: #28a745;">${{ "%.2f"|format(user.total_revenue_usd) }}</td>
                             <td>{{ user.total_analyses_count }}</td>
                             <td>${{ "%.2f"|format(user.balance_usd) }}</td>
-                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ (user.created_at|to_aest).strftime('%Y-%m-%d') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -210,7 +210,7 @@
                             <th>Analyses</th>
                             <th>Total Spent</th>
                             <th>Balance</th>
-                            <th>Joined</th>
+                            <th>Joined (AEST)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -225,7 +225,7 @@
                             <td style="font-weight: 600; color: #667eea;">{{ user.total_analyses_count }}</td>
                             <td>${{ "%.2f"|format(user.total_revenue_usd) }}</td>
                             <td>${{ "%.2f"|format(user.balance_usd) }}</td>
-                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ (user.created_at|to_aest).strftime('%Y-%m-%d') }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

@@ -50,6 +50,14 @@ def create_app(config_name=None):
             return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
         return ''
     
+    @app.template_filter('to_aest')
+    def to_aest(dt):
+        """Convert UTC datetime to AEST (UTC+10)"""
+        if dt:
+            from datetime import timedelta
+            return dt + timedelta(hours=10)
+        return dt
+    
     @app.template_filter('number_format')
     def number_format(value):
         """Format number with thousands separator"""
@@ -3096,56 +3104,60 @@ def create_app(config_name=None):
         if not to_date:
             to_date = datetime.now().strftime('%Y-%m-%d')
         
-        # Parse dates
+        # Parse dates - assume user input is in AEST, convert to UTC for database query
         start_datetime = datetime.strptime(from_date, '%Y-%m-%d')
         end_datetime = datetime.strptime(to_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
         
-        # Query transactions in date range
+        # Convert AEST to UTC (subtract 10 hours)
+        start_datetime_utc = start_datetime - timedelta(hours=10)
+        end_datetime_utc = end_datetime - timedelta(hours=10)
+        
+        # Query transactions in date range (using UTC times for database)
         transactions_query = Transaction.query.filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc
         )
         
         # Calculate financial metrics
         signup_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('%sign-up bonus%')
         ).scalar() or Decimal('0')
         
         volume_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('%volume bonus%')
         ).scalar() or Decimal('0')
         
         refunds = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('%refund%')
         ).scalar() or Decimal('0'))
         
         stripe_revenue = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('stripe purchase%')
         ).scalar() or Decimal('0')
         
         analysis_spending = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('analysis:%')
         ).scalar() or Decimal('0'))
         
         manual_credits = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('%manual credit%')
         ).scalar() or Decimal('0')
         
         manual_debits = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
-            Transaction.created_at >= start_datetime,
-            Transaction.created_at <= end_datetime,
+            Transaction.created_at >= start_datetime_utc,
+            Transaction.created_at <= end_datetime_utc,
             Transaction.description.ilike('%manual debit%')
         ).scalar() or Decimal('0'))
         

@@ -99,8 +99,8 @@
                         <p>Total Revenue</p>
                     </div>
                     <div class="stat-item">
-                        <h3>{{ user.created_at.strftime('%Y-%m-%d') }}</h3>
-                        <p>Joined</p>
+                        <h3>{{ (user.created_at|to_aest).strftime('%Y-%m-%d') }}</h3>
+                        <p>Joined (AEST)</p>
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@
                     {% for analysis in analyses[:10] %}
                     <li class="analysis-item">
                         <h4>{{ analysis.job_title }}</h4>
-                        <p>{{ analysis.num_candidates }} candidates • {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p>{{ analysis.num_candidates }} candidates • {{ (analysis.created_at|to_aest).strftime('%Y-%m-%d %H:%M AEST') }}</p>
                     </li>
                     {% endfor %}
                 </ul>
@@ -176,7 +176,7 @@
                     <tbody>
                         {% for txn in transactions %}
                         <tr>
-                            <td>{{ txn.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ (txn.created_at|to_aest).strftime('%Y-%m-%d %H:%M AEST') }}</td>
                             <td>
                                 <span style="{% if txn.transaction_type == 'credit' %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 600;">
                                     {{ txn.transaction_type|upper }}
