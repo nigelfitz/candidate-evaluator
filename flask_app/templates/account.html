@@ -119,11 +119,11 @@
                     </td>
                     <td style="padding: 16px;">
                         {% if transaction.transaction_type == 'credit' %}
-                            <span style="background: #d1fae5; color: #065f46; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;">
+                            <span style="background: #10b981; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;">
                                 CREDIT
                             </span>
                         {% else %}
-                            <span style="background: #fee2e2; color: #991b1b; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;">
+                            <span style="background: #f3f4f6; color: #374151; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px;">
                                 DEBIT
                             </span>
                         {% endif %}
@@ -157,12 +157,7 @@
                     <td style="padding: 16px; text-align: right;">
                         {% if transaction.transaction_type == 'credit' and transaction.stripe_amount_cents and transaction.stripe_amount_cents > 0 %}
                             {# Show Stripe payment amount for credit purchases #}
-                            <div style="font-weight: 700; font-size: 15px; color: #059669;">
-                                +${{ "%.2f"|format(transaction.stripe_amount_cents / 100) }}
-                            </div>
-                            <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;">
-                                (${{ "%.2f"|format(transaction.amount_usd) }} credits)
-                            </div>
+                            <span style="color: #059669; font-weight: 700; font-size: 15px;">+${{ "%.2f"|format(transaction.stripe_amount_cents / 100) }}</span>
                         {% elif transaction.amount_usd > 0 %}
                             <span style="color: #059669; font-weight: 700; font-size: 15px;">+${{ "%.2f"|format(transaction.amount_usd) }}</span>
                         {% else %}

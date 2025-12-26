@@ -90,12 +90,12 @@
                         </div>
                     </td>
                     <td style="padding: 16px; text-align: center;">
-                        <span style="background: #dbeafe; color: #1e40af; padding: 6px 12px; border-radius: 12px; font-weight: 600; font-size: 14px;">
+                        <span style="background: #f3f4f6; color: #374151; padding: 6px 12px; border-radius: 12px; font-weight: 600; font-size: 14px;">
                             {{ analysis.num_candidates }}
                         </span>
                     </td>
                     <td style="padding: 16px; text-align: center;">
-                        <span style="background: #d1fae5; color: #065f46; padding: 6px 12px; border-radius: 12px; font-weight: 600; font-size: 14px;">
+                        <span style="background: #f3f4f6; color: #374151; padding: 6px 12px; border-radius: 12px; font-weight: 600; font-size: 14px;">
                             {{ analysis.num_criteria }}
                         </span>
                     </td>
@@ -107,24 +107,28 @@
                     <td style="padding: 16px; text-align: right;">
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
                             <a href="{{ url_for('results', analysis_id=analysis.id) }}" 
-                               class="btn btn-sm btn-primary"
-                               style="padding: 6px 12px; font-size: 13px; text-decoration: none;">
-                                📊 Results
+                               title="Results"
+                               style="padding: 8px 10px; background: #3b82f6; color: white; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s;"
+                               onmouseover="this.style.background='#2563eb'"
+                               onmouseout="this.style.background='#3b82f6'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
                             </a>
                             <a href="{{ url_for('exports', analysis_id=analysis.id) }}" 
-                               class="btn btn-sm btn-secondary"
-                               style="padding: 6px 12px; font-size: 13px; text-decoration: none;">
-                                📄 Export
+                               title="Export Reports"
+                               style="padding: 8px 10px; background: #6b7280; color: white; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s;"
+                               onmouseover="this.style.background='#4b5563'"
+                               onmouseout="this.style.background='#6b7280'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                             </a>
                             <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
                                   style="display: inline;"
                                   onsubmit="return confirm('⚠️ Are you sure you want to permanently delete this analysis?\n\nThis action cannot be undone. Your transaction history will be preserved.')">
                                 <button type="submit" 
-                                        class="btn btn-sm"
-                                        style="padding: 6px 12px; font-size: 13px; background: #ef4444; color: white; border: none; cursor: pointer;"
+                                        title="Delete Job"
+                                        style="padding: 8px 10px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s;"
                                         onmouseover="this.style.background='#dc2626'"
                                         onmouseout="this.style.background='#ef4444'">
-                                    🗑️ Delete
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                                 </button>
                             </form>
                         </div>
