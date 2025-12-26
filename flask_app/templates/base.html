@@ -348,7 +348,9 @@
             {% if messages %}
                 <div class="flash-messages">
                     {% for category, message in messages %}
-                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                        {% if category != 'admin' or request.path.startswith('/admin') %}
+                        <div class="flash flash-{{ category if category != 'admin' else 'success' }}">{{ message }}</div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             {% endif %}

@@ -2871,7 +2871,7 @@ def create_app(config_name=None):
         with open(settings_path, 'w') as f:
             json.dump(settings, f, indent=2)
         
-        flash('✅ Settings saved successfully! Changes take effect immediately.', 'success')
+        flash('✅ Settings saved successfully! Changes take effect immediately.', 'admin')
         return redirect(url_for('admin_gpt_settings'))
     
     
@@ -2917,7 +2917,7 @@ def create_app(config_name=None):
         with open(prompts_path, 'w', encoding='utf-8') as f:
             json.dump(prompts, f, indent=2, ensure_ascii=False)
         
-        flash('✅ Prompts saved successfully! Changes take effect immediately.', 'success')
+        flash('✅ Prompts saved successfully! Changes take effect immediately.', 'admin')
         return redirect(url_for('admin_prompts'))
     
     
