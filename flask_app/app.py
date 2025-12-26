@@ -1855,6 +1855,43 @@ def create_app(config_name=None):
                              balances=balances,
                              existing_analyses=existing_analyses)
     
+    @app.route('/delete-account', methods=['POST'])
+    @login_required
+    def delete_account():
+        """Permanently delete user account and all associated data"""
+        user_id = current_user.id
+        user_email = current_user.email
+        
+        try:
+            # Delete all user's analyses (cascades to candidate_files)
+            Analysis.query.filter_by(user_id=user_id).delete()
+            
+            # Delete all transactions
+            Transaction.query.filter_by(user_id=user_id).delete()
+            
+            # Delete feedback
+            Feedback.query.filter_by(user_id=user_id).delete()
+            
+            # Delete user settings if they exist
+            from database import UserSettings
+            UserSettings.query.filter_by(user_id=user_id).delete()
+            
+            # Logout the user before deleting
+            logout_user()
+            
+            # Finally delete the user account
+            User.query.filter_by(id=user_id).delete()
+            
+            db.session.commit()
+            
+            flash(f'Account {user_email} has been permanently deleted.', 'success')
+            return redirect(url_for('landing'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while deleting your account. Please contact support.', 'danger')
+            return redirect(url_for('account'))
+    
     @app.route('/job-history')
     @login_required
     def job_history():

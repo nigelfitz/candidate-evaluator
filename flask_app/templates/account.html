@@ -189,6 +189,78 @@
            onmouseout="this.style.textDecoration='none'">
             ← Back to Dashboard
         </a>
+        <h2 style="color: #dc2626; margin: 60px 0 15px 0; font-size: 20px; padding-top: 40px; border-top: 2px solid #e5e7eb;">⚠️ Danger Zone</h2>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="color: #dc2626; font-weight: 600; margin-bottom: 5px;">Delete Account</div>
+                    <div style="color: #6b7280; font-size: 14px;">
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                    </div>
+                </div>
+                <button onclick="showDeleteConfirmation()" 
+                        style="background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;"
+                        onmouseover="this.style.background='#b91c1c'"
+                        onmouseout="this.style.background='#dc2626'">
+                    🗑️ Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteAccountModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <div style="background: #fee2e2; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 15px;">
+                    ⚠️
+                </div>
+                <h3 style="margin: 0; color: #1f2937; font-size: 20px;">Delete Account?</h3>
+            </div>
+            
+            <p style="color: #6b7280; margin-bottom: 20px; line-height: 1.6;">
+                This will <strong style="color: #dc2626;">permanently delete</strong> your account, including:
+            </p>
+            <ul style="color: #6b7280; margin-bottom: 20px; padding-left: 25px;">
+                <li>Your account balance (${{ "%.2f"|format(current_user.balance_usd) }})</li>
+                <li>All job analyses and results</li>
+                <li>Transaction history</li>
+                <li>All uploaded candidate files</li>
+            </ul>
+            <p style="color: #dc2626; font-weight: 600; margin-bottom: 20px;">
+                ⚠️ This action cannot be undone.
+            </p>
+            
+            <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    Type <strong>DELETE</strong> to confirm:
+                </label>
+                <input type="text" 
+                       id="deleteConfirmInput" 
+                       placeholder="Type DELETE in capital letters"
+                       style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="hideDeleteConfirmation()" 
+                        style="flex: 1; background: #f3f4f6; color: #374151; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 500;"
+                        onmouseover="this.style.background='#e5e7eb'"
+                        onmouseout="this.style.background='#f3f4f6'">
+                    Cancel
+                </button>
+                <form method="POST" action="{{ url_for('delete_account') }}" style="flex: 1; margin: 0;" id="deleteAccountForm">
+                    <button type="button"
+                            onclick="submitDeleteAccount()"
+                            id="confirmDeleteBtn"
+                            style="width: 100%; background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 500;"
+                            onmouseover="this.style.background='#b91c1c'"
+                            onmouseout="this.style.background='#dc2626'"
+                            disabled>
+                        Delete My Account
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
