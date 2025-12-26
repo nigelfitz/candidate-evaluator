@@ -71,13 +71,25 @@ def load_gpt_settings():
     return {
         'model': settings['gpt_model']['value'],
         'temperature': settings['temperature']['value'],
+        'presence_penalty': settings['presence_penalty']['value'],
+        'frequency_penalty': settings['frequency_penalty']['value'],
         'max_tokens': settings['max_tokens']['value'],
         'evidence_snippet_chars': settings['evidence_snippet_chars']['value'],
         'candidate_text_chars': settings['candidate_text_chars']['value'],
         'jd_text_chars': settings['jd_text_chars']['value'],
         'high_threshold': settings['score_thresholds']['high_threshold']['value'],
         'low_threshold': settings['score_thresholds']['low_threshold']['value'],
-        'top_evidence_items': settings['advanced_settings']['top_evidence_items']['value']
+        'top_evidence_items': settings['advanced_settings']['top_evidence_items']['value'],
+        'min_strengths': settings['advanced_settings']['min_strengths']['value'],
+        'max_strengths': settings['advanced_settings']['max_strengths']['value'],
+        'min_gaps': settings['advanced_settings']['min_gaps']['value'],
+        'max_gaps': settings['advanced_settings']['max_gaps']['value'],
+        'notes_length': settings['advanced_settings']['notes_length']['value'],
+        'insight_tone': settings['advanced_settings']['insight_tone']['value'],
+        'evidence_filter_strategy': settings['advanced_settings']['evidence_filter_strategy']['value'],
+        'evidence_score_threshold_high': settings['advanced_settings']['evidence_score_threshold_high']['value'],
+        'evidence_score_threshold_low': settings['advanced_settings']['evidence_score_threshold_low']['value'],
+        'chunk_overlap_chars': settings['advanced_settings']['chunk_overlap_chars']['value']
     }
 
 
@@ -684,14 +696,32 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     # Use provided model parameter, otherwise use config setting
     model_to_use = model if model != "gpt-4o" else settings['model']
     
-    # Sort criteria by score and take top N based on config
-    sorted_criteria = sorted(criteria, key=lambda c: coverage_scores.get(c, 0.0), reverse=True)
-    top_criteria = sorted_criteria[:settings['top_evidence_items']]
+    # Filter criteria based on strategy setting
+    evidence_strategy = settings['evidence_filter_strategy']
+    
+    if evidence_strategy == 'all_criteria':
+        # Send all criteria
+        filtered_criteria = criteria
+    elif evidence_strategy == 'strengths_and_gaps':
+        # Top 5 strengths + Bottom 5 gaps
+        sorted_by_score = sorted(criteria, key=lambda c: coverage_scores.get(c, 0.0), reverse=True)
+        top_5 = sorted_by_score[:5]
+        bottom_5 = sorted_by_score[-5:] if len(sorted_by_score) > 5 else []
+        filtered_criteria = top_5 + bottom_5
+    elif evidence_strategy == 'threshold_based':
+        # Only criteria above high threshold or below low threshold
+        high_thresh = settings['evidence_score_threshold_high']
+        low_thresh = settings['evidence_score_threshold_low']
+        filtered_criteria = [c for c in criteria if coverage_scores.get(c, 0.0) >= high_thresh or coverage_scores.get(c, 0.0) <= low_thresh]
+    else:  # 'top_n_by_score' (default)
+        # Sort criteria by score and take top N based on config
+        sorted_by_score = sorted(criteria, key=lambda c: coverage_scores.get(c, 0.0), reverse=True)
+        filtered_criteria = sorted_by_score[:settings['top_evidence_items']]
     
     # Build evidence lines from coverage scores and evidence snippets
     # Uses configurable character limit from admin settings
     ev_items = []
-    for criterion in top_criteria:
+    for criterion in filtered_criteria:
         score = coverage_scores.get(criterion, 0.0)
         # Get evidence snippet from evidence_map
         evidence_key = (candidate_name, criterion)
@@ -729,14 +759,36 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     system_prompt = insights_prompts['system_prompt']['value']
     
+    # Map notes_length setting to instruction text
+    notes_length_map = {
+        'brief': '1-2 sentences',
+        'medium': '2-4 sentences',
+        'detailed': '4-6 sentences (one paragraph)'
+    }
+    notes_instruction = notes_length_map.get(settings['notes_length'], '2-4 sentences')
+    
+    # Map insight_tone setting to instruction text
+    tone_map = {
+        'professional': 'professional hiring language',
+        'conversational': 'friendly, conversational tone',
+        'technical': 'technical focus with specific tech details',
+        'executive': 'high-level strategic assessment suitable for C-suite'
+    }
+    tone_instruction = tone_map.get(settings['insight_tone'], 'professional hiring language')
+    
     # Build user prompt from template, replacing placeholders
-    user_prompt = insights_prompts['user_prompt_template']['value'].format(
-        jd_text=jd_text[:settings['jd_text_chars']],
+    user_prompt = insights_prompts['user_prompt_te        # Admin-configurable
+            presence_penalty=settings['presence_penalty'],  # Admin-configurable
+            frequency_penalty=settings['frequency_penalty'], # Admin-configurable
+            max_tokens=settings['max_tokens']        ars']],
         candidate_name=candidate_name,
         candidate_text=candidate_text[:settings['candidate_text_chars']],
         evidence_lines=ev_lines,
         top_n=settings['top_evidence_items']
     )
+    
+    # Add instructions for min/max items and notes length
+    user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)

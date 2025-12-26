@@ -425,13 +425,17 @@ def create_app(config_name=None):
                         raw_bytes=resume_bytes
                     ))
                 
+                # Load settings for chunk overlap
+                from analysis import load_gpt_settings
+                gpt_settings = load_gpt_settings()
+                
                 # Run analysis
                 coverage, insights, evidence_map = analyse_candidates(
                     candidates=candidates,
                     criteria=criteria,
                     weights=None,
                     chunk_chars=1200,
-                    overlap=150
+                    overlap=gpt_settings['chunk_overlap_chars']
                 )
                 
                 # Calculate cost
@@ -843,6 +847,10 @@ def create_app(config_name=None):
                                      shortfall=float(estimated_cost - current_user.balance_usd),
                                      selected_insights_mode=insights_mode)
             
+            # Load settings for chunk overlap
+            from analysis import load_gpt_settings
+            gpt_settings = load_gpt_settings()
+            
             # IMPORTANT: Run analysis FIRST, charge AFTER (if analysis fails, no charge)
             print(f"DEBUG: Starting analysis (NO CHARGE YET)...")
             coverage, insights, evidence_map = analyse_candidates(
@@ -850,7 +858,7 @@ def create_app(config_name=None):
                 criteria=criteria,
                 weights=None,
                 chunk_chars=1200,
-                overlap=150
+                overlap=gpt_settings['chunk_overlap_chars']
             )
             print(f"DEBUG: Coverage analysis complete!")
             

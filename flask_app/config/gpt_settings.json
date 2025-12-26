@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "description": "GPT Configuration for Candidate Insights Generation",
-    "last_updated": "2025-12-18 05:33:59 UTC",
+    "last_updated": "2025-12-26 13:12:22 UTC",
     "warning": "Changes to these settings affect both quality and cost. Test with small batches first."
   },
   "gpt_model": {
@@ -29,6 +29,30 @@
     "cost_impact": "No cost impact - only affects output style",
     "quality_impact": "0.2 ensures consistent, professional insights. Higher temps may introduce unnecessary creativity or inconsistency."
   },
+  "presence_penalty": {
+    "value": 0.4,
+    "description": "Reduces repetitive phrasing across insights (0.0 = no penalty, 2.0 = max penalty)",
+    "range": [
+      0.0,
+      2.0
+    ],
+    "explanation": "Penalizes using the same phrases repeatedly. Higher values = more unique phrasing per candidate. Helps avoid 'demonstrates strong...' being used for everyone.",
+    "recommended": 0.4,
+    "cost_impact": "No cost impact - only affects output style",
+    "quality_impact": "0.3-0.6 produces more personalized, varied insights. Too high (>1.0) may produce awkward phrasing."
+  },
+  "frequency_penalty": {
+    "value": 0.3,
+    "description": "Discourages repeating the same words within a response (0.0 = no penalty, 2.0 = max penalty)",
+    "range": [
+      0.0,
+      2.0
+    ],
+    "explanation": "Reduces word repetition within each insight. Prevents 'Python experience... experienced with Python... Python skills' redundancy.",
+    "recommended": 0.3,
+    "cost_impact": "No cost impact - only affects output style",
+    "quality_impact": "0.2-0.4 produces more natural, varied language. Too high (>0.8) may lose important keyword repetition."
+  },
   "max_tokens": {
     "value": 1000,
     "description": "Maximum number of tokens (words) in GPT response",
@@ -54,7 +78,7 @@
     "quality_impact": "400 chars: Often cuts mid-sentence. 600 chars: Good context, complete thoughts. 1000 chars: Diminishing returns - GPT gets enough from 600."
   },
   "candidate_text_chars": {
-    "value": 3000,
+    "value": 4000,
     "description": "Characters of candidate resume text sent to GPT for context",
     "range": [
       1000,
@@ -66,7 +90,7 @@
     "quality_impact": "3000 chars captures critical info (header, summary, recent roles). More doesn't significantly improve insights since evidence snippets provide specifics."
   },
   "jd_text_chars": {
-    "value": 3000,
+    "value": 4000,
     "description": "Characters of Job Description sent to GPT for context",
     "range": [
       1000,
@@ -158,7 +182,121 @@
       ],
       "explanation": "We send top N criteria by score to GPT. More = better context but higher cost. 10 balances both.",
       "recommended": 10,
-      "cost_impact": "Directly multiplies evidence_snippet_chars cost. 10 items \u00c3\u2014 600 chars = 6000 chars. 20 items = 12000 chars (double cost)."
+      "cost_impact": "Directly multiplies evidence_snippet_chars cost. 10 items × 600 chars = 6000 chars. 20 items = 12000 chars (double cost)."
+    },
+    "min_strengths": {
+      "value": 3,
+      "description": "Minimum number of strengths to generate",
+      "range": [
+        2,
+        8
+      ],
+      "explanation": "GPT will generate at least this many strength items. Ensures consistent output length.",
+      "recommended": 3,
+      "quality_impact": "Prevents too-short insights. Most candidates have 3-6 notable strengths."
+    },
+    "max_strengths": {
+      "value": 6,
+      "description": "Maximum number of strengths to generate",
+      "range": [
+        4,
+        10
+      ],
+      "explanation": "GPT will generate at most this many strength items. Prevents overly long insights.",
+      "recommended": 6,
+      "quality_impact": "Keeps insights focused on most important points. Too many dilutes impact."
+    },
+    "min_gaps": {
+      "value": 3,
+      "description": "Minimum number of gaps/concerns to generate",
+      "range": [
+        2,
+        8
+      ],
+      "explanation": "GPT will generate at least this many gap items. Ensures balanced assessment.",
+      "recommended": 3,
+      "quality_impact": "Prevents overly positive assessments. Every candidate has areas of concern."
+    },
+    "max_gaps": {
+      "value": 6,
+      "description": "Maximum number of gaps/concerns to generate",
+      "range": [
+        4,
+        10
+      ],
+      "explanation": "GPT will generate at most this many gap items. Prevents overly negative assessments.",
+      "recommended": 6,
+      "quality_impact": "Keeps assessment constructive. Too many gaps can seem unfairly critical."
+    },
+    "notes_length": {
+      "value": "medium",
+      "description": "Length of overall assessment notes",
+      "options": [
+        "brief",
+        "medium",
+        "detailed"
+      ],
+      "explanation": "brief: 1-2 sentences. medium: 2-4 sentences (CURRENT). detailed: 1 paragraph (4-6 sentences).",
+      "recommended": "medium",
+      "quality_impact": "Medium provides good context without overwhelming. Brief for quick screening, detailed for final rounds."
+    },
+    "insight_tone": {
+      "value": "professional",
+      "description": "Tone/style of insights",
+      "options": [
+        "professional",
+        "conversational",
+        "technical",
+        "executive"
+      ],
+      "explanation": "professional: Standard hiring language (CURRENT). conversational: More casual/friendly. technical: Focus on tech details. executive: High-level strategic focus.",
+      "recommended": "professional",
+      "quality_impact": "Match tone to audience. Technical for eng managers, executive for C-suite roles."
+    },
+    "evidence_filter_strategy": {
+      "value": "top_n_by_score",
+      "description": "How to select which criteria evidence to send to GPT",
+      "options": [
+        "top_n_by_score",
+        "strengths_and_gaps",
+        "threshold_based",
+        "all_criteria"
+      ],
+      "explanation": "top_n_by_score: Send top N highest scores (CURRENT). strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only >0.65 or <0.40. all_criteria: Send everything.",
+      "recommended": "top_n_by_score",
+      "cost_impact": "all_criteria doubles token costs. threshold_based is most efficient. top_n provides good balance.",
+      "quality_impact": "strengths_and_gaps gives most balanced insights. threshold_based focuses on extremes."
+    },
+    "evidence_score_threshold_high": {
+      "value": 0.65,
+      "description": "When using threshold_based strategy, scores above this are sent as strengths",
+      "range": [
+        0.5,
+        0.85
+      ],
+      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring above this are sent to GPT.",
+      "recommended": 0.65
+    },
+    "evidence_score_threshold_low": {
+      "value": 0.40,
+      "description": "When using threshold_based strategy, scores below this are sent as gaps",
+      "range": [
+        0.15,
+        0.50
+      ],
+      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring below this are sent to GPT.",
+      "recommended": 0.40
+    },
+    "chunk_overlap_chars": {
+      "value": 150,
+      "description": "Overlap between text chunks when processing long documents",
+      "range": [
+        50,
+        300
+      ],
+      "explanation": "When splitting resumes into chunks, this many characters overlap between adjacent chunks. Prevents missing context at boundaries.",
+      "recommended": 150,
+      "quality_impact": "100-200 chars provides good context preservation. Too low may split sentences poorly. Too high wastes processing."
     }
   },
   "_usage_notes": {
