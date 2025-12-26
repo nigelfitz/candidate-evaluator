@@ -754,7 +754,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Expand
                 targetElement.classList.add('show');
                 targetElement.style.overflow = 'hidden';
-                targetElement.style.maxHeight = targetElement.scrollHeight + 'px';
+                
+                // Check if the accordion contains an iframe (like PDF viewer)
+                const hasIframe = targetElement.querySelector('iframe');
+                
+                if (hasIframe) {
+                    // For accordions with iframes, use a large fixed height
+                    targetElement.style.maxHeight = '800px';
+                    // Recalculate after iframe loads
+                    setTimeout(() => {
+                        const actualHeight = targetElement.scrollHeight;
+                        targetElement.style.maxHeight = Math.max(actualHeight, 700) + 'px';
+                    }, 100);
+                } else {
+                    // For text content, calculate normally
+                    targetElement.style.maxHeight = targetElement.scrollHeight + 'px';
+                    // Recalculate after content renders
+                    setTimeout(() => {
+                        targetElement.style.maxHeight = targetElement.scrollHeight + 'px';
+                    }, 50);
+                }
+                
                 setTimeout(() => {
                     targetElement.style.overflow = 'visible';
                 }, 300);
