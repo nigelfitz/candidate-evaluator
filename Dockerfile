@@ -28,5 +28,8 @@ EXPOSE 8080
 # Change to flask_app directory
 WORKDIR /app/flask_app
 
-# Run the application  
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "600", "app:create_app()"]
+# Make startup script executable
+RUN chmod +x start.sh
+
+# Run the application with migration check
+CMD ["bash", "start.sh"]

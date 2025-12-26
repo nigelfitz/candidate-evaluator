@@ -2838,10 +2838,23 @@ def create_app(config_name=None):
         # Get user's transactions
         transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.desc()).limit(50).all()
         
+        # Calculate bonus/promotional funds (not refundable)
+        bonus_total = Decimal('0')
+        for txn in Transaction.query.filter_by(user_id=user_id).all():
+            # Check if transaction is a bonus/promotional type
+            if any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
+                if txn.amount_usd > 0:  # Only count positive bonuses
+                    bonus_total += Decimal(str(txn.amount_usd))
+        
+        # Calculate maximum refundable balance
+        max_refundable = max(Decimal('0'), user.balance_usd - bonus_total)
+        
         return render_template('admin_user_detail.html',
                              user=user,
                              analyses=analyses,
                              transactions=transactions,
+                             bonus_total=bonus_total,
+                             max_refundable=max_refundable,
                              active_tab='users')
     
     
@@ -2980,21 +2993,95 @@ def create_app(config_name=None):
                              sort_by=sort_by)
     
     
-    @app.route('/admin/users/<int:user_id>/add-funds', methods=['POST'])
+    @app.route('/admin/users/<int:user_id>/adjust-balance', methods=['POST'])
     @admin_required
-    def admin_add_funds(user_id):
-        """Manually add funds to a user account"""
+    def admin_adjust_balance(user_id):
+        """Adjust user balance with support for credits, debits, refunds, and corrections"""
         user = User.query.get_or_404(user_id)
-        amount = float(request.form.get('amount', 0))
-        reason = request.form.get('reason', 'Manual credit adjustment by admin')
         
-        if amount > 0:
-            user.add_funds(amount, reason)
-            db.session.commit()
-            flash(f'✅ Added ${amount:.2f} to {user.email}', 'success')
-        else:
+        transaction_type = request.form.get('transaction_type')
+        amount = Decimal(str(request.form.get('amount', 0)))
+        reason = request.form.get('reason', 'Manual adjustment by admin')
+        
+        if amount <= 0:
             flash('❌ Amount must be positive', 'danger')
+            return redirect(url_for('admin_user_detail', user_id=user_id))
         
+        # Calculate bonus total for refund validation
+        bonus_total = Decimal('0')
+        for txn in Transaction.query.filter_by(user_id=user_id).all():
+            if any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
+                if txn.amount_usd > 0:
+                    bonus_total += Decimal(str(txn.amount_usd))
+        max_refundable = max(Decimal('0'), user.balance_usd - bonus_total)
+        
+        # Handle different transaction types
+        if transaction_type == 'manual_credit':
+            # Add funds (positive transaction)
+            user.balance_usd += amount
+            transaction = Transaction(
+                user_id=user_id,
+                amount_usd=amount,
+                transaction_type='credit',
+                description=f'Manual Credit - {reason}'
+            )
+            db.session.add(transaction)
+            flash(f'✅ Added ${amount:.2f} to {user.email}', 'success')
+            
+        elif transaction_type == 'manual_debit':
+            # Remove funds (negative transaction)
+            if user.balance_usd < amount:
+                flash(f'❌ Cannot debit ${amount:.2f} - user only has ${user.balance_usd:.2f}', 'danger')
+                return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+            user.balance_usd -= amount
+            transaction = Transaction(
+                user_id=user_id,
+                amount_usd=-amount,  # Negative for debit
+                transaction_type='debit',
+                description=f'Manual Debit - {reason}'
+            )
+            db.session.add(transaction)
+            flash(f'✅ Deducted ${amount:.2f} from {user.email}', 'success')
+            
+        elif transaction_type == 'refund':
+            # Refund (cannot exceed refundable balance)
+            if amount > max_refundable:
+                flash(f'❌ Cannot refund ${amount:.2f} - maximum refundable balance is ${max_refundable:.2f} (excluding ${bonus_total:.2f} in bonuses)', 'danger')
+                return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+            if user.balance_usd < amount:
+                flash(f'❌ Cannot refund ${amount:.2f} - user only has ${user.balance_usd:.2f}', 'danger')
+                return redirect(url_for('admin_user_detail', user_id=user_id))
+            
+            user.balance_usd -= amount
+            transaction = Transaction(
+                user_id=user_id,
+                amount_usd=-amount,  # Negative for refund
+                transaction_type='debit',
+                description=f'Refund - {reason}'
+            )
+            db.session.add(transaction)
+            flash(f'✅ Refunded ${amount:.2f} to {user.email}', 'success')
+            
+        elif transaction_type == 'bonus_correction':
+            # Bonus correction (can be positive or negative based on context)
+            # For now, treat as positive adjustment to promotional balance
+            user.balance_usd += amount
+            transaction = Transaction(
+                user_id=user_id,
+                amount_usd=amount,
+                transaction_type='credit',
+                description=f'Bonus Correction - {reason}'
+            )
+            db.session.add(transaction)
+            flash(f'✅ Applied bonus correction of ${amount:.2f} to {user.email}', 'success')
+        
+        else:
+            flash('❌ Invalid transaction type', 'danger')
+            return redirect(url_for('admin_user_detail', user_id=user_id))
+        
+        db.session.commit()
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
     
