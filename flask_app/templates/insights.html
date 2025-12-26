@@ -141,6 +141,34 @@
             line-height: 1.4;
         }
     }
+    
+    /* Accordion styles */
+    .accordion-collapse {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out;
+    }
+    
+    .accordion-collapse.show {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .accordion-button::after {
+        content: '';
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-right: 2px solid #64748b;
+        border-bottom: 2px solid #64748b;
+        transform: rotate(45deg);
+        margin-left: auto;
+        transition: transform 0.3s ease;
+    }
+    
+    .accordion-button:not(.collapsed)::after {
+        transform: rotate(-135deg);
+    }
 </style>
 {% endblock %}
 
@@ -645,6 +673,71 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeEvidenceDrawer();
     }
+});
+
+// Accordion functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all accordion buttons
+    const accordionButtons = document.querySelectorAll('.accordion-button');
+    
+    accordionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Get the target collapse element
+            const targetId = this.getAttribute('data-bs-target');
+            const targetElement = document.querySelector(targetId);
+            
+            if (!targetElement) return;
+            
+            // Check if this is a nested accordion
+            const parentAccordionId = targetElement.getAttribute('data-bs-parent');
+            
+            // Toggle the current accordion
+            const isExpanded = targetElement.classList.contains('show');
+            
+            if (isExpanded) {
+                // Collapse
+                targetElement.style.maxHeight = '0';
+                targetElement.style.overflow = 'hidden';
+                setTimeout(() => {
+                    targetElement.classList.remove('show');
+                }, 300);
+                this.classList.add('collapsed');
+            } else {
+                // If there's a parent accordion, close siblings
+                if (parentAccordionId) {
+                    const parent = document.querySelector(parentAccordionId);
+                    if (parent) {
+                        const siblings = parent.querySelectorAll('.accordion-collapse.show');
+                        siblings.forEach(sibling => {
+                            if (sibling !== targetElement) {
+                                sibling.style.maxHeight = '0';
+                                sibling.style.overflow = 'hidden';
+                                setTimeout(() => {
+                                    sibling.classList.remove('show');
+                                }, 300);
+                                // Find and update the button state
+                                const siblingButton = document.querySelector(`[data-bs-target="#${sibling.id}"]`);
+                                if (siblingButton) {
+                                    siblingButton.classList.add('collapsed');
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                // Expand
+                targetElement.classList.add('show');
+                targetElement.style.overflow = 'hidden';
+                targetElement.style.maxHeight = targetElement.scrollHeight + 'px';
+                setTimeout(() => {
+                    targetElement.style.overflow = 'visible';
+                }, 300);
+                this.classList.remove('collapsed');
+            }
+        });
+    });
 });
 
 // Global variables for unlock flow
