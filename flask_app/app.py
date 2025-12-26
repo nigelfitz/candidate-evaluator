@@ -2957,50 +2957,58 @@ def create_app(config_name=None):
         signup_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Sign-up Bonus%')
+            Transaction.description.ilike('%sign-up bonus%')
         ).scalar() or Decimal('0')
         
         volume_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Volume Bonus%')
+            db.or_(
+                Transaction.description.ilike('%volume bonus%'),
+                Transaction.description.ilike('%promotional bundle%')
+            )
         ).scalar() or Decimal('0')
         
         refunds = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Refund%')
+            Transaction.description.ilike('%refund%')
         ).scalar() or Decimal('0'))
         
         stripe_revenue = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Stripe Purchase%')
+            Transaction.description.ilike('%stripe purchase%')
         ).scalar() or Decimal('0')
         
         analysis_spending = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Analysis Spend%')
+            Transaction.description.ilike('%analysis spend%')
         ).scalar() or Decimal('0'))
         
         manual_credits = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Manual Credit%')
+            Transaction.description.ilike('%manual credit%')
         ).scalar() or Decimal('0')
         
         manual_debits = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%Manual Debit%')
+            Transaction.description.ilike('%manual debit%')
         ).scalar() or Decimal('0'))
         
         # Transaction counts
-        signup_bonus_count = transactions_query.filter(Transaction.description.ilike('%Sign-up Bonus%')).count()
-        volume_bonus_count = transactions_query.filter(Transaction.description.ilike('%Volume Bonus%')).count()
-        refund_count = transactions_query.filter(Transaction.description.ilike('%Refund%')).count()
-        stripe_purchase_count = transactions_query.filter(Transaction.description.ilike('%Stripe Purchase%')).count()
+        signup_bonus_count = transactions_query.filter(Transaction.description.ilike('%sign-up bonus%')).count()
+        volume_bonus_count = transactions_query.filter(
+            db.or_(
+                Transaction.description.ilike('%volume bonus%'),
+                Transaction.description.ilike('%promotional bundle%')
+            )
+        ).count()
+        refund_count = transactions_query.filter(Transaction.description.ilike('%refund%')).count()
+        stripe_purchase_count = transactions_query.filter(Transaction.description.ilike('%stripe purchase%')).count()
         
         # Calculate totals
         total_promotional = signup_bonuses + volume_bonuses
