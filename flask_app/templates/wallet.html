@@ -53,15 +53,15 @@
                 <ul style="list-style: none; padding: 0; margin-bottom: 25px; flex-grow: 1;">
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        1 Job Analysis ($10.00)
+                        Full Ranking of all candidates
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        Unlimited candidates
+                        Deep Insights for Top 5
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        AI-powered insights
+                        Unlock more insights for $1 each
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
@@ -103,15 +103,15 @@
                 <ul style="list-style: none; padding: 0; margin-bottom: 25px; flex-grow: 1;">
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        5 Job Analyses ($50 value)
+                        Full Ranking for 5 Jobs
+                    </li>
+                    <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
+                        <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
+                        Deep Insights for Top 15 (per job)
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="gift" style="width: 20px; height: 20px; color: #8b5cf6; margin-right: 10px; flex-shrink: 0;"></i>
                         <strong>Save $10 (20% bonus)</strong>
-                    </li>
-                    <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
-                        <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        Unlimited candidates per job
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
@@ -175,10 +175,25 @@
         </div>
     </div>
     
-    <!-- Security Badge -->
-    <div style="text-align: center; color: #6b7280; font-size: 14px;">
-        <i data-lucide="shield-check" style="width: 20px; height: 20px; color: #10b981; margin-right: 8px; vertical-align: middle;"></i>
-        Secure payment powered by Stripe • Your balance never expires
+    <!-- Pro Tip Box -->
+    <div style=\"margin-top: 40px; margin-bottom: 30px; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #3b82f6; border-radius: 8px; max-width: 800px; margin-left: auto; margin-right: auto;\">
+        <div style=\"display: flex; align-items: start; gap: 12px;\">
+            <div style=\"background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0;\">PRO TIP</div>
+            <p style=\"font-size: 1rem; color: #1e3a8a; margin: 0; line-height: 1.6;\">
+                Don't worry\u2014we analyze every single resume against every criterion regardless of the tier you choose. We recommend starting with the Top 5 Insights to see your strongest matches immediately. You can always unlock more later!
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer Disclaimer -->
+    <div style=\"text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 20px;\">
+        <p style=\"margin: 0 0 8px 0; line-height: 1.6;\">
+            <i data-lucide=\"shield-check\" style=\"width: 18px; height: 18px; color: #10b981; margin-right: 6px; vertical-align: middle;\"></i>
+            Secure payment powered by Stripe
+        </p>
+        <p style=\"margin: 0; font-size: 13px; color: #9ca3af; max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.6;\">
+            All prices are in USD. Pre-paid balance does not expire while account is active. Refunds are governed by the Australian Consumer Law as per our <a href=\"{{ url_for('terms') }}\" style=\"color: #3b82f6; text-decoration: none;\">Terms</a>.
+        </p>
     </div>
 </div>
 

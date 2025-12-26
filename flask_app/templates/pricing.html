@@ -134,8 +134,8 @@
             <h3>The Test Drive</h3>
             <div class="price-value">$0</div>
             <ul class="price-list">
-                <li>1 Full Job Analysis</li>
-                <li>5 Deep AI Insights</li>
+                <li>Full Ranking of all candidates</li>
+                <li>Deep Insights for Top 5</li>
                 <li>No credit card required</li>
             </ul>
             <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Start Free Trial</a>
@@ -147,9 +147,9 @@
             <h3>Single Job</h3>
             <div class="price-value">$10</div>
             <ul class="price-list">
-                <li>1 Full Job Analysis</li>
-                <li>5 Deep AI Insights</li>
-                <li>Unlimited Resume Ranking</li>
+                <li>Full Ranking of all candidates</li>
+                <li>Deep Insights for Top 5</li>
+                <li>Unlock more insights for $1 each</li>
             </ul>
             <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Get Started</a>
         </div>
@@ -159,18 +159,28 @@
             <h3>Hiring Sprint</h3>
             <div class="price-value">$40</div>
             <ul class="price-list">
-                <li>5 Full Job Analyses</li>
-                <li>25 Deep AI Insights</li>
+                <li>Full Ranking for 5 Jobs</li>
+                <li>Deep Insights for Top 15 (per job)</li>
                 <li>$8.00 per job value</li>
             </ul>
             <a href="{{ url_for('auth.register') }}" class="cta-button" style="width:100%">Buy Sprint</a>
         </div>
     </div>
     
-    <!-- Footer Text -->
-    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
-        <p style="font-size: 1.1rem; color: #64748b; max-width: 600px; margin: 0 auto;">
-            Need more depth? Unlock extra candidate insights for <strong style="color: #1e293b;">$1.00 each</strong> anytime using your account balance.
+    <!-- Pro Tip Box -->
+    <div style="margin-top: 50px; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #3b82f6; border-radius: 8px; max-width: 700px; margin-left: auto; margin-right: auto;">
+        <div style="display: flex; align-items: start; gap: 12px;">
+            <div style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0;">PRO TIP</div>
+            <p style="font-size: 1rem; color: #1e3a8a; margin: 0; line-height: 1.6;">
+                Don't worry—we analyze every single resume against every criterion regardless of the tier you choose. We recommend starting with the Top 5 Insights to see your strongest matches immediately. You can always unlock more later!
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer Disclaimer -->
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <p style="font-size: 0.9rem; color: #64748b; text-align: center; max-width: 700px; margin: 0 auto; line-height: 1.6;">
+            All prices are in USD. Pre-paid balance does not expire while account is active. Refunds are governed by the Australian Consumer Law as per our <a href="{{ url_for('terms') }}" style="color: #3b82f6; text-decoration: none;">Terms</a>.
         </p>
     </div>
 </div>
