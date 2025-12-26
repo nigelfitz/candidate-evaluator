@@ -129,6 +129,54 @@
                     </div>
                 </div>
                 
+                <!-- Presence Penalty -->
+                <div class="setting-item">
+                    <div class="setting-name">Presence Penalty</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="presence_penalty" class="form-range flex-grow-1" 
+                               min="0" max="2" step="0.1" value="{{ settings.presence_penalty.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.presence_penalty.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.0 (None)</span>
+                        <span>0.4 (Recommended)</span>
+                        <span>2.0 (Maximum)</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.presence_penalty.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.presence_penalty.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.presence_penalty.recommended }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.presence_penalty.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Frequency Penalty -->
+                <div class="setting-item">
+                    <div class="setting-name">Frequency Penalty</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="frequency_penalty" class="form-range flex-grow-1" 
+                               min="0" max="2" step="0.1" value="{{ settings.frequency_penalty.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.frequency_penalty.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.0 (None)</span>
+                        <span>0.3 (Recommended)</span>
+                        <span>2.0 (Maximum)</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.frequency_penalty.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.frequency_penalty.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.frequency_penalty.recommended }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.frequency_penalty.quality_impact }}
+                    </div>
+                </div>
+                
                 <!-- Max Tokens -->
                 <div class="setting-item">
                     <div class="setting-name">Max Response Tokens</div>
@@ -254,6 +302,232 @@
                     </div>
                     <div class="cost-impact">
                         <strong>💰 Cost Impact:</strong> {{ settings.advanced_settings.top_evidence_items.cost_impact }}
+                    </div>
+                </div>
+                
+                <!-- Evidence Filter Strategy -->
+                <div class="setting-item">
+                    <div class="setting-name">Evidence Filter Strategy</div>
+                    <select name="evidence_filter_strategy" class="form-select mt-2">
+                        {% for option in settings.advanced_settings.evidence_filter_strategy.options %}
+                        <option value="{{ option }}" {% if option == settings.advanced_settings.evidence_filter_strategy.value %}selected{% endif %}>
+                            {{ option.replace('_', ' ').title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="setting-desc">{{ settings.advanced_settings.evidence_filter_strategy.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_filter_strategy.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.evidence_filter_strategy.recommended }}
+                    </div>
+                    <div class="cost-impact">
+                        <strong>💰 Cost Impact:</strong> {{ settings.advanced_settings.evidence_filter_strategy.cost_impact }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.evidence_filter_strategy.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Evidence Score Threshold High -->
+                <div class="setting-item">
+                    <div class="setting-name">Evidence Threshold - High (for threshold_based strategy)</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="evidence_score_threshold_high" class="form-range flex-grow-1" 
+                               min="0.5" max="0.85" step="0.05" value="{{ settings.advanced_settings.evidence_score_threshold_high.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.evidence_score_threshold_high.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.5</span>
+                        <span>0.65 (Recommended)</span>
+                        <span>0.85</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.evidence_score_threshold_high.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_score_threshold_high.explanation }}
+                    </div>
+                </div>
+                
+                <!-- Evidence Score Threshold Low -->
+                <div class="setting-item">
+                    <div class="setting-name">Evidence Threshold - Low (for threshold_based strategy)</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="evidence_score_threshold_low" class="form-range flex-grow-1" 
+                               min="0.15" max="0.50" step="0.05" value="{{ settings.advanced_settings.evidence_score_threshold_low.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.evidence_score_threshold_low.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.15</span>
+                        <span>0.40 (Recommended)</span>
+                        <span>0.50</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.evidence_score_threshold_low.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_score_threshold_low.explanation }}
+                    </div>
+                </div>
+                
+                <!-- Chunk Overlap -->
+                <div class="setting-item">
+                    <div class="setting-name">Text Chunk Overlap Characters</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="chunk_overlap_chars" class="form-range flex-grow-1" 
+                               min="50" max="300" step="25" value="{{ settings.advanced_settings.chunk_overlap_chars.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.chunk_overlap_chars.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>50</span>
+                        <span>150 (Recommended)</span>
+                        <span>300</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.chunk_overlap_chars.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.chunk_overlap_chars.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.chunk_overlap_chars.recommended }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.chunk_overlap_chars.quality_impact }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Output Format Settings -->
+            <div class="settings-card">
+                <div class="section-header">
+                    <h3 class="mb-0">📝 Output Format Settings</h3>
+                </div>
+                
+                <!-- Min Strengths -->
+                <div class="setting-item">
+                    <div class="setting-name">Minimum Number of Strengths</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="min_strengths" class="form-range flex-grow-1" 
+                               min="2" max="8" step="1" value="{{ settings.advanced_settings.min_strengths.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.min_strengths.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>2</span>
+                        <span>3 (Recommended)</span>
+                        <span>8</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.min_strengths.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.min_strengths.explanation }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.min_strengths.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Max Strengths -->
+                <div class="setting-item">
+                    <div class="setting-name">Maximum Number of Strengths</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="max_strengths" class="form-range flex-grow-1" 
+                               min="4" max="10" step="1" value="{{ settings.advanced_settings.max_strengths.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.max_strengths.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>4</span>
+                        <span>6 (Recommended)</span>
+                        <span>10</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.max_strengths.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.max_strengths.explanation }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.max_strengths.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Min Gaps -->
+                <div class="setting-item">
+                    <div class="setting-name">Minimum Number of Gaps</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="min_gaps" class="form-range flex-grow-1" 
+                               min="2" max="8" step="1" value="{{ settings.advanced_settings.min_gaps.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.min_gaps.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>2</span>
+                        <span>3 (Recommended)</span>
+                        <span>8</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.min_gaps.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.min_gaps.explanation }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.min_gaps.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Max Gaps -->
+                <div class="setting-item">
+                    <div class="setting-name">Maximum Number of Gaps</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="max_gaps" class="form-range flex-grow-1" 
+                               min="4" max="10" step="1" value="{{ settings.advanced_settings.max_gaps.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.max_gaps.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>4</span>
+                        <span>6 (Recommended)</span>
+                        <span>10</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_settings.max_gaps.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.max_gaps.explanation }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.max_gaps.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Notes Length -->
+                <div class="setting-item">
+                    <div class="setting-name">Overall Notes Length</div>
+                    <select name="notes_length" class="form-select mt-2">
+                        {% for option in settings.advanced_settings.notes_length.options %}
+                        <option value="{{ option }}" {% if option == settings.advanced_settings.notes_length.value %}selected{% endif %}>
+                            {{ option.title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="setting-desc">{{ settings.advanced_settings.notes_length.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.notes_length.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.notes_length.recommended }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.notes_length.quality_impact }}
+                    </div>
+                </div>
+                
+                <!-- Insight Tone -->
+                <div class="setting-item">
+                    <div class="setting-name">Insight Tone/Style</div>
+                    <select name="insight_tone" class="form-select mt-2">
+                        {% for option in settings.advanced_settings.insight_tone.options %}
+                        <option value="{{ option }}" {% if option == settings.advanced_settings.insight_tone.value %}selected{% endif %}>
+                            {{ option.title() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="setting-desc">{{ settings.advanced_settings.insight_tone.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_settings.insight_tone.explanation }}
+                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.insight_tone.recommended }}
+                    </div>
+                    <div class="quality-impact">
+                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.insight_tone.quality_impact }}
                     </div>
                 </div>
             </div>
