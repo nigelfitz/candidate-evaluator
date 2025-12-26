@@ -1,13 +1,14 @@
 #!/bin/bash
-# Railway startup script - runs migration then starts the app
+# Railway startup script - runs migrations then starts the app
 
-echo "🔄 Running database migration..."
+echo "🔄 Running database migrations..."
 python add_welcome_bonus_column.py
+python migrate_add_suspension.py
 
 if [ $? -eq 0 ]; then
-    echo "✅ Migration completed or already applied"
+    echo "✅ Migrations completed or already applied"
 else
-    echo "⚠️  Migration had issues but continuing startup..."
+    echo "⚠️  Migrations had issues but continuing startup..."
 fi
 
 echo "🚀 Starting Flask app..."

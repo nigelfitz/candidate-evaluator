@@ -66,6 +66,25 @@
                 <h1>{{ user.email }}</h1>
                 <p>{% if user.name %}{{ user.name }} • {% endif %}User ID: {{ user.id }}</p>
                 
+                <!-- Suspension Status Banner -->
+                {% if user.is_suspended %}
+                <div style="background: #fef2f2; border: 2px solid #dc2626; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="background: #dc2626; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;">
+                            🚫
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="color: #dc2626; font-weight: 700; font-size: 18px; margin-bottom: 5px;">ACCOUNT SUSPENDED</div>
+                            {% if user.suspension_reason %}
+                            <div style="color: #6b7280; font-size: 14px;"><strong>Reason:</strong> {{ user.suspension_reason }}</div>
+                            {% else %}
+                            <div style="color: #6b7280; font-size: 14px;">No reason provided</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <div class="user-stats">
                     <div class="stat-item">
                         <h3>${{ "%.2f"|format(user.balance_usd) }}</h3>
@@ -112,6 +131,11 @@
             <div class="action-buttons">
                 <button onclick="showAdjustBalanceModal()" class="btn btn-success">💰 Adjust Balance</button>
                 <button onclick="showResetPasswordModal()" class="btn btn-warning">🔑 Reset Password</button>
+                {% if user.is_suspended %}
+                <button onclick="showUnsuspendModal()" class="btn btn-success" style="background: #10b981; border-color: #10b981;">✅ Unsuspend Account</button>
+                {% else %}
+                <button onclick="showSuspendModal()" class="btn btn-warning" style="background: #f59e0b; border-color: #f59e0b;">⚠️ Suspend Account</button>
+                {% endif %}
             </div>
             
             {% if get_flashed_messages() %}
@@ -228,6 +252,49 @@
         </div>
     </div>
     
+    <!-- Suspend Account Modal -->
+    <div id="suspendModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: #f59e0b;">⚠️ Suspend Account</h3>
+            <p style="color: #6b7280; margin-bottom: 20px;">
+                This will immediately block {{ user.email }} from logging in and using the service.
+            </p>
+            <form method="POST" action="{{ url_for('admin_suspend_user', user_id=user.id) }}">
+                <div class="mb-3">
+                    <label class="form-label">Suspension Reason (optional):</label>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="e.g., Terms violation, payment fraud, abuse..."></textarea>
+                    <small class="form-text text-muted">This will be visible to other admins</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-warning" style="background: #f59e0b; border-color: #f59e0b;">Suspend Account</button>
+                    <button type="button" onclick="hideModal('suspendModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Unsuspend Account Modal -->
+    <div id="unsuspendModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: #10b981;">✅ Unsuspend Account</h3>
+            <p style="color: #6b7280; margin-bottom: 20px;">
+                This will restore access for {{ user.email }} and allow them to log in again.
+            </p>
+            {% if user.suspension_reason %}
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <div style="font-weight: 600; margin-bottom: 5px;">Original Suspension Reason:</div>
+                <div style="color: #6b7280;">{{ user.suspension_reason }}</div>
+            </div>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin_unsuspend_user', user_id=user.id) }}">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success" style="background: #10b981; border-color: #10b981;">Unsuspend Account</button>
+                    <button type="button" onclick="hideModal('unsuspendModal')" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script>
         function showAdjustBalanceModal() {
             document.getElementById('adjustBalanceModal').classList.add('active');
@@ -236,6 +303,14 @@
         
         function showResetPasswordModal() {
             document.getElementById('resetPasswordModal').classList.add('active');
+        }
+        
+        function showSuspendModal() {
+            document.getElementById('suspendModal').classList.add('active');
+        }
+        
+        function showUnsuspendModal() {
+            document.getElementById('unsuspendModal').classList.add('active');
         }
         
         function hideModal(modalId) {

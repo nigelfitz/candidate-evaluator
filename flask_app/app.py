@@ -36,7 +36,11 @@ def create_app(config_name=None):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        user = User.query.get(int(user_id))
+        # Block suspended users from logging in
+        if user and user.is_suspended:
+            return None
+        return user
     
     # Add template filters
     @app.template_filter('to_local_time')
@@ -1891,6 +1895,33 @@ def create_app(config_name=None):
             db.session.rollback()
             flash('An error occurred while deleting your account. Please contact support.', 'danger')
             return redirect(url_for('account'))
+    
+    @app.route('/admin/users/<int:user_id>/suspend', methods=['POST'])
+    @admin_required
+    def admin_suspend_user(user_id):
+        """Suspend a user account"""
+        user = User.query.get_or_404(user_id)
+        reason = request.form.get('reason', '').strip()
+        
+        user.is_suspended = True
+        user.suspension_reason = reason if reason else None
+        db.session.commit()
+        
+        flash(f'✅ User {user.email} has been suspended', 'success')
+        return redirect(url_for('admin_user_detail', user_id=user_id))
+    
+    @app.route('/admin/users/<int:user_id>/unsuspend', methods=['POST'])
+    @admin_required
+    def admin_unsuspend_user(user_id):
+        """Unsuspend a user account"""
+        user = User.query.get_or_404(user_id)
+        
+        user.is_suspended = False
+        user.suspension_reason = None
+        db.session.commit()
+        
+        flash(f'✅ User {user.email} has been unsuspended', 'success')
+        return redirect(url_for('admin_user_detail', user_id=user_id))
     
     @app.route('/job-history')
     @login_required

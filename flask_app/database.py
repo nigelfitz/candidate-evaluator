@@ -18,6 +18,10 @@ class User(UserMixin, db.Model):
     balance_usd = db.Column(db.Numeric(10, 2), default=0.00, nullable=False)
     welcome_bonus_claimed = db.Column(db.Boolean, default=False, nullable=False)  # Track if signup bonus was given
     
+    # Account status
+    is_suspended = db.Column(db.Boolean, default=False, nullable=False)
+    suspension_reason = db.Column(db.String(500))
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_login = db.Column(db.DateTime)
