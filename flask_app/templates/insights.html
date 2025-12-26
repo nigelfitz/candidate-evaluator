@@ -201,8 +201,8 @@
     <div style="position: sticky; top: 0; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 24px; border-bottom: 2px solid #e5e7eb; z-index: 10;">
         <div style="display: flex; justify-content: space-between; align-items: start;">
             <div>
-                <h4 id="drawerTitle" style="color: white; margin: 0; font-weight: 700; font-size: 20px;">Evidence</h4>
-                <p style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 13px;">Raw text extracted from resume</p>
+                <h4 style="color: white; margin: 0; font-weight: 700; font-size: 20px;">Source Evidence</h4>
+                <p id="drawerTitle" style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 13px; font-weight: 600;">Criterion Name</p>
             </div>
             <button onclick="closeEvidenceDrawer()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                 <i data-lucide="x" style="width: 20px; height: 20px;"></i>
@@ -212,6 +212,11 @@
     
     <!-- Drawer Content -->
     <div style="padding: 24px;">
+        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #1e40af; font-size: 13px; line-height: 1.6; font-style: italic;">
+                This is the raw data extracted directly from the candidate's uploaded documents used to calculate the score for this criterion.
+            </p>
+        </div>
         <pre id="drawerContent" style="background: #f8fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; font-size: 14px; border: 1px solid #e5e7eb; font-family: 'Courier New', monospace; color: #1f2937;"></pre>
     </div>
 </div>
@@ -432,9 +437,9 @@
                             <td colspan="3" style="background: #fffbeb; padding: 8px 16px; border: 1px solid #fde68a;">
                                 <small style="color: #92400e; font-size: 12px;">
                                     <strong>Legend:</strong> 
-                                    <span style="display: inline-block; width: 12px; height: 12px; background: #dc2626; border-radius: 3px; margin: 0 4px;"></span> &lt;40% 
-                                    <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 3px; margin: 0 4px;"></span> 40-69% 
-                                    <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 3px; margin: 0 4px;"></span> 70%+
+                                    <span style="display: inline-block; width: 12px; height: 12px; background: #dc2626; border-radius: 3px; margin: 0 4px;"></span> Weak (0-39%) 
+                                    <span style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 3px; margin: 0 4px 0 8px;"></span> Moderate (40-69%) 
+                                    <span style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 3px; margin: 0 4px 0 8px;"></span> Strong (70-100%)
                                 </small>
                             </td>
                         </tr>
