@@ -269,7 +269,7 @@
         
         if (bonus > 0) {
             const totalBalance = amount + bonus;
-            bonusFeedback.innerHTML = `✨ 15% Volume Bonus Applied: +$${bonus.toFixed(2)}. Total Balance: $${totalBalance.toFixed(2)}`;
+            bonusFeedback.innerHTML = `✨ 15% Volume Bonus Applied: +$${bonus.toFixed(2)}. Pay $${amount.toFixed(2)}, Get $${totalBalance.toFixed(2)} Value`;
             bonusFeedback.style.color = '#10b981';
         } else {
             bonusFeedback.innerHTML = '';
