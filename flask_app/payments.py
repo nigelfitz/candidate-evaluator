@@ -244,21 +244,32 @@ def success():
     session_id = request.args.get('session_id')
     return_to = request.args.get('return_to', 'dashboard')
     
+    print(f"🎉 Success route called! session_id={session_id}, return_to={return_to}, user={current_user.id}")
+    
     if session_id:
         try:
             stripe.api_key = Config.STRIPE_SECRET_KEY
             # Retrieve the session to verify it
             session = stripe.checkout.Session.retrieve(session_id)
             
+            print(f"📋 Session retrieved: payment_status={session.payment_status}, metadata={session.get('metadata', {})}")
+            
             if session.payment_status == 'paid':
                 # Add credits immediately for local testing (webhook won't work on localhost)
+                print(f"💳 Payment confirmed as paid. Fulfilling order...")
                 fulfill_order(session)
                 flash('Payment successful! Credits have been added to your account.', 'success')
             else:
+                print(f"⏳ Payment status is {session.payment_status}, not 'paid'")
                 flash('Payment is being processed. Credits will be added once confirmed.', 'info')
                 
         except Exception as e:
+            print(f"❌ Error in success route: {str(e)}")
+            import traceback
+            traceback.print_exc()
             flash(f'Payment completed, but verification failed: {str(e)}', 'warning')
+    else:
+        print("⚠️ No session_id provided in success route")
     
     # Handle different return destinations
     if return_to == 'run_analysis':
@@ -283,6 +294,8 @@ def webhook():
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
     
+    print(f"🔔 Webhook received! Event type: {request.get_json().get('type', 'unknown')}")
+    
     stripe.api_key = Config.STRIPE_SECRET_KEY
     
     # For testing, we'll skip signature verification
@@ -291,15 +304,20 @@ def webhook():
         event = stripe.Event.construct_from(
             request.get_json(), stripe.api_key
         )
+        print(f"✅ Webhook event constructed successfully: {event['type']}")
     except Exception as e:
+        print(f"❌ Error constructing webhook event: {str(e)}")
         return jsonify({'error': str(e)}), 400
     
     # Handle the checkout.session.completed event
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
+        print(f"💰 Processing checkout.session.completed for user {session.get('metadata', {}).get('user_id', 'unknown')}")
         
         # Fulfill the purchase
         fulfill_order(session)
+    else:
+        print(f"ℹ️ Ignoring event type: {event['type']}")
     
     return jsonify({'status': 'success'}), 200
 
