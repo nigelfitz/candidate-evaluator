@@ -380,10 +380,11 @@ function togglePreview(previewId, pdfUrl) {
     const previewDiv = document.getElementById(previewId);
     const iframe = document.getElementById(previewId + 'Frame');
     
-    if (previewDiv.style.display === 'none') {
+    if (previewDiv.style.display === 'none' || previewDiv.style.display === '') {
         // Show preview
         previewDiv.style.display = 'block';
-        if (pdfUrl && iframe.src === '') {
+        if (pdfUrl) {
+            // Set or update the iframe src
             iframe.src = pdfUrl;
         }
         // Smooth scroll to preview
