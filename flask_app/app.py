@@ -2881,7 +2881,7 @@ def create_app(config_name=None):
         """AI Prompts management panel"""
         prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
         
-        with open(prompts_path, 'r') as f:
+        with open(prompts_path, 'r', encoding='utf-8') as f:
             prompts = json.load(f)
         
         message = request.args.get('message')
@@ -2898,7 +2898,7 @@ def create_app(config_name=None):
         prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
         
         # Load current prompts
-        with open(prompts_path, 'r') as f:
+        with open(prompts_path, 'r', encoding='utf-8') as f:
             prompts = json.load(f)
         
         # Update JD Extraction prompts
@@ -2914,8 +2914,8 @@ def create_app(config_name=None):
         prompts['_metadata']['updated_by'] = 'admin'
         
         # Save back to file
-        with open(prompts_path, 'w') as f:
-            json.dump(prompts, f, indent=2)
+        with open(prompts_path, 'w', encoding='utf-8') as f:
+            json.dump(prompts, f, indent=2, ensure_ascii=False)
         
         flash('✅ Prompts saved successfully! Changes take effect immediately.', 'success')
         return redirect(url_for('admin_prompts'))

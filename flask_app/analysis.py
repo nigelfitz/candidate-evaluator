@@ -104,7 +104,7 @@ def load_prompts():
     Returns dict with all prompts and their current values.
     """
     prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
-    with open(prompts_path, 'r') as f:
+    with open(prompts_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 
