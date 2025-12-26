@@ -2933,6 +2933,80 @@ def create_app(config_name=None):
         # Recent analyses
         recent_analyses = Analysis.query.order_by(Analysis.created_at.desc()).limit(20).all()
         
+        # Financial reporting with date range
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+        
+        # Default to last 30 days if no dates specified
+        if not from_date:
+            from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not to_date:
+            to_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Parse dates
+        start_datetime = datetime.strptime(from_date, '%Y-%m-%d')
+        end_datetime = datetime.strptime(to_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+        
+        # Query transactions in date range
+        transactions_query = Transaction.query.filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime
+        )
+        
+        # Calculate financial metrics
+        signup_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Sign-up Bonus%')
+        ).scalar() or Decimal('0')
+        
+        volume_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Volume Bonus%')
+        ).scalar() or Decimal('0')
+        
+        refunds = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Refund%')
+        ).scalar() or Decimal('0'))
+        
+        stripe_revenue = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Stripe Purchase%')
+        ).scalar() or Decimal('0')
+        
+        analysis_spending = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Analysis Spend%')
+        ).scalar() or Decimal('0'))
+        
+        manual_credits = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Manual Credit%')
+        ).scalar() or Decimal('0')
+        
+        manual_debits = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
+            Transaction.created_at >= start_datetime,
+            Transaction.created_at <= end_datetime,
+            Transaction.description.ilike('%Manual Debit%')
+        ).scalar() or Decimal('0'))
+        
+        # Transaction counts
+        signup_bonus_count = transactions_query.filter(Transaction.description.ilike('%Sign-up Bonus%')).count()
+        volume_bonus_count = transactions_query.filter(Transaction.description.ilike('%Volume Bonus%')).count()
+        refund_count = transactions_query.filter(Transaction.description.ilike('%Refund%')).count()
+        stripe_purchase_count = transactions_query.filter(Transaction.description.ilike('%Stripe Purchase%')).count()
+        
+        # Calculate totals
+        total_promotional = signup_bonuses + volume_bonuses
+        total_revenue_period = stripe_revenue
+        net_balance_change = stripe_revenue + manual_credits - refunds - manual_debits - analysis_spending
+        
         return render_template('admin_stats.html',
                              active_tab='stats',
                              total_users=total_users,
@@ -2944,7 +3018,23 @@ def create_app(config_name=None):
                              recent_signups=recent_signups,
                              top_revenue_users=top_revenue_users,
                              top_analysis_users=top_analysis_users,
-                             recent_analyses=recent_analyses)
+                             recent_analyses=recent_analyses,
+                             # Financial reporting
+                             from_date=from_date,
+                             to_date=to_date,
+                             signup_bonuses=signup_bonuses,
+                             volume_bonuses=volume_bonuses,
+                             total_promotional=total_promotional,
+                             refunds=refunds,
+                             stripe_revenue=stripe_revenue,
+                             analysis_spending=analysis_spending,
+                             manual_credits=manual_credits,
+                             manual_debits=manual_debits,
+                             net_balance_change=net_balance_change,
+                             signup_bonus_count=signup_bonus_count,
+                             volume_bonus_count=volume_bonus_count,
+                             refund_count=refund_count,
+                             stripe_purchase_count=stripe_purchase_count)
     
     @app.route('/admin/feedback')
     @admin_required

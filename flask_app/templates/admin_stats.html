@@ -83,6 +83,87 @@
                 </div>
             </div>
             
+            <!-- Financial Reporting Section -->
+            <div class="section-title">💰 Financial Report</div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <!-- Date Range Filter -->
+                <form method="get" class="mb-4" style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                    <div>
+                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">From Date:</label>
+                        <input type="date" name="from_date" value="{{ from_date }}" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <div>
+                        <label style="font-weight: 600; display: block; margin-bottom: 5px;">To Date:</label>
+                        <input type="date" name="to_date" value="{{ to_date }}" class="form-control" style="max-width: 200px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background: #667eea; border: none;">📊 Update Report</button>
+                    <a href="{{ url_for('admin_stats') }}" class="btn btn-secondary">Reset to 30 days</a>
+                </form>
+                
+                <!-- Financial Metrics Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <!-- Revenue Section -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <div style="font-size: 0.85rem; color: #666; font-weight: 600; margin-bottom: 8px;">💳 STRIPE REVENUE</div>
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #28a745;">${{ "%.2f"|format(stripe_revenue) }}</div>
+                        <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">{{ stripe_purchase_count }} purchases</div>
+                    </div>
+                    
+                    <!-- Promotional Credits -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #f5576c;">
+                        <div style="font-size: 0.85rem; color: #666; font-weight: 600; margin-bottom: 8px;">🎁 PROMOTIONAL CREDITS</div>
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #f5576c;">${{ "%.2f"|format(total_promotional) }}</div>
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 5px;">
+                            Sign-up: ${{ "%.2f"|format(signup_bonuses) }} ({{ signup_bonus_count }})<br>
+                            Volume: ${{ "%.2f"|format(volume_bonuses) }} ({{ volume_bonus_count }})
+                        </div>
+                    </div>
+                    
+                    <!-- Refunds -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <div style="font-size: 0.85rem; color: #666; font-weight: 600; margin-bottom: 8px;">↩️ REFUNDS ISSUED</div>
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #dc3545;">${{ "%.2f"|format(refunds) }}</div>
+                        <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">{{ refund_count }} refunds</div>
+                    </div>
+                    
+                    <!-- Analysis Spending -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <div style="font-size: 0.85rem; color: #666; font-weight: 600; margin-bottom: 8px;">📊 ANALYSIS USAGE</div>
+                        <div style="font-size: 1.8rem; font-weight: 700; color: #667eea;">${{ "%.2f"|format(analysis_spending) }}</div>
+                        <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">Balance consumed</div>
+                    </div>
+                    
+                    <!-- Manual Adjustments -->
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #17a2b8;">
+                        <div style="font-size: 0.85rem; color: #666; font-weight: 600; margin-bottom: 8px;">✏️ MANUAL ADJUSTMENTS</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #17a2b8;">
+                            +${{ "%.2f"|format(manual_credits) }} / -${{ "%.2f"|format(manual_debits) }}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #999; margin-top: 5px;">Credits / Debits</div>
+                    </div>
+                    
+                    <!-- Net Balance Change -->
+                    <div style="background: {% if net_balance_change >= 0 %}linear-gradient(135deg, #11998e 0%, #38ef7d 100%){% else %}linear-gradient(135deg, #f093fb 0%, #f5576c 100%){% endif %}; padding: 20px; border-radius: 8px; color: white;">
+                        <div style="font-size: 0.85rem; opacity: 0.95; font-weight: 600; margin-bottom: 8px;">📈 NET BALANCE CHANGE</div>
+                        <div style="font-size: 1.8rem; font-weight: 700;">${{ "%.2f"|format(net_balance_change) }}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9; margin-top: 5px;">Revenue - Costs</div>
+                    </div>
+                </div>
+                
+                <!-- Explanation -->
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <div style="font-weight: 600; color: #666; margin-bottom: 8px;">💡 Report Explanation:</div>
+                    <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 0.9rem;">
+                        <li><strong>Stripe Revenue:</strong> Actual money collected from customer payments</li>
+                        <li><strong>Promotional Credits:</strong> Marketing costs (sign-up bonuses + volume discounts)</li>
+                        <li><strong>Refunds:</strong> Money returned to customers</li>
+                        <li><strong>Analysis Usage:</strong> Balance consumed by running analyses (customer usage)</li>
+                        <li><strong>Manual Adjustments:</strong> Admin credits/debits for special cases</li>
+                        <li><strong>Net Balance:</strong> Revenue - Refunds - Manual Debits (represents true financial position)</li>
+                    </ul>
+                </div>
+            </div>
+            
             <!-- Top Users by Revenue -->
             <div class="section-title">💰 Top Users by Revenue</div>
             {% if top_revenue_users %}
