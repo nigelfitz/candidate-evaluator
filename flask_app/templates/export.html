@@ -226,7 +226,7 @@
                                    class="btn btn-export-secondary">
                                     <i class="bi bi-file-word"></i> Download Word
                                 </a>
-                                <button class="btn btn-export-preview" onclick="togglePreview('executivePreview', '{{ url_for('preview_executive_pdf', analysis_id=analysis.id) }}')">
+                                <button class="btn btn-export-preview" onclick="togglePreview('executivePreview', '{{ url_for('preview_executive_pdf_inline', analysis_id=analysis.id) }}')">
                                     <i class="bi bi-eye"></i> Preview PDF
                                 </button>
                             </div>

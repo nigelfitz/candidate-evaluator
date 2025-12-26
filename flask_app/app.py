@@ -2125,6 +2125,44 @@ def create_app(config_name=None):
                              images=image_data,
                              analysis=analysis)
     
+    @app.route('/export/<int:analysis_id>/preview-pdf-inline')
+    @login_required
+    def preview_executive_pdf_inline(analysis_id):
+        """Serve executive summary PDF inline for preview"""
+        import io
+        from flask import send_file
+        from export_utils import to_executive_summary_pdf
+        
+        analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        if not analysis:
+            return "Analysis not found", 404
+        
+        # Parse data
+        coverage = json.loads(analysis.coverage_analysis) if analysis.coverage_analysis else {}
+        insights = json.loads(analysis.insights) if analysis.insights else {}
+        
+        # Get candidate name
+        candidate_name = analysis.candidate_name or "Unknown Candidate"
+        
+        # Get job title
+        job_title = analysis.job_title or "Position"
+        
+        # Generate PDF
+        pdf_bytes = to_executive_summary_pdf(
+            coverage=coverage,
+            insights=insights,
+            candidate_name=candidate_name,
+            job_title=job_title
+        )
+        
+        # Return PDF with inline disposition
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=False,
+            download_name=f'preview_{candidate_name}.pdf'
+        )
+    
     @app.route('/export/<int:analysis_id>/executive-pdf')
     @login_required
     def export_executive_pdf(analysis_id):
