@@ -3057,6 +3057,8 @@ def create_app(config_name=None):
     @admin_required
     def admin_stats():
         """Usage statistics and analytics"""
+        from datetime import timedelta as td
+        
         # User stats
         total_users = User.query.count()
         users_with_analyses = User.query.filter(User.total_analyses_count > 0).count()
@@ -3114,10 +3116,7 @@ def create_app(config_name=None):
         volume_bonuses = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            db.or_(
-                Transaction.description.ilike('%volume bonus%'),
-                Transaction.description.ilike('%promotional bundle%')
-            )
+            Transaction.description.ilike('%volume bonus%')
         ).scalar() or Decimal('0')
         
         refunds = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
@@ -3129,13 +3128,13 @@ def create_app(config_name=None):
         stripe_revenue = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%stripe purchase%')
+            Transaction.description.ilike('stripe purchase%')
         ).scalar() or Decimal('0')
         
         analysis_spending = abs(db.session.query(db.func.sum(Transaction.amount_usd)).filter(
             Transaction.created_at >= start_datetime,
             Transaction.created_at <= end_datetime,
-            Transaction.description.ilike('%analysis spend%')
+            Transaction.description.ilike('analysis:%')
         ).scalar() or Decimal('0'))
         
         manual_credits = db.session.query(db.func.sum(Transaction.amount_usd)).filter(
@@ -3152,14 +3151,9 @@ def create_app(config_name=None):
         
         # Transaction counts
         signup_bonus_count = transactions_query.filter(Transaction.description.ilike('%sign-up bonus%')).count()
-        volume_bonus_count = transactions_query.filter(
-            db.or_(
-                Transaction.description.ilike('%volume bonus%'),
-                Transaction.description.ilike('%promotional bundle%')
-            )
-        ).count()
+        volume_bonus_count = transactions_query.filter(Transaction.description.ilike('%volume bonus%')).count()
         refund_count = transactions_query.filter(Transaction.description.ilike('%refund%')).count()
-        stripe_purchase_count = transactions_query.filter(Transaction.description.ilike('%stripe purchase%')).count()
+        stripe_purchase_count = transactions_query.filter(Transaction.description.ilike('stripe purchase%')).count()
         
         # Calculate totals
         total_promotional = signup_bonuses + volume_bonuses
@@ -3178,6 +3172,7 @@ def create_app(config_name=None):
                              top_revenue_users=top_revenue_users,
                              top_analysis_users=top_analysis_users,
                              recent_analyses=recent_analyses,
+                             timedelta=td,  # Pass timedelta to template for timezone conversion
                              # Financial reporting
                              from_date=from_date,
                              to_date=to_date,
