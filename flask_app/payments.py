@@ -153,16 +153,23 @@ def create_checkout_session():
                 if charge_amount < 5:
                     return jsonify({'error': 'Minimum amount is $5'}), 400
                 
-                # Add funds directly in dev mode
-                if is_bundle:
-                    description = f'{plan_name} - Promotional Bundle (Dev Mode)'
-                else:
-                    description = f'Stripe Purchase - {plan_name} (Dev Mode)'
+                bonus_amount = credit_amount - charge_amount
                 
+                # Add base purchase
+                purchase_description = f'Stripe Purchase - {plan_name} (Dev Mode)'
                 current_user.add_funds(
-                    amount_usd=credit_amount,
-                    description=description
+                    amount_usd=charge_amount,
+                    description=purchase_description
                 )
+                
+                # Add bonus as separate transaction if applicable
+                if bonus_amount > 0:
+                    bonus_description = f'Volume Bonus - {plan_name} (Dev Mode)'
+                    current_user.add_funds(
+                        amount_usd=bonus_amount,
+                        description=bonus_description
+                    )
+                
                 db.session.commit()
                 
                 # Return the return URL
@@ -308,40 +315,41 @@ def fulfill_order(session):
         
         user = User.query.get(user_id)
         if user:
-            # Add funds to user account
-            user.balance_usd += credit_amount
+            bonus_amount = credit_amount - charge_amount
             
-            # Determine transaction description based on bundle status
-            if is_bundle:
-                bonus_amount = credit_amount - charge_amount
-                description = f"Stripe Purchase - {plan_name} (paid ${charge_amount:.2f}, received ${credit_amount:.2f})"
-                transaction_type_detail = 'Volume Bonus'
-            else:
-                description = f"Stripe Purchase - {plan_name}"
-                transaction_type_detail = 'Stripe Purchase'
-            
-            # Record transaction
-            transaction = Transaction(
+            # Add base purchase amount
+            user.balance_usd += charge_amount
+            purchase_transaction = Transaction(
                 user_id=user_id,
-                amount_usd=credit_amount,
+                amount_usd=charge_amount,
                 transaction_type='credit',
-                description=description,
+                description=f"Stripe Purchase - {plan_name}",
                 stripe_payment_id=session.get('payment_intent'),
                 stripe_amount_cents=session['amount_total']
             )
-            db.session.add(transaction)
+            db.session.add(purchase_transaction)
             
-            # If it's a bundle, also track revenue
-            if is_bundle:
-                user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + charge_amount
-            else:
-                user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + credit_amount
+            # Add bonus as separate transaction if applicable
+            if bonus_amount > 0:
+                user.balance_usd += bonus_amount
+                bonus_transaction = Transaction(
+                    user_id=user_id,
+                    amount_usd=bonus_amount,
+                    transaction_type='credit',
+                    description=f"Volume Bonus - {plan_name}",
+                    stripe_payment_id=session.get('payment_intent'),
+                    stripe_amount_cents=0  # Bonus doesn't have a Stripe charge
+                )
+                db.session.add(bonus_transaction)
+            
+            # Track revenue (only the amount actually paid)
+            user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + charge_amount
             
             db.session.commit()
             
             print(f"✅ Successfully added ${credit_amount:.2f} to user {user_id}. New balance: ${user.balance_usd:.2f}")
-            if is_bundle:
-                print(f"   🎁 Bundle applied: Charged ${charge_amount:.2f}, credited ${credit_amount:.2f}")
+            if bonus_amount > 0:
+                print(f"   🎁 Bonus applied: Charged ${charge_amount:.2f}, bonus ${bonus_amount:.2f}, total credited ${credit_amount:.2f}")
         
     except Exception as e:
         print(f"❌ Error fulfilling order: {str(e)}")

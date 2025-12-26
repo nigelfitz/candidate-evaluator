@@ -80,7 +80,7 @@
         <div class="pricing-card recommended" data-plan="sprint">
             <div style="background: white; border: 3px solid #6366f1; border-radius: 12px; padding: 30px; height: 100%; display: flex; flex-direction: column; transition: all 0.3s; cursor: pointer; position: relative; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);">
                 <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 6px 20px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);">
-                    BEST VALUE • SAVE $10
+                    BEST VALUE • $5 BONUS
                 </div>
                 
                 <div style="text-align: center; margin-bottom: 20px; margin-top: 10px;">
@@ -92,10 +92,10 @@
                 <div style="text-align: center; margin-bottom: 25px;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;">
                         <div style="font-size: 24px; color: #9ca3af; text-decoration: line-through;">$50</div>
-                        <div style="font-size: 48px; font-weight: bold; color: #6366f1;">$40</div>
+                        <div style="font-size: 48px; font-weight: bold; color: #6366f1;">$45</div>
                     </div>
                     <div style="background: #eff6ff; color: #1e40af; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
-                        Pay $40 → Get $50 balance
+                        Pay $45 → Get $50 balance
                     </div>
                     <div style="color: #6b7280; font-size: 14px; margin-top: 8px;">5 complete analyses</div>
                 </div>
@@ -119,7 +119,7 @@
                     </li>
                 </ul>
                 
-                <button class="select-plan-btn" data-amount="40" data-plan-name="Hiring Sprint" data-bundle="true" data-credit-amount="50"
+                <button class="select-plan-btn" data-amount="45" data-plan-name="Hiring Sprint" data-bundle="true" data-credit-amount="50"
                         style="width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
                     Select Plan
                 </button>
@@ -145,7 +145,8 @@
                                placeholder="50"
                                style="width: 100%; padding: 16px 16px 16px 40px; font-size: 24px; font-weight: 600; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; color: #1f2937;">
                     </div>
-                    <div style="color: #6b7280; font-size: 14px;">Minimum: $5</div>
+                    <div id="bonusFeedback" style="color: #10b981; font-size: 14px; font-weight: 600; min-height: 20px; margin-bottom: 8px;"></div>
+                    <div style="color: #6b7280; font-size: 14px;">Minimum: $5 • $50+ gets 15% bonus</div>
                 </div>
                 
                 <ul style="list-style: none; padding: 0; margin-bottom: 25px; flex-grow: 1;">
@@ -235,14 +236,49 @@
     // Initialize Lucide icons
     lucide.createIcons();
     
+    // Calculate bonus based on amount
+    function calculateBonus(amount) {
+        if (amount >= 50) {
+            return Math.floor(amount * 0.15 * 100) / 100; // 15% bonus, rounded to 2 decimals
+        }
+        return 0;
+    }
+    
+    // Update bonus feedback in real-time
+    const customAmountInput = document.getElementById('customAmountInput');
+    const bonusFeedback = document.getElementById('bonusFeedback');
+    
+    customAmountInput.addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        const bonus = calculateBonus(amount);
+        
+        if (bonus > 0) {
+            const totalBalance = amount + bonus;
+            bonusFeedback.innerHTML = `✨ 15% Volume Bonus Applied: +$${bonus.toFixed(2)}. Total Balance: $${totalBalance.toFixed(2)}`;
+            bonusFeedback.style.color = '#10b981';
+        } else {
+            bonusFeedback.innerHTML = '';
+        }
+    });
+    
     // Handle plan selection
     document.querySelectorAll('.select-plan-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             
             const isBundle = this.dataset.bundle === 'true';
-            const chargeAmount = parseFloat(this.dataset.amount || document.getElementById('customAmountInput').value);
-            const creditAmount = isBundle ? parseFloat(this.dataset.creditAmount) : chargeAmount;
+            let chargeAmount = parseFloat(this.dataset.amount || document.getElementById('customAmountInput').value);
+            let creditAmount;
+            
+            if (isBundle) {
+                // Preset bundle (Hiring Sprint: $45 → $50)
+                creditAmount = parseFloat(this.dataset.creditAmount);
+            } else {
+                // Custom amount: apply 15% bonus if >= $50
+                const bonus = calculateBonus(chargeAmount);
+                creditAmount = chargeAmount + bonus;
+            }
+            
             const planName = this.dataset.planName;
             
             // Validation
