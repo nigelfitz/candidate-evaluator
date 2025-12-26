@@ -100,7 +100,7 @@
                     </div>
                     <div class="stat-item">
                         <h3 class="local-time" data-utc="{{ user.created_at|to_local_time }}">{{ user.created_at.strftime('%Y-%m-%d') }}</h3>
-                        <p>Joined (AEST)</p>
+                        <p>Joined</p>
                     </div>
                 </div>
             </div>
@@ -152,7 +152,7 @@
                 <ul class="analysis-list">
                     {% for analysis in analyses[:10] %}
                     <li class="analysis-item">
-                        <h4>{{ analysis.job_title }}</h4>
+                        <h4><span style="color: #6b7280; font-weight: 500; margin-right: 6px;">Job #{{ "%04d"|format(analysis.id) }}</span>{{ analysis.job_title }}</h4>
                         <p>{{ analysis.num_candidates }} candidates • <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</span></p>
                     </li>
                     {% endfor %}
