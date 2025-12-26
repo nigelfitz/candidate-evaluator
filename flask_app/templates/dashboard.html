@@ -437,7 +437,7 @@
     {% for analysis in recent_analyses %}
     <div class="analysis-card">
         <div class="analysis-card-header">
-            <h3>{{ analysis.job_title or 'Untitled Job' }}</h3>
+            <h3><span style="color: #6b7280; font-weight: 500; margin-right: 6px;">Job #{{ "%04d"|format(analysis.id) }}</span>{{ analysis.job_title or 'Untitled Job' }}</h3>
             <span class="analysis-badge">Complete</span>
         </div>
         <div class="analysis-card-meta">
