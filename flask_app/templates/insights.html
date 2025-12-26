@@ -233,13 +233,13 @@
             <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
             Results
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
-            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
-            Export Reports
-        </a>
         <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
             <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
             Candidate Insights
+        </a>
+        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+            <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+            Export Reports
         </a>
     </div>
     
