@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     
     # Account balance in USD
     balance_usd = db.Column(db.Numeric(10, 2), default=0.00, nullable=False)
+    welcome_bonus_claimed = db.Column(db.Boolean, default=False, nullable=False)  # Track if signup bonus was given
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -50,7 +51,7 @@ class User(UserMixin, db.Model):
         db.session.add(transaction)
         return transaction
     
-    def deduct_funds(self, amount_usd, description='Analysis', analysis_id=None):
+    def deduct_funds(self, amount_usd, description='Analysis Spend', analysis_id=None):
         """Deduct funds from user account"""
         if self.balance_usd < amount_usd:
             return False

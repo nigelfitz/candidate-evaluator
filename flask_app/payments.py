@@ -15,19 +15,19 @@ payments = Blueprint('payments', __name__)
 @payments.route('/buy-credits')
 @login_required
 def buy_credits():
-    """Display add funds page"""
+    """Redirect to wallet page (legacy compatibility)"""
+    return redirect(url_for('payments.wallet'))
+
+
+@payments.route('/wallet')
+@login_required
+def wallet():
+    """Display wallet page with three-card pricing options"""
     stripe_configured = bool(Config.STRIPE_SECRET_KEY)
     is_dev_mode = os.environ.get('FLASK_ENV') == 'development'
-    return_to = request.args.get('return_to', 'dashboard')  # Where to return after payment
+    return_to = request.args.get('return_to', 'dashboard')
     
-    # Debug logging
-    print(f"DEBUG: STRIPE_SECRET_KEY exists: {bool(Config.STRIPE_SECRET_KEY)}")
-    print(f"DEBUG: STRIPE_SECRET_KEY value (first 10 chars): {Config.STRIPE_SECRET_KEY[:10] if Config.STRIPE_SECRET_KEY else 'None'}")
-    print(f"DEBUG: stripe_configured: {stripe_configured}")
-    print(f"DEBUG: is_dev_mode: {is_dev_mode}")
-    print(f"DEBUG: return_to: {return_to}")
-    
-    return render_template('add_funds.html', 
+    return render_template('wallet.html', 
                          stripe_configured=stripe_configured,
                          is_dev_mode=is_dev_mode,
                          return_to=return_to)
@@ -145,15 +145,23 @@ def create_checkout_session():
             # In dev mode, add test funds instead
             if os.environ.get('FLASK_ENV') == 'development':
                 data = request.get_json()
-                amount = Decimal(str(data.get('amount', 0)))
+                charge_amount = Decimal(str(data.get('amount', 0)))
+                credit_amount = Decimal(str(data.get('credit_amount', charge_amount)))
+                is_bundle = data.get('is_bundle', False)
+                plan_name = data.get('plan_name', 'Custom Amount')
                 
-                if amount < 5:
+                if charge_amount < 5:
                     return jsonify({'error': 'Minimum amount is $5'}), 400
                 
-                # Add test funds directly
+                # Add funds directly in dev mode
+                if is_bundle:
+                    description = f'{plan_name} - Promotional Bundle (Dev Mode)'
+                else:
+                    description = f'Stripe Purchase - {plan_name} (Dev Mode)'
+                
                 current_user.add_funds(
-                    amount_usd=amount,
-                    description=f'Test funds added (DEV MODE)'
+                    amount_usd=credit_amount,
+                    description=description
                 )
                 db.session.commit()
                 
@@ -167,11 +175,22 @@ def create_checkout_session():
         stripe.api_key = Config.STRIPE_SECRET_KEY
         
         data = request.get_json()
-        amount = float(data.get('amount', 0))
+        charge_amount = float(data.get('amount', 0))
+        credit_amount = float(data.get('credit_amount', charge_amount))
+        is_bundle = data.get('is_bundle', False)
+        plan_name = data.get('plan_name', 'Custom Amount')
         return_url = data.get('return_url', url_for('dashboard', _external=True))
         
-        if amount < 5:
+        if charge_amount < 5:
             return jsonify({'error': 'Minimum amount is $5'}), 400
+        
+        # Determine product description
+        if is_bundle:
+            product_name = f'{plan_name}'
+            product_description = f'Pay ${charge_amount:.2f}, receive ${credit_amount:.2f} balance'
+        else:
+            product_name = 'Account Balance'
+            product_description = f'Add ${credit_amount:.2f} to your account'
         
         # Create Stripe Checkout Session with custom success URL
         checkout_session = stripe.checkout.Session.create(
@@ -179,10 +198,10 @@ def create_checkout_session():
             line_items=[{
                 'price_data': {
                     'currency': 'usd',
-                    'unit_amount': int(amount * 100),
+                    'unit_amount': int(charge_amount * 100),
                     'product_data': {
-                        'name': 'Account Funds',
-                        'description': f"Add ${amount:.2f} to continue analysis",
+                        'name': product_name,
+                        'description': product_description,
                     },
                 },
                 'quantity': 1,
@@ -194,7 +213,10 @@ def create_checkout_session():
             client_reference_id=str(current_user.id),
             metadata={
                 'user_id': current_user.id,
-                'amount_usd': f"{amount:.2f}",
+                'charge_amount': f"{charge_amount:.2f}",
+                'credit_amount': f"{credit_amount:.2f}",
+                'is_bundle': str(is_bundle),
+                'plan_name': plan_name,
                 'current_balance': f"{current_user.balance_usd:.2f}"
             }
         )
@@ -279,27 +301,50 @@ def fulfill_order(session):
     """Add funds to user account after successful payment"""
     try:
         user_id = int(session['metadata']['user_id'])
-        amount_usd = Decimal(session['metadata']['amount_usd'])
+        charge_amount = Decimal(session['metadata'].get('charge_amount', session['metadata'].get('amount_usd', '0')))
+        credit_amount = Decimal(session['metadata'].get('credit_amount', charge_amount))
+        is_bundle = session['metadata'].get('is_bundle', 'False') == 'True'
+        plan_name = session['metadata'].get('plan_name', 'Account Top-Up')
         
         user = User.query.get(user_id)
         if user:
             # Add funds to user account
-            user.balance_usd += amount_usd
+            user.balance_usd += credit_amount
+            
+            # Determine transaction description based on bundle status
+            if is_bundle:
+                bonus_amount = credit_amount - charge_amount
+                description = f"Stripe Purchase - {plan_name} (paid ${charge_amount:.2f}, received ${credit_amount:.2f})"
+                transaction_type_detail = 'Volume Bonus'
+            else:
+                description = f"Stripe Purchase - {plan_name}"
+                transaction_type_detail = 'Stripe Purchase'
             
             # Record transaction
             transaction = Transaction(
                 user_id=user_id,
-                amount_usd=amount_usd,
+                amount_usd=credit_amount,
                 transaction_type='credit',
-                description=f"Added ${amount_usd:.2f} to account",
+                description=description,
                 stripe_payment_id=session.get('payment_intent'),
                 stripe_amount_cents=session['amount_total']
             )
             db.session.add(transaction)
+            
+            # If it's a bundle, also track revenue
+            if is_bundle:
+                user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + charge_amount
+            else:
+                user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + credit_amount
+            
             db.session.commit()
             
-            print(f"✅ Successfully added ${amount_usd:.2f} to user {user_id}. New balance: ${user.balance_usd:.2f}")
+            print(f"✅ Successfully added ${credit_amount:.2f} to user {user_id}. New balance: ${user.balance_usd:.2f}")
+            if is_bundle:
+                print(f"   🎁 Bundle applied: Charged ${charge_amount:.2f}, credited ${credit_amount:.2f}")
         
     except Exception as e:
         print(f"❌ Error fulfilling order: {str(e)}")
+        import traceback
+        traceback.print_exc()
         # In production, you should log this and have a retry mechanism

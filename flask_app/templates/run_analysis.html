@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check if user has sufficient funds (skip check for test drive)
             if (!isTestDrive && {{ current_user.balance_usd }} < totalCost) {
                 // Redirect to top-up page with return_to parameter
-                window.location.href = '{{ url_for("payments.buy_credits") }}?return_to=run_analysis';
+                window.location.href = '{{ url_for("payments.wallet") }}?return_to=run_analysis';
                 return;
             }
             
@@ -477,11 +477,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check if insufficient funds
         if (userBalance < totalCost) {
             if (continueBtnText) {
-                continueBtnText.textContent = 'Top Up Credits to Run';
+                continueBtnText.textContent = `Top Up Balance to Run ($${totalCost.toFixed(2)})`;
             }
         } else {
             if (continueBtnText) {
-                continueBtnText.textContent = `Run Analysis Now ($${totalCost.toFixed(2)})`;
+                continueBtnText.textContent = `Run Analysis ($${totalCost.toFixed(2)})`;
             }
         }
     }

@@ -84,7 +84,7 @@ def register():
             starting_balance = settings['new_user_welcome_credit']['value']
             
             # Create user
-            user = User(email=email, name=name, balance_usd=starting_balance)
+            user = User(email=email, name=name, balance_usd=starting_balance, welcome_bonus_claimed=True)
             user.set_password(password)
             
             # Track signup source (from URL parameter ?ref=)
@@ -92,6 +92,17 @@ def register():
             user.signup_source = signup_source
             
             db.session.add(user)
+            db.session.flush()  # Flush to get user.id for transaction
+            
+            # Record signup bonus transaction
+            from database import Transaction
+            signup_transaction = Transaction(
+                user_id=user.id,
+                amount_usd=starting_balance,
+                transaction_type='credit',
+                description='Sign-up Bonus - Welcome to Candidate Evaluator!'
+            )
+            db.session.add(signup_transaction)
             db.session.commit()
             
             print(f"✅ User created successfully: {email}")

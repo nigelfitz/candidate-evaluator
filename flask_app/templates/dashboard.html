@@ -395,12 +395,33 @@
 
 <!-- Wallet Bar -->
 {% if current_user.is_authenticated %}
+
+<!-- Welcome Banner for New Users -->
+{% if current_user.welcome_bonus_claimed and current_user.total_analyses_count == 0 %}
+<div id="welcomeBanner" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); position: relative;">
+    <button onclick="document.getElementById('welcomeBanner').style.display='none'" 
+            style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 20px; line-height: 1; transition: background 0.2s;">
+        ×
+    </button>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <i data-lucide="gift" style="width: 56px; height: 56px; flex-shrink: 0;"></i>
+        <div>
+            <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Welcome! We've added $10.00 to your account 🎉</h3>
+            <p style="margin: 0; font-size: 15px; opacity: 0.95; line-height: 1.5;">
+                Your <strong>Test Drive</strong> is ready! This is enough for your first complete analysis. 
+                Click "Start New Analysis" above to begin screening candidates with AI.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="wallet-bar">
     <div class="balance-info">
         <span class="balance-label">Your Balance:</span>
         <span class="balance-amount">${{ "%.2f"|format(current_user.balance_usd) }}</span>
     </div>
-    <a href="{{ url_for('payments.buy_credits') }}" class="btn-add-funds"><i data-lucide="credit-card" style="width: 18px; height: 18px; margin-right: 6px;"></i>Add Funds</a>
+    <a href="{{ url_for('payments.wallet') }}" class="btn-add-funds"><i data-lucide="credit-card" style="width: 18px; height: 18px; margin-right: 6px;"></i>Add Funds</a>
 </div>
 {% endif %}
 
@@ -448,7 +469,7 @@
 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
     <strong style="color: #92400e;"><i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px; vertical-align: middle;"></i>Low Balance</strong>
     <p style="color: #92400e; margin: 0.5rem 0 0 0;">You have ${{ "%.2f"|format(current_user.balance_usd) }} remaining. 
-        <a href="{{ url_for('payments.buy_credits') }}" style="color: #2563eb; text-decoration: underline;">Add funds</a> to continue analyzing.</p>
+        <a href="{{ url_for('payments.wallet') }}" style="color: #2563eb; text-decoration: underline;">Add funds</a> to continue analyzing.</p>
 </div>
 {% endif %}
 {% endif %}
