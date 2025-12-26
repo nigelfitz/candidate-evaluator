@@ -242,8 +242,10 @@
                                         ✕ Close Preview
                                     </button>
                                 </div>
-                                <embed id="executivePreviewFrame" src="" type="application/pdf" width="100%" height="800px" 
+                                <object id="executivePreviewFrame" data="" type="application/pdf" width="100%" height="800px" 
                                         style="border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+                                    <p>Unable to display PDF. <a id="executivePreviewLink" href="" target="_blank">Click here to open in new window</a></p>
+                                </object>
                             </div>
                         </div>
                     </div>
@@ -374,17 +376,21 @@
 
 <!-- JavaScript for Interactive Controls -->
 <script>
-// Toggle PDF preview
+// Toggle PDF preview (v2 - using object tag)
 function togglePreview(previewId, pdfUrl) {
     const previewDiv = document.getElementById(previewId);
-    const embedElement = document.getElementById(previewId + 'Frame');
+    const objectElement = document.getElementById(previewId + 'Frame');
+    const fallbackLink = document.getElementById(previewId + 'Link');
     
     if (previewDiv.style.display === 'none' || previewDiv.style.display === '') {
         // Show preview
         previewDiv.style.display = 'block';
         if (pdfUrl) {
-            // Set the PDF URL directly without parameters
-            embedElement.src = pdfUrl;
+            // Set the PDF URL using data attribute for object tag
+            objectElement.data = pdfUrl;
+            if (fallbackLink) {
+                fallbackLink.href = pdfUrl;
+            }
         }
         // Smooth scroll to preview
         setTimeout(() => {
