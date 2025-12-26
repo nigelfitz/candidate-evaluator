@@ -1444,12 +1444,30 @@ def create_app(config_name=None):
         
         print(f"DEBUG insights.html: has_gpt_insights = {has_gpt_insights}")
         
+        # Get evidence snippets first (handle both tuple and pipe formats)
+        evidence_data_raw = json.loads(analysis.evidence_data) if analysis.evidence_data else {}
+        evidence_data = {}
+        for key_str, value in evidence_data_raw.items():
+            if '|||' in key_str:
+                evidence_data[key_str] = value
+            else:
+                try:
+                    key_tuple = eval(key_str)
+                    if isinstance(key_tuple, tuple) and len(key_tuple) == 2:
+                        evidence_data[f"{key_tuple[0]}|||{key_tuple[1]}"] = value
+                except:
+                    pass
+        
         # Group scores by category
         cat_map = json.loads(analysis.category_map) if analysis.category_map else {}
         scores_by_category = {}
         for criterion in criteria_cols:
             category = cat_map.get(criterion, 'Other Requirements')
             score = current_candidate_data['data'][criterion]
+            
+            # Get snippet for this criterion
+            key = f"{selected_candidate}|||{criterion}"
+            snippet = evidence_data.get(key, "No evidence available")
             
             # Determine color and rating
             if score >= hi_threshold:
@@ -1469,10 +1487,11 @@ def create_app(config_name=None):
                 'criterion': criterion,
                 'score': score,
                 'color': color,
-                'rating': rating
+                'rating': rating,
+                'snippet': snippet
             })
         
-        # Get evidence snippets (handle both tuple and pipe formats)
+        # Build evidence list for backward compatibility
         evidence_data_raw = json.loads(analysis.evidence_data) if analysis.evidence_data else {}
         evidence_data = {}
         for key_str, value in evidence_data_raw.items():
