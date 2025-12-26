@@ -2129,39 +2129,63 @@ def create_app(config_name=None):
     @login_required
     def preview_executive_pdf_inline(analysis_id):
         """Serve executive summary PDF inline for preview"""
-        import io
         from flask import send_file
         from export_utils import to_executive_summary_pdf
+        import io
         
-        analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
-        if not analysis:
-            return "Analysis not found", 404
-        
-        # Parse data
-        coverage = json.loads(analysis.coverage_analysis) if analysis.coverage_analysis else {}
-        insights = json.loads(analysis.insights) if analysis.insights else {}
-        
-        # Get candidate name
-        candidate_name = analysis.candidate_name or "Unknown Candidate"
-        
-        # Get job title
-        job_title = analysis.job_title or "Position"
-        
-        # Generate PDF
-        pdf_bytes = to_executive_summary_pdf(
-            coverage=coverage,
-            insights=insights,
-            candidate_name=candidate_name,
-            job_title=job_title
-        )
-        
-        # Return PDF with inline disposition
-        return send_file(
-            io.BytesIO(pdf_bytes),
-            mimetype='application/pdf',
-            as_attachment=False,
-            download_name=f'preview_{candidate_name}.pdf'
-        )
+        try:
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+            if not analysis:
+                return "Analysis not found", 404
+            
+            # Parse data - same as export_executive_pdf
+            import pandas as pd
+            from io import StringIO
+            coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+            insights = json.loads(analysis.insights_data)
+            criteria = json.loads(analysis.criteria_list)
+            
+            # Build category map
+            category_map = {}
+            for crit in criteria:
+                crit_lower = crit.lower()
+                if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                    category_map[crit] = 'Technical Skills'
+                elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                    category_map[crit] = 'Experience'
+                elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                    category_map[crit] = 'Qualifications'
+                elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                    category_map[crit] = 'Soft Skills'
+                else:
+                    category_map[crit] = 'Other Requirements'
+            
+            # Generate PDF
+            pdf_bytes = to_executive_summary_pdf(
+                coverage=coverage_df,
+                insights=insights,
+                jd_text=analysis.job_description_text,
+                cat_map=category_map,
+                hi=0.75,
+                lo=0.35,
+                jd_filename=analysis.job_title
+            )
+            
+            if pdf_bytes is None:
+                return "PDF generation not available (ReportLab not installed)", 500
+            
+            # Return PDF with inline disposition (not as download)
+            return send_file(
+                io.BytesIO(pdf_bytes),
+                mimetype='application/pdf',
+                as_attachment=False,
+                download_name=f'{analysis.job_title}_preview.pdf'
+            )
+        except Exception as e:
+            import traceback
+            app.logger.error(f"Error generating PDF preview: {str(e)}")
+            app.logger.error(traceback.format_exc())
+            return f"Error generating PDF: {str(e)}", 500
     
     @app.route('/export/<int:analysis_id>/executive-pdf')
     @login_required
