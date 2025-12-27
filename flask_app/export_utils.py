@@ -408,15 +408,14 @@ def to_executive_summary_pdf(
         if insights:
             story.append(Paragraph("Key Insights for Top Candidates", heading_style))
             
-            # Create bullet style with proper indentation
+            # Create bullet style with proper indentation so wrapped text aligns
             bullet_style = ParagraphStyle(
                 'BulletStyle',
                 parent=styles['Normal'],
-                leftIndent=20,
-                firstLineIndent=-20,
+                leftIndent=15,
+                firstLineIndent=-10,
                 spaceBefore=3,
-                spaceAfter=3,
-                bulletIndent=0
+                spaceAfter=3
             )
             
             for idx, candidate_name in enumerate(top5['Candidate'].head(5), 1):
