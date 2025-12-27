@@ -1185,7 +1185,9 @@ def create_app(config_name=None):
                     coverage=coverage_df,
                     cat_map=category_map,
                     hi=0.75,
-                    lo=0.35
+                    lo=0.35,
+                    job_title=analysis.job_title,
+                    job_number=analysis.id
                 )
                 
                 if excel_bytes is None:
@@ -2370,7 +2372,9 @@ def create_app(config_name=None):
             coverage=coverage_df,
             cat_map=category_map,
             hi=0.75,
-            lo=0.35
+            lo=0.35,
+            job_title=analysis.job_title,
+            job_number=analysis.id
         )
         
         if excel_bytes is None:
@@ -2401,6 +2405,11 @@ def create_app(config_name=None):
         import pandas as pd
         from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
+        
+        # Round all numeric columns to 2 decimal places for better readability
+        numeric_cols = coverage_df.select_dtypes(include=['float64', 'float32']).columns
+        for col in numeric_cols:
+            coverage_df[col] = coverage_df[col].round(2)
         
         # Convert to CSV
         csv_buffer = io.StringIO()

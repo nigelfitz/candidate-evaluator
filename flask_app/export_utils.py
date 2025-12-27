@@ -91,7 +91,9 @@ def to_excel_coverage_matrix(
     coverage: pd.DataFrame, 
     cat_map: Dict[str, str], 
     hi: float = 0.75, 
-    lo: float = 0.35
+    lo: float = 0.35,
+    job_title: str = "Job Position",
+    job_number: Optional[int] = None
 ) -> Optional[bytes]:
     """
     Export coverage matrix to Excel with formatting and color coding.
@@ -104,8 +106,10 @@ def to_excel_coverage_matrix(
     Args:
         coverage: DataFrame with columns ['Candidate', 'Overall', ...criteria...]
         cat_map: Dict mapping criterion -> category
-        hi: High threshold for color coding (green)
-        lo: Low threshold for color coding (red)
+        hi: High threshold for color coding (green) - default 0.75 = 75%
+        lo: Low threshold for color coding (red) - default 0.35 = 35%
+        job_title: Job title for display
+        job_number: Analysis/Job ID number for header
     
     Returns:
         Bytes of Excel file or None if openpyxl not available
@@ -123,13 +127,22 @@ def to_excel_coverage_matrix(
         ws_summary = wb.active
         ws_summary.title = "Summary"
         
-        # Add title
-        ws_summary['A1'] = "Candidate Analysis Summary"
-        ws_summary['A1'].font = Font(size=16, bold=True, color="1F77B4")
-        ws_summary.merge_cells('A1:D1')
+        # Add Job # and Job Title at the very top
+        row = 1
+        if job_number:
+            ws_summary[f'A{row}'] = f"Job #{job_number:04d}: {job_title}"
+        else:
+            ws_summary[f'A{row}'] = f"Job Position: {job_title}"
+        ws_summary[f'A{row}'].font = Font(size=14, bold=True, color="1F77B4")
+        ws_summary.merge_cells(f'A{row}:D{row}')
+        
+        row += 2
+        ws_summary[f'A{row}'] = "Candidate Analysis Summary"
+        ws_summary[f'A{row}'].font = Font(size=16, bold=True, color="1F77B4")
+        ws_summary.merge_cells(f'A{row}:D{row}')
         
         # Add metrics
-        row = 3
+        row += 2
         ws_summary[f'A{row}'] = "Total Candidates:"
         ws_summary[f'B{row}'] = len(coverage)
         ws_summary[f'A{row}'].font = Font(bold=True)
@@ -158,16 +171,17 @@ def to_excel_coverage_matrix(
             row += 1
             ws_summary[f'A{row}'] = idx
             ws_summary[f'B{row}'] = r['Candidate']
-            ws_summary[f'C{row}'] = round(r['Overall'], 2)
+            ws_summary[f'C{row}'] = r['Overall']  # Will be formatted as percentage
+            ws_summary[f'C{row}'].number_format = '0%'  # Format as percentage
             
             # Color code the score
             score = r['Overall']
             if score >= hi:
-                ws_summary[f'C{row}'].fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+                ws_summary[f'C{row}'].fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
             elif score >= lo:
-                ws_summary[f'C{row}'].fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+                ws_summary[f'C{row}'].fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
             else:
-                ws_summary[f'C{row}'].fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+                ws_summary[f'C{row}'].fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
         
         # Adjust column widths
         ws_summary.column_dimensions['A'].width = 8
@@ -202,15 +216,16 @@ def to_excel_coverage_matrix(
             # Remaining columns: scores for each candidate
             for c_idx, (_, candidate_row) in enumerate(coverage.iterrows(), 2):
                 score = candidate_row[criterion]
-                cell = ws_matrix.cell(row=r_idx, column=c_idx, value=round(score, 2))
+                cell = ws_matrix.cell(row=r_idx, column=c_idx, value=score)  # Use raw score value
+                cell.number_format = '0%'  # Format as percentage
                 
-                # Color code the score
+                # Color code the score - using matching web UI colors
                 if score >= hi:
-                    cell.fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+                    cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")  # Green
                 elif score >= lo:
-                    cell.fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+                    cell.fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")  # Amber
                 else:
-                    cell.fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+                    cell.fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")  # Red
                 cell.alignment = Alignment(horizontal="center")
         
         # Auto-adjust column widths
@@ -226,21 +241,25 @@ def to_excel_coverage_matrix(
             adjusted_width = min(max_length + 2, 50)
             ws_matrix.column_dimensions[column_letter].width = adjusted_width
         
-        # Sheet 3: Legend
+        # Sheet 3: Legend with consistent terminology
         ws_legend = wb.create_sheet("Legend")
         ws_legend['A1'] = "Score Color Coding"
         ws_legend['A1'].font = Font(size=14, bold=True)
         
-        ws_legend['A3'] = f"Strong (≥{hi:.2f})"
-        ws_legend['A3'].fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+        ws_legend['A3'] = f"Strong (≥{int(hi*100)}%)"
+        ws_legend['A3'].fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+        ws_legend['B3'] = "Excellent alignment with requirements"
         
-        ws_legend['A4'] = f"Moderate ({lo:.2f}-{hi:.2f})"
-        ws_legend['A4'].fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+        ws_legend['A4'] = f"Moderate ({int(lo*100)}%-{int(hi*100-1)}%)"
+        ws_legend['A4'].fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+        ws_legend['B4'] = "Acceptable fit with some gaps"
         
-        ws_legend['A5'] = f"Weak (<{lo:.2f})"
-        ws_legend['A5'].fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+        ws_legend['A5'] = f"Weak (<{int(lo*100)}%)"
+        ws_legend['A5'].fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
+        ws_legend['B5'] = "Significant gaps in required areas"
         
-        ws_legend.column_dimensions['A'].width = 25
+        ws_legend.column_dimensions['A'].width = 20
+        ws_legend.column_dimensions['B'].width = 40
         
         wb.save(buf)
         buf.seek(0)
