@@ -2875,6 +2875,33 @@ def create_app(config_name=None):
         return redirect(url_for('admin_login'))
     
     
+    def admin_required(f):
+        """Decorator to protect admin routes with 30-minute inactivity timeout"""
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not session.get('admin_logged_in'):
+                flash('⚠️ Admin access required', 'warning')
+                return redirect(url_for('admin_login'))
+            
+            # Check for inactivity timeout (30 minutes)
+            last_activity_str = session.get('admin_last_activity')
+            if last_activity_str:
+                last_activity = datetime.fromisoformat(last_activity_str)
+                inactivity = datetime.now(timezone.utc) - last_activity
+                
+                if inactivity > timedelta(minutes=30):
+                    session.pop('admin_logged_in', None)
+                    session.pop('admin_last_activity', None)
+                    flash('⏱️ Session expired due to inactivity. Please login again.', 'warning')
+                    return redirect(url_for('admin_login'))
+            
+            # Update last activity timestamp
+            session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    
     @app.route('/admin/setup-2fa')
     def admin_setup_2fa():
         """Generate QR code for 2FA setup (only accessible without 2FA enabled)"""
@@ -2922,33 +2949,6 @@ def create_app(config_name=None):
         ).paginate(page=page, per_page=per_page, error_out=False)
         
         return render_template('admin_audit_logs.html', logs=logs)
-    
-    
-    def admin_required(f):
-        """Decorator to protect admin routes with 30-minute inactivity timeout"""
-        from functools import wraps
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get('admin_logged_in'):
-                flash('⚠️ Admin access required', 'warning')
-                return redirect(url_for('admin_login'))
-            
-            # Check for inactivity timeout (30 minutes)
-            last_activity_str = session.get('admin_last_activity')
-            if last_activity_str:
-                last_activity = datetime.fromisoformat(last_activity_str)
-                inactivity = datetime.now(timezone.utc) - last_activity
-                
-                if inactivity > timedelta(minutes=30):
-                    session.pop('admin_logged_in', None)
-                    session.pop('admin_last_activity', None)
-                    flash('⏱️ Session expired due to inactivity. Please login again.', 'warning')
-                    return redirect(url_for('admin_login'))
-            
-            # Update last activity timestamp
-            session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
-            return f(*args, **kwargs)
-        return decorated_function
     
     
     @app.route('/admin')
