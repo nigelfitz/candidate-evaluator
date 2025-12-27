@@ -408,6 +408,17 @@ def to_executive_summary_pdf(
         if insights:
             story.append(Paragraph("Key Insights for Top Candidates", heading_style))
             
+            # Create bullet style with proper indentation
+            bullet_style = ParagraphStyle(
+                'BulletStyle',
+                parent=styles['Normal'],
+                leftIndent=20,
+                firstLineIndent=-20,
+                spaceBefore=3,
+                spaceAfter=3,
+                bulletIndent=0
+            )
+            
             for idx, candidate_name in enumerate(top5['Candidate'].head(5), 1):
                 cand_insights = insights.get(candidate_name, {})
                 
@@ -419,19 +430,22 @@ def to_executive_summary_pdf(
                     if strengths:
                         story.append(Paragraph("<b>Strengths:</b>", styles['Normal']))
                         for s in strengths[:3]:  # Top 3 strengths only
-                            story.append(Paragraph(f"• {s}", styles['Normal']))
+                            story.append(Paragraph(f"• {s}", bullet_style))
+                        story.append(Spacer(1, 0.2*cm))  # Space after Strengths
                     
                     # Gaps
                     gaps = cand_insights.get('gaps', [])
                     if gaps:
                         story.append(Paragraph("<b>Development Areas:</b>", styles['Normal']))
                         for g in gaps[:3]:  # Top 3 gaps only
-                            story.append(Paragraph(f"• {g}", styles['Normal']))
+                            story.append(Paragraph(f"• {g}", bullet_style))
+                        story.append(Spacer(1, 0.2*cm))  # Space after Development Areas
                     
-                    # Notes
+                    # Notes with heading
                     notes = cand_insights.get('notes', '')
                     if notes:
-                        story.append(Paragraph(f"<i>{notes}</i>", styles['Normal']))
+                        story.append(Paragraph("<b>Overall Assessment:</b>", styles['Normal']))
+                        story.append(Paragraph(f"{notes}", styles['Normal']))
                     
                     # Add horizontal separator between candidates (except last one)
                     if idx < len(top5['Candidate'].head(5)):
@@ -785,12 +799,14 @@ def to_executive_summary_word(
                         for g in gaps[:3]:
                             doc.add_paragraph(g, style='List Bullet')
                     
-                    # Overall notes
+                    # Overall Assessment with heading
                     notes = cand_insights.get('notes', '')
                     if notes:
+                        assessment_para = doc.add_paragraph()
+                        assessment_run = assessment_para.add_run("Overall Assessment:")
+                        assessment_run.font.bold = True
                         notes_para = doc.add_paragraph()
                         notes_run = notes_para.add_run(notes)
-                        notes_run.font.italic = True
                 else:
                     no_insights = doc.add_paragraph("No AI insights generated for this candidate")
                     for run in no_insights.runs:
