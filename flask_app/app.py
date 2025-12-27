@@ -2276,7 +2276,7 @@ def create_app(config_name=None):
     def export_executive_docx(analysis_id):
         """Download executive summary Word document"""
         from flask import send_file
-        from export_candidate import to_executive_summary_docx
+        from export_utils import to_executive_summary_word
         
         analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
         if not analysis:
@@ -2305,15 +2305,16 @@ def create_app(config_name=None):
             else:
                 category_map[crit] = 'Other Requirements'
         
-        # Generate Word doc
-        docx_bytes = to_executive_summary_docx(
+        # Generate Word document
+        docx_bytes = to_executive_summary_word(
             coverage=coverage_df,
             insights=insights,
             jd_text=analysis.job_description_text,
             cat_map=category_map,
             hi=0.75,
             lo=0.35,
-            jd_filename=analysis.job_title
+            jd_filename=analysis.job_title,
+            job_number=analysis.id
         )
         
         if docx_bytes is None:

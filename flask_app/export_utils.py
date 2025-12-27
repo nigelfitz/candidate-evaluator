@@ -560,4 +560,347 @@ def to_executive_summary_pdf(
         return None
 
 
-# Function continues in next part...
+# ============================================================================
+# WORD EXPORT - Executive Summary (Formatted Document)
+# ============================================================================
+
+def to_executive_summary_word(
+    coverage: pd.DataFrame,
+    insights: Dict[str, Dict],
+    jd_text: str,
+    cat_map: Dict[str, str],
+    hi: float = 0.75,
+    lo: float = 0.35,
+    jd_filename: str = "Job Description",
+    job_number: Optional[int] = None
+) -> Optional[bytes]:
+    """
+    Generate a professional executive summary Word document.
+    
+    Includes:
+    - Header with Job # and branding
+    - Analysis overview & key metrics
+    - Top 5 candidates table with color-coded ratings
+    - AI insights for candidates
+    - Shortlist recommendation (on separate page)
+    - Placeholder for company logo
+    
+    Args:
+        coverage: DataFrame with candidate scores
+        insights: Dict mapping candidate_name -> {top, gaps, notes}
+        jd_text: Job description text
+        cat_map: Criterion -> category mapping
+        hi: High threshold (default 0.75 = 75%)
+        lo: Low threshold (default 0.35 = 35%)
+        jd_filename: Name of JD file for display
+        job_number: Analysis/Job ID number for header
+    
+    Returns:
+        Bytes of Word document or None if python-docx not available
+    """
+    if not DOCX_AVAILABLE:
+        return None
+    
+    try:
+        doc = Document()
+        
+        # ===== HEADER WITH JOB # AND LOGO PLACEHOLDER =====
+        header_section = doc.sections[0]
+        header = header_section.header
+        
+        # Add logo placeholder (right-aligned)
+        logo_para = header.add_paragraph()
+        logo_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        logo_run = logo_para.add_run("[COMPANY LOGO HERE]")
+        logo_run.font.size = Pt(10)
+        logo_run.font.color.rgb = RGBColor(150, 150, 150)
+        logo_run.font.italic = True
+        
+        # Title with Job Number
+        title = doc.add_paragraph()
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        title_run = title.add_run("Executive Summary - Candidate Analysis")
+        title_run.font.name = 'Arial'
+        title_run.font.size = Pt(18)
+        title_run.font.bold = True
+        title_run.font.color.rgb = RGBColor(31, 119, 180)  # Blue
+        
+        # Job number and title
+        if job_number:
+            job_title_para = doc.add_paragraph()
+            job_title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            job_run = job_title_para.add_run(f"Job #{job_number:04d}: {jd_filename}")
+            job_run.font.name = 'Arial'
+            job_run.font.size = Pt(14)
+            job_run.font.bold = True
+        else:
+            job_title_para = doc.add_paragraph()
+            job_title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            job_run = job_title_para.add_run(f"Job Position: {jd_filename}")
+            job_run.font.name = 'Arial'
+            job_run.font.size = Pt(14)
+            job_run.font.bold = True
+        
+        # Generated date (subtle)
+        date_para = doc.add_paragraph()
+        date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        date_run = date_para.add_run(f"Generated: {datetime.now().strftime('%B %d, %Y')}")
+        date_run.font.size = Pt(9)
+        date_run.font.color.rgb = RGBColor(107, 114, 128)  # Gray
+        
+        doc.add_paragraph()  # Spacer
+        
+        # ===== ANALYSIS OVERVIEW =====
+        heading = doc.add_paragraph()
+        heading_run = heading.add_run("Analysis Overview")
+        heading_run.font.name = 'Arial'
+        heading_run.font.size = Pt(14)
+        heading_run.font.bold = True
+        heading_run.font.color.rgb = RGBColor(31, 119, 180)
+        
+        # Overview table
+        overview_table = doc.add_table(rows=4, cols=2)
+        overview_table.style = 'Light Grid Accent 1'
+        overview_data = [
+            ("Total Candidates Analyzed", str(len(coverage))),
+            ("Evaluation Criteria", str(len([c for c in coverage.columns if c not in ('Candidate', 'Overall')]))),
+            ("Highest Score Achieved", f"{coverage['Overall'].max()*100:.0f}%"),
+            ("Average Score", f"{coverage['Overall'].mean()*100:.0f}%")
+        ]
+        
+        for i, (label, value) in enumerate(overview_data):
+            row_cells = overview_table.rows[i].cells
+            row_cells[0].text = label
+            row_cells[1].text = value
+            # Bold labels
+            for paragraph in row_cells[0].paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+        
+        doc.add_paragraph()  # Spacer
+        
+        # ===== TOP 5 CANDIDATES TABLE WITH COLOR-CODED PILLS =====
+        heading = doc.add_paragraph()
+        heading_run = heading.add_run("Top 5 Candidates")
+        heading_run.font.name = 'Arial'
+        heading_run.font.size = Pt(14)
+        heading_run.font.bold = True
+        heading_run.font.color.rgb = RGBColor(31, 119, 180)
+        
+        top5 = coverage[['Candidate', 'Overall']].head(5)
+        
+        # Create table
+        candidates_table = doc.add_table(rows=len(top5)+1, cols=4)
+        candidates_table.style = 'Light Grid Accent 1'
+        
+        # Header row
+        header_cells = candidates_table.rows[0].cells
+        headers = ["Rank", "Candidate Name", "Overall Score", "Rating"]
+        for i, header_text in enumerate(headers):
+            header_cells[i].text = header_text
+            for paragraph in header_cells[i].paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    run.font.color.rgb = RGBColor(255, 255, 255)
+            # Blue background for header
+            from docx.oxml.shared import OxmlElement, qn
+            shading_elm = OxmlElement('w:shd')
+            shading_elm.set(qn('w:fill'), '1F77B4')
+            header_cells[i]._element.get_or_add_tcPr().append(shading_elm)
+        
+        # Data rows with color-coded ratings
+        for idx, (_, row) in enumerate(top5.iterrows(), 1):
+            score = row['Overall']
+            score_pct = f"{score*100:.0f}%"
+            
+            # Determine rating and color
+            if score >= hi:
+                rating_text = "STRONG"
+                bg_color = 'D1FAE5'  # Light green
+            elif score >= lo:
+                rating_text = "MODERATE"
+                bg_color = 'FEF3C7'  # Light yellow
+            else:
+                rating_text = "WEAK"
+                bg_color = 'FEE2E2'  # Light red
+            
+            row_cells = candidates_table.rows[idx].cells
+            row_cells[0].text = str(idx)
+            row_cells[1].text = row['Candidate']
+            row_cells[2].text = score_pct
+            row_cells[3].text = rating_text
+            
+            # Center align all cells
+            for cell in row_cells:
+                for paragraph in cell.paragraphs:
+                    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            
+            # Color the rating cell
+            shading_elm = OxmlElement('w:shd')
+            shading_elm.set(qn('w:fill'), bg_color)
+            row_cells[3]._element.get_or_add_tcPr().append(shading_elm)
+            
+            # Bold the rating text
+            for paragraph in row_cells[3].paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+        
+        doc.add_paragraph()  # Spacer
+        
+        # ===== KEY INSIGHTS FOR TOP CANDIDATES =====
+        if insights:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run("Key Insights for Top Candidates")
+            heading_run.font.name = 'Arial'
+            heading_run.font.size = Pt(14)
+            heading_run.font.bold = True
+            heading_run.font.color.rgb = RGBColor(31, 119, 180)
+            
+            for idx, candidate_name in enumerate(top5['Candidate'].head(5), 1):
+                cand_insights = insights.get(candidate_name, {})
+                
+                # Candidate name
+                cand_heading = doc.add_paragraph()
+                cand_run = cand_heading.add_run(f"{idx}. {candidate_name}")
+                cand_run.font.name = 'Arial'
+                cand_run.font.size = Pt(12)
+                cand_run.font.bold = True
+                
+                if cand_insights:
+                    # Strengths
+                    strengths = cand_insights.get('top', [])
+                    if strengths:
+                        strengths_para = doc.add_paragraph()
+                        strengths_run = strengths_para.add_run("Strengths:")
+                        strengths_run.font.bold = True
+                        for s in strengths[:3]:
+                            doc.add_paragraph(s, style='List Bullet')
+                    
+                    # Gaps/Development Areas
+                    gaps = cand_insights.get('gaps', [])
+                    if gaps:
+                        gaps_para = doc.add_paragraph()
+                        gaps_run = gaps_para.add_run("Development Areas:")
+                        gaps_run.font.bold = True
+                        for g in gaps[:3]:
+                            doc.add_paragraph(g, style='List Bullet')
+                    
+                    # Overall notes
+                    notes = cand_insights.get('notes', '')
+                    if notes:
+                        notes_para = doc.add_paragraph()
+                        notes_run = notes_para.add_run(notes)
+                        notes_run.font.italic = True
+                else:
+                    no_insights = doc.add_paragraph("No AI insights generated for this candidate")
+                    for run in no_insights.runs:
+                        run.font.italic = True
+                
+                # Add horizontal separator (except for last candidate)
+                if idx < len(top5['Candidate'].head(5)):
+                    doc.add_paragraph('_' * 80)  # Simple text separator
+        
+        # ===== PAGE BREAK BEFORE RECOMMENDATION =====
+        doc.add_page_break()
+        
+        # ===== RECOMMENDATION =====
+        heading = doc.add_paragraph()
+        heading_run = heading.add_run("Recommendation")
+        heading_run.font.name = 'Arial'
+        heading_run.font.size = Pt(14)
+        heading_run.font.bold = True
+        heading_run.font.color.rgb = RGBColor(31, 119, 180)
+        
+        top_candidate_name = coverage.iloc[0]['Candidate']
+        top_score = coverage.iloc[0]['Overall']
+        
+        # Build intelligent recommendation (same logic as PDF)
+        strong_candidates = coverage[coverage['Overall'] >= hi]
+        moderate_candidates = coverage[(coverage['Overall'] >= lo) & (coverage['Overall'] < hi)]
+        
+        recommendation_parts = []
+        
+        if len(strong_candidates) == 0:
+            if len(moderate_candidates) > 0:
+                recommendation_parts.append(
+                    f"Caution: No candidates achieved a strong match score (≥{hi*100:.0f}%). "
+                    f"The highest score was {top_score*100:.0f}% for {top_candidate_name}, indicating a moderate match."
+                )
+                recommendation_parts.append(
+                    f"We recommend carefully reviewing the {len(moderate_candidates)} moderate-scoring candidate(s) "
+                    f"to identify specific skill gaps, or consider expanding the candidate pool."
+                )
+            else:
+                recommendation_parts.append(
+                    f"Warning: All candidates scored below the moderate threshold ({lo*100:.0f}%). "
+                    f"The highest score was only {top_score*100:.0f}% for {top_candidate_name}."
+                )
+                recommendation_parts.append(
+                    "We recommend reconsidering the job requirements or sourcing additional candidates, "
+                    "as the current pool shows weak alignment with the position criteria."
+                )
+        elif len(strong_candidates) == 1:
+            recommendation_parts.append(
+                f"{top_candidate_name} is the clear leading candidate with a strong overall score "
+                f"of {top_score*100:.0f}%, demonstrating excellent alignment with the position requirements."
+            )
+            if len(moderate_candidates) > 0:
+                recommendation_parts.append(
+                    f"Additionally, {len(moderate_candidates)} candidate(s) achieved moderate scores and could serve as backup options."
+                )
+            recommendation_parts.append(
+                f"We recommend prioritizing {top_candidate_name} for the next stage of recruitment."
+            )
+        else:
+            top_3_strong = strong_candidates.head(3)
+            score_range = top_3_strong['Overall'].max() - top_3_strong['Overall'].min()
+            
+            if score_range < 0.10:
+                names = ", ".join([row['Candidate'] for _, row in top_3_strong.iterrows()])
+                recommendation_parts.append(
+                    f"We have {len(strong_candidates)} strong candidates with very similar scores "
+                    f"(range: {top_3_strong['Overall'].min()*100:.0f}%–{top_3_strong['Overall'].max()*100:.0f}%). "
+                    f"The top candidates are: {names}."
+                )
+                recommendation_parts.append(
+                    "Given the close scoring, we recommend interviewing multiple candidates to assess "
+                    "cultural fit, communication skills, and other qualitative factors."
+                )
+            else:
+                recommendation_parts.append(
+                    f"{top_candidate_name} is the leading candidate with a score of {top_score*100:.0f}%, "
+                    f"followed by {len(strong_candidates)-1} other strong candidate(s)."
+                )
+                recommendation_parts.append(
+                    f"We recommend prioritizing {top_candidate_name}, while keeping other strong candidates as viable alternatives."
+                )
+        
+        for part in recommendation_parts:
+            doc.add_paragraph(part)
+        
+        doc.add_paragraph()  # Spacer
+        
+        # ===== SCORE INTERPRETATION LEGEND =====
+        heading = doc.add_paragraph()
+        heading_run = heading.add_run("Score Interpretation")
+        heading_run.font.name = 'Arial'
+        heading_run.font.size = Pt(14)
+        heading_run.font.bold = True
+        heading_run.font.color.rgb = RGBColor(31, 119, 180)
+        
+        doc.add_paragraph(f"• Strong (≥{hi*100:.0f}%): Excellent alignment with requirements")
+        doc.add_paragraph(f"• Moderate ({lo*100:.0f}%–{hi*100:.0f}%): Acceptable fit with some gaps")
+        doc.add_paragraph(f"• Weak (<{lo*100:.0f}%): Significant gaps in required areas")
+        
+        # Save to bytes
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return buf.getvalue()
+    
+    except Exception as e:
+        print(f"Word generation error: {e}")
+        return None
+
+
+# End of export_utils.py
