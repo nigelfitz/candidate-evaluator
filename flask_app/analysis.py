@@ -777,10 +777,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     tone_instruction = tone_map.get(settings['insight_tone'], 'professional hiring language')
     
     # Build user prompt from template, replacing placeholders
-    user_prompt = insights_prompts['user_prompt_te        # Admin-configurable
-            presence_penalty=settings['presence_penalty'],  # Admin-configurable
-            frequency_penalty=settings['frequency_penalty'], # Admin-configurable
-            max_tokens=settings['max_tokens']        ars']],
+    user_prompt = insights_prompts['user_prompt_template']['value'].format(
+        job_title=job_title,
+        criteria=', '.join(criteria[:settings['criteria_preview_chars']]),
         candidate_name=candidate_name,
         candidate_text=candidate_text[:settings['candidate_text_chars']],
         evidence_lines=ev_lines,
