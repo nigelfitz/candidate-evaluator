@@ -347,10 +347,10 @@
         <div class="card-body py-3">
             <!-- Row 1: Candidate Name and Download PDF Button -->
             <div class="row align-items-center mb-2">
-                <div class="col-md-8">
+                <div class="col">
                     <h3 class="mb-0" style="color: #1f2937; font-weight: 700; font-size: 1.75rem;">👤 {{ current_candidate.name }}</h3>
                 </div>
-                <div class="col-md-4 text-end">
+                <div class="col-auto">
                     <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
                        class="btn btn-sm btn-primary" 
                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
@@ -361,7 +361,7 @@
             </div>
             <!-- Row 2: Overall Score/Badges and Prev/Next Buttons -->
             <div class="row align-items-center">
-                <div class="col-md-8">
+                <div class="col">
                     <div class="text-muted small">
                         <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
                         <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
@@ -370,9 +370,9 @@
                         <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
                     </div>
                 </div>
-                <div class="col-md-4 text-end">
+                <div class="col-auto">
                     <!-- Navigation buttons with 10px gap -->
-                    <div style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
                         <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
                                 {% if current_idx == 0 %}disabled{% endif %}
                                 style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
