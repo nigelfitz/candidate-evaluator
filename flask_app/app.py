@@ -1136,7 +1136,8 @@ def create_app(config_name=None):
                     cat_map=category_map,
                     hi=0.75,
                     lo=0.35,
-                    jd_filename=analysis.job_title
+                    jd_filename=analysis.job_title,
+                    job_number=analysis.id
                 )
                 
                 if pdf_bytes is None:
@@ -2117,7 +2118,8 @@ def create_app(config_name=None):
             cat_map=category_map,
             hi=0.75,
             lo=0.35,
-            jd_filename=analysis.job_title
+            jd_filename=analysis.job_title,
+            job_number=analysis.id
         )
         
         if pdf_bytes is None:
@@ -2188,7 +2190,8 @@ def create_app(config_name=None):
                 cat_map=category_map,
                 hi=0.75,
                 lo=0.35,
-                jd_filename=analysis.job_title
+                jd_filename=analysis.job_title,
+                job_number=analysis.id
             )
             
             if pdf_bytes is None:
@@ -2249,7 +2252,8 @@ def create_app(config_name=None):
             cat_map=category_map,
             hi=0.75,
             lo=0.35,
-            jd_filename=analysis.job_title
+            jd_filename=analysis.job_title,
+            job_number=analysis.id
         )
         
         if pdf_bytes is None:

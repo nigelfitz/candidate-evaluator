@@ -262,7 +262,8 @@ def to_executive_summary_pdf(
     cat_map: Dict[str, str],
     hi: float = 0.75,
     lo: float = 0.35,
-    jd_filename: str = "Job Description"
+    jd_filename: str = "Job Description",
+    job_number: Optional[int] = None
 ) -> Optional[bytes]:
     """
     Generate a professional executive summary PDF.
@@ -281,6 +282,7 @@ def to_executive_summary_pdf(
         hi: High threshold
         lo: Low threshold
         jd_filename: Name of JD file for display
+        job_number: Analysis/Job ID number for header
     
     Returns:
         Bytes of PDF file or None if reportlab not available
@@ -313,10 +315,23 @@ def to_executive_summary_pdf(
             spaceBefore=10
         )
         
-        # Title
-        story.append(Paragraph("Executive Summary - Candidate Analysis", title_style))
-        story.append(Paragraph(f"Job Position: {jd_filename}", styles['Normal']))
-        story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
+        # Title with Job Number
+        if job_number:
+            title_text = f"Executive Summary - Candidate Analysis<br/><font size=14>Job #{job_number:04d}: {jd_filename}</font>"
+        else:
+            title_text = f"Executive Summary - Candidate Analysis<br/><font size=14>Job Position: {jd_filename}</font>"
+        
+        story.append(Paragraph(title_text, title_style))
+        
+        # Generated date - subtle
+        date_style = ParagraphStyle(
+            'DateStyle',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#6B7280'),
+            alignment=TA_CENTER
+        )
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}", date_style))
         story.append(Spacer(1, 0.5*cm))
         
         # Analysis Overview
@@ -324,8 +339,8 @@ def to_executive_summary_pdf(
         overview_data = [
             ["Total Candidates Analyzed", str(len(coverage))],
             ["Evaluation Criteria", str(len([c for c in coverage.columns if c not in ('Candidate', 'Overall')]))],
-            ["Highest Score Achieved", f"{coverage['Overall'].max():.2f}"],
-            ["Average Score", f"{coverage['Overall'].mean():.2f}"]
+            ["Highest Score Achieved", f"{coverage['Overall'].max()*100:.0f}%"],
+            ["Average Score", f"{coverage['Overall'].mean()*100:.0f}%"]
         ]
         overview_table = Table(overview_data, colWidths=[10*cm, 6*cm])
         overview_table.setStyle(TableStyle([
@@ -338,40 +353,58 @@ def to_executive_summary_pdf(
         story.append(overview_table)
         story.append(Spacer(1, 0.5*cm))
         
-        # Top 5 Candidates
+        # Top 5 Candidates with color-coded pill ratings
         story.append(Paragraph("Top 5 Candidates", heading_style))
         top5 = coverage[['Candidate', 'Overall']].head(5)
+        
+        # Create custom paragraph style for pills
+        from reportlab.platypus import Paragraph as RLParagraph
         
         top_data = [["Rank", "Candidate Name", "Overall Score", "Rating"]]
         for idx, (_, row) in enumerate(top5.iterrows(), 1):
             score = row['Overall']
-            rating = "Strong Match" if score >= hi else ("Moderate Match" if score >= lo else "Weak Match")
-            top_data.append([str(idx), row['Candidate'], f"{score:.2f}", rating])
+            score_pct = f"{score*100:.0f}%"
+            
+            # Create color-coded pill HTML
+            if score >= hi:
+                rating_pill = '<para alignment="center" backColor="#10B981" textColor="white" borderPadding="4" borderRadius="12" fontSize="10"><b>STRONG</b></para>'
+                bg_color = colors.HexColor('#D1FAE5')
+            elif score >= lo:
+                rating_pill = '<para alignment="center" backColor="#F59E0B" textColor="white" borderPadding="4" borderRadius="12" fontSize="10"><b>MODERATE</b></para>'
+                bg_color = colors.HexColor('#FEF3C7')
+            else:
+                rating_pill = '<para alignment="center" backColor="#EF4444" textColor="white" borderPadding="4" borderRadius="12" fontSize="10"><b>WEAK</b></para>'
+                bg_color = colors.HexColor('#FEE2E2')
+            
+            top_data.append([str(idx), row['Candidate'], score_pct, Paragraph(rating_pill, styles['Normal'])])
         
-        top_table = Table(top_data, colWidths=[2*cm, 8*cm, 3*cm, 3*cm])
+        top_table = Table(top_data, colWidths=[2*cm, 7*cm, 3.5*cm, 3.5*cm])
         top_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1F77B4')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')])
         ]))
         
-        # Color code ratings
+        # Add background color to rating cells
         for i, (_, row) in enumerate(top5.iterrows(), 1):
             score = row['Overall']
             if score >= hi:
-                top_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.HexColor('#C6EFCE'))]))
+                bg_color = colors.HexColor('#D1FAE5')
             elif score >= lo:
-                top_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.HexColor('#FFEB9C'))]))
+                bg_color = colors.HexColor('#FEF3C7')
             else:
-                top_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), colors.HexColor('#FFC7CE'))]))
+                bg_color = colors.HexColor('#FEE2E2')
+            top_table.setStyle(TableStyle([('BACKGROUND', (3, i), (3, i), bg_color)]))
         
         story.append(top_table)
         story.append(Spacer(1, 0.5*cm))
         
-        # AI Insights for Top 5 (if available)
+        # AI Insights for Top 5 (if available) - with horizontal separators
         if insights:
             story.append(Paragraph("Key Insights for Top Candidates", heading_style))
             
@@ -400,11 +433,26 @@ def to_executive_summary_pdf(
                     if notes:
                         story.append(Paragraph(f"<i>{notes}</i>", styles['Normal']))
                     
-                    story.append(Spacer(1, 0.3*cm))
+                    # Add horizontal separator between candidates (except last one)
+                    if idx < len(top5['Candidate'].head(5)):
+                        story.append(Spacer(1, 0.2*cm))
+                        from reportlab.platypus import HRFlowable
+                        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E5E7EB')))
+                        story.append(Spacer(1, 0.3*cm))
+                    else:
+                        story.append(Spacer(1, 0.3*cm))
                 else:
                     story.append(Paragraph(f"<b>{idx}. {candidate_name}</b>", styles['Heading3']))
                     story.append(Paragraph("<i>No AI insights generated for this candidate</i>", styles['Normal']))
-                    story.append(Spacer(1, 0.3*cm))
+                    
+                    # Add horizontal separator between candidates (except last one)
+                    if idx < len(top5['Candidate'].head(5)):
+                        story.append(Spacer(1, 0.2*cm))
+                        from reportlab.platypus import HRFlowable
+                        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E5E7EB')))
+                        story.append(Spacer(1, 0.3*cm))
+                    else:
+                        story.append(Spacer(1, 0.3*cm))
         
         # Recommendation (intelligent, context-aware - matching Streamlit)
         story.append(PageBreak())
@@ -425,8 +473,8 @@ def to_executive_summary_pdf(
             # No strong candidates at all
             if len(moderate_candidates) > 0:
                 recommendation_parts.append(
-                    f"<b>Caution:</b> No candidates achieved a strong match score (≥{hi:.2f}). "
-                    f"The highest score was <b>{top_score:.2f}</b> for <b>{top_candidate_name}</b>, "
+                    f"<b>Caution:</b> No candidates achieved a strong match score (≥{hi*100:.0f}%). "
+                    f"The highest score was <b>{top_score*100:.0f}%</b> for <b>{top_candidate_name}</b>, "
                     f"indicating a <b>moderate match</b>."
                 )
                 recommendation_parts.append(
@@ -435,8 +483,8 @@ def to_executive_summary_pdf(
                 )
             else:
                 recommendation_parts.append(
-                    f"<b>Warning:</b> All candidates scored below the moderate threshold ({lo:.2f}). "
-                    f"The highest score was only <b>{top_score:.2f}</b> for <b>{top_candidate_name}</b>."
+                    f"<b>Warning:</b> All candidates scored below the moderate threshold ({lo*100:.0f}%). "
+                    f"The highest score was only <b>{top_score*100:.0f}%</b> for <b>{top_candidate_name}</b>."
                 )
                 recommendation_parts.append(
                     "We recommend reconsidering the job requirements or sourcing additional candidates, "
@@ -447,7 +495,7 @@ def to_executive_summary_pdf(
             # Clear winner
             recommendation_parts.append(
                 f"<b>{top_candidate_name}</b> is the clear leading candidate with a strong overall score "
-                f"of <b>{top_score:.2f}</b>, demonstrating excellent alignment with the position requirements."
+                f"of <b>{top_score*100:.0f}%</b>, demonstrating excellent alignment with the position requirements."
             )
             
             if len(moderate_candidates) > 0:
@@ -468,7 +516,7 @@ def to_executive_summary_pdf(
                 names = ", ".join([f"<b>{row['Candidate']}</b>" for _, row in top_3_strong.iterrows()])
                 recommendation_parts.append(
                     f"We have <b>{len(strong_candidates)} strong candidates</b> with very similar scores "
-                    f"(range: {top_3_strong['Overall'].min():.2f}–{top_3_strong['Overall'].max():.2f}). "
+                    f"(range: {top_3_strong['Overall'].min()*100:.0f}%–{top_3_strong['Overall'].max()*100:.0f}%). "
                     f"The top candidates are: {names}."
                 )
                 recommendation_parts.append(
@@ -477,7 +525,7 @@ def to_executive_summary_pdf(
                 )
             else:
                 recommendation_parts.append(
-                    f"<b>{top_candidate_name}</b> is the leading candidate with a score of <b>{top_score:.2f}</b>, "
+                    f"<b>{top_candidate_name}</b> is the leading candidate with a score of <b>{top_score*100:.0f}%</b>, "
                     f"followed by {len(strong_candidates)-1} other strong candidate(s)."
                 )
                 recommendation_parts.append(
@@ -492,12 +540,12 @@ def to_executive_summary_pdf(
         
         story.append(Spacer(1, 0.3*cm))
         
-        # Legend
+        # Legend - Fixed typo
         story.append(Paragraph("Score Interpretation", heading_style))
         legend_text = (
-            f"• <b>Strong (≥{hi:.2f}):</b> Excellent alignment with requirements<br/>"
-            f"• <b>Moderate ({lo:.2f}–{hi:.2f}):</b> Acceptable fit with some gaps<br/>"
-            f"• <b>Weak (&lt;{lo:.2f}):</b> Significant gaps in required areas"
+            f"• <b>Strong (≥{hi*100:.0f}%):</b> Excellent alignment with requirements<br/>"
+            f"• <b>Moderate ({lo*100:.0f}%–{hi*100:.0f}%):</b> Acceptable fit with some gaps<br/>"
+            f"• <b>Weak (&lt;{lo*100:.0f}%):</b> Significant gaps in required areas"
         )
         story.append(Paragraph(legend_text, styles['Normal']))
         story.append(Spacer(1, 0.2*cm))
