@@ -968,7 +968,7 @@ window.addEventListener('load', function() {
 
 <!-- Sticky Bottom Bar -->
 {% if is_current_draft_analysis %}
-{% set show_back_button = True %}
+{% set show_back_button = False %}
 {% set back_url = url_for('results', analysis_id=analysis_id) %}
 {% set continue_text = 'Start New Analysis' %}
 {% set continue_url = url_for('analyze', new=1) %}
