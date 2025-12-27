@@ -778,8 +778,7 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     # Build user prompt from template, replacing placeholders
     user_prompt = insights_prompts['user_prompt_template']['value'].format(
-        job_title=job_title,
-        criteria=', '.join(criteria[:settings['criteria_preview_chars']]),
+        jd_text=jd_text[:settings['jd_text_chars']],
         candidate_name=candidate_name,
         candidate_text=candidate_text[:settings['candidate_text_chars']],
         evidence_lines=ev_lines,
