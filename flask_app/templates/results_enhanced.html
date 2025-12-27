@@ -951,6 +951,12 @@ function downloadCSV() {
     // Get current filtered/sorted data
     let data = [...coverageData];
     
+    // Check if we have data
+    if (!data || data.length === 0) {
+        alert('No data available to download');
+        return;
+    }
+    
     if (currentSort === 'name') {
         data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
     } else if (currentSort === 'score-desc') {
@@ -970,7 +976,11 @@ function downloadCSV() {
     const headers = Object.keys(data[0]);
     const csv = [
         headers.join(','),
-        ...data.map(row => headers.map(h => `"${row[h]}"`).join(','))
+        ...data.map(row => headers.map(h => {
+            // Escape quotes and handle special characters
+            const value = String(row[h] ?? '');
+            return `"${value.replace(/"/g, '""')}"`;
+        }).join(','))
     ].join('\n');
     
     // Download
@@ -979,7 +989,9 @@ function downloadCSV() {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'coverage_matrix.csv';
+    document.body.appendChild(a);  // Add to DOM before clicking
     a.click();
+    document.body.removeChild(a);  // Clean up
     window.URL.revokeObjectURL(url);
 }
 

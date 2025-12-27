@@ -2406,14 +2406,16 @@ def create_app(config_name=None):
         from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         
-        # Round all numeric columns to 2 decimal places for better readability
-        numeric_cols = coverage_df.select_dtypes(include=['float64', 'float32']).columns
-        for col in numeric_cols:
-            coverage_df[col] = coverage_df[col].round(2)
+        # Transpose: Candidates as columns, Criteria as rows
+        # Set 'Candidate' as index, transpose, then reset index
+        coverage_df = coverage_df.set_index('Candidate').T
+        
+        # Round all numeric values to 2 decimal places for better readability
+        coverage_df = coverage_df.round(2)
         
         # Convert to CSV
         csv_buffer = io.StringIO()
-        coverage_df.to_csv(csv_buffer, index=False)
+        coverage_df.to_csv(csv_buffer, index=True)  # Keep index (criteria names)
         csv_buffer.seek(0)
         
         # Return as download with sanitized filename
