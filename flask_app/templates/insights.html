@@ -346,46 +346,38 @@
     <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
         <div class="card-body py-3">
             <!-- Row 1: Candidate Name and Download PDF Button -->
-            <div class="row align-items-center mb-2">
-                <div class="col">
-                    <h3 class="mb-0" style="color: #1f2937; font-weight: 700; font-size: 1.75rem;">👤 {{ current_candidate.name }}</h3>
-                </div>
-                <div class="col-auto">
-                    <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
-                       class="btn btn-sm btn-primary" 
-                       style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Download PDF
-                    </a>
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="mb-0" style="color: #1f2937; font-weight: 700; font-size: 1.75rem;">👤 {{ current_candidate.name }}</h3>
+                <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
+                   class="btn btn-sm btn-primary" 
+                   style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download PDF
+                </a>
             </div>
             <!-- Row 2: Overall Score/Badges and Prev/Next Buttons -->
-            <div class="row align-items-center">
-                <div class="col">
-                    <div class="text-muted small">
-                        <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
-                        <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
-                        <span class="badge bg-success me-1">✅ {{ current_candidate.strong_count }}</span>
-                        <span class="badge bg-warning text-dark me-1">⚠️ {{ current_candidate.moderate_count }}</span>
-                        <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
+                    <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
+                    <span class="badge bg-success me-1">✅ {{ current_candidate.strong_count }}</span>
+                    <span class="badge bg-warning text-dark me-1">⚠️ {{ current_candidate.moderate_count }}</span>
+                    <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
                 </div>
-                <div class="col-auto">
-                    <!-- Navigation buttons with 10px gap -->
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
-                                {% if current_idx == 0 %}disabled{% endif %}
-                                style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                            Prev
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(1)"
-                                {% if current_idx == candidates|length - 1 %}disabled{% endif %}
-                                style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </button>
-                    </div>
+                <!-- Navigation buttons with 10px gap -->
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
+                            {% if current_idx == 0 %}disabled{% endif %}
+                            style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Prev
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(1)"
+                            {% if current_idx == candidates|length - 1 %}disabled{% endif %}
+                            style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
+                        Next
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
                 </div>
             </div>
         </div>
