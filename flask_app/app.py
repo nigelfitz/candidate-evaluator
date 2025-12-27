@@ -2586,6 +2586,7 @@ def create_app(config_name=None):
         # Get request data
         data = request.get_json()
         candidates = data.get('candidates', [])
+        include_evidence = data.get('include_evidence', False)
         
         if not candidates:
             return {'error': 'No candidates selected'}, 400
