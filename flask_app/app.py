@@ -1786,7 +1786,8 @@ def create_app(config_name=None):
             lo=0.35,
             include_evidence=True,  # Include evidence by default for individual downloads
             job_title=analysis.job_title,
-            gpt_candidates=gpt_candidates_raw
+            gpt_candidates=gpt_candidates_raw,
+            job_number=analysis.id
         )
         
         if pdf_bytes is None:
@@ -2511,7 +2512,8 @@ def create_app(config_name=None):
                 lo=0.35,
                 include_evidence=include_evidence,
                 job_title=analysis.job_title,
-                gpt_candidates=gpt_candidates_raw
+                gpt_candidates=gpt_candidates_raw,
+                job_number=analysis.id
             )
             
             if pdf_bytes:
@@ -2637,11 +2639,14 @@ def create_app(config_name=None):
                 candidate_name=candidate,
                 coverage_row=coverage_row,
                 insights=cand_insights,
+                evidence_map=evidence_map,
                 cat_map=category_map,
                 hi=0.75,
                 lo=0.35,
+                include_evidence=include_evidence,
                 job_title=analysis.job_title,
-                gpt_candidates=gpt_candidates_raw
+                gpt_candidates=gpt_candidates_raw,
+                job_number=analysis.id
             )
             
             if docx_bytes:

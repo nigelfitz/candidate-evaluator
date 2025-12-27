@@ -43,7 +43,8 @@ def to_individual_candidate_pdf(
     lo: float = 0.35,
     include_evidence: bool = False,
     job_title: str = "",
-    gpt_candidates: List[str] = None
+    gpt_candidates: List[str] = None,
+    job_number: int = None
 ) -> Optional[bytes]:
     """
     Generate individual candidate report PDF with disclaimer for non-AI candidates.
@@ -59,6 +60,7 @@ def to_individual_candidate_pdf(
         include_evidence: Whether to include evidence snippets
         job_title: Job title for header
         gpt_candidates: List of candidates that had AI insights generated
+        job_number: Job number for header (e.g., 18 for "Job #0018")
     
     Returns:
         Bytes of PDF or None if reportlab not available
@@ -91,20 +93,21 @@ def to_individual_candidate_pdf(
             spaceBefore=10
         )
         
-        # Title
+        # Title with Job# in header
+        job_header = f"Job #{job_number:04d}: {job_title}" if job_number and job_title else (f"Job #{job_number:04d}" if job_number else (f"Position: {job_title}" if job_title else ""))
+        if job_header:
+            story.append(Paragraph(job_header, styles['Normal']))
         story.append(Paragraph(f"Candidate Report: {candidate_name}", title_style))
-        if job_title:
-            story.append(Paragraph(f"Position: {job_title}", styles['Normal']))
         story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
         story.append(Spacer(1, 0.5*cm))
         
-        # Overall Score
+        # Overall Score (convert to percentage and bold labels)
         overall_score = coverage_row.get('Overall', 0.0)
         rating = "Strong Match" if overall_score >= hi else ("Moderate Match" if overall_score >= lo else "Weak Match")
         
         score_data = [
-            ["Overall Score", f"{overall_score:.2f}"],
-            ["Rating", rating]
+            [Paragraph("<b>Overall Score</b>", styles['Normal']), f"{overall_score * 100:.0f}%"],
+            [Paragraph("<b>Rating</b>", styles['Normal']), rating]
         ]
         score_table = Table(score_data, colWidths=[8*cm, 8*cm])
         score_table.setStyle(TableStyle([
@@ -188,12 +191,18 @@ def to_individual_candidate_pdf(
         for category in sorted(criteria_by_cat.keys()):
             story.append(Paragraph(f"<b>{category}</b>", styles['Heading4']))
             
-            criteria_data = [["Criterion", "Score", "Rating"]]
+            criteria_data = [["Criterion", "Score", "Status"]]
             for crit, score in sorted(criteria_by_cat[category], key=lambda x: x[1], reverse=True):
-                rating = "Strong" if score >= hi else ("Moderate" if score >= lo else "Weak")
                 # Use Paragraph for criterion name to enable text wrapping
                 crit_para = Paragraph(crit, styles['Normal'])
-                criteria_data.append([crit_para, f"{score:.2f}", rating])
+                # Color-coded pill instead of text rating
+                if score >= hi:
+                    status_pill = Paragraph('<para align="center" backColor="#D1FAE5" borderColor="#10B981" borderWidth="1" borderPadding="3"><font color="#065F46" size="9"><b>STRONG</b></font></para>', styles['Normal'])
+                elif score >= lo:
+                    status_pill = Paragraph('<para align="center" backColor="#FEF3C7" borderColor="#F59E0B" borderWidth="1" borderPadding="3"><font color="#92400E" size="9"><b>MODERATE</b></font></para>', styles['Normal'])
+                else:
+                    status_pill = Paragraph('<para align="center" backColor="#FEE2E2" borderColor="#EF4444" borderWidth="1" borderPadding="3"><font color="#991B1B" size="9"><b>WEAK</b></font></para>', styles['Normal'])
+                criteria_data.append([crit_para, f"{score * 100:.0f}%", status_pill])
             
             crit_table = Table(criteria_data, colWidths=[10*cm, 3*cm, 3*cm])
             crit_table.setStyle(TableStyle([
@@ -207,15 +216,7 @@ def to_individual_candidate_pdf(
                 ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
             ]))
             
-            # Color code ratings
-            for i, (_, score) in enumerate(sorted(criteria_by_cat[category], key=lambda x: x[1], reverse=True), 1):
-                if score >= hi:
-                    crit_table.setStyle(TableStyle([('BACKGROUND', (2, i), (2, i), colors.HexColor('#C6EFCE'))]))
-                elif score >= lo:
-                    crit_table.setStyle(TableStyle([('BACKGROUND', (2, i), (2, i), colors.HexColor('#FFEB9C'))]))
-                else:
-                    crit_table.setStyle(TableStyle([('BACKGROUND', (2, i), (2, i), colors.HexColor('#FFC7CE'))]))
-            
+
             story.append(crit_table)
             story.append(Spacer(1, 0.3*cm))
         
@@ -235,8 +236,16 @@ def to_individual_candidate_pdf(
                 evidence_key = (candidate_name, crit)
                 if evidence_key in evidence_map:
                     snippet, _ = evidence_map[evidence_key]
-                    story.append(Paragraph(f"<b>{crit}</b> (Score: {score:.2f})", styles['Heading4']))
-                    story.append(Paragraph(f"<i>{snippet[:300]}...</i>", styles['Normal']))
+                    # Clean and truncate snippet, ensuring we get unique content
+                    clean_snippet = snippet.strip()
+                    if len(clean_snippet) > 300:
+                        # Try to find a sentence boundary near 300 chars
+                        truncate_pos = clean_snippet.rfind('.', 200, 300)
+                        if truncate_pos == -1:
+                            truncate_pos = 300
+                        clean_snippet = clean_snippet[:truncate_pos+1]
+                    story.append(Paragraph(f"<b>{crit}</b> (Score: {score * 100:.0f}%)", styles['Heading4']))
+                    story.append(Paragraph(f"<i>{clean_snippet}</i>", styles['Normal']))
                     story.append(Spacer(1, 0.2*cm))
         
         # Build PDF
@@ -261,11 +270,14 @@ def to_individual_candidate_docx(
     candidate_name: str,
     coverage_row: pd.Series,
     insights: Dict[str, Any],
+    evidence_map: Dict[Tuple[str,str], Tuple[str,float]],
     cat_map: Dict[str, str],
     hi: float = 0.75,
     lo: float = 0.35,
+    include_evidence: bool = False,
     job_title: str = "",
-    gpt_candidates: List[str] = None
+    gpt_candidates: List[str] = None,
+    job_number: int = None
 ) -> Optional[bytes]:
     """
     Generate editable Word document for individual candidate.
@@ -292,28 +304,38 @@ def to_individual_candidate_docx(
     try:
         doc = Document()
         
-        # Title
-        title = doc.add_heading(f'Candidate Report: {candidate_name}', 0)
-        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        
-        if job_title:
+        # Title with Job# in header
+        if job_number and job_title:
+            job_para = doc.add_paragraph(f"Job #{job_number:04d}: {job_title}")
+            job_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        elif job_number:
+            job_para = doc.add_paragraph(f"Job #{job_number:04d}")
+            job_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        elif job_title:
             position_para = doc.add_paragraph(f"Position: {job_title}")
             position_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        title = doc.add_heading(f'Candidate Report: {candidate_name}', 0)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
         date_para = doc.add_paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}")
         date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
         doc.add_paragraph()  # Spacing
         
-        # Overall Score
+        # Overall Score (convert to percentage and bold labels)
         overall_score = coverage_row.get('Overall', 0.0)
         rating = "Strong Match" if overall_score >= hi else ("Moderate Match" if overall_score >= lo else "Weak Match")
         
         table = doc.add_table(rows=2, cols=2)
         table.style = 'Light Grid Accent 1'
-        table.cell(0, 0).text = 'Overall Score'
-        table.cell(0, 1).text = f"{overall_score:.2f}"
-        table.cell(1, 0).text = 'Rating'
+        cell = table.cell(0, 0)
+        cell.text = 'Overall Score'
+        cell.paragraphs[0].runs[0].bold = True
+        table.cell(0, 1).text = f"{overall_score * 100:.0f}%"
+        cell = table.cell(1, 0)
+        cell.text = 'Rating'
+        cell.paragraphs[0].runs[0].bold = True
         table.cell(1, 1).text = rating
         
         doc.add_paragraph()  # Spacing
@@ -387,14 +409,69 @@ def to_individual_candidate_docx(
             # Header
             table.cell(0, 0).text = 'Criterion'
             table.cell(0, 1).text = 'Score'
-            table.cell(0, 2).text = 'Rating'
+            table.cell(0, 2).text = 'Status'
             
-            # Data
+            # Data with percentage scores and color-coded pills
             for idx, (crit, score) in enumerate(sorted_criteria, 1):
-                rating = "Strong" if score >= hi else ("Moderate" if score >= lo else "Weak")
                 table.cell(idx, 0).text = crit
-                table.cell(idx, 1).text = f"{score:.2f}"
-                table.cell(idx, 2).text = rating
+                table.cell(idx, 1).text = f"{score * 100:.0f}%"
+                
+                # Add color-coded status pill
+                status_cell = table.cell(idx, 2)
+                if score >= hi:
+                    status_cell.text = 'STRONG'
+                    # Set green background
+                    from docx.oxml import OxmlElement
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill', 'D1FAE5')
+                    status_cell._element.get_or_add_tcPr().append(shading_elm)
+                    status_cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(6, 95, 70)
+                    status_cell.paragraphs[0].runs[0].bold = True
+                elif score >= lo:
+                    status_cell.text = 'MODERATE'
+                    # Set amber background
+                    from docx.oxml import OxmlElement
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill', 'FEF3C7')
+                    status_cell._element.get_or_add_tcPr().append(shading_elm)
+                    status_cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(146, 64, 14)
+                    status_cell.paragraphs[0].runs[0].bold = True
+                else:
+                    status_cell.text = 'WEAK'
+                    # Set red background
+                    from docx.oxml import OxmlElement
+                    shading_elm = OxmlElement('w:shd')
+                    shading_elm.set('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill', 'FEE2E2')
+                    status_cell._element.get_or_add_tcPr().append(shading_elm)
+                    status_cell.paragraphs[0].runs[0].font.color.rgb = RGBColor(153, 27, 27)
+                    status_cell.paragraphs[0].runs[0].bold = True
+                # Center align status
+                status_cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # Evidence snippets (optional) - matching PDF structure
+        if include_evidence and evidence_map:
+            doc.add_heading('Detailed Scores & Evidence', 1)
+            doc.add_paragraph('Showing evidence for top-scored criteria', style='Intense Quote')
+            
+            # Get top 5 criteria by score
+            all_criteria = [(col, coverage_row[col]) for col in coverage_row.index if col not in ('Candidate', 'Overall')]
+            top_criteria = sorted(all_criteria, key=lambda x: x[1], reverse=True)[:5]
+            
+            for crit, score in top_criteria:
+                evidence_key = (candidate_name, crit)
+                if evidence_key in evidence_map:
+                    snippet, _ = evidence_map[evidence_key]
+                    # Clean and truncate snippet
+                    clean_snippet = snippet.strip()
+                    if len(clean_snippet) > 300:
+                        truncate_pos = clean_snippet.rfind('.', 200, 300)
+                        if truncate_pos == -1:
+                            truncate_pos = 300
+                        clean_snippet = clean_snippet[:truncate_pos+1]
+                    
+                    doc.add_heading(f"{crit} (Score: {score * 100:.0f}%)", 2)
+                    para = doc.add_paragraph(clean_snippet)
+                    para.style = 'Intense Quote'
         
         # Save to buffer
         buf = io.BytesIO()
