@@ -917,9 +917,12 @@ function attachEventListeners() {
     
     document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
     document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
-    
+}
+
+// Attach download button listener separately to ensure element exists
+document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('downloadCSV');
-    console.log('Download button element:', downloadBtn);
+    console.log('Looking for Download button element:', downloadBtn);
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function() {
             console.log('Download button clicked!');
@@ -927,9 +930,9 @@ function attachEventListeners() {
         });
         console.log('Download CSV event listener attached');
     } else {
-        console.error('Download CSV button not found!');
+        console.error('Download CSV button not found! Available buttons:', document.querySelectorAll('button[id*="download" i]'));
     }
-}
+});
 
 function initializeCustomSelection() {
     const candidates = coverageData.map(row => row.Candidate);
