@@ -2701,8 +2701,13 @@ def create_app(config_name=None):
         simple_df = coverage_df[['Candidate', 'Overall']].copy()
         simple_df.columns = ['Candidate Name', 'Overall Score']
         
-        # Convert to CSV
+        # Round Overall Score to 2 decimal places
+        simple_df['Overall Score'] = simple_df['Overall Score'].round(2)
+        
+        # Convert to CSV with Job# header
         csv_buffer = io.StringIO()
+        # Write Job# and Job Title as header
+        csv_buffer.write(f"Job #{analysis.id:04d}: {analysis.job_title}\n")
         simple_df.to_csv(csv_buffer, index=False)
         csv_buffer.seek(0)
         
@@ -2733,8 +2738,10 @@ def create_app(config_name=None):
         import pandas as pd
         df = pd.DataFrame({'Criterion': criteria})
         
-        # Convert to CSV
+        # Convert to CSV with Job# header
         csv_buffer = io.StringIO()
+        # Write Job# and Job Title as header
+        csv_buffer.write(f"Job #{analysis.id:04d}: {analysis.job_title}\n")
         df.to_csv(csv_buffer, index=False)
         csv_buffer.seek(0)
         
