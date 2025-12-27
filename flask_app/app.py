@@ -2073,11 +2073,20 @@ def create_app(config_name=None):
         from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         
+        # Parse gpt_candidates list (candidates with AI insights)
+        gpt_candidates_list = []
+        if analysis.gpt_candidates:
+            try:
+                gpt_candidates_list = json.loads(analysis.gpt_candidates)
+            except:
+                gpt_candidates_list = []
+        
         return render_template('export.html', 
                              analysis=analysis, 
                              coverage=coverage_df,
                              user_settings=user_settings,
-                             is_current_draft_analysis=is_current_draft_analysis)
+                             is_current_draft_analysis=is_current_draft_analysis,
+                             gpt_candidates=gpt_candidates_list)
     
     @app.route('/export/<int:analysis_id>/preview-pdf')
     @login_required

@@ -303,8 +303,8 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Select Candidates:</label>
                                 <div class="btn-group d-block mb-3" role="group">
-                                    <input type="radio" class="btn-check" name="candidateSelection" id="top3" value="top3" checked>
-                                    <label class="btn btn-outline-info" for="top3">Top 3</label>
+                                    <input type="radio" class="btn-check" name="candidateSelection" id="aiInsights" value="aiInsights" checked>
+                                    <label class="btn btn-outline-info" for="aiInsights">Candidates with AI Insights</label>
                                     
                                     <input type="radio" class="btn-check" name="candidateSelection" id="top5" value="top5">
                                     <label class="btn btn-outline-info" for="top5">Top 5</label>
@@ -457,9 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function getSelectedCandidates() {
         const selection = document.querySelector('input[name="candidateSelection"]:checked').value;
         const allCandidates = {{ coverage['Candidate'].tolist() | tojson }};
+        const gptCandidates = {{ gpt_candidates | tojson }};
         
-        if (selection === 'top3') {
-            return allCandidates.slice(0, 3);
+        if (selection === 'aiInsights') {
+            // Filter to only candidates with AI insights
+            return allCandidates.filter(candidate => gptCandidates.includes(candidate));
         } else if (selection === 'top5') {
             return allCandidates.slice(0, 5);
         } else if (selection === 'all') {
