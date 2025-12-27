@@ -918,7 +918,17 @@ function attachEventListeners() {
     document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
     document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
     
-    document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
+    const downloadBtn = document.getElementById('downloadCSV');
+    console.log('Download button element:', downloadBtn);
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            console.log('Download button clicked!');
+            downloadCSV();
+        });
+        console.log('Download CSV event listener attached');
+    } else {
+        console.error('Download CSV button not found!');
+    }
 }
 
 function initializeCustomSelection() {
@@ -948,14 +958,19 @@ function toggleCustomCandidate(candidate) {
 }
 
 function downloadCSV() {
+    console.log('downloadCSV function called');
+    console.log('coverageData:', coverageData);
+    
     // Get current filtered/sorted data
     let data = [...coverageData];
     
     // Check if we have data
     if (!data || data.length === 0) {
+        console.error('No data available');
         alert('No data available to download');
         return;
     }
+    console.log('Data length:', data.length);
     
     if (currentSort === 'name') {
         data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
