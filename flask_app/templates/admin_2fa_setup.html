@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup 2FA - Admin - Candidate Evaluator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .setup-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .qr-code {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .qr-code img {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            background: white;
+        }
+        .secret-box {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            word-break: break-all;
+        }
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .btn-copy {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-copy:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-card">
+        <h2 class="text-center mb-4">🔐 Setup Two-Factor Authentication</h2>
+        
+        <div class="alert alert-info">
+            <strong>ℹ️ Important:</strong> Once you complete this setup, you'll need both your password AND a 6-digit code from your authenticator app to login.
+        </div>
+        
+        <div class="step">
+            <h5>Step 1: Install an Authenticator App</h5>
+            <p>Download one of these apps on your phone:</p>
+            <ul>
+                <li><strong>Google Authenticator</strong> (iOS/Android)</li>
+                <li><strong>Authy</strong> (iOS/Android/Desktop)</li>
+                <li><strong>Microsoft Authenticator</strong> (iOS/Android)</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h5>Step 2: Scan This QR Code</h5>
+            <div class="qr-code">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="2FA QR Code">
+            </div>
+            <p class="text-center text-muted">Open your authenticator app and scan this QR code</p>
+        </div>
+        
+        <div class="step">
+            <h5>Step 3: Save Your Secret Key</h5>
+            <p>If you can't scan the QR code, enter this secret manually:</p>
+            <div class="secret-box" id="secret">{{ secret }}</div>
+            <div class="text-center">
+                <button class="btn-copy" onclick="copySecret()">📋 Copy Secret</button>
+            </div>
+            <p class="text-muted mt-2"><small>⚠️ Keep this secret safe! You'll need it to restore access if you lose your phone.</small></p>
+        </div>
+        
+        <div class="step">
+            <h5>Step 4: Add Secret to Environment Variables</h5>
+            <p>On your Railway deployment, add this environment variable:</p>
+            <div class="alert alert-warning">
+                <code>ADMIN_TOTP_SECRET={{ secret }}</code>
+            </div>
+            <p><strong>How to add on Railway:</strong></p>
+            <ol>
+                <li>Go to your Railway project dashboard</li>
+                <li>Click on your service → Variables tab</li>
+                <li>Add new variable: <code>ADMIN_TOTP_SECRET</code></li>
+                <li>Paste the value: <code>{{ secret }}</code></li>
+                <li>Save and redeploy</li>
+            </ol>
+        </div>
+        
+        <div class="alert alert-success">
+            <h5>✅ You're Done!</h5>
+            <p class="mb-0">After adding the environment variable, your next login will require:</p>
+            <ul class="mb-0">
+                <li>Admin password</li>
+                <li>6-digit code from your authenticator app</li>
+            </ul>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('admin_login') }}" class="btn btn-primary">← Back to Login</a>
+        </div>
+    </div>
+    
+    <script>
+        function copySecret() {
+            const secret = document.getElementById('secret').textContent;
+            navigator.clipboard.writeText(secret).then(() => {
+                alert('✅ Secret copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Audit Logs{% endblock %}
+
+{% block content %}
+<style>
+    .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+    .audit-table { font-size: 0.9rem; }
+    .action-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+    .action-login { background: #d1fae5; color: #065f46; }
+    .action-logout { background: #fee2e2; color: #991b1b; }
+    .action-suspend { background: #fef3c7; color: #92400e; }
+    .action-failed { background: #fecaca; color: #7f1d1d; }
+    .details-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .details-cell:hover { text-decoration: underline; }
+</style>
+
+<a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">Logout</a>
+
+<div class="container mt-5" style="max-width: 1400px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🔍 Admin Audit Logs</h2>
+        <a href="{{ url_for('admin_settings') }}" class="btn btn-secondary">← Back to Admin</a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>ℹ️ About Audit Logs:</strong> This log tracks all admin actions including logins, user suspensions, and system changes. Logs are retained permanently for security and compliance.
+            </div>
+            
+            {% if logs.items %}
+            <div class="table-responsive">
+                <table class="table table-hover audit-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>IP Address</th>
+                            <th>Details</th>
+                            <th>User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</td>
+                            <td>
+                                <span class="action-badge 
+                                    {% if 'login_success' in log.action %}action-login
+                                    {% elif 'logout' in log.action %}action-logout
+                                    {% elif 'suspend' in log.action %}action-suspend
+                                    {% elif 'failed' in log.action or 'blocked' in log.action %}action-failed
+                                    {% endif %}">
+                                    {{ log.action.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td><code>{{ log.ip_address }}</code></td>
+                            <td class="details-cell" 
+                                {% if log.details %}
+                                title="{{ log.details }}"
+                                onclick="alert('{{ log.details|replace('\"', '&quot;') }}')"
+                                {% endif %}>
+                                {% if log.details %}
+                                    {{ log.details[:50] }}{% if log.details|length > 50 %}...{% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="details-cell" title="{{ log.user_agent }}">
+                                {{ log.user_agent[:40] }}{% if log.user_agent|length > 40 %}...{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if logs.has_prev or logs.has_next %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_audit_logs', page=logs.prev_num) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ logs.page }} of {{ logs.pages }}</span>
+                    </li>
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_audit_logs', page=logs.next_num) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="alert alert-secondary text-center">
+                No audit logs yet. Actions will be logged here.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -60,17 +60,41 @@
             {% endif %}
         {% endwith %}
         
+        {% if locked_out %}
+        <div class="alert alert-danger">
+            <strong>⛔ Account Locked</strong><br>
+            Too many failed login attempts. Please try again in 15 minutes.
+        </div>
+        {% else %}
         <form method="POST">
             <div class="mb-3">
                 <label for="password" class="form-label">Admin Password</label>
                 <input type="password" class="form-control" id="password" name="password" 
-                       placeholder="Enter admin password" required autofocus>
+                       placeholder="Enter admin password" required autofocus
+                       {% if password_verified %}value="***" disabled{% endif %}>
             </div>
+            
+            {% if totp_enabled or password_verified %}
+            <div class="mb-3">
+                <label for="totp_code" class="form-label">
+                    🔐 Two-Factor Code
+                    {% if totp_enabled %}<span class="text-muted">(from your authenticator app)</span>{% endif %}
+                </label>
+                <input type="text" class="form-control" id="totp_code" name="totp_code" 
+                       placeholder="6-digit code" maxlength="6" pattern="[0-9]{6}"
+                       {% if password_verified %}required autofocus{% endif %}>
+            </div>
+            {% endif %}
             
             <button type="submit" class="btn btn-primary btn-login">Login</button>
         </form>
+        {% endif %}
         
         <div class="text-center mt-3">
+            {% if not totp_enabled and not locked_out %}
+            <a href="{{ url_for('admin_setup_2fa') }}" class="text-primary small">Setup 2FA</a>
+            <span class="text-muted"> | </span>
+            {% endif %}
             <a href="{{ url_for('landing') }}" class="text-muted">← Back to Home</a>
         </div>
     </div>

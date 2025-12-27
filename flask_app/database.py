@@ -291,3 +291,31 @@ def init_db(app):
                         # Continue anyway - table might already be fixed
             else:
                 raise
+
+
+class AdminLoginAttempt(db.Model):
+    """Track admin login attempts for brute-force protection"""
+    __tablename__ = 'admin_login_attempts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False, index=True)  # IPv6 support
+    attempted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    success = db.Column(db.Boolean, default=False, nullable=False)
+    
+    def __repr__(self):
+        return f'<AdminLoginAttempt {self.id}: {self.ip_address} at {self.attempted_at}>'
+
+
+class AdminAuditLog(db.Model):
+    """Audit log for admin actions"""
+    __tablename__ = 'admin_audit_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    action = db.Column(db.String(100), nullable=False, index=True)  # e.g., 'user_suspended', 'settings_updated'
+    details = db.Column(db.Text)  # JSON string with action details
+    ip_address = db.Column(db.String(45), nullable=False)
+    user_agent = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    def __repr__(self):
+        return f'<AdminAuditLog {self.id}: {self.action} at {self.created_at}>'

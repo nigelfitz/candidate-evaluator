@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import LoginManager, login_required, current_user
 from config import config
-from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback
+from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback, AdminLoginAttempt, AdminAuditLog
 import os
 import re
 from datetime import datetime, timezone, timedelta
@@ -11,6 +11,10 @@ from werkzeug.utils import secure_filename
 from decimal import Decimal
 import io
 from dotenv import load_dotenv
+import pyotp
+import qrcode
+from io import BytesIO
+import base64
 
 # Load environment variables from .env file
 load_dotenv()
@@ -2759,33 +2763,165 @@ def create_app(config_name=None):
     # ADMIN ROUTES - Protected configuration panel
     # ============================================================================
     
+    # Admin Security Helper Functions
+    def get_client_ip():
+        """Get client IP address (handles proxies/load balancers)"""
+        if request.headers.get('X-Forwarded-For'):
+            return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        return request.remote_addr
+    
+    def check_brute_force(ip_address):
+        """Check if IP is locked out due to failed attempts"""
+        cutoff_time = datetime.utcnow() - timedelta(minutes=15)
+        recent_attempts = AdminLoginAttempt.query.filter(
+            AdminLoginAttempt.ip_address == ip_address,
+            AdminLoginAttempt.attempted_at > cutoff_time,
+            AdminLoginAttempt.success == False
+        ).count()
+        
+        return recent_attempts >= 5
+    
+    def record_login_attempt(ip_address, success):
+        """Record admin login attempt"""
+        attempt = AdminLoginAttempt(
+            ip_address=ip_address,
+            attempted_at=datetime.utcnow(),
+            success=success
+        )
+        db.session.add(attempt)
+        db.session.commit()
+    
+    def clear_login_attempts(ip_address):
+        """Clear failed login attempts after successful login"""
+        cutoff_time = datetime.utcnow() - timedelta(minutes=15)
+        AdminLoginAttempt.query.filter(
+            AdminLoginAttempt.ip_address == ip_address,
+            AdminLoginAttempt.attempted_at > cutoff_time
+        ).delete()
+        db.session.commit()
+    
+    def log_admin_action(action, details=None):
+        """Log admin action for audit trail"""
+        log = AdminAuditLog(
+            action=action,
+            details=json.dumps(details) if details else None,
+            ip_address=get_client_ip(),
+            user_agent=request.headers.get('User-Agent', '')[:255]
+        )
+        db.session.add(log)
+        db.session.commit()
+    
     @app.route('/admin/login', methods=['GET', 'POST'])
     def admin_login():
-        """Simple password protection for admin panel"""
+        """Admin login with brute-force protection and optional 2FA"""
+        client_ip = get_client_ip()
+        
+        # Check for brute-force lockout
+        if check_brute_force(client_ip):
+            flash('⛔ Too many failed attempts. Please try again in 15 minutes.', 'danger')
+            log_admin_action('login_blocked_brute_force', {'ip': client_ip})
+            return render_template('admin_login.html', locked_out=True)
+        
         if request.method == 'POST':
             password = request.form.get('password')
-            # Use environment variable or default password (CHANGE THIS!)
+            totp_code = request.form.get('totp_code', '').strip()
+            
+            # Use environment variable or default password
             admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
             
-            if password == admin_password:
-                session['admin_logged_in'] = True
-                session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
-                session.permanent = True
-                flash('✅ Admin access granted', 'success')
-                return redirect(url_for('admin_settings'))
-            else:
+            # Step 1: Verify password
+            if password != admin_password:
+                record_login_attempt(client_ip, False)
                 flash('❌ Invalid password', 'danger')
+                log_admin_action('login_failed_password', {'ip': client_ip})
+                return render_template('admin_login.html')
+            
+            # Step 2: Verify TOTP if enabled
+            totp_secret = os.environ.get('ADMIN_TOTP_SECRET')
+            if totp_secret:
+                if not totp_code:
+                    flash('⚠️ 2FA code required', 'warning')
+                    return render_template('admin_login.html', password_verified=True)
+                
+                totp = pyotp.TOTP(totp_secret)
+                if not totp.verify(totp_code, valid_window=1):
+                    record_login_attempt(client_ip, False)
+                    flash('❌ Invalid 2FA code', 'danger')
+                    log_admin_action('login_failed_2fa', {'ip': client_ip})
+                    return render_template('admin_login.html', password_verified=True)
+            
+            # Success - clear failed attempts and log in
+            clear_login_attempts(client_ip)
+            record_login_attempt(client_ip, True)
+            session['admin_logged_in'] = True
+            session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
+            session.permanent = True
+            log_admin_action('login_success', {'ip': client_ip})
+            flash('✅ Admin access granted', 'success')
+            return redirect(url_for('admin_settings'))
         
-        return render_template('admin_login.html')
+        # Check if 2FA is enabled
+        totp_enabled = bool(os.environ.get('ADMIN_TOTP_SECRET'))
+        return render_template('admin_login.html', totp_enabled=totp_enabled)
     
     
     @app.route('/admin/logout')
     def admin_logout():
         """Logout from admin panel"""
+        log_admin_action('logout')
         session.pop('admin_logged_in', None)
         session.pop('admin_last_activity', None)
         flash('Logged out from admin panel', 'info')
         return redirect(url_for('admin_login'))
+    
+    
+    @app.route('/admin/setup-2fa')
+    def admin_setup_2fa():
+        """Generate QR code for 2FA setup (only accessible without 2FA enabled)"""
+        # Only allow this if 2FA is not yet configured
+        if os.environ.get('ADMIN_TOTP_SECRET'):
+            flash('⚠️ 2FA is already configured. To reset, remove ADMIN_TOTP_SECRET from environment.', 'warning')
+            return redirect(url_for('admin_login'))
+        
+        # Generate new secret
+        secret = pyotp.random_base32()
+        
+        # Create provisioning URI for QR code
+        totp = pyotp.TOTP(secret)
+        provisioning_uri = totp.provisioning_uri(
+            name='Admin',
+            issuer_name='Candidate Evaluator'
+        )
+        
+        # Generate QR code
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(provisioning_uri)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64 for display
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        return render_template('admin_2fa_setup.html', 
+                             secret=secret, 
+                             qr_code=img_str,
+                             provisioning_uri=provisioning_uri)
+    
+    
+    @app.route('/admin/audit-logs')
+    @admin_required
+    def admin_audit_logs():
+        """View admin audit logs"""
+        page = request.args.get('page', 1, type=int)
+        per_page = 50
+        
+        logs = AdminAuditLog.query.order_by(
+            AdminAuditLog.created_at.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+        
+        return render_template('admin_audit_logs.html', logs=logs)
     
     
     def admin_required(f):
@@ -3049,6 +3185,12 @@ def create_app(config_name=None):
         user.suspension_reason = reason if reason else None
         db.session.commit()
         
+        log_admin_action('user_suspended', {
+            'user_id': user_id,
+            'email': user.email,
+            'reason': reason
+        })
+        
         flash(f'✅ User {user.email} has been suspended', 'success')
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
@@ -3062,6 +3204,11 @@ def create_app(config_name=None):
         user.is_suspended = False
         user.suspension_reason = None
         db.session.commit()
+        
+        log_admin_action('user_unsuspended', {
+            'user_id': user_id,
+            'email': user.email
+        })
         
         flash(f'✅ User {user.email} has been unsuspended', 'success')
         return redirect(url_for('admin_user_detail', user_id=user_id))
