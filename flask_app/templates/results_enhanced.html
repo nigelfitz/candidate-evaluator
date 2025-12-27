@@ -362,9 +362,9 @@
 
             <!-- Coverage Matrix Controls -->
             <div class="card mb-4">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-primary text-white" style="display: flex; justify-content: space-between; align-items: center;">
                     <h5 class="mb-0">📈 Coverage Matrix</h5>
-                    <button id="downloadCSV" class="btn btn-sm btn-light">
+                    <button id="downloadCSV" class="btn btn-sm btn-light" style="white-space: nowrap;">
                         📥 Download CSV
                     </button>
                 </div>
@@ -957,19 +957,14 @@ function toggleCustomCandidate(candidate) {
 }
 
 function downloadCSV() {
-    console.log('downloadCSV function called');
-    console.log('coverageData:', coverageData);
-    
     // Get current filtered/sorted data
     let data = [...coverageData];
     
     // Check if we have data
     if (!data || data.length === 0) {
-        console.error('No data available');
         alert('No data available to download');
         return;
     }
-    console.log('Data length:', data.length);
     
     if (currentSort === 'name') {
         data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
@@ -986,16 +981,31 @@ function downloadCSV() {
         data = data.filter(row => selectedCandidates.includes(row.Candidate));
     }
     
-    // Convert to CSV
-    const headers = Object.keys(data[0]);
-    const csv = [
-        headers.join(','),
-        ...data.map(row => headers.map(h => {
-            // Escape quotes and handle special characters
-            const value = String(row[h] ?? '');
-            return `"${value.replace(/"/g, '""')}"`;
-        }).join(','))
-    ].join('\n');
+    // Transpose: Candidates as columns, Criteria as rows
+    // Get all criteria (exclude 'Candidate' field)
+    const candidateNames = data.map(row => row.Candidate);
+    const allKeys = Object.keys(data[0]);
+    const criteriaKeys = allKeys.filter(key => key !== 'Candidate');
+    
+    // Build transposed data with rounded values
+    const csvRows = [];
+    
+    // Header row: Criterion name + candidate names
+    csvRows.push(['Criterion', ...candidateNames].map(v => `"${v}"`).join(','));
+    
+    // Data rows: one row per criterion
+    criteriaKeys.forEach(criterion => {
+        const row = [criterion];
+        data.forEach(candidateRow => {
+            const value = candidateRow[criterion];
+            // Round numeric values to 2 decimal places
+            const roundedValue = typeof value === 'number' ? Math.round(value * 100) / 100 : value;
+            row.push(roundedValue);
+        });
+        csvRows.push(row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    });
+    
+    const csv = csvRows.join('\n');
     
     // Download
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -1003,9 +1013,9 @@ function downloadCSV() {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'coverage_matrix.csv';
-    document.body.appendChild(a);  // Add to DOM before clicking
+    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);  // Clean up
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 }
 
