@@ -552,7 +552,46 @@ def infer_candidate_name(file_name: str, text: str) -> str:
 
 
 # -----------------------------
-        {"score": int (0-100), "reason": "1-sentence justification"}
+# Cost estimation
+# -----------------------------
+def estimate_tokens(text: str) -> int:
+    """Rough token estimation: ~4 chars per token"""
+    return len(text) // 4
+
+
+def estimate_analysis_cost(jd_text: str, candidate_texts: List[str], num_criteria: int, model: str = "gpt-4o") -> Dict[str, Any]:
+    """Estimate GPT API cost for analysis"""
+    # Pricing per 1M tokens (as of Nov 2024)
+    PRICING = {
+        "gpt-4o": {"input": 2.50, "output": 10.00},
+        "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+    }
+    
+    prices = PRICING.get(model, PRICING["gpt-4o"])
+    
+    # JD extraction
+    jd_tokens_in = estimate_tokens(jd_text)
+    jd_tokens_out = num_criteria * 20
+    
+    # Candidate insights (for top 3)
+    num_insights = min(3, len(candidate_texts))
+    avg_candidate_tokens = sum(estimate_tokens(text) for text in candidate_texts[:num_insights]) // max(1, num_insights)
+    total_insight_input = (jd_tokens_in + num_criteria * 15 + avg_candidate_tokens) * num_insights
+    total_insight_output = num_insights * 500  # ~500 tokens per insight
+    
+    # Total
+    total_input = jd_tokens_in + total_insight_input
+    total_output = jd_tokens_out + total_insight_output
+    
+    cost_input = (total_input / 1_000_000) * prices["input"]
+    cost_output = (total_output / 1_000_000) * prices["output"]
+    total_cost = cost_input + cost_output
+    
+    return {
+        "total_input_tokens": total_input,
+        "total_output_tokens": total_output,
+        "estimated_cost_usd": round(total_cost, 4),
+        "model": model
     """
     if not OpenAI:
         return {"score": 0, "reason": "OpenAI not available"}
