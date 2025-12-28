@@ -642,7 +642,7 @@ def analyse_candidates(
             
             # Store evidence (best matching snippet) plus density info for UI
             best_chunk_text = all_chunk_texts[chunk_rows[best_chunk_idx]]
-            evidence_map[(cand.name, crit)] = (best_chunk_text, max_sim, strong_chunks)
+            evidence_map[(cand.name, crit)] = (best_chunk_text, max_sim, int(strong_chunks))
         
         # Compute weighted overall score
         row["Overall"] = sum(criterion_scores) / sum(weights) if sum(weights) > 0 else 0.0
