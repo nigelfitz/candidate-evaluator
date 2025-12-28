@@ -786,6 +786,11 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         top_n=settings['top_evidence_items']
     )
     
+    # Add context about what the scores mean
+    user_prompt = f"IMPORTANT CONTEXT: The scores (0-100%) represent semantic similarity between the candidate's resume and each job requirement. Higher scores indicate stronger textual evidence of that skill/experience. A 90% score means excellent alignment with substantial relevant content. A 10% score means minimal/weak alignment with very limited relevant content.\n\n" + user_prompt
+        top_n=settings['top_evidence_items']
+    )
+    
     # Add instructions for min/max items and notes length
     user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
     
