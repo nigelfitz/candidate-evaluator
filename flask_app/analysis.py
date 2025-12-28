@@ -637,6 +637,31 @@ def analyse_candidates(
             # Final score: 80% peak + 20% density
             final_score = (max_sim * 0.80) + density_bonus
             
+            # QUALIFICATION BOOST: Detect binary qualifications (degrees, certifications, memberships)
+            # If criterion mentions "membership", "degree", "qualification", "certified", "chartered"
+            # AND candidate has strong keyword match, boost to 95%+
+            qual_keywords = ['membership', 'degree', 'qualification', 'certified', 'chartered', 'bachelor', 'master', 'phd', 'cpa', 'cfa', 'professional body']
+            crit_lower = crit.lower()
+            is_qualification = any(kw in crit_lower for kw in qual_keywords)
+            
+            if is_qualification:
+                # Check if candidate text has relevant qualification terms
+                cand_text_lower = ' '.join([all_chunk_texts[chunk_rows[i]] for i in range(len(chunk_rows))]).lower()
+                
+                # For accounting body membership
+                if 'accounting body' in crit_lower or 'professional accounting' in crit_lower:
+                    if any(term in cand_text_lower for term in ['chartered accountant', 'cpa', 'ca', 'cma', 'certified public accountant']):
+                        final_score = max(final_score, 0.95)  # Boost to 95% minimum
+                
+                # For general membership/qualification
+                elif 'membership' in crit_lower and any(term in cand_text_lower for term in ['member', 'chartered', 'certified', 'qualified']):
+                    final_score = max(final_score, 0.90)
+                
+                # For degree requirements
+                elif any(deg in crit_lower for deg in ['bachelor', 'degree', 'master', 'phd']):
+                    if any(deg in cand_text_lower for deg in ['bachelor', 'degree', 'master', 'phd', 'b.a.', 'b.s.', 'mba', 'm.s.']):
+                        final_score = max(final_score, 0.90)
+            
             row[crit] = final_score
             criterion_scores.append(final_score * weights[crit_idx])
             
