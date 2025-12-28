@@ -4,32 +4,44 @@ Run this once to update the database schema
 """
 
 from database import db, Analysis
+from sqlalchemy import text
 
-def migrate_add_resumes_processed():
+def migrate():
     """Add resumes_processed column to analyses table"""
+    print("🔄 Starting resumes_processed migration...")
+    
     try:
         # Check if column already exists
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        columns = [col['name'] for col in inspector.get_columns('analyses')]
+        result = db.session.execute(text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='analyses' AND column_name='resumes_processed';
+        """))
         
-        if 'resumes_processed' in columns:
-            print("✅ Column 'resumes_processed' already exists")
-            return
+        existing_columns = [row[0] for row in result.fetchall()]
+        
+        if 'resumes_processed' in existing_columns:
+            print("✅ Column 'resumes_processed' already exists. Skipping.")
+            return True
         
         # Add column
-        with db.engine.connect() as conn:
-            conn.execute(db.text("""
-                ALTER TABLE analyses 
-                ADD COLUMN resumes_processed INTEGER DEFAULT 0
-            """))
-            conn.commit()
+        print("📝 Adding 'resumes_processed' column to analyses table...")
+        db.session.execute(text("""
+            ALTER TABLE analyses 
+            ADD COLUMN resumes_processed INTEGER DEFAULT 0;
+        """))
         
-        print("✅ Successfully added 'resumes_processed' column to analyses table")
+        db.session.commit()
+        print("✅ resumes_processed migration completed successfully!")
+        return True
         
     except Exception as e:
-        print(f"ERROR: Failed to add resumes_processed column: {str(e)}")
-        raise
+        db.session.rollback()
+        print(f"❌ Migration failed: {e}")
+        return False
 
 if __name__ == "__main__":
-    migrate_add_resumes_processed()
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        migrate()
