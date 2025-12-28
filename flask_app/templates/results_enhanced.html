@@ -848,11 +848,22 @@ function updateEvidenceDisplay() {
     }
     
     const snippet = evidence[0];
+    const densityCount = evidence[2] || 0; // New: chunk count for density indicator
     
     // Get actual score from coverage data
     const row = coverageData.find(r => r.Candidate === candidate);
     const score = row ? parseFloat(row[criterion]) : 0;
     const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
+    
+    // Generate evidence depth indicator
+    let evidenceTag = '';
+    if (score >= 0.90) {
+        evidenceTag = '<span class="badge bg-success ms-2" style="font-size: 0.8rem;">🏆 Strong Peak Performance</span>';
+    } else if (densityCount >= 4) {
+        evidenceTag = `<span class="badge bg-info ms-2" style="font-size: 0.8rem;">📊 Extensive Track Record (${densityCount} mentions)</span>`;
+    } else if (densityCount >= 2) {
+        evidenceTag = `<span class="badge bg-secondary ms-2" style="font-size: 0.8rem;">✓ Multiple mentions (${densityCount})</span>`;
+    }
     
     // Check if this candidate has insights (Top 5 with justifications)
     const candidateInsights = insightsData ? insightsData[candidate] : null;
@@ -867,12 +878,13 @@ function updateEvidenceDisplay() {
         hasCandidateInsights: !!candidateInsights,
         hasJustifications: !!justifications,
         justificationKeys: Object.keys(justifications),
-        specificJustification: justification
+        specificJustification: justification,
+        densityCount: densityCount
     });
     
     let html = `
         <div class="alert alert-${scoreColor}">
-            <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>
+            <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>${evidenceTag}
         </div>
     `;
     
