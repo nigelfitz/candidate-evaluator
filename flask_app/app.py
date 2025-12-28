@@ -890,7 +890,7 @@ def create_app(config_name=None):
             
             # IMPORTANT: Run analysis FIRST, charge AFTER (if analysis fails, no charge)
             print(f"DEBUG: Starting analysis (NO CHARGE YET)...")
-            coverage, insights, evidence_map = analyse_candidates(
+            coverage, insights, evidence_map, ai_scoring_data = analyse_candidates(
                 candidates=candidates,
                 criteria=criteria,
                 weights=None,
@@ -899,8 +899,15 @@ def create_app(config_name=None):
             )
             print(f"DEBUG: Coverage analysis complete!")
             
+            # Extract AI scoring data for re-scoring selected candidates
+            criteria_embs = ai_scoring_data['criteria_embs']
+            chunk_embs = ai_scoring_data['chunk_embs']
+            chunk_map = ai_scoring_data['chunk_map']
+            all_chunk_texts = ai_scoring_data['all_chunk_texts']
+            weights = ai_scoring_data['weights']
+            
             # Generate GPT insights (can fail with OpenAI API errors)
-            from analysis import gpt_candidate_insights
+            from analysis import gpt_candidate_insights, ai_rescore_candidate
             insights_data = {}
             gpt_candidates_list = []
             
@@ -908,22 +915,49 @@ def create_app(config_name=None):
             if num_insights > 0:
                 top_candidates = coverage.nlargest(num_insights, 'Overall')
                 print(f"DEBUG: Top {num_insights} candidates selected for insights: {list(top_candidates['Candidate'])}")
+                print(f"DEBUG: AI re-scoring {len(top_candidates)} candidates selected for insights...")
+                
                 for idx, row in top_candidates.iterrows():
                     candidate_name = row['Candidate']
                     gpt_candidates_list.append(candidate_name)
                     candidate_obj = next((c for c in candidates if c.name == candidate_name), None)
                     if candidate_obj:
                         print(f"DEBUG: Generating insights for candidate: {candidate_name}")
-                        candidate_scores = {col: row[col] for col in coverage.columns if col not in ['Candidate', 'Overall']}
+                        
+                        # TWO-STAGE SCORING: Re-score this candidate with AI evaluation
+                        ai_scores, ai_justifications = ai_rescore_candidate(
+                            candidate_name=candidate_name,
+                            criteria=criteria,
+                            criteria_embs=criteria_embs,
+                            chunk_embs=chunk_embs,
+                            chunk_map=chunk_map,
+                            all_chunk_texts=all_chunk_texts,
+                            weights=weights
+                        )
+                        
+                        # Update coverage dataframe with AI scores
+                        for crit in criteria:
+                            coverage.loc[coverage['Candidate'] == candidate_name, crit] = ai_scores.get(crit, 0.0)
+                        
+                        # Recalculate overall score with AI scores
+                        weighted_scores = [ai_scores.get(crit, 0.0) * weights[i] for i, crit in enumerate(criteria)]
+                        new_overall = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
+                        coverage.loc[coverage['Candidate'] == candidate_name, 'Overall'] = new_overall
+                        
+                        # Generate insights using AI-scored data
                         insights = gpt_candidate_insights(
                             candidate_name=candidate_name,
                             candidate_text=candidate_obj.text,
                             jd_text=jd_text,
-                            coverage_scores=candidate_scores,
+                            coverage_scores=ai_scores,
                             criteria=criteria,
                             evidence_map=evidence_map,
                             model="gpt-4o"
                         )
+                        
+                        # Use AI justifications for perfect alignment
+                        insights['justifications'] = ai_justifications
+                        
                         insights_data[candidate_name] = insights
                         print(f"DEBUG: Insights generated for {candidate_name}")
             else:
