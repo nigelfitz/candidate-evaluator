@@ -601,17 +601,11 @@ def create_app(config_name=None):
                 analysis.category_map = json.dumps(category_map)
                 analysis.gpt_candidates = json.dumps(gpt_candidates_list)
                 
-                # Store candidate files for viewing
-                from database import CandidateFile
-                    cost_usd=total_cost,
-                    analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large')
-                )
                 db.session.add(analysis)
                 
                 # Flush to get analysis.id before linking to transaction
                 db.session.flush()
                 
-                # Link transaction to analysis and update description with Job#
                 # Store candidate files for viewing
                 from database import CandidateFile
                 for candidate in candidates:
