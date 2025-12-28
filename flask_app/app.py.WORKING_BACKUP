@@ -385,7 +385,7 @@ def create_app(config_name=None):
             try:
                 from analysis import (
                     read_file_bytes, hash_bytes, Candidate,
-                    infer_candidate_name
+                    analyse_candidates, infer_candidate_name
                 )
                 
                 # Check we have JD and criteria in database
@@ -783,7 +783,7 @@ def create_app(config_name=None):
         
         # POST - Run the analysis
         try:
-            from analysis import Candidate
+            from analysis import Candidate, analyse_candidates
             from config import Config
             
             # CRITICAL: Check form token to prevent duplicate submissions
