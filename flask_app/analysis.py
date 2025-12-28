@@ -536,64 +536,208 @@ def infer_candidate_name(file_name: str, text: str) -> str:
 # -----------------------------
 # Main analysis function
 # -----------------------------
-# ============================================
-# DEPRECATED: Old Semantic Similarity System
-# These functions are no longer used. The system now uses pure AI evaluation.
-# Kept only for reference during transition period.
-# ============================================
-
-# OLD: analyse_candidates() - REPLACED BY ai_service.py AIService class
-# OLD: get_top_chunks_for_criterion() - REPLACED BY AI evaluation
-# OLD: ai_evaluate_criterion() - REPLACED BY ai_service.py
-# OLD: ai_rescore_candidate() - REPLACED BY ai_service.py
-# OLD: gpt_candidate_insights() - REPLACED BY ai_service.generate_deep_insights()
-
-# If you see import errors, update your code to use ai_service.py instead
+def analyse_candidates(
+    candidates: List[Candidate],
+    criteria: List[str],
+    weights: Optional[List[float]] = None,
+    chunk_chars: int = 1200,
+    overlap: int = 150,
+) -> Tuple[pd.DataFrame, Dict[str, Dict], Dict[Tuple[str, str], Tuple[str, float]], Dict[str, Any]]:
+    """
+    Analyze candidates against criteria using semantic similarity
+    
+    Returns:
+        - coverage: DataFrame with scores for each candidate/criterion
+        - insights: Dict[candidate_name, dict] (placeholder for GPT insights)
+        - evidence_map: Dict[(candidate, criterion), (snippet, score)]
+        - ai_scoring_data: Dict with data needed for AI re-scoring (criteria_embs, chunk_embs, etc.)
+    """
+    import time
+    start_time = time.time()
+    
+    if weights is None:
+        weights = [1.0] * len(criteria)
+    
+    # Chunk all candidate texts
+    chunk_start = time.time()
+    all_chunk_texts = []
+    chunk_index = []  # (candidate_idx, chunk_idx)
+    
+    for i, cand in enumerate(candidates):
+        chunks = chunk_text(cand.text, chunk_chars, overlap)
+        for j, ch in enumerate(chunks):
+            all_chunk_texts.append(ch)
+            chunk_index.append((i, j))
+    
+    print(f"Text chunking: {time.time() - chunk_start:.2f}s ({len(all_chunk_texts)} chunks)")
+    
+    # Load embedder and create embeddings
+    embed_start = time.time()
+    info = load_embedder()
+    chunk_embs, vec_type = prepare_corpus_embeddings(all_chunk_texts, info)
+    print(f"Embedding generation: {time.time() - embed_start:.2f}s ({vec_type})")
+    
+    # Map candidate_idx -> chunk row indices
+    cand_to_rows = {i: [] for i in range(len(candidates))}
+    for ridx, (ci, cj) in enumerate(chunk_index):
+        cand_to_rows[ci].append(ridx)
+    
+    # PRE-COMPUTE: Embed all criteria once (MAJOR PERFORMANCE FIX)
+    criteria_embed_start = time.time()
+    if vec_type == "sbert":
+        criteria_embs = embed_sbert(criteria, info["model"])
+    else:
+        criteria_embs = np.zeros((len(criteria), chunk_embs.shape[1]))
+    print(f"Criterion embedding: {time.time() - criteria_embed_start:.2f}s")
+    
+    # Analyze each candidate
+    coverage_records = []
+    evidence_map: Dict[Tuple[str, str], Tuple[str, float]] = {}
+    
+    for cand_idx, cand in enumerate(candidates):
+        row = {"Candidate": cand.name}
+        chunk_rows = cand_to_rows[cand_idx]
+        
+        if len(chunk_rows) == 0:
+            # No chunks for this candidate
+            for crit in criteria:
+                row[crit] = 0.0
+            row["Overall"] = 0.0
+            coverage_records.append(row)
+            continue
+        
+        cand_embs = chunk_embs[chunk_rows]
+        
+        # Score against each criterion with Evidence Density bonus
+        criterion_scores = []
+        for crit_idx, crit in enumerate(criteria):
+            # Use pre-computed criterion embedding (NO MORE REDUNDANT EMBEDDING!)
+            crit_emb = criteria_embs[crit_idx:crit_idx+1]  # Shape: (1, embedding_dim)
+            
+            # Compute similarity to all candidate chunks
+            sims = pairwise_cosine(crit_emb, cand_embs)[0]
+            max_sim = float(sims.max())
+            best_chunk_idx = int(sims.argmax())
+            
+            # FAST MATH SCORING (for non-insight candidates)
+            # This provides instant ranking using semantic similarity + density bonus
+            # Candidates selected for Deep Insights will be re-scored with AI evaluation
+            
+            # Evidence Density: Peak similarity (80%) + density bonus (20%)
+            density_threshold = 0.60
+            strong_chunks = np.sum(sims >= density_threshold)
+            density_bonus = min(strong_chunks * 0.04, 0.20)
+            
+            # Mastery Floor: Protect world-class specialists (90%+ peak → min 10% density bonus)
+            if max_sim >= 0.90 and density_bonus < 0.10:
+                density_bonus = 0.10
+            
+            # Simple linear scoring for initial ranking
+            final_score = (max_sim * 0.80) + density_bonus
+            
+            row[crit] = final_score
+            criterion_scores.append(final_score * weights[crit_idx])
+            
+            # Store evidence (best matching snippet) plus density info for UI
+            best_chunk_text = all_chunk_texts[chunk_rows[best_chunk_idx]]
+            evidence_map[(cand.name, crit)] = (best_chunk_text, max_sim, int(strong_chunks))
+        
+        # Compute weighted overall score
+        row["Overall"] = sum(criterion_scores) / sum(weights) if sum(weights) > 0 else 0.0
+        coverage_records.append(row)
+    
+    # Create DataFrame and sort by Overall score
+    coverage = pd.DataFrame(coverage_records)
+    coverage = coverage.sort_values("Overall", ascending=False).reset_index(drop=True)
+    
+    # Insights placeholder (will be filled by GPT if enabled)
+    insights = {}
+    
+    # Prepare data for AI re-scoring (Two-Stage Scoring)
+    # Build chunk_map mapping candidate_name -> chunk indices
+    chunk_map = {}
+    for cand_idx, cand in enumerate(candidates):
+        chunk_map[cand.name] = cand_to_rows[cand_idx]
+    
+    ai_scoring_data = {
+        'criteria_embs': criteria_embs,
+        'chunk_embs': chunk_embs,
+        'chunk_map': chunk_map,
+        'all_chunk_texts': all_chunk_texts,
+        'weights': weights
+    }
+    
+    return coverage, insights, evidence_map, ai_scoring_data
 
 
 # -----------------------------
-# Cost estimation
+# AI-Powered Criterion Evaluation
 # -----------------------------
-def estimate_tokens(text: str) -> int:
-    """Rough token estimation: ~4 chars per token"""
-    return len(text) // 4
+# -----------------------------
+# AI-Powered Criterion Evaluation
+# -----------------------------
+def get_top_chunks_for_criterion(crit_emb, cand_embs, all_chunk_texts, chunk_rows, top_n=3):
+    """
+    Retrieve top N most relevant chunks for a criterion (Stage 1: Retrieval).
+    
+    Args:
+        crit_emb: Criterion embedding (shape: 1 x embedding_dim)
+        cand_embs: Candidate chunk embeddings
+        all_chunk_texts: List of all chunk texts
+        chunk_rows: Indices of chunks belonging to this candidate
+        top_n: Number of top chunks to return
+    
+    Returns:
+        List of top N chunk texts (strings)
+    """
+    # Compute similarity to all candidate chunks
+    sims = pairwise_cosine(crit_emb, cand_embs)[0]
+    
+    # Get indices of top N chunks (sorted by similarity)
+    top_indices = np.argsort(sims)[::-1][:top_n]
+    
+    # Retrieve actual chunk texts
+    top_chunks = [all_chunk_texts[chunk_rows[idx]] for idx in top_indices if idx < len(chunk_rows)]
+    
+    return top_chunks
 
 
-def estimate_analysis_cost(jd_text: str, candidate_texts: List[str], num_criteria: int, model: str = "gpt-4o") -> Dict[str, Any]:
-    """Estimate GPT API cost for analysis"""
-    # Pricing per 1M tokens (as of Nov 2024)
-    PRICING = {
-        "gpt-4o": {"input": 2.50, "output": 10.00},
-        "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    }
+def ai_evaluate_criterion(criterion: str, top_chunks: List[str], model: str = "gpt-4o-mini") -> Dict[str, Any]:
+    """
+    Stage 2 Scoring: AI-powered reasoned evaluation of a single criterion.
     
-    prices = PRICING.get(model, PRICING["gpt-4o"])
+    Replaces manual heuristics (qualification boosts, non-linear curves) with GPT-4o-mini
+    that naturally understands:
+    - Binary qualifications (CA, CPA, degree) → 100 score
+    - Track record across multiple roles (density) → higher scores
+    - Outdated or mismatched seniority → conservative scores
     
-    # JD extraction
-    jd_tokens_in = estimate_tokens(jd_text)
-    jd_tokens_out = num_criteria * 20
+    Args:
+        criterion: The job requirement being evaluated
+        top_chunks: Top 3 most relevant resume snippets from semantic retrieval
+        model: GPT model to use (default: gpt-4o-mini for speed/cost)
     
-    # Candidate insights (for top 3)
-    num_insights = min(3, len(candidate_texts))
-    avg_candidate_tokens = sum(estimate_tokens(text) for text in candidate_texts[:num_insights]) // max(1, num_insights)
-    total_insight_input = (jd_tokens_in + num_criteria * 15 + avg_candidate_tokens) * num_insights
-    total_insight_output = num_insights * 500  # ~500 tokens per insight
+    Returns:
+        {"score": int (0-100), "reason": "1-sentence justification"}
+    """
+    if not OpenAI:
+        return {"score": 0, "reason": "OpenAI not available"}
     
-    # Total
-    total_input = jd_tokens_in + total_insight_input
-    total_output = jd_tokens_out + total_insight_output
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     
-    cost_input = (total_input / 1_000_000) * prices["input"]
-    cost_output = (total_output / 1_000_000) * prices["output"]
-    total_cost = cost_input + cost_output
+    # Format chunks for prompt
+    chunks_text = "\n\n".join([f"Snippet {i+1}: {chunk}" for i, chunk in enumerate(top_chunks)])
     
-    return {
-        "total_input_tokens": total_input,
-        "total_output_tokens": total_output,
-        "estimated_cost_usd": round(total_cost, 4),
-        "model": model
-    }
+    system_prompt = """You are a senior recruiter. I will provide a Job Criterion and the 3 most relevant snippets from a candidate's resume. Your task is to provide a final score from 0-100.
 
+Rules:
+1. If the criterion requires a specific license, degree, or membership (e.g., CA, CPA, Bar, Bachelor's), and the snippets show they have it, give a 100.
+2. If the snippets show a consistent track record across multiple roles, reward this with a higher score than a single mention (Density).
+3. If the evidence is outdated or doesn't quite match the level of seniority required, score conservatively.
+4. Return only a JSON object: {"score": integer, "reason": "1-sentence justification"}.
+5. Keep the reason concise and factual - focus on what evidence was found."""
+    
+    user_prompt = f"""Criterion: {criterion}
 
 Resume Snippets:
 {chunks_text}
