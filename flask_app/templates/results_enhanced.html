@@ -908,15 +908,24 @@ function updateEvidenceDisplay() {
             </details>
         `;
     } else if (candidateInsights && !justification) {
-        // HAS INSIGHTS BUT NO JUSTIFICATION FOR THIS CRITERION (old analysis or criterion not in Top N)
+        // HAS INSIGHTS BUT NO JUSTIFICATION FOR THIS CRITERION (criterion not in Top N by score)
         html += `
-            <div class="alert alert-warning">
-                <strong>ℹ️ Justification Not Available</strong>
-                <p class="mb-0">This analysis was run before AI justifications were added, or this criterion wasn't included in the Top N evidence items. Re-run the analysis to generate justifications.</p>
+            <div class="alert alert-info" style="border-left: 4px solid #0ea5e9;">
+                <div class="d-flex align-items-start" style="gap: 12px;">
+                    <i data-lucide="info" style="width: 20px; height: 20px; color: #0ea5e9; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <strong>Justification Not Generated</strong>
+                        <p class="mb-0 mt-1" style="font-size: 0.95rem;">AI justifications are generated only for the top-scoring criteria where the candidate has the strongest evidence. This criterion scored ${score.toFixed(2)}, placing it outside the top evidence tier for this candidate.</p>
+                        ${score < thresholds.low ? '<p class="mb-0 mt-2" style="font-size: 0.9rem;"><em>Low score indicates limited relevant experience in this area.</em></p>' : ''}
+                    </div>
+                </div>
             </div>
             <details class="card">
-                <summary class="card-header" style="cursor: pointer;">
-                    <strong>Raw Source Text</strong>
+                <summary class="card-header" style="cursor: pointer; user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                        <strong>Raw Source Text</strong>
+                    </span>
                 </summary>
                 <div class="card-body">
                     <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px;">${snippet}</div>
