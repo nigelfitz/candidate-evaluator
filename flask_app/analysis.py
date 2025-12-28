@@ -696,12 +696,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     # Use provided model parameter, otherwise use config setting
     model_to_use = model if model != "gpt-4o" else settings['model']
     
-    # Generate justifications for ALL criteria - let GPT decide appropriate tone based on score
-    filtered_criteria = criteria
-    
-    # Build evidence lines from coverage scores and evidence snippets
-    # Pass score with contextual quality label to help GPT calibrate justification tone
-    ev_items = []
+    # Build criterion list with scores for GPT context
+    # GPT will search the full resume itself rather than pre-selected snippets
+    criteria_list = []
     for criterion in criteria:
         score = coverage_scores.get(criterion, 0.0)
         score_percent = int(score * 100)
@@ -718,16 +715,9 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         else:
             quality = "MINIMAL match"
         
-        # Get FULL evidence chunk from evidence_map (not truncated)
-        evidence_key = (candidate_name, criterion)
-        full_chunk = ""
-        if evidence_key in evidence_map:
-            # Pass complete 1200-char chunk for better justification context
-            full_chunk = evidence_map[evidence_key][0].replace("\n", " ")
-        
-        ev_items.append(f"- {criterion} (SCORE: {score_percent}% - {quality}):\n  Evidence chunk: {full_chunk}")
+        criteria_list.append(f"- {criterion} (SCORE: {score_percent}% - {quality})")
     
-    ev_lines = "\n".join(ev_items)
+    criteria_with_scores = "\n".join(criteria_list)
     
     # JSON schema for response - includes justifications dict
     schema = {
@@ -781,37 +771,36 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     user_prompt = insights_prompts['user_prompt_template']['value'].format(
         jd_text=jd_text[:settings['jd_text_chars']],
         candidate_name=candidate_name,
-        candidate_text=candidate_text[:settings['candidate_text_chars']],
-        evidence_lines=ev_lines,
+        candidate_text=candidate_text,  # FULL RESUME - no truncation
+        evidence_lines=criteria_with_scores,  # Just scores, no snippets - GPT searches full resume
         top_n=settings['top_evidence_items']
     )
     
     # Add context about what the scores mean
     user_prompt = f"IMPORTANT CONTEXT: The scores (0-100%) represent semantic similarity between the candidate's resume and each job requirement. Higher scores indicate stronger textual evidence of that skill/experience. A 90% score means excellent alignment with substantial relevant content. A 10% score means minimal/weak alignment with very limited relevant content.\n\n" + user_prompt
-        top_n=settings['top_evidence_items']
-    )
     
     # Add instructions for min/max items and notes length
     user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
     
     # Add justification instructions with score-aware guidance
-    user_prompt += "\n\nIMPORTANT: For each criterion in the evidence list above, write ONE professional justification sentence in the 'justifications' object."
+    user_prompt += "\n\nIMPORTANT: For each criterion in the list above, write ONE professional justification sentence in the 'justifications' object."
+    user_prompt += "\n\nSearch the FULL resume to find ALL relevant evidence for each criterion. Don't limit yourself to one example - cite multiple roles/achievements if the candidate demonstrates the skill across their career."
     user_prompt += "\n\nCALIBRATE YOUR TONE based on the score percentage:"
-    user_prompt += "\n- STRONG match (75-100%): Emphasize depth and breadth of evidence. Be enthusiastic about strong alignment."
+    user_prompt += "\n- STRONG match (75-100%): Emphasize depth and breadth of evidence. Cite multiple examples if present."
     user_prompt += "\n- GOOD match (50-74%): Note solid evidence while acknowledging it's not exhaustive. Balanced positive tone."
     user_prompt += "\n- MODERATE match (35-49%): Acknowledge limited evidence exists but gaps are notable. Cautious tone."
     user_prompt += "\n- WEAK match (15-34%): Note minimal evidence found. State what little exists without overstating it."
     user_prompt += "\n- MINIMAL match (0-14%): State clearly that insufficient evidence was found, or that evidence suggests lack of this skill."
     user_prompt += "\n\nEach justification must:"
     user_prompt += "\n1. Reflect the score honestly - don't oversell weak matches or undersell strong ones"
-    user_prompt += "\n2. Cite specific facts from the evidence chunk (roles, numbers, achievements)"
+    user_prompt += "\n2. Cite specific facts from the FULL resume (roles, numbers, achievements across multiple jobs if applicable)"
     user_prompt += "\n3. Be unique per criterion - explain WHY it demonstrates THAT specific criterion"
     user_prompt += "\n4. Avoid generic phrases like 'This shows X' or 'The candidate demonstrates Y'"
-    user_prompt += "\n5. Be professional and concise (one sentence)"
+    user_prompt += "\n5. Be professional and concise (1-2 sentences max)"
     user_prompt += "\n\nExamples:"
-    user_prompt += "\n- 85% match: \"Led cross-functional teams of 12+ engineers through three major system migrations with zero downtime, demonstrating strong technical leadership.\""
-    user_prompt += "\n- 40% match: \"Resume mentions managing a small team of 5 at SLF Lawyers, though specific leadership examples are limited.\""
-    user_prompt += "\n- 8% match: \"No substantial evidence of leadership roles found; resume focuses primarily on individual contributor work.\""
+    user_prompt += "\n- 85% Budget Management: \"Demonstrated consistent budget oversight across three senior roles: managed $2M annual budgets at SLF Lawyers (2018-2023), directed departmental budgets at Gold Coast Council (2015-2018), and provided budget analysis at Previous Corp (2012-2015).\""
+    user_prompt += "\n- 40% Budget Management: \"Resume mentions managing a small team budget at SLF Lawyers, though lacks detail on scope or specific financial responsibilities.\""
+    user_prompt += "\n- 8% Budget Management: \"No evidence of budget management responsibilities found; roles focus primarily on technical execution rather than financial oversight.\""
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)
