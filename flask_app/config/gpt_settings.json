@@ -254,7 +254,7 @@
       "quality_impact": "Match tone to audience. Technical for eng managers, executive for C-suite roles."
     },
     "evidence_filter_strategy": {
-      "value": "top_n_by_score",
+      "value": "threshold_based",
       "description": "How to select which criteria evidence to send to GPT",
       "options": [
         "top_n_by_score",
@@ -262,23 +262,23 @@
         "threshold_based",
         "all_criteria"
       ],
-      "explanation": "top_n_by_score: Send top N highest scores (CURRENT). strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only >0.65 or <0.40. all_criteria: Send everything.",
-      "recommended": "top_n_by_score",
+      "explanation": "top_n_by_score: Send top N highest scores. strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only >0.50 or <0.30 (CURRENT). all_criteria: Send everything.",
+      "recommended": "threshold_based",
       "cost_impact": "all_criteria doubles token costs. threshold_based is most efficient. top_n provides good balance.",
-      "quality_impact": "strengths_and_gaps gives most balanced insights. threshold_based focuses on extremes."
+      "quality_impact": "threshold_based generates justifications only where candidate has meaningful evidence (score ≥0.50) or notable gaps (score ≤0.30)."
     },
     "evidence_score_threshold_high": {
-      "value": 0.65,
+      "value": 0.50,
       "description": "When using threshold_based strategy, scores above this are sent as strengths",
       "range": [
         0.5,
         0.85
       ],
-      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring above this are sent to GPT.",
-      "recommended": 0.65
+      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring above this get AI justifications. Set to 0.50 to include all moderate-to-strong matches.",
+      "recommended": 0.50
     },
     "evidence_score_threshold_low": {
-      "value": 0.40,
+      "value": 0.30,
       "description": "When using threshold_based strategy, scores below this are sent as gaps",
       "range": [
         0.15,
