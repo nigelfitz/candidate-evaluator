@@ -787,14 +787,10 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     tone_instruction = tone_map.get(settings['insight_tone'], 'professional hiring language')
     
     # Build user prompt from template, replacing placeholders
-    # IMPORTANT: Limit candidate text to prevent JSON parsing issues with very long resumes
-    max_candidate_chars = 8000  # Enough for full 2-3 page resume but not excessive
-    candidate_text_limited = candidate_text[:max_candidate_chars] if len(candidate_text) > max_candidate_chars else candidate_text
-    
     user_prompt = insights_prompts['user_prompt_template']['value'].format(
         jd_text=jd_text[:settings['jd_text_chars']],
         candidate_name=candidate_name,
-        candidate_text=candidate_text_limited,  # Use limited version
+        candidate_text=candidate_text,  # Full resume - no artificial limits
         evidence_lines=criteria_with_scores,  # Just scores, no snippets - GPT searches full resume
         top_n=settings['top_evidence_items']
     )
@@ -805,8 +801,12 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     # Add instructions for min/max items and notes length
     user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
     
-    # Add justification instructions with score-aware guidance
-    user_prompt += "\n\nIMPORTANT: For each criterion in the list above, write ONE professional justification sentence in the 'justifications' object."
+    # Add justification instructions with score-aware guidance  
+    user_prompt += "\n\nIMPORTANT JSON FORMAT: Return a JSON object with these exact keys:"
+    user_prompt += "\n{'top': [array of strength strings], 'gaps': [array of gap strings], 'notes': 'assessment string', 'justifications': {dict mapping criterion to justification}}"
+    user_prompt += "\n\nFor the 'justifications' object, create ONE entry per criterion with the criterion name as the key and the justification sentence as the value."
+    user_prompt += "\nExample: {'Expert financial analysis': 'Demonstrated financial analysis in role X', 'Advanced skills with Microsoft Excel': 'Used Excel extensively at Y'}"
+    user_prompt += "\n\nDO NOT embed justifications inside the top/gaps arrays. Keep them separate in the justifications dict."
     user_prompt += "\n\nCRITICAL: When writing justifications, avoid using quotation marks or apostrophes that could break JSON formatting. Use simple declarative sentences."
     user_prompt += "\n\nSearch the FULL resume to find ALL relevant evidence for each criterion. Don't limit yourself to one example - cite multiple roles/achievements if the candidate demonstrates the skill across their career."
     user_prompt += "\n\nCALIBRATE YOUR TONE based on the score percentage:"
@@ -903,6 +903,14 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         justifications = result.get('justifications', {})
         if not isinstance(justifications, dict):
             justifications = {}
+        
+        # Fallback: If justifications empty, check if GPT put them inside top_strengths
+        if len(justifications) == 0:
+            for key in ['top', 'top_strengths']:
+                if key in result and isinstance(result[key], list):
+                    for item in result[key]:
+                        if isinstance(item, dict) and 'criterion' in item and 'justification' in item:
+                            justifications[item['criterion']] = item['justification']
         
         # DEBUG: Log justification status
         print(f"DEBUG: Justifications extracted: {len(justifications)} items")

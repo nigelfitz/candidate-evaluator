@@ -262,24 +262,24 @@
         "threshold_based",
         "all_criteria"
       ],
-      "explanation": "top_n_by_score: Send top N highest scores. strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only >0.50 or <0.30 (CURRENT). all_criteria: Send everything.",
+      "explanation": "top_n_by_score: Send top N highest scores. strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only scores ≥0.40 (CURRENT - positive evidence only). all_criteria: Send everything.",
       "recommended": "threshold_based",
-      "cost_impact": "all_criteria doubles token costs. threshold_based is most efficient. top_n provides good balance.",
-      "quality_impact": "threshold_based generates justifications only where candidate has meaningful evidence (score ≥0.50) or notable gaps (score ≤0.30)."
+      "cost_impact": "all_criteria doubles token costs. threshold_based is most efficient by focusing on meaningful matches only.",
+      "quality_impact": "threshold_based generates justifications only where candidate has real evidence to support the criterion."
     },
     "evidence_score_threshold_high": {
-      "value": 0.50,
-      "description": "When using threshold_based strategy, scores above this are sent as strengths",
+      "value": 0.40,
+      "description": "When using threshold_based strategy, only scores above this get justifications",
       "range": [
-        0.5,
+        0.3,
         0.85
       ],
-      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring above this get AI justifications. Set to 0.50 to include all moderate-to-strong matches.",
-      "recommended": 0.50
+      "explanation": "Criteria scoring above this get AI justifications. Set to 0.40 (40%) to include moderate-to-strong matches. Scores below this show 'insufficient evidence' message.",
+      "recommended": 0.40
     },
     "evidence_score_threshold_low": {
-      "value": 0.30,
-      "description": "When using threshold_based strategy, scores below this are sent as gaps",
+      "value": 0.0,
+      "description": "NOT USED - set to 0.0 to disable gap justifications",
       "range": [
         0.15,
         0.50
