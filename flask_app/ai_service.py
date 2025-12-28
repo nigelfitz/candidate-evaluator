@@ -150,25 +150,60 @@ Candidate Resume:
 
 Provide your evaluation."""
 
-        response = await self.client.chat.completions.create(
-            model=self.ranker_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.2,
-            max_tokens=150,
-            response_format={"type": "json_object"}
-        )
+        # Retry logic for rate limits
+        max_retries = 5
+        retry_delay = 1.0  # Start with 1 second
         
-        result = json.loads(response.choices[0].message.content)
-        
-        return CriterionScore(
-            criterion=criterion,
-            score=max(0, min(100, int(result.get("score", 0)))),
-            justification=result.get("justification", "No justification provided"),
-            is_anchor=is_anchor
-        )
+        for attempt in range(max_retries):
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.ranker_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=150,
+                    response_format={"type": "json_object"}
+                )
+                
+                result = json.loads(response.choices[0].message.content)
+                
+                return CriterionScore(
+                    criterion=criterion,
+                    score=max(0, min(100, int(result.get("score", 0)))),
+                    justification=result.get("justification", "No justification provided"),
+                    is_anchor=is_anchor
+                )
+                
+            except Exception as e:
+                error_str = str(e)
+                
+                # Check if it's a rate limit error
+                if "rate_limit" in error_str.lower() or "429" in error_str:
+                    if attempt < max_retries - 1:
+                        # Exponential backoff
+                        wait_time = retry_delay * (2 ** attempt)
+                        print(f"Rate limit hit for {criterion}. Waiting {wait_time:.1f}s before retry {attempt + 1}/{max_retries}")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        print(f"ERROR: Max retries exceeded for {criterion}: {error_str}")
+                        return CriterionScore(
+                            criterion=criterion,
+                            score=0,
+                            justification=f"Rate limit error after {max_retries} retries",
+                            is_anchor=is_anchor
+                        )
+                else:
+                    # Non-rate-limit error - fail immediately
+                    print(f"ERROR scoring {criterion}: {error_str}")
+                    return CriterionScore(
+                        criterion=criterion,
+                        score=0,
+                        justification=f"Evaluation error: {error_str[:100]}",
+                        is_anchor=is_anchor
+                    )
     
     
     async def score_candidate_all_criteria(
@@ -273,19 +308,56 @@ Phase 1 Draft Scores:
 
 Provide deep insights with refined justifications."""
 
-        response = await self.client.chat.completions.create(
-            model=self.insight_model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.3,
-            max_tokens=2000,
-            response_format={"type": "json_object"}
-        )
+        # Retry logic with exponential backoff for rate limit handling
+        max_retries = 5
+        retry_delay = 1.0  # Start with 1 second
         
-        result = json.loads(response.choices[0].message.content)
-        return result
+        for attempt in range(max_retries):
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.insight_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=2000,
+                    response_format={"type": "json_object"}
+                )
+                
+                result = json.loads(response.choices[0].message.content)
+                return result
+                
+            except Exception as e:
+                error_str = str(e)
+                
+                # Check if it's a rate limit error
+                if "rate_limit" in error_str.lower() or "429" in error_str:
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)  # Exponential backoff: 1s, 2s, 4s, 8s, 16s
+                        print(f"Rate limit hit for insights generation ({candidate_name}). Waiting {wait_time:.1f}s before retry {attempt + 1}/{max_retries}")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        # All retries exhausted - return empty insights with error
+                        print(f"Rate limit error after {max_retries} retries for {candidate_name}")
+                        return {
+                            "top": ["Unable to generate insights due to rate limits"],
+                            "gaps": ["Unable to generate insights due to rate limits"],
+                            "notes": f"Rate limit error after {max_retries} retries",
+                            "justifications": {},
+                            "interview_questions": []
+                        }
+                else:
+                    # Non-rate-limit error - fail immediately
+                    print(f"Insights generation error for {candidate_name}: {error_str[:100]}")
+                    return {
+                        "top": ["Unable to generate insights due to error"],
+                        "gaps": ["Unable to generate insights due to error"],
+                        "notes": f"Evaluation error: {error_str[:100]}",
+                        "justifications": {},
+                        "interview_questions": []
+                    }
 
 
 # ============================================
