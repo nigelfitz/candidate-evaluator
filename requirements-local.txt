@@ -20,6 +20,9 @@ openpyxl==3.1.2
 email-validator==2.1.0
 Flask-Mail==0.9.1
 # gunicorn==21.2.0  # EXCLUDED - only needed for production deployment
+pyotp==2.9.0  # For 2FA admin authentication
+qrcode==7.4.2  # For 2FA QR code generation
+Pillow==10.1.0  # For image processing (required by qrcode)
 numpy==1.26.2
 pandas==2.1.4
 sentence-transformers==2.5.0

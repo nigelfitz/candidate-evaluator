@@ -4,21 +4,16 @@ Run this once to update the database schema
 """
 
 from database import db, Analysis
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 
 def migrate():
     """Add resumes_processed column to analyses table"""
     print("🔄 Starting resumes_processed migration...")
     
     try:
-        # Check if column already exists
-        result = db.session.execute(text("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name='analyses' AND column_name='resumes_processed';
-        """))
-        
-        existing_columns = [row[0] for row in result.fetchall()]
+        # Check if column already exists (SQLite compatible)
+        inspector = inspect(db.engine)
+        existing_columns = [col['name'] for col in inspector.get_columns('analyses')]
         
         if 'resumes_processed' in existing_columns:
             print("✅ Column 'resumes_processed' already exists. Skipping.")

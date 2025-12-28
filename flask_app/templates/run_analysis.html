@@ -111,7 +111,18 @@
         <div style="text-align: center; margin-bottom: 32px;">
             <div class="spinner-border text-primary" style="width: 80px; height: 80px; margin-bottom: 24px;"></div>
             <h2 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Processing Analysis</h2>
-            <p style="color: #64748b; font-size: 16px;">This may take a few minutes...</p>
+            <p style="color: #64748b; font-size: 16px;">Analyzing candidates with AI reasoning...</p>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div style="background: #f1f5f9; border-radius: 12px; padding: 12px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 13px; color: #64748b; font-weight: 500;">Progress</span>
+                <span id="progressPercentage" style="font-size: 13px; color: #3b82f6; font-weight: 600;">0%</span>
+            </div>
+            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s ease;"></div>
+            </div>
         </div>
         
         <!-- Live Status Log -->
@@ -123,10 +134,126 @@
         </div>
         
         <div style="margin-top: 24px; text-align: center;">
-            <div id="progressText" style="color: #3b82f6; font-weight: 600; font-size: 16px;">Step 1 of 4</div>
+            <div id="progressText" style="color: #3b82f6; font-weight: 600; font-size: 16px;">Initializing analysis...</div>
         </div>
     </div>
 </div>
+
+<script>
+// Dynamic Progress Tracking System
+let progressInterval = null;
+let lastProgressValue = 0;
+let lastProgressTime = Date.now();
+let isPhase2 = false;
+
+function startProgressTracking(totalCandidates) {
+    const statusLog = document.getElementById('statusLog');
+    const progressText = document.getElementById('progressText');
+    
+    // Add initial status
+    addStatusItem('Validating job criteria...');
+    
+    // Start polling after 2 seconds (give server time to start)
+    setTimeout(() => {
+        progressInterval = setInterval(() => checkProgress(totalCandidates), 1000);
+    }, 2000);
+}
+
+function checkProgress(totalCandidates) {
+    // Try to extract analysis_id from current URL or session
+    // For now, we'll use a workaround: check if there's a draft analysis in progress
+    fetch('/api/analysis-progress/latest', {
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) return;
+        
+        const currentProgress = data.resumes_processed;
+        const total = data.total_candidates || totalCandidates;
+        const isComplete = data.is_complete;
+        
+        // Calculate and update progress percentage
+        const percentage = total > 0 ? Math.round((currentProgress / total) * 100) : 0;
+        const progressBar = document.getElementById('progressBar');
+        const progressPercentage = document.getElementById('progressPercentage');
+        
+        if (progressBar) {
+            progressBar.style.width = percentage + '%';
+        }
+        if (progressPercentage) {
+            progressPercentage.textContent = percentage + '%';
+        }
+        
+        // Update progress text
+        if (isComplete) {
+            clearInterval(progressInterval);
+            updateProgressText('✅ Analysis complete! Redirecting...');
+            if (progressBar) progressBar.style.width = '100%';
+            if (progressPercentage) progressPercentage.textContent = '100%';
+            return;
+        }
+        
+        // Check for stall (no progress for 10+ seconds)
+        if (currentProgress === lastProgressValue) {
+            const stallTime = Date.now() - lastProgressTime;
+            if (stallTime > 10000 && !isPhase2) {
+                updateProgressText('⚡ Optimizing speed for high-volume analysis...');
+            }
+        } else {
+            // Progress moved - update tracking
+            lastProgressValue = currentProgress;
+            lastProgressTime = Date.now();
+            
+            // Check if Phase 1 is complete (all candidates scored)
+            if (currentProgress >= total && !isPhase2) {
+                isPhase2 = true;
+                addStatusItem('Phase 1 complete! Starting deep insights...');
+                updateProgressText('🎯 Finalizing Deep Insights & Reports...');
+            } else if (currentProgress > 0) {
+                updateProgressText(`📊 Scanned ${currentProgress} of ${total} candidates...`);
+                
+                // Add milestone status items
+                if (currentProgress === 1) {
+                    addStatusItem('Reading first candidate...');
+                } else if (currentProgress === Math.floor(total * 0.25)) {
+                    addStatusItem('25% complete - Processing continues...');
+                } else if (currentProgress === Math.floor(total * 0.5)) {
+                    addStatusItem('Halfway through candidate scoring...');
+                } else if (currentProgress === Math.floor(total * 0.75)) {
+                    addStatusItem('75% complete - Almost there...');
+                } else if (currentProgress === total) {
+                    addStatusItem(`All ${total} candidates scored! ✨`);
+                }
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Progress check error:', error);
+    });
+}
+
+function addStatusItem(text) {
+    const statusLog = document.getElementById('statusLog');
+    const statusItem = document.createElement('div');
+    statusItem.className = 'status-item';
+    statusItem.style.color = '#16a34a';
+    statusItem.style.marginBottom = '8px';
+    statusItem.innerHTML = `
+        <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+        <span>${text}</span>
+    `;
+    statusLog.appendChild(statusItem);
+    statusLog.scrollTop = statusLog.scrollHeight;
+    
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function updateProgressText(text) {
+    const progressText = document.getElementById('progressText');
+    progressText.textContent = text;
+}
+</script>
 
 <!-- Insufficient Funds Modal -->
 {% if insufficient_funds %}
@@ -354,6 +481,19 @@ document.addEventListener('DOMContentLoaded', function() {
         opacity: 1;
     }
 }
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.progress-text-animated {
+    animation: pulse 2s ease-in-out infinite;
+}
 </style>
 
 <!-- Include Bottom Bar -->
@@ -403,47 +543,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const overlay = document.getElementById('processingOverlay');
             overlay.style.display = 'flex';
             
-            // Simulate live status updates
-            const statusLog = document.getElementById('statusLog');
-            const progressText = document.getElementById('progressText');
-            const resumeCount = {{ resume_count }};
+            // Start dynamic progress tracking
+            startProgressTracking({{ resume_count }});
             
-            const statusUpdates = [
-                { delay: 500, text: 'Validating job criteria...', step: '1 of 4' },
-                { delay: 1500, text: `Reading Resume 1 of ${resumeCount}...`, step: '2 of 4' },
-                { delay: 2500, text: `Reading Resume ${Math.min(3, resumeCount)} of ${resumeCount}...`, step: '2 of 4' },
-                { delay: 3500, text: `Reading Resume ${Math.min(5, resumeCount)} of ${resumeCount}...`, step: '2 of 4' },
-                { delay: 4500, text: 'Extracting candidate information...', step: '2 of 4' },
-                { delay: 5500, text: 'Scoring against criteria...', step: '3 of 4' },
-                { delay: 6500, text: 'Calculating match percentages...', step: '3 of 4' },
-                { delay: 7500, text: 'Generating AI insights...', step: '4 of 4' },
-                { delay: 8500, text: 'Analyzing strengths and gaps...', step: '4 of 4' },
-                { delay: 9500, text: 'Creating recommendations...', step: '4 of 4' },
-                { delay: 10500, text: 'Finalizing results...', step: '4 of 4' }
-            ];
+            // Submit form via AJAX to keep page active for progress updates
+            const form = document.getElementById('runAnalysisForm');
+            const formData = new FormData(form);
             
-            statusUpdates.forEach(update => {
-                setTimeout(() => {
-                    const statusItem = document.createElement('div');
-                    statusItem.className = 'status-item';
-                    statusItem.style.color = '#16a34a';
-                    statusItem.style.marginBottom = '8px';
-                    statusItem.innerHTML = `
-                        <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
-                        <span>${update.text}</span>
-                    `;
-                    statusLog.appendChild(statusItem);
-                    statusLog.scrollTop = statusLog.scrollHeight;
-                    progressText.textContent = `Step ${update.step}`;
-                    
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                }, update.delay);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Analysis complete - navigate to results
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    // Check if we got JSON or HTML response
+                    return response.text().then(text => {
+                        try {
+                            const data = JSON.parse(text);
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                            }
+                        } catch (e) {
+                            // HTML response - likely a redirect page
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    throw new Error('Analysis failed');
+                }
+            })
+            .catch(error => {
+                console.error('Analysis error:', error);
+                clearInterval(progressInterval);
+                alert('An error occurred during analysis. Please try again.');
+                overlay.style.display = 'none';
             });
-            
-            // Submit the form after showing overlay
-            setTimeout(() => {
-                document.getElementById('runAnalysisForm').submit();
-            }, 1000);
         };
     }
     
