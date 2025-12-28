@@ -783,6 +783,8 @@ def ai_rescore_candidate(candidate_name: str, criteria: List[str], criteria_embs
     - Perfect alignment between scores and justifications
     - Natural handling of edge cases without manual heuristics
     
+    Uses batch OpenAI API calls for speed (all criteria evaluated in parallel).
+    
     Args:
         candidate_name: Name of candidate to re-score
         criteria: List of criterion names
@@ -797,6 +799,8 @@ def ai_rescore_candidate(candidate_name: str, criteria: List[str], criteria_embs
         - scores_dict: {criterion: score (0.0-1.0)}
         - justifications_dict: {criterion: justification string}
     """
+    import concurrent.futures
+    
     scores = {}
     justifications = {}
     
@@ -808,19 +812,37 @@ def ai_rescore_candidate(candidate_name: str, criteria: List[str], criteria_embs
     
     cand_embs = chunk_embs[chunk_rows]
     
-    print(f"DEBUG: AI re-scoring {candidate_name} across {len(criteria)} criteria...")
+    print(f"DEBUG: AI re-scoring {candidate_name} across {len(criteria)} criteria (parallel)...")
     
+    # Prepare all evaluation tasks
+    eval_tasks = []
     for crit_idx, crit in enumerate(criteria):
         # Stage 1: Semantic retrieval of top 3 chunks
         crit_emb = criteria_embs[crit_idx:crit_idx+1]
         top_chunks = get_top_chunks_for_criterion(crit_emb, cand_embs, all_chunk_texts, chunk_rows, top_n=3)
+        eval_tasks.append((crit, top_chunks))
+    
+    # Stage 2: Parallel AI evaluation (much faster!)
+    # Process all criteria concurrently using ThreadPoolExecutor
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # Submit all evaluation jobs
+        future_to_crit = {
+            executor.submit(ai_evaluate_criterion, crit, chunks): crit 
+            for crit, chunks in eval_tasks
+        }
         
-        # Stage 2: AI evaluation with reasoning
-        eval_result = ai_evaluate_criterion(crit, top_chunks)
-        
-        # Convert 0-100 score to 0.0-1.0 for consistency
-        scores[crit] = eval_result["score"] / 100.0
-        justifications[crit] = eval_result["reason"]
+        # Collect results as they complete
+        for future in concurrent.futures.as_completed(future_to_crit):
+            crit = future_to_crit[future]
+            try:
+                eval_result = future.result()
+                # Convert 0-100 score to 0.0-1.0 for consistency
+                scores[crit] = eval_result["score"] / 100.0
+                justifications[crit] = eval_result["reason"]
+            except Exception as e:
+                print(f"ERROR evaluating {crit}: {str(e)}")
+                scores[crit] = 0.0
+                justifications[crit] = f"Evaluation error: {str(e)}"
     
     print(f"DEBUG: AI scoring complete for {candidate_name}")
     
