@@ -696,40 +696,36 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     # Use provided model parameter, otherwise use config setting
     model_to_use = model if model != "gpt-4o" else settings['model']
     
-    # Filter criteria based on strategy setting
-    evidence_strategy = settings['evidence_filter_strategy']
-    
-    if evidence_strategy == 'all_criteria':
-        # Send all criteria
-        filtered_criteria = criteria
-    elif evidence_strategy == 'strengths_and_gaps':
-        # Top 5 strengths + Bottom 5 gaps
-        sorted_by_score = sorted(criteria, key=lambda c: coverage_scores.get(c, 0.0), reverse=True)
-        top_5 = sorted_by_score[:5]
-        bottom_5 = sorted_by_score[-5:] if len(sorted_by_score) > 5 else []
-        filtered_criteria = top_5 + bottom_5
-    elif evidence_strategy == 'threshold_based':
-        # Only criteria above high threshold or below low threshold
-        high_thresh = settings['evidence_score_threshold_high']
-        low_thresh = settings['evidence_score_threshold_low']
-        filtered_criteria = [c for c in criteria if coverage_scores.get(c, 0.0) >= high_thresh or coverage_scores.get(c, 0.0) <= low_thresh]
-    else:  # 'top_n_by_score' (default)
-        # Sort criteria by score and take top N based on config
-        sorted_by_score = sorted(criteria, key=lambda c: coverage_scores.get(c, 0.0), reverse=True)
-        filtered_criteria = sorted_by_score[:settings['top_evidence_items']]
+    # Generate justifications for ALL criteria - let GPT decide appropriate tone based on score
+    filtered_criteria = criteria
     
     # Build evidence lines from coverage scores and evidence snippets
-    # For justifications, we pass the FULL 1200-char chunk (not truncated snippet)
+    # Pass score with contextual quality label to help GPT calibrate justification tone
     ev_items = []
-    for criterion in filtered_criteria:
+    for criterion in criteria:
         score = coverage_scores.get(criterion, 0.0)
+        score_percent = int(score * 100)
+        
+        # Quality label to help GPT understand match strength
+        if score >= 0.75:
+            quality = "STRONG match"
+        elif score >= 0.50:
+            quality = "GOOD match"
+        elif score >= 0.35:
+            quality = "MODERATE match"
+        elif score >= 0.15:
+            quality = "WEAK match"
+        else:
+            quality = "MINIMAL match"
+        
         # Get FULL evidence chunk from evidence_map (not truncated)
         evidence_key = (candidate_name, criterion)
         full_chunk = ""
         if evidence_key in evidence_map:
             # Pass complete 1200-char chunk for better justification context
             full_chunk = evidence_map[evidence_key][0].replace("\n", " ")
-        ev_items.append(f"- {criterion} (score {score:.2f}):\n  Evidence chunk: {full_chunk}")
+        
+        ev_items.append(f"- {criterion} (SCORE: {score_percent}% - {quality}):\n  Evidence chunk: {full_chunk}")
     
     ev_lines = "\n".join(ev_items)
     
@@ -793,14 +789,24 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     # Add instructions for min/max items and notes length
     user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
     
-    # Add justification instructions
-    user_prompt += f"\n\nIMPORTANT: For each criterion in the evidence list above, write ONE professional justification sentence in the 'justifications' object. Each justification must:"
-    user_prompt += "\n1. Be specific - cite actual achievements, numbers, or facts from the evidence chunk"
-    user_prompt += "\n2. Be unique - even if the same chunk matches multiple criteria, explain WHY it demonstrates THAT specific criterion"
-    user_prompt += "\n3. Avoid generic phrases like 'This text shows X' or 'The candidate demonstrates Y'"
-    user_prompt += "\n4. Be professional and concise (one sentence)"
-    user_prompt += "\n5. Highlight concrete details (e.g., 'Directed a team of 12 through a high-stakes merger' not 'Shows leadership')"
-    user_prompt += "\n\nExample format: {\"Leadership\": \"Directed a cross-functional team of 12 engineers through a complex system migration while maintaining zero downtime.\", \"Stakeholder Management\": \"Successfully negotiated requirements with C-level executives across three business units during quarterly planning cycles.\"}"
+    # Add justification instructions with score-aware guidance
+    user_prompt += "\n\nIMPORTANT: For each criterion in the evidence list above, write ONE professional justification sentence in the 'justifications' object."
+    user_prompt += "\n\nCALIBRATE YOUR TONE based on the score percentage:"
+    user_prompt += "\n- STRONG match (75-100%): Emphasize depth and breadth of evidence. Be enthusiastic about strong alignment."
+    user_prompt += "\n- GOOD match (50-74%): Note solid evidence while acknowledging it's not exhaustive. Balanced positive tone."
+    user_prompt += "\n- MODERATE match (35-49%): Acknowledge limited evidence exists but gaps are notable. Cautious tone."
+    user_prompt += "\n- WEAK match (15-34%): Note minimal evidence found. State what little exists without overstating it."
+    user_prompt += "\n- MINIMAL match (0-14%): State clearly that insufficient evidence was found, or that evidence suggests lack of this skill."
+    user_prompt += "\n\nEach justification must:"
+    user_prompt += "\n1. Reflect the score honestly - don't oversell weak matches or undersell strong ones"
+    user_prompt += "\n2. Cite specific facts from the evidence chunk (roles, numbers, achievements)"
+    user_prompt += "\n3. Be unique per criterion - explain WHY it demonstrates THAT specific criterion"
+    user_prompt += "\n4. Avoid generic phrases like 'This shows X' or 'The candidate demonstrates Y'"
+    user_prompt += "\n5. Be professional and concise (one sentence)"
+    user_prompt += "\n\nExamples:"
+    user_prompt += "\n- 85% match: \"Led cross-functional teams of 12+ engineers through three major system migrations with zero downtime, demonstrating strong technical leadership.\""
+    user_prompt += "\n- 40% match: \"Resume mentions managing a small team of 5 at SLF Lawyers, though specific leadership examples are limited.\""
+    user_prompt += "\n- 8% match: \"No substantial evidence of leadership roles found; resume focuses primarily on individual contributor work.\""
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)
