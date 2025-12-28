@@ -607,7 +607,7 @@ def analyse_candidates(
         
         cand_embs = chunk_embs[chunk_rows]
         
-        # Score against each criterion
+        # Score against each criterion with Evidence Density bonus
         criterion_scores = []
         for crit_idx, crit in enumerate(criteria):
             # Use pre-computed criterion embedding (NO MORE REDUNDANT EMBEDDING!)
@@ -618,12 +618,31 @@ def analyse_candidates(
             max_sim = float(sims.max())
             best_chunk_idx = int(sims.argmax())
             
-            row[crit] = max_sim
-            criterion_scores.append(max_sim * weights[crit_idx])
+            # PHASE 1: Evidence Density Scoring
+            # Primary score: MAX similarity (80% weight)
+            # Density bonus: Multiple strong chunks (20% weight with Mastery Floor)
             
-            # Store evidence (best matching snippet)
+            # Count chunks above 60% threshold
+            density_threshold = 0.60
+            strong_chunks = np.sum(sims >= density_threshold)
+            
+            # Calculate density bonus (4% per chunk, max 20%)
+            density_bonus = min(strong_chunks * 0.04, 0.20)
+            
+            # Mastery Floor: If peak >90%, grant minimum 10% density bonus
+            # This protects world-class specialists from being penalized for conciseness
+            if max_sim >= 0.90 and density_bonus < 0.10:
+                density_bonus = 0.10
+            
+            # Final score: 80% peak + 20% density
+            final_score = (max_sim * 0.80) + density_bonus
+            
+            row[crit] = final_score
+            criterion_scores.append(final_score * weights[crit_idx])
+            
+            # Store evidence (best matching snippet) plus density info for UI
             best_chunk_text = all_chunk_texts[chunk_rows[best_chunk_idx]]
-            evidence_map[(cand.name, crit)] = (best_chunk_text, max_sim)
+            evidence_map[(cand.name, crit)] = (best_chunk_text, max_sim, strong_chunks)
         
         # Compute weighted overall score
         row["Overall"] = sum(criterion_scores) / sum(weights) if sum(weights) > 0 else 0.0

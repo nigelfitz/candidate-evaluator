@@ -235,7 +235,9 @@ def to_individual_candidate_pdf(
             for crit, score in top_criteria:
                 evidence_key = (candidate_name, crit)
                 if evidence_key in evidence_map:
-                    snippet, _ = evidence_map[evidence_key]
+                    evidence_tuple = evidence_map[evidence_key]
+                    # Handle both old format (snippet, score) and new format (snippet, score, density)
+                    snippet = evidence_tuple[0]
                     # Clean and truncate snippet, ensuring we get unique content
                     clean_snippet = snippet.strip()
                     if len(clean_snippet) > 300:
@@ -460,7 +462,9 @@ def to_individual_candidate_docx(
             for crit, score in top_criteria:
                 evidence_key = (candidate_name, crit)
                 if evidence_key in evidence_map:
-                    snippet, _ = evidence_map[evidence_key]
+                    evidence_tuple = evidence_map[evidence_key]
+                    # Handle both old format (snippet, score) and new format (snippet, score, density)
+                    snippet = evidence_tuple[0]
                     # Clean and truncate snippet
                     clean_snippet = snippet.strip()
                     if len(clean_snippet) > 300:
