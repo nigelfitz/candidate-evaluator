@@ -787,10 +787,14 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     tone_instruction = tone_map.get(settings['insight_tone'], 'professional hiring language')
     
     # Build user prompt from template, replacing placeholders
+    # IMPORTANT: Limit candidate text to prevent JSON parsing issues with very long resumes
+    max_candidate_chars = 8000  # Enough for full 2-3 page resume but not excessive
+    candidate_text_limited = candidate_text[:max_candidate_chars] if len(candidate_text) > max_candidate_chars else candidate_text
+    
     user_prompt = insights_prompts['user_prompt_template']['value'].format(
         jd_text=jd_text[:settings['jd_text_chars']],
         candidate_name=candidate_name,
-        candidate_text=candidate_text,  # FULL RESUME - no truncation
+        candidate_text=candidate_text_limited,  # Use limited version
         evidence_lines=criteria_with_scores,  # Just scores, no snippets - GPT searches full resume
         top_n=settings['top_evidence_items']
     )
@@ -803,6 +807,7 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     # Add justification instructions with score-aware guidance
     user_prompt += "\n\nIMPORTANT: For each criterion in the list above, write ONE professional justification sentence in the 'justifications' object."
+    user_prompt += "\n\nCRITICAL: When writing justifications, avoid using quotation marks or apostrophes that could break JSON formatting. Use simple declarative sentences."
     user_prompt += "\n\nSearch the FULL resume to find ALL relevant evidence for each criterion. Don't limit yourself to one example - cite multiple roles/achievements if the candidate demonstrates the skill across their career."
     user_prompt += "\n\nCALIBRATE YOUR TONE based on the score percentage:"
     user_prompt += "\n- STRONG match (75-100%): Emphasize depth and breadth of evidence. Cite multiple examples if present."
