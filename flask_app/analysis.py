@@ -542,7 +542,7 @@ def analyse_candidates(
     weights: Optional[List[float]] = None,
     chunk_chars: int = 1200,
     overlap: int = 150,
-) -> Tuple[pd.DataFrame, Dict[str, Dict], Dict[Tuple[str, str], Tuple[str, float]]]:
+) -> Tuple[pd.DataFrame, Dict[str, Dict], Dict[Tuple[str, str], Tuple[str, float]], Dict[str, Any]]:
     """
     Analyze candidates against criteria using semantic similarity
     
@@ -550,6 +550,7 @@ def analyse_candidates(
         - coverage: DataFrame with scores for each candidate/criterion
         - insights: Dict[candidate_name, dict] (placeholder for GPT insights)
         - evidence_map: Dict[(candidate, criterion), (snippet, score)]
+        - ai_scoring_data: Dict with data needed for AI re-scoring (criteria_embs, chunk_embs, etc.)
     """
     import time
     start_time = time.time()
@@ -618,63 +619,21 @@ def analyse_candidates(
             max_sim = float(sims.max())
             best_chunk_idx = int(sims.argmax())
             
-            # PHASE 1: Evidence Density Scoring
-            # Primary score: MAX similarity (80% weight)
-            # Density bonus: Multiple strong chunks (20% weight with Mastery Floor)
+            # FAST MATH SCORING (for non-insight candidates)
+            # This provides instant ranking using semantic similarity + density bonus
+            # Candidates selected for Deep Insights will be re-scored with AI evaluation
             
-            # Count chunks above 60% threshold
+            # Evidence Density: Peak similarity (80%) + density bonus (20%)
             density_threshold = 0.60
             strong_chunks = np.sum(sims >= density_threshold)
-            
-            # Calculate density bonus (4% per chunk, max 20%)
             density_bonus = min(strong_chunks * 0.04, 0.20)
             
-            # Mastery Floor: If peak >90%, grant minimum 10% density bonus
-            # This protects world-class specialists from being penalized for conciseness
+            # Mastery Floor: Protect world-class specialists (90%+ peak → min 10% density bonus)
             if max_sim >= 0.90 and density_bonus < 0.10:
                 density_bonus = 0.10
             
-            # NON-LINEAR SCORING CURVE: Semantic similarity is a relevance signal, not a literal percentage
-            # Problem: 60% similarity often means "relevant transferable experience" but scores as 60%
-            # Solution: Apply a curve that rewards relevant experience while staying strict for no evidence
-            
-            # Apply scoring curve based on peak similarity:
-            if max_sim >= 0.75:
-                # Strong match: minimal adjustment (already high)
-                adjusted_peak = max_sim
-            elif max_sim >= 0.50:
-                # Relevant experience zone: boost generously
-                # 50% → 65%, 60% → 73%, 70% → 81%
-                # Formula: 0.50 + (max_sim - 0.50) * 1.6
-                adjusted_peak = 0.50 + (max_sim - 0.50) * 1.6
-            elif max_sim >= 0.35:
-                # Tangential zone: modest boost
-                # 35% → 42%, 40% → 50%, 45% → 58%
-                adjusted_peak = 0.35 + (max_sim - 0.35) * 1.4
-            else:
-                # No evidence zone: stay strict (no adjustment)
-                adjusted_peak = max_sim
-            
-            # Final score: 80% adjusted peak + 20% density
-            final_score = (adjusted_peak * 0.80) + density_bonus
-            
-            # QUALIFICATION BOOST: Binary qualifications (degrees, certifications, memberships)
-            # Problem: Semantic similarity treats "Chartered Accountant" vs "professional accounting body membership" 
-            # as only 47% similar due to wording differences, but logically it's a 100% match.
-            # Solution: If criterion looks like a qualification AND there's moderate semantic match (>40%), 
-            # assume it's likely a true match and boost score. Qualifications are binary - you have it or you don't.
-            
-            qual_keywords = ['membership', 'member of', 'degree', 'qualification', 'certified', 'chartered', 
-                           'bachelor', 'master', 'phd', 'diploma', 'license', 'licensed', 'registration', 
-                           'registered', 'professional body', 'accreditation', 'accredited']
-            crit_lower = crit.lower()
-            is_qualification = any(kw in crit_lower for kw in qual_keywords)
-            
-            # If it's a qualification criterion and semantic similarity found SOME match (>0.40),
-            # boost significantly since qualifications are binary
-            if is_qualification and max_sim >= 0.40:
-                # Boost to 92% - high confidence but not perfect (allows for edge cases)
-                final_score = max(final_score, 0.92)
+            # Simple linear scoring for initial ranking
+            final_score = (max_sim * 0.80) + density_bonus
             
             row[crit] = final_score
             criterion_scores.append(final_score * weights[crit_idx])
@@ -694,7 +653,178 @@ def analyse_candidates(
     # Insights placeholder (will be filled by GPT if enabled)
     insights = {}
     
-    return coverage, insights, evidence_map
+    # Prepare data for AI re-scoring (Two-Stage Scoring)
+    # Build chunk_map mapping candidate_name -> chunk indices
+    chunk_map = {}
+    for cand_idx, cand in enumerate(candidates):
+        chunk_map[cand.name] = cand_to_rows[cand_idx]
+    
+    ai_scoring_data = {
+        'criteria_embs': criteria_embs,
+        'chunk_embs': chunk_embs,
+        'chunk_map': chunk_map,
+        'all_chunk_texts': all_chunk_texts,
+        'weights': weights
+    }
+    
+    return coverage, insights, evidence_map, ai_scoring_data
+
+
+# -----------------------------
+# AI-Powered Criterion Evaluation
+# -----------------------------
+# -----------------------------
+# AI-Powered Criterion Evaluation
+# -----------------------------
+def get_top_chunks_for_criterion(crit_emb, cand_embs, all_chunk_texts, chunk_rows, top_n=3):
+    """
+    Retrieve top N most relevant chunks for a criterion (Stage 1: Retrieval).
+    
+    Args:
+        crit_emb: Criterion embedding (shape: 1 x embedding_dim)
+        cand_embs: Candidate chunk embeddings
+        all_chunk_texts: List of all chunk texts
+        chunk_rows: Indices of chunks belonging to this candidate
+        top_n: Number of top chunks to return
+    
+    Returns:
+        List of top N chunk texts (strings)
+    """
+    # Compute similarity to all candidate chunks
+    sims = pairwise_cosine(crit_emb, cand_embs)[0]
+    
+    # Get indices of top N chunks (sorted by similarity)
+    top_indices = np.argsort(sims)[::-1][:top_n]
+    
+    # Retrieve actual chunk texts
+    top_chunks = [all_chunk_texts[chunk_rows[idx]] for idx in top_indices if idx < len(chunk_rows)]
+    
+    return top_chunks
+
+
+def ai_evaluate_criterion(criterion: str, top_chunks: List[str], model: str = "gpt-4o-mini") -> Dict[str, Any]:
+    """
+    Stage 2 Scoring: AI-powered reasoned evaluation of a single criterion.
+    
+    Replaces manual heuristics (qualification boosts, non-linear curves) with GPT-4o-mini
+    that naturally understands:
+    - Binary qualifications (CA, CPA, degree) → 100 score
+    - Track record across multiple roles (density) → higher scores
+    - Outdated or mismatched seniority → conservative scores
+    
+    Args:
+        criterion: The job requirement being evaluated
+        top_chunks: Top 3 most relevant resume snippets from semantic retrieval
+        model: GPT model to use (default: gpt-4o-mini for speed/cost)
+    
+    Returns:
+        {"score": int (0-100), "reason": "1-sentence justification"}
+    """
+    if not OpenAI:
+        return {"score": 0, "reason": "OpenAI not available"}
+    
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    
+    # Format chunks for prompt
+    chunks_text = "\n\n".join([f"Snippet {i+1}: {chunk}" for i, chunk in enumerate(top_chunks)])
+    
+    system_prompt = """You are a senior recruiter. I will provide a Job Criterion and the 3 most relevant snippets from a candidate's resume. Your task is to provide a final score from 0-100.
+
+Rules:
+1. If the criterion requires a specific license, degree, or membership (e.g., CA, CPA, Bar, Bachelor's), and the snippets show they have it, give a 100.
+2. If the snippets show a consistent track record across multiple roles, reward this with a higher score than a single mention (Density).
+3. If the evidence is outdated or doesn't quite match the level of seniority required, score conservatively.
+4. Return only a JSON object: {"score": integer, "reason": "1-sentence justification"}.
+5. Keep the reason concise and factual - focus on what evidence was found."""
+    
+    user_prompt = f"""Criterion: {criterion}
+
+Resume Snippets:
+{chunks_text}
+
+Provide your evaluation as JSON."""
+    
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.2,
+            max_tokens=150,
+            response_format={"type": "json_object"}
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        
+        # Validate response
+        if "score" not in result or "reason" not in result:
+            return {"score": 0, "reason": "Invalid AI response format"}
+        
+        # Ensure score is in range
+        score = max(0, min(100, int(result["score"])))
+        
+        return {"score": score, "reason": result["reason"]}
+        
+    except Exception as e:
+        print(f"ERROR in ai_evaluate_criterion: {str(e)}")
+        return {"score": 0, "reason": f"Evaluation error: {str(e)}"}
+
+
+def ai_rescore_candidate(candidate_name: str, criteria: List[str], criteria_embs, 
+                        chunk_embs, chunk_map, all_chunk_texts, weights: List[float]) -> Tuple[Dict[str, float], Dict[str, str]]:
+    """
+    Re-score a candidate using AI evaluation for all criteria (Two-Stage Scoring).
+    
+    This replaces the math-based scoring with AI reasoning for candidates selected
+    for Deep Insights, providing:
+    - More accurate scores (handles qualifications, seniority, context)
+    - Perfect alignment between scores and justifications
+    - Natural handling of edge cases without manual heuristics
+    
+    Args:
+        candidate_name: Name of candidate to re-score
+        criteria: List of criterion names
+        criteria_embs: Pre-computed criterion embeddings
+        chunk_embs: All chunk embeddings
+        chunk_map: Dict mapping candidate name to chunk indices
+        all_chunk_texts: List of all chunk texts
+        weights: List of criterion weights
+    
+    Returns:
+        Tuple of (scores_dict, justifications_dict)
+        - scores_dict: {criterion: score (0.0-1.0)}
+        - justifications_dict: {criterion: justification string}
+    """
+    scores = {}
+    justifications = {}
+    
+    # Get this candidate's chunks
+    chunk_rows = chunk_map.get(candidate_name, [])
+    if len(chunk_rows) == 0:
+        # No chunks - return zero scores
+        return {crit: 0.0 for crit in criteria}, {crit: "No resume content available" for crit in criteria}
+    
+    cand_embs = chunk_embs[chunk_rows]
+    
+    print(f"DEBUG: AI re-scoring {candidate_name} across {len(criteria)} criteria...")
+    
+    for crit_idx, crit in enumerate(criteria):
+        # Stage 1: Semantic retrieval of top 3 chunks
+        crit_emb = criteria_embs[crit_idx:crit_idx+1]
+        top_chunks = get_top_chunks_for_criterion(crit_emb, cand_embs, all_chunk_texts, chunk_rows, top_n=3)
+        
+        # Stage 2: AI evaluation with reasoning
+        eval_result = ai_evaluate_criterion(crit, top_chunks)
+        
+        # Convert 0-100 score to 0.0-1.0 for consistency
+        scores[crit] = eval_result["score"] / 100.0
+        justifications[crit] = eval_result["reason"]
+    
+    print(f"DEBUG: AI scoring complete for {candidate_name}")
+    
+    return scores, justifications
 
 
 # -----------------------------

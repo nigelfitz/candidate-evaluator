@@ -434,13 +434,20 @@ def create_app(config_name=None):
                 gpt_settings = load_gpt_settings()
                 
                 # Run analysis
-                coverage, insights, evidence_map = analyse_candidates(
+                coverage, insights, evidence_map, ai_scoring_data = analyse_candidates(
                     candidates=candidates,
                     criteria=criteria,
                     weights=None,
                     chunk_chars=1200,
                     overlap=gpt_settings['chunk_overlap_chars']
                 )
+                
+                # Extract AI scoring data for re-scoring selected candidates
+                criteria_embs = ai_scoring_data['criteria_embs']
+                chunk_embs = ai_scoring_data['chunk_embs']
+                chunk_map = ai_scoring_data['chunk_map']
+                all_chunk_texts = ai_scoring_data['all_chunk_texts']
+                weights = ai_scoring_data['weights']
                 
                 # Calculate cost
                 from config import Config
@@ -498,13 +505,15 @@ def create_app(config_name=None):
                         break
                 
                 # Generate GPT insights for selected candidates
-                from analysis import gpt_candidate_insights
+                from analysis import gpt_candidate_insights, ai_rescore_candidate
                 insights_data = {}
                 gpt_candidates_list = []  # Track which candidates had GPT insights
                 
                 if num_insights > 0:
                     # Get top N candidates by overall score
                     top_candidates = coverage.nlargest(num_insights, 'Overall')
+                    
+                    print(f"DEBUG: AI re-scoring {len(top_candidates)} candidates selected for insights...")
                     
                     for idx, row in top_candidates.iterrows():
                         candidate_name = row['Candidate']
@@ -513,19 +522,43 @@ def create_app(config_name=None):
                         # Find the candidate object
                         candidate_obj = next((c for c in candidates if c.name == candidate_name), None)
                         if candidate_obj:
-                            # Get scores for this candidate
-                            candidate_scores = {col: row[col] for col in coverage.columns if col not in ['Candidate', 'Overall']}
+                            # TWO-STAGE SCORING: Re-score this candidate with AI evaluation
+                            # Stage 1: Semantic retrieval finds top 3 chunks per criterion
+                            # Stage 2: AI evaluates those chunks and provides reasoned scores + justifications
+                            ai_scores, ai_justifications = ai_rescore_candidate(
+                                candidate_name=candidate_name,
+                                criteria=criteria,
+                                criteria_embs=criteria_embs,
+                                chunk_embs=chunk_embs,
+                                chunk_map=chunk_map,
+                                all_chunk_texts=all_chunk_texts,
+                                weights=weights
+                            )
                             
-                            # Generate insights with evidence snippets
+                            # Update coverage dataframe with AI scores
+                            for crit in criteria:
+                                coverage.loc[coverage['Candidate'] == candidate_name, crit] = ai_scores.get(crit, 0.0)
+                            
+                            # Recalculate overall score with AI scores
+                            weighted_scores = [ai_scores.get(crit, 0.0) * weights[i] for i, crit in enumerate(criteria)]
+                            new_overall = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
+                            coverage.loc[coverage['Candidate'] == candidate_name, 'Overall'] = new_overall
+                            
+                            # Generate insights using AI-scored data
                             insights = gpt_candidate_insights(
                                 candidate_name=candidate_name,
                                 candidate_text=candidate_obj.text,
                                 jd_text=jd_text,
-                                coverage_scores=candidate_scores,
+                                coverage_scores=ai_scores,  # Use AI scores
                                 criteria=criteria,
                                 evidence_map=evidence_map,
                                 model="gpt-4o"
                             )
+                            
+                            # CRITICAL: Use AI justifications instead of GPT insights justifications
+                            # This ensures perfect alignment between scores and justifications
+                            insights['justifications'] = ai_justifications
+                            
                             insights_data[candidate_name] = insights
                 
                 # Build category map from criteria_list (not criteria which is just strings)
