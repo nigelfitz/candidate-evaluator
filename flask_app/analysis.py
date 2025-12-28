@@ -637,30 +637,23 @@ def analyse_candidates(
             # Final score: 80% peak + 20% density
             final_score = (max_sim * 0.80) + density_bonus
             
-            # QUALIFICATION BOOST: Detect binary qualifications (degrees, certifications, memberships)
-            # If criterion mentions "membership", "degree", "qualification", "certified", "chartered"
-            # AND candidate has strong keyword match, boost to 95%+
-            qual_keywords = ['membership', 'degree', 'qualification', 'certified', 'chartered', 'bachelor', 'master', 'phd', 'cpa', 'cfa', 'professional body']
+            # QUALIFICATION BOOST: Binary qualifications (degrees, certifications, memberships)
+            # Problem: Semantic similarity treats "Chartered Accountant" vs "professional accounting body membership" 
+            # as only 47% similar due to wording differences, but logically it's a 100% match.
+            # Solution: If criterion looks like a qualification AND there's moderate semantic match (>40%), 
+            # assume it's likely a true match and boost score. Qualifications are binary - you have it or you don't.
+            
+            qual_keywords = ['membership', 'member of', 'degree', 'qualification', 'certified', 'chartered', 
+                           'bachelor', 'master', 'phd', 'diploma', 'license', 'licensed', 'registration', 
+                           'registered', 'professional body', 'accreditation', 'accredited']
             crit_lower = crit.lower()
             is_qualification = any(kw in crit_lower for kw in qual_keywords)
             
-            if is_qualification:
-                # Check if candidate text has relevant qualification terms
-                cand_text_lower = ' '.join([all_chunk_texts[chunk_rows[i]] for i in range(len(chunk_rows))]).lower()
-                
-                # For accounting body membership
-                if 'accounting body' in crit_lower or 'professional accounting' in crit_lower:
-                    if any(term in cand_text_lower for term in ['chartered accountant', 'cpa', 'ca', 'cma', 'certified public accountant']):
-                        final_score = max(final_score, 0.95)  # Boost to 95% minimum
-                
-                # For general membership/qualification
-                elif 'membership' in crit_lower and any(term in cand_text_lower for term in ['member', 'chartered', 'certified', 'qualified']):
-                    final_score = max(final_score, 0.90)
-                
-                # For degree requirements
-                elif any(deg in crit_lower for deg in ['bachelor', 'degree', 'master', 'phd']):
-                    if any(deg in cand_text_lower for deg in ['bachelor', 'degree', 'master', 'phd', 'b.a.', 'b.s.', 'mba', 'm.s.']):
-                        final_score = max(final_score, 0.90)
+            # If it's a qualification criterion and semantic similarity found SOME match (>0.40),
+            # boost significantly since qualifications are binary
+            if is_qualification and max_sim >= 0.40:
+                # Boost to 92% - high confidence but not perfect (allows for edge cases)
+                final_score = max(final_score, 0.92)
             
             row[crit] = final_score
             criterion_scores.append(final_score * weights[crit_idx])
