@@ -130,6 +130,9 @@ class Analysis(db.Model):
     # Analysis metadata
     analysis_size = db.Column(db.String(20))  # 'small', 'medium', 'large'
     
+    # Progress tracking (for live progress bar during AI pipeline)
+    resumes_processed = db.Column(db.Integer, default=0)  # Number of resumes scored so far
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     

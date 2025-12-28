@@ -429,30 +429,7 @@ def create_app(config_name=None):
                         raw_bytes=resume_bytes
                     ))
                 
-                # Load settings for chunk overlap
-                from analysis import load_gpt_settings
-                gpt_settings = load_gpt_settings()
-                
-                # Run analysis
-                coverage, insights, evidence_map, ai_scoring_data = analyse_candidates(
-                    candidates=candidates,
-                    criteria=criteria,
-                    weights=None,
-                    chunk_chars=1200,
-                    overlap=gpt_settings['chunk_overlap_chars']
-                )
-                
-                # Extract AI scoring data for re-scoring selected candidates
-                criteria_embs = ai_scoring_data['criteria_embs']
-                chunk_embs = ai_scoring_data['chunk_embs']
-                chunk_map = ai_scoring_data['chunk_map']
-                all_chunk_texts = ai_scoring_data['all_chunk_texts']
-                weights = ai_scoring_data['weights']
-                
-                # Calculate cost
-                from config import Config
-                total_cost = Config.BASE_ANALYSIS_PRICE
-                
+                # Determine number of insights to generate
                 num_candidates = len(candidates)
                 if insights_mode == 'top3':
                     num_insights = min(3, num_candidates)
@@ -465,6 +442,9 @@ def create_app(config_name=None):
                 else:
                     num_insights = 0
                 
+                # Calculate cost
+                from config import Config
+                total_cost = Config.BASE_ANALYSIS_PRICE
                 num_extra_insights = max(0, num_insights - 3)
                 total_cost += num_extra_insights * Config.EXTRA_INSIGHT_PRICE
                 total_cost = Decimal(str(total_cost))
@@ -504,78 +484,125 @@ def create_app(config_name=None):
                         job_title = line
                         break
                 
-                # Generate GPT insights for selected candidates
-                from analysis import gpt_candidate_insights, ai_rescore_candidate
-                insights_data = {}
-                gpt_candidates_list = []  # Track which candidates had GPT insights
+                # ============================================
+                # NEW AI PIPELINE: Production-Grade Scoring
+                # ============================================
+                import asyncio
+                from ai_service import run_global_ranking, run_deep_insights
                 
-                if num_insights > 0:
-                    # Get top N candidates by overall score
-                    top_candidates = coverage.nlargest(num_insights, 'Overall')
-                    
-                    print(f"DEBUG: AI re-scoring {len(top_candidates)} candidates selected for insights...")
-                    
-                    for idx, row in top_candidates.iterrows():
-                        candidate_name = row['Candidate']
-                        gpt_candidates_list.append(candidate_name)  # Track for disclaimers
-                        
-                        # Find the candidate object
-                        candidate_obj = next((c for c in candidates if c.name == candidate_name), None)
-                        if candidate_obj:
-                            # TWO-STAGE SCORING: Re-score this candidate with AI evaluation
-                            # Stage 1: Semantic retrieval finds top 3 chunks per criterion
-                            # Stage 2: AI evaluates those chunks and provides reasoned scores + justifications
-                            ai_scores, ai_justifications = ai_rescore_candidate(
-                                candidate_name=candidate_name,
-                                criteria=criteria,
-                                criteria_embs=criteria_embs,
-                                chunk_embs=chunk_embs,
-                                chunk_map=chunk_map,
-                                all_chunk_texts=all_chunk_texts,
-                                weights=weights
-                            )
-                            
-                            # Update coverage dataframe with AI scores
-                            for crit in criteria:
-                                coverage.loc[coverage['Candidate'] == candidate_name, crit] = ai_scores.get(crit, 0.0)
-                            
-                            # Recalculate overall score with AI scores
-                            weighted_scores = [ai_scores.get(crit, 0.0) * weights[i] for i, crit in enumerate(criteria)]
-                            new_overall = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
-                            coverage.loc[coverage['Candidate'] == candidate_name, 'Overall'] = new_overall
-                            
-                            # Generate insights using AI-scored data
-                            insights = gpt_candidate_insights(
-                                candidate_name=candidate_name,
-                                candidate_text=candidate_obj.text,
-                                jd_text=jd_text,
-                                coverage_scores=ai_scores,  # Use AI scores
-                                criteria=criteria,
-                                evidence_map=evidence_map,
-                                model="gpt-4o"
-                            )
-                            
-                            # CRITICAL: Use AI justifications instead of GPT insights justifications
-                            # This ensures perfect alignment between scores and justifications
-                            insights['justifications'] = ai_justifications
-                            
-                            insights_data[candidate_name] = insights
+                print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
                 
-                # Build category map from criteria_list (not criteria which is just strings)
-                category_map = {c['criterion']: c.get('category', 'Other Requirements') for c in criteria_list if c.get('use', True)}
-                
+                # Create Analysis record for progress tracking
                 analysis = Analysis(
                     user_id=current_user.id,
                     job_title=job_title,
                     job_description_text=jd_text[:5000],
                     num_candidates=len(candidates),
                     num_criteria=len(criteria),
-                    coverage_data=coverage.to_json(orient='records'),
-                    insights_data=json.dumps(insights_data),
-                    evidence_data=json.dumps({f"{k[0]}|||{k[1]}": v for k, v in evidence_map.items()}),
+                    coverage_data='',  # Will be populated after Phase 1
+                    insights_data='',  # Will be populated after Phase 2
+                    evidence_data='',  # Will be populated after Phase 1
                     criteria_list=json.dumps(criteria),
-                    category_map=json.dumps(category_map),
-                    gpt_candidates=json.dumps(gpt_candidates_list),
+                    cost_usd=total_cost,
+                    analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large'),
+                    resumes_processed=0
+                )
+                db.session.add(analysis)
+                db.session.flush()  # Get analysis.id
+                
+                # Link transaction to analysis
+                transaction.analysis_id = analysis.id
+                transaction.description = f"[Job #{analysis.id:04d}] - {job_title}"
+                
+                # Progress callback for live updates
+                def update_progress(completed, total):
+                    """Update database with progress"""
+                    analysis.resumes_processed = completed
+                    db.session.commit()
+                    print(f"Progress: {completed}/{total} candidates scored")
+                
+                # PHASE 1: Global Ranking (All Candidates)
+                print("Phase 1: AI scoring all candidates...")
+                candidate_tuples = [(c.name, c.text) for c in candidates]
+                
+                evaluations = asyncio.run(
+                    run_global_ranking(
+                        candidates=candidate_tuples,
+                        jd_text=jd_text,
+                        criteria=criteria_list,  # Pass full criteria with metadata
+                        progress_callback=update_progress
+                    )
+                )
+                
+                print(f"Phase 1 complete. Top candidate: {evaluations[0].candidate_name} ({evaluations[0].overall_score:.1f}/100)")
+                
+                # PHASE 2: Deep Insights (Top N Only)
+                insights_data = {}
+                gpt_candidates_list = []
+                
+                if num_insights > 0:
+                    print(f"Phase 2: Generating deep insights for top {num_insights}...")
+                    
+                    insights_data = asyncio.run(
+                        run_deep_insights(
+                            candidates=candidate_tuples,
+                            jd_text=jd_text,
+                            evaluations=evaluations,
+                            top_n=num_insights
+                        )
+                    )
+                    
+                    gpt_candidates_list = list(insights_data.keys())
+                    print(f"Phase 2 complete. Generated insights for {len(insights_data)} candidates")
+                    
+                    # CRITICAL: Overwrite draft justifications with INSIGHT_AGENT versions
+                    for candidate_name, insights in insights_data.items():
+                        # Find evaluation for this candidate
+                        eval_obj = next((e for e in evaluations if e.candidate_name == candidate_name), None)
+                        if eval_obj and 'justifications' in insights:
+                            # Replace Phase 1 draft justifications with Phase 2 premium versions
+                            for criterion, refined_justification in insights['justifications'].items():
+                                # Update the evaluation object
+                                score_obj = next((s for s in eval_obj.criterion_scores if s.criterion == criterion), None)
+                                if score_obj:
+                                    score_obj.justification = refined_justification
+                
+                # Convert evaluations to DataFrame format (for existing UI compatibility)
+                import pandas as pd
+                coverage_records = []
+                evidence_map = {}
+                
+                for eval_obj in evaluations:
+                    row = {"Candidate": eval_obj.candidate_name}
+                    
+                    # Add criterion scores
+                    for score in eval_obj.criterion_scores:
+                        row[score.criterion] = score.score / 100.0  # Convert to 0-1
+                        
+                        # Store justification as evidence (for UI compatibility)
+                        evidence_map[(eval_obj.candidate_name, score.criterion)] = (
+                            score.justification,  # Justification text
+                            score.score / 100.0,  # Score
+                            1  # Density count (not applicable in AI pipeline)
+                        )
+                    
+                    row["Overall"] = eval_obj.overall_score / 100.0
+                    coverage_records.append(row)
+                
+                coverage = pd.DataFrame(coverage_records)
+                
+                # Build category map from criteria_list
+                category_map = {c['criterion']: c.get('category', 'Other Requirements') for c in criteria_list if c.get('use', True)}
+                
+                # Update analysis with results
+                analysis.coverage_data = coverage.to_json(orient='records')
+                analysis.insights_data = json.dumps(insights_data)
+                analysis.evidence_data = json.dumps({f"{k[0]}|||{k[1]}": v for k, v in evidence_map.items()})
+                analysis.category_map = json.dumps(category_map)
+                analysis.gpt_candidates = json.dumps(gpt_candidates_list)
+                
+                # Store candidate files for viewing
+                from database import CandidateFile
                     cost_usd=total_cost,
                     analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large')
                 )
@@ -585,9 +612,6 @@ def create_app(config_name=None):
                 db.session.flush()
                 
                 # Link transaction to analysis and update description with Job#
-                transaction.analysis_id = analysis.id
-                transaction.description = f"[Job #{analysis.id:04d}] - {job_title}"
-                
                 # Store candidate files for viewing
                 from database import CandidateFile
                 for candidate in candidates:
