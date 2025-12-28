@@ -904,6 +904,12 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         if not isinstance(justifications, dict):
             justifications = {}
         
+        # DEBUG: Log justification status
+        print(f"DEBUG: Justifications extracted: {len(justifications)} items")
+        if len(justifications) == 0:
+            print(f"DEBUG: GPT response keys: {result.keys()}")
+            print(f"DEBUG: Full GPT response (first 500 chars): {str(result)[:500]}")
+        
         return {
             "top": top,
             "gaps": gaps,
