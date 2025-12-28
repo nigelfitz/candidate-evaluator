@@ -592,25 +592,8 @@ def estimate_analysis_cost(jd_text: str, candidate_texts: List[str], num_criteri
         "total_output_tokens": total_output,
         "estimated_cost_usd": round(total_cost, 4),
         "model": model
-    """
-    if not OpenAI:
-        return {"score": 0, "reason": "OpenAI not available"}
-    
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    
-    # Format chunks for prompt
-    chunks_text = "\n\n".join([f"Snippet {i+1}: {chunk}" for i, chunk in enumerate(top_chunks)])
-    
-    system_prompt = """You are a senior recruiter. I will provide a Job Criterion and the 3 most relevant snippets from a candidate's resume. Your task is to provide a final score from 0-100.
+    }
 
-Rules:
-1. If the criterion requires a specific license, degree, or membership (e.g., CA, CPA, Bar, Bachelor's), and the snippets show they have it, give a 100.
-2. If the snippets show a consistent track record across multiple roles, reward this with a higher score than a single mention (Density).
-3. If the evidence is outdated or doesn't quite match the level of seniority required, score conservatively.
-4. Return only a JSON object: {"score": integer, "reason": "1-sentence justification"}.
-5. Keep the reason concise and factual - focus on what evidence was found."""
-    
-    user_prompt = f"""Criterion: {criterion}
 
 Resume Snippets:
 {chunks_text}
