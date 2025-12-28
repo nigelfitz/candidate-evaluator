@@ -492,7 +492,7 @@
         <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <span style="color: #475569;">Current Balance:</span>
-                <strong style="color: #1e293b;">${{ current_user.credits }}</strong>
+                <strong style="color: #1e293b;">${{ "%.2f"|format(current_user.balance_usd) }}</strong>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
                 <span style="color: #475569;">Cost to Unlock:</span>
@@ -501,7 +501,7 @@
             <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 16px 0;">
             <div style="display: flex; justify-content: space-between;">
                 <span style="color: #475569; font-weight: 600;">New Balance:</span>
-                <strong style="color: #059669; font-size: 1.2rem;">${{ "%.2f"|format(current_user.credits - 1) }}</strong>
+                <strong style="color: #059669; font-size: 1.2rem;">${{ "%.2f"|format(current_user.balance_usd - 1) }}</strong>
             </div>
         </div>
         
@@ -511,7 +511,7 @@
             </p>
         </div>
         
-        {% if current_user.credits >= 1 %}
+        {% if current_user.balance_usd >= 1 %}
         <div style="display: flex; gap: 12px;">
             <button onclick="closeUnlockModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
             <button onclick="confirmUnlock()" class="btn btn-primary" style="flex: 1;">
