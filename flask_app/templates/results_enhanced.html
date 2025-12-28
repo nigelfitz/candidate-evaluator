@@ -418,10 +418,10 @@
             <!-- Evidence Explorer -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">🔍 Evidence Explorer</h5>
+                    <h5 class="mb-0">🔍 Evidence & Justifications</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-3">Select a candidate and criterion to view the evidence snippet used for scoring</p>
+                    <p class="text-muted mb-3">Select a candidate and criterion to view AI-generated justifications and source evidence</p>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -553,6 +553,7 @@
 const coverageData = {{ coverage_data | tojson | safe }};
 const categoryMap = {{ category_map | tojson | safe }};
 const evidenceMap = {{ evidence_map | tojson | safe }};
+const insightsData = {{ insights | tojson | safe }};
 const thresholds = { high: {{ user_settings.default_hi_threshold / 100 }}, low: {{ user_settings.default_lo_threshold / 100 }} };
 
 let currentSort = 'score-desc';
@@ -803,32 +804,74 @@ function updateEvidenceDisplay() {
     const score = row ? parseFloat(row[criterion]) : 0;
     const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
     
-    // Highlight keywords from criterion in the evidence
-    const criterionWords = criterion.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    let highlightedSnippet = snippet;
-    criterionWords.forEach(word => {
-        const regex = new RegExp(`(${word})`, 'gi');
-        highlightedSnippet = highlightedSnippet.replace(regex, '<mark style="background: #fef08a; font-weight: 600; padding: 2px 4px; border-radius: 3px;">$1</mark>');
-    });
+    // Check if this candidate has insights (Top 5 with justifications)
+    const hasInsights = insightsData && insightsData[candidate];
+    const justifications = hasInsights && insightsData[candidate].justifications ? insightsData[candidate].justifications : {};
+    const justification = justifications[criterion];
     
-    const html = `
+    let html = `
         <div class="alert alert-${scoreColor}">
             <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>
         </div>
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Evidence from resume:</span>
-                <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    📄 View Resume
-                </a>
-            </div>
-            <div class="card-body">
-                <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9rem;">${highlightedSnippet}</div>
-            </div>
-        </div>
     `;
     
+    if (hasInsights && justification) {
+        // TOP 5: Show GPT justification + collapsible raw source
+        html += `
+            <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
+                <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #3b82f6;"></i>
+                    <strong>AI Justification</strong>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="font-size: 1.05rem; line-height: 1.6;">${justification}</p>
+                </div>
+            </div>
+            
+            <details class="card">
+                <summary class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer; user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                        <strong>Raw Source Text</strong>
+                    </span>
+                    <small class="text-muted">Click to expand/collapse</small>
+                </summary>
+                <div class="card-body">
+                    <div class="mb-2 d-flex justify-content-end">
+                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            📄 View Full Resume
+                        </a>
+                    </div>
+                    <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px;">${snippet}</div>
+                </div>
+            </details>
+        `;
+    } else {
+        // NOT TOP 5: Show "Unlock" CTA
+        html += `
+            <div class="card text-center" style="border: 2px dashed #cbd5e1; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                <div class="card-body py-5">
+                    <i data-lucide="lock" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 16px;"></i>
+                    <h5 class="mb-3" style="color: #475569;">Deep Insights Available</h5>
+                    <p class="text-muted mb-4">Unlock AI-powered justifications and detailed evidence analysis for this candidate.</p>
+                    <a href="{{ url_for('insights', analysis_id=analysis.id) }}?candidate=${encodeURIComponent(candidate)}" 
+                       class="btn btn-primary" 
+                       style="padding: 12px 32px; font-weight: 600;">
+                        <i data-lucide="unlock" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                        Unlock Deep Insights
+                    </a>
+                    <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">View comprehensive AI analysis including strengths, gaps, and evidence justifications</p>
+                </div>
+            </div>
+        `;
+    }
+    
     document.getElementById('evidenceDisplay').innerHTML = html;
+    
+    // Re-initialize Lucide icons for dynamically added content
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 }
 
 function scrollToEvidenceExplorer(candidateName) {

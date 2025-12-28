@@ -719,29 +719,34 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         filtered_criteria = sorted_by_score[:settings['top_evidence_items']]
     
     # Build evidence lines from coverage scores and evidence snippets
-    # Uses configurable character limit from admin settings
+    # For justifications, we pass the FULL 1200-char chunk (not truncated snippet)
     ev_items = []
     for criterion in filtered_criteria:
         score = coverage_scores.get(criterion, 0.0)
-        # Get evidence snippet from evidence_map
+        # Get FULL evidence chunk from evidence_map (not truncated)
         evidence_key = (candidate_name, criterion)
-        snippet = ""
+        full_chunk = ""
         if evidence_key in evidence_map:
-            # Truncate to admin-configured length
-            snippet = evidence_map[evidence_key][0][:settings['evidence_snippet_chars']].replace("\n", " ")
-        ev_items.append(f"- {criterion} (score {score:.2f}): {snippet}")
+            # Pass complete 1200-char chunk for better justification context
+            full_chunk = evidence_map[evidence_key][0].replace("\n", " ")
+        ev_items.append(f"- {criterion} (score {score:.2f}):\n  Evidence chunk: {full_chunk}")
     
     ev_lines = "\n".join(ev_items)
     
-    # JSON schema for response
+    # JSON schema for response - includes justifications dict
     schema = {
         "type": "object",
         "properties": {
             "top": {"type": "array", "items": {"type": "string"}},
             "gaps": {"type": "array", "items": {"type": "string"}},
             "notes": {"type": "string"},
+            "justifications": {
+                "type": "object",
+                "description": "Dict mapping criterion name to 1-sentence professional justification",
+                "additionalProperties": {"type": "string"}
+            }
         },
-        "required": ["top", "gaps", "notes"],
+        "required": ["top", "gaps", "notes", "justifications"],
         "additionalProperties": False,
     }
     
@@ -787,6 +792,15 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
     
     # Add instructions for min/max items and notes length
     user_prompt += f"\n\nGenerate between {settings['min_strengths']}-{settings['max_strengths']} strengths and {settings['min_gaps']}-{settings['max_gaps']} gaps. Write the overall notes in {notes_instruction} using {tone_instruction}."
+    
+    # Add justification instructions
+    user_prompt += f"\n\nIMPORTANT: For each criterion in the evidence list above, write ONE professional justification sentence in the 'justifications' object. Each justification must:"
+    user_prompt += "\n1. Be specific - cite actual achievements, numbers, or facts from the evidence chunk"
+    user_prompt += "\n2. Be unique - even if the same chunk matches multiple criteria, explain WHY it demonstrates THAT specific criterion"
+    user_prompt += "\n3. Avoid generic phrases like 'This text shows X' or 'The candidate demonstrates Y'"
+    user_prompt += "\n4. Be professional and concise (one sentence)"
+    user_prompt += "\n5. Highlight concrete details (e.g., 'Directed a team of 12 through a high-stakes merger' not 'Shows leadership')"
+    user_prompt += "\n\nExample format: {\"Leadership\": \"Directed a cross-functional team of 12 engineers through a complex system migration while maintaining zero downtime.\", \"Stakeholder Management\": \"Successfully negotiated requirements with C-level executives across three business units during quarterly planning cycles.\"}"
     
     try:
         # Call GPT with admin-configured settings (temperature, max_tokens, model)
@@ -861,10 +875,16 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         else:
             notes = str(notes).strip()
         
+        # Extract justifications - dict mapping criterion → justification sentence
+        justifications = result.get('justifications', {})
+        if not isinstance(justifications, dict):
+            justifications = {}
+        
         return {
             "top": top,
             "gaps": gaps,
             "notes": notes,
+            "justifications": justifications
         }
         
     except Exception as e:
@@ -872,7 +892,8 @@ def gpt_candidate_insights(candidate_name: str, candidate_text: str, jd_text: st
         return {
             "top": [],
             "gaps": [],
-            "notes": f"Error generating insights: {str(e)}"
+            "notes": f"Error generating insights: {str(e)}",
+            "justifications": {}
         }
 
 
