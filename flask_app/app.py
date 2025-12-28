@@ -908,111 +908,123 @@ def create_app(config_name=None):
                                      shortfall=float(estimated_cost - current_user.balance_usd),
                                      selected_insights_mode=insights_mode)
             
-            # Load settings for chunk overlap
-            from analysis import load_gpt_settings
-            gpt_settings = load_gpt_settings()
-            
-            # IMPORTANT: Run analysis FIRST, charge AFTER (if analysis fails, no charge)
-            print(f"DEBUG: Starting analysis (NO CHARGE YET)...")
-            coverage, insights, evidence_map, ai_scoring_data = analyse_candidates(
-                candidates=candidates,
-                criteria=criteria,
-                weights=None,
-                chunk_chars=1200,
-                overlap=gpt_settings['chunk_overlap_chars']
-            )
-            print(f"DEBUG: Coverage analysis complete!")
-            
-            # Extract AI scoring data for re-scoring selected candidates
-            criteria_embs = ai_scoring_data['criteria_embs']
-            chunk_embs = ai_scoring_data['chunk_embs']
-            chunk_map = ai_scoring_data['chunk_map']
-            all_chunk_texts = ai_scoring_data['all_chunk_texts']
-            weights = ai_scoring_data['weights']
-            
-            # Generate GPT insights (can fail with OpenAI API errors)
-            from analysis import gpt_candidate_insights, ai_rescore_candidate
-            insights_data = {}
-            gpt_candidates_list = []
-            
-            print(f"DEBUG: About to generate GPT insights. num_insights={num_insights}")
-            if num_insights > 0:
-                top_candidates = coverage.nlargest(num_insights, 'Overall')
-                print(f"DEBUG: Top {num_insights} candidates selected for insights: {list(top_candidates['Candidate'])}")
-                print(f"DEBUG: AI re-scoring {len(top_candidates)} candidates selected for insights...")
-                
-                for idx, row in top_candidates.iterrows():
-                    candidate_name = row['Candidate']
-                    gpt_candidates_list.append(candidate_name)
-                    candidate_obj = next((c for c in candidates if c.name == candidate_name), None)
-                    if candidate_obj:
-                        print(f"DEBUG: Generating insights for candidate: {candidate_name}")
-                        
-                        # TWO-STAGE SCORING: Re-score this candidate with AI evaluation
-                        ai_scores, ai_justifications = ai_rescore_candidate(
-                            candidate_name=candidate_name,
-                            criteria=criteria,
-                            criteria_embs=criteria_embs,
-                            chunk_embs=chunk_embs,
-                            chunk_map=chunk_map,
-                            all_chunk_texts=all_chunk_texts,
-                            weights=weights
-                        )
-                        
-                        # Update coverage dataframe with AI scores
-                        for crit in criteria:
-                            coverage.loc[coverage['Candidate'] == candidate_name, crit] = ai_scores.get(crit, 0.0)
-                        
-                        # Recalculate overall score with AI scores
-                        weighted_scores = [ai_scores.get(crit, 0.0) * weights[i] for i, crit in enumerate(criteria)]
-                        new_overall = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
-                        coverage.loc[coverage['Candidate'] == candidate_name, 'Overall'] = new_overall
-                        
-                        # Generate insights using AI-scored data
-                        insights = gpt_candidate_insights(
-                            candidate_name=candidate_name,
-                            candidate_text=candidate_obj.text,
-                            jd_text=jd_text,
-                            coverage_scores=ai_scores,
-                            criteria=criteria,
-                            evidence_map=evidence_map,
-                            model="gpt-4o"
-                        )
-                        
-                        # Use AI justifications for perfect alignment
-                        insights['justifications'] = ai_justifications
-                        
-                        insights_data[candidate_name] = insights
-                        print(f"DEBUG: Insights generated for {candidate_name}")
-            else:
-                print(f"DEBUG: num_insights is 0, skipping GPT insights generation")
-            
-            # Build category map
-            category_map = {c['criterion']: c.get('category', 'Other Requirements') for c in criteria_list if c.get('use', True)}
+            # ============================================
+            # NEW AI PIPELINE: Production-Grade Scoring
+            # ============================================
+            import asyncio
+            from ai_service import run_global_ranking, run_deep_insights
             
             # Use job title from draft (already extracted/edited by user)
             job_title = draft.job_title or "Position Not Specified"
             
-            # Create analysis record
+            print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
+            
+            # Create Analysis record for progress tracking
             analysis = Analysis(
                 user_id=current_user.id,
                 job_title=job_title,
-                job_description_text=jd_text[:5000],  # Truncated for display
-                jd_full_text=jd_text,  # Full text for recreating drafts
-                jd_filename=draft.jd_filename,  # Original filename
+                job_description_text=jd_text[:5000],
+                jd_full_text=jd_text,
+                jd_filename=draft.jd_filename,
                 num_candidates=len(candidates),
                 num_criteria=len(criteria),
-                coverage_data=coverage.to_json(orient='records'),
-                insights_data=json.dumps(insights_data),
-                evidence_data=json.dumps({f"{k[0]}|||{k[1]}": v for k, v in evidence_map.items()}),
+                coverage_data='',  # Will be populated after Phase 1
+                insights_data='',  # Will be populated after Phase 2
+                evidence_data='',  # Will be populated after Phase 1
                 criteria_list=json.dumps(criteria),
-                category_map=json.dumps(category_map),
-                gpt_candidates=json.dumps(gpt_candidates_list),
                 cost_usd=estimated_cost,
-                analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large')
+                analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large'),
+                resumes_processed=0
             )
             db.session.add(analysis)
-            db.session.flush()  # Get analysis.id for linking transaction later
+            db.session.flush()  # Get analysis.id
+            
+            # Progress callback for live updates
+            def update_progress(completed, total):
+                """Update database with progress"""
+                analysis.resumes_processed = completed
+                db.session.commit()
+                print(f"Progress: {completed}/{total} candidates scored")
+            
+            # PHASE 1: Global Ranking (All Candidates)
+            print("Phase 1: AI scoring all candidates...")
+            candidate_tuples = [(c.name, c.text) for c in candidates]
+            
+            evaluations = asyncio.run(
+                run_global_ranking(
+                    candidates=candidate_tuples,
+                    jd_text=jd_text,
+                    criteria=criteria_list,  # Pass full criteria with metadata
+                    progress_callback=update_progress
+                )
+            )
+            
+            print(f"Phase 1 complete. Top candidate: {evaluations[0].candidate_name} ({evaluations[0].overall_score:.1f}/100)")
+            
+            # PHASE 2: Deep Insights (Top N Only)
+            insights_data = {}
+            gpt_candidates_list = []
+            
+            if num_insights > 0:
+                print(f"Phase 2: Generating deep insights for top {num_insights}...")
+                
+                insights_data = asyncio.run(
+                    run_deep_insights(
+                        candidates=candidate_tuples,
+                        jd_text=jd_text,
+                        evaluations=evaluations,
+                        top_n=num_insights
+                    )
+                )
+                
+                gpt_candidates_list = list(insights_data.keys())
+                print(f"Phase 2 complete. Generated insights for {len(insights_data)} candidates")
+                
+                # CRITICAL: Overwrite draft justifications with INSIGHT_AGENT versions
+                for candidate_name, insights in insights_data.items():
+                    # Find evaluation for this candidate
+                    eval_obj = next((e for e in evaluations if e.candidate_name == candidate_name), None)
+                    if eval_obj and 'justifications' in insights:
+                        # Replace Phase 1 draft justifications with Phase 2 premium versions
+                        for criterion, refined_justification in insights['justifications'].items():
+                            # Update the evaluation object
+                            score_obj = next((s for s in eval_obj.criterion_scores if s.criterion == criterion), None)
+                            if score_obj:
+                                score_obj.justification = refined_justification
+            
+            # Convert evaluations to DataFrame format (for existing UI compatibility)
+            import pandas as pd
+            coverage_records = []
+            evidence_map = {}
+            
+            for eval_obj in evaluations:
+                row = {"Candidate": eval_obj.candidate_name}
+                
+                # Add criterion scores
+                for score in eval_obj.criterion_scores:
+                    row[score.criterion] = score.score / 100.0  # Convert to 0-1
+                    
+                    # Store justification as evidence (for UI compatibility)
+                    evidence_map[(eval_obj.candidate_name, score.criterion)] = (
+                        score.justification,  # Justification text (premium version for unlocked candidates)
+                        score.score / 100.0,  # Score
+                        1  # Density count (not applicable in AI pipeline)
+                    )
+                
+                row["Overall"] = eval_obj.overall_score / 100.0
+                coverage_records.append(row)
+            
+            coverage = pd.DataFrame(coverage_records)
+            
+            # Build category map
+            category_map = {c['criterion']: c.get('category', 'Other Requirements') for c in criteria_list if c.get('use', True)}
+            
+            # Update analysis with results
+            analysis.coverage_data = coverage.to_json(orient='records')
+            analysis.insights_data = json.dumps(insights_data)
+            analysis.evidence_data = json.dumps({f"{k[0]}|||{k[1]}": v for k, v in evidence_map.items()})
+            analysis.category_map = json.dumps(category_map)
+            analysis.gpt_candidates = json.dumps(gpt_candidates_list)
             
             # Store candidate files
             from database import CandidateFile
