@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Candidate Evaluator</title>
+    <title>GPT Settings - Admin Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
@@ -15,99 +15,134 @@
         .setting-value { font-family: 'Courier New', monospace; background: #667eea; color: white; padding: 6px 14px; border-radius: 6px; display: inline-block; font-weight: 600; }
         .setting-desc { color: #555; margin-top: 10px; font-size: 0.95rem; line-height: 1.5; }
         .setting-explanation { background: #f0f4ff; padding: 14px 16px; border-radius: 8px; margin-top: 12px; font-size: 0.9rem; border-left: 3px solid #667eea; }
-        .cost-impact { background: #fff9e6; padding: 10px 14px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #ffc107; font-size: 0.9rem; }
-        .quality-impact { background: #e8f5f7; padding: 10px 14px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #17a2b8; font-size: 0.9rem; }
+        .agent-badge { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 8px; }
+        .ranker-badge { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .insight-badge { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .profit-card { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; }
+        .profit-card h3 { margin: 0; font-size: 1.4rem; }
+        .profit-value { font-size: 3rem; font-weight: bold; margin: 15px 0; }
+        .profit-breakdown { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .profit-breakdown div { margin: 5px 0; font-size: 0.95rem; }
+        .section-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 24px; border-radius: 12px; margin-bottom: 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .section-header:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+        .section-header h3 { margin: 0; font-size: 1.3rem; font-weight: 600; }
+        .section-header .toggle-icon { font-size: 1.5rem; transition: transform 0.3s; }
+        .section-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .section-content { padding: 25px; border: 2px solid #f0f0f0; border-top: none; border-radius: 0 0 12px 12px; background: white; }
+        .section-content.collapsed { display: none; }
+        .section-badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 12px; }
         .warning { background: #f8d7da; padding: 12px; border-radius: 8px; border-left: 4px solid #dc3545; margin-bottom: 20px; }
         .success-msg { background: #d4edda; padding: 12px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 20px; }
         .btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px 30px; font-size: 1.1rem; }
         .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
         .form-range { margin-top: 10px; }
         .range-labels { display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px; }
-        .current-cost { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-        .current-cost h3 { margin: 0; font-size: 1.3rem; }
-        .current-cost .cost-value { font-size: 2.5rem; font-weight: bold; margin: 10px 0; }
-        
-        /* Collapsible Section Headers */
-        .section-header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
-            padding: 18px 24px; 
-            border-radius: 12px; 
-            margin-bottom: 0; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        .section-header:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); 
-        }
-        .section-header h3 { 
-            margin: 0; 
-            font-size: 1.3rem; 
-            font-weight: 600; 
-        }
-        .section-header .toggle-icon { 
-            font-size: 1.5rem; 
-            transition: transform 0.3s; 
-        }
-        .section-header.collapsed .toggle-icon { 
-            transform: rotate(-90deg); 
-        }
-        .section-content {
-            padding: 25px;
-            border: 2px solid #f0f0f0;
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            background: white;
-        }
-        .section-content.collapsed {
-            display: none;
-        }
-        
-        /* Section Badge */
-        .section-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 12px;
-        }
-        
         .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
-        
-        /* Tab Navigation */
         .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
-        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; }
+        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; position: relative; }
         .admin-tabs a:hover { color: #667eea; }
         .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
+        
+        /* Finance Menu Container */
+        .finance-menu-container {
+            display: inline-block;
+            position: relative;
+        }
+        
+        /* System Settings Menu Container */
+        .system-settings-menu-container {
+            display: inline-block;
+            position: relative;
+        }
+        
+        /* System Settings Dropdown */
+        .system-settings-dropdown { 
+            display: none; 
+            position: absolute; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            min-width: 200px; 
+            z-index: 10000; 
+            top: 100%; 
+            left: 0; 
+            border: 1px solid #e0e0e0;
+            margin-top: 0;
+            padding-top: 8px;
+        }
+        .system-settings-dropdown a { 
+            display: block !important; 
+            padding: 12px 20px !important; 
+            border-bottom: 1px solid #f0f0f0 !important; 
+            font-size: 0.95rem !important;
+            position: relative !important;
+            color: #666 !important;
+            text-decoration: none !important;
+        }
+        .system-settings-dropdown a:last-child { border-bottom: none !important; }
+        .system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+        
+        /* Finance Dropdown */
+        .finance-dropdown { 
+            display: none; 
+            position: absolute; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            min-width: 200px; 
+            z-index: 10000; 
+            top: 100%; 
+            left: 0; 
+            border: 1px solid #e0e0e0;
+            margin-top: 0;
+            padding-top: 8px;
+        }
+        .finance-dropdown a { 
+            display: block !important; 
+            padding: 12px 20px !important; 
+            border-bottom: 1px solid #f0f0f0 !important; 
+            font-size: 0.95rem !important;
+            position: relative !important;
+            color: #666 !important;
+            text-decoration: none !important;
+        }
+        .finance-dropdown a:last-child { border-bottom: none !important; }
+        .finance-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+        
         .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
         .session-info .timeout { font-weight: 600; color: #667eea; }
     </style>
 </head>
 <body>
-    <div class="session-info">
-        ⏱️ Session timeout: <span class="timeout">30 min inactivity</span>
-    </div>
     <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🔒 Logout</a>
     
     <div class="admin-container">
         <!-- Tab Navigation -->
         <div class="admin-tabs">
-            <a href="{{ url_for('admin_gpt_settings') }}" class="{% if active_tab == 'gpt' %}active{% endif %}">🤖 GPT Settings</a>
-            <a href="{{ url_for('admin_prompts') }}" class="{% if active_tab == 'prompts' %}active{% endif %}">💬 Prompts</a>
+            <div class="system-settings-menu-container">
+                <a href="#" class="{% if active_tab in ['gpt', 'prompts', 'system', 'pricing'] %}active{% endif %}">⚙️ System Settings ▾</a>
+                <div class="system-settings-dropdown">
+                    <a href="{{ url_for('admin_gpt_settings') }}">🤖 GPT Settings</a>
+                    <a href="{{ url_for('admin_prompts') }}">💬 Prompts</a>
+                    <a href="{{ url_for('admin_system') }}">🔧 General Settings</a>
+                    <a href="{{ url_for('admin_pricing') }}">💰 Pricing & Revenue</a>
+                </div>
+            </div>
             <a href="{{ url_for('admin_users') }}" class="{% if active_tab == 'users' %}active{% endif %}">👥 Users</a>
-            <a href="{{ url_for('admin_system') }}" class="{% if active_tab == 'system' %}active{% endif %}">⚙️ System</a>
-            <a href="{{ url_for('admin_stats') }}" class="{% if active_tab == 'stats' %}active{% endif %}">📊 Stats</a>
             <a href="{{ url_for('admin_feedback') }}" class="{% if active_tab == 'feedback' %}active{% endif %}">💬 Feedback</a>
-            <a href="{{ url_for('admin_audit_logs') }}" class="{% if active_tab == 'audit' %}active{% endif %}">🔍 Audit Logs</a>
+            <div class="finance-menu-container">
+                <a href="#" class="{% if active_tab in ['stats', 'audit', 'business_health', 'balance_audit'] %}active{% endif %}">💰 Finance ▾</a>
+                <div class="finance-dropdown">
+                    <a href="{{ url_for('admin_stats') }}">📊 Stats</a>
+                    <a href="{{ url_for('admin_audit_logs') }}">🔍 Audit Logs</a>
+                    <a href="{{ url_for('admin_business_health') }}">💚 Business Health</a>
+                    <a href="{{ url_for('admin_balance_audit') }}">⚖️ Balance Audit</a>
+                </div>
+            </div>
         </div>
+        
         <div class="settings-card">
-            <h1 class="text-center mb-4">⚙️ Admin Settings Panel</h1>
+            <h1 class="text-center mb-4">🎯 Two-Agent AI Configuration</h1>
             
             {% if message %}
             <div class="success-msg">
@@ -116,486 +151,508 @@
             {% endif %}
             
             <div class="warning">
-                <strong>⚠️ Important:</strong> Changes to these settings affect both quality and cost of GPT insights. 
-                Always test with "Top 3" insights first before processing large batches. Changes take effect immediately 
-                after saving (server restart not required).
-            </div>
-            
-            <div class="current-cost">
-                <h3>Current Cost Per Insight</h3>
-                <div class="cost-value" id="currentCost">~$0.018</div>
-                <small>Based on current settings with {{ settings.gpt_model.value }} model</small>
+                <strong>⚠️ Two-Agent System:</strong> RANKER handles bulk scoring (all candidates × all criteria). 
+                INSIGHT generates deep analysis for selected candidates only. Changes take effect immediately after saving.
             </div>
         </div>
         
         <form method="POST" action="{{ url_for('admin_save_settings') }}">
-            <!-- Core GPT Settings -->
+            <!-- Core Two-Agent Settings -->
             <div class="settings-card">
                 <div class="section-header" onclick="toggleSection(this)">
                     <div>
-                        <h3 class="mb-0">🤖 Core GPT Settings<span class="section-badge">4 settings</span></h3>
+                        <h3 class="mb-0">🤖 Core Agent Configuration<span class="section-badge">4 settings</span></h3>
                     </div>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="section-content">
                 
-                <!-- Model Selection -->
+                <!-- RANKER Model -->
                 <div class="setting-item">
-                    <div class="setting-name">GPT Model</div>
-                    <select name="gpt_model" class="form-select mt-2" onchange="updateCostEstimate()">
-                        {% for option in settings.gpt_model.options %}
-                        <option value="{{ option }}" {% if option == settings.gpt_model.value %}selected{% endif %}>
+                    <div class="setting-name">RANKER Model<span class="agent-badge ranker-badge">BULK SCORING</span></div>
+                    <select name="ranker_model" class="form-select mt-2" onchange="updateCostEstimate()">
+                        {% for option in settings.ranker_model.options %}
+                        <option value="{{ option }}" {% if option == settings.ranker_model.value %}selected{% endif %}>
                             {{ option }}
                         </option>
                         {% endfor %}
                     </select>
-                    <div class="setting-desc">{{ settings.gpt_model.description }}</div>
+                    <div class="setting-desc">{{ settings.ranker_model.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.gpt_model.explanation }}
+                        <strong>Usage:</strong> {{ settings.ranker_model.usage }}<br>
+                        <strong>Explanation:</strong> {{ settings.ranker_model.explanation }}
                     </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.gpt_model.cost_impact }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.gpt_model.quality_impact }}
+                    <div class="setting-explanation" style="background: #fff9e6; border-left-color: #ffc107;">
+                        <strong>💰 Cost:</strong> {{ settings.ranker_model.cost_impact }}
                     </div>
                 </div>
                 
-                <!-- Temperature -->
+                <!-- INSIGHT Model -->
                 <div class="setting-item">
-                    <div class="setting-name">Temperature</div>
+                    <div class="setting-name">INSIGHT Model<span class="agent-badge insight-badge">DEEP ANALYSIS</span></div>
+                    <select name="insight_model" class="form-select mt-2" onchange="updateCostEstimate()">
+                        {% for option in settings.insight_model.options %}
+                        <option value="{{ option }}" {% if option == settings.insight_model.value %}selected{% endif %}>
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="setting-desc">{{ settings.insight_model.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Usage:</strong> {{ settings.insight_model.usage }}<br>
+                        <strong>Explanation:</strong> {{ settings.insight_model.explanation }}
+                    </div>
+                    <div class="setting-explanation" style="background: #fff9e6; border-left-color: #ffc107;">
+                        <strong>💰 Cost:</strong> {{ settings.insight_model.cost_impact }}
+                    </div>
+                </div>
+                
+                <!-- RANKER Temperature -->
+                <div class="setting-item">
+                    <div class="setting-name">RANKER Temperature<span class="agent-badge ranker-badge">CONSISTENCY</span></div>
                     <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="temperature" class="form-range flex-grow-1" 
-                               min="0" max="2" step="0.1" value="{{ settings.temperature.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.temperature.value }}</output>
+                        <input type="range" name="ranker_temperature" class="form-range flex-grow-1" 
+                               min="0" max="1" step="0.05" value="{{ settings.ranker_temperature.value }}"
+                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.ranker_temperature.value }}</output>
                     </div>
                     <div class="range-labels">
                         <span>0.0 (Deterministic)</span>
-                        <span>1.0 (Balanced)</span>
-                        <span>2.0 (Creative)</span>
+                        <span>0.1 (Recommended)</span>
+                        <span>1.0 (Creative)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.temperature.description }}</div>
+                    <div class="setting-desc">{{ settings.ranker_temperature.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.temperature.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.temperature.recommended }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.temperature.quality_impact }}
+                        <strong>Explanation:</strong> {{ settings.ranker_temperature.explanation }}
                     </div>
                 </div>
                 
+                <!-- INSIGHT Temperature -->
+                <div class="setting-item">
+                    <div class="setting-name">INSIGHT Temperature<span class="agent-badge insight-badge">READABILITY</span></div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="insight_temperature" class="form-range flex-grow-1" 
+                               min="0" max="1" step="0.05" value="{{ settings.insight_temperature.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.insight_temperature.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.0 (Robotic)</span>
+                        <span>0.4 (Recommended)</span>
+                        <span>1.0 (Creative)</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.insight_temperature.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.insight_temperature.explanation }}
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            <!-- Advanced API Settings (Collapsed by Default) -->
+            <div class="settings-card">
+                <div class="section-header collapsed" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">⚙️ Advanced API Settings<span class="section-badge">Expert Controls</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content collapsed">
+                
                 <!-- Presence Penalty -->
                 <div class="setting-item">
-                    <div class="setting-name">Presence Penalty</div>
+                    <div class="setting-name">Presence Penalty<span class="agent-badge insight-badge">INSIGHT ONLY</span></div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="presence_penalty" class="form-range flex-grow-1" 
-                               min="0" max="2" step="0.1" value="{{ settings.presence_penalty.value }}"
+                               min="0" max="2" step="0.1" value="{{ settings.advanced_api_settings.presence_penalty.value }}"
                                oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.presence_penalty.value }}</output>
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_api_settings.presence_penalty.value }}</output>
                     </div>
                     <div class="range-labels">
                         <span>0.0 (None)</span>
                         <span>0.4 (Recommended)</span>
                         <span>2.0 (Maximum)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.presence_penalty.description }}</div>
+                    <div class="setting-desc">{{ settings.advanced_api_settings.presence_penalty.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.presence_penalty.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.presence_penalty.recommended }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.presence_penalty.quality_impact }}
+                        <strong>Explanation:</strong> {{ settings.advanced_api_settings.presence_penalty.explanation }}
                     </div>
                 </div>
                 
                 <!-- Frequency Penalty -->
                 <div class="setting-item">
-                    <div class="setting-name">Frequency Penalty</div>
+                    <div class="setting-name">Frequency Penalty<span class="agent-badge insight-badge">INSIGHT ONLY</span></div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="frequency_penalty" class="form-range flex-grow-1" 
-                               min="0" max="2" step="0.1" value="{{ settings.frequency_penalty.value }}"
+                               min="0" max="2" step="0.1" value="{{ settings.advanced_api_settings.frequency_penalty.value }}"
                                oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.frequency_penalty.value }}</output>
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_api_settings.frequency_penalty.value }}</output>
                     </div>
                     <div class="range-labels">
                         <span>0.0 (None)</span>
                         <span>0.3 (Recommended)</span>
                         <span>2.0 (Maximum)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.frequency_penalty.description }}</div>
+                    <div class="setting-desc">{{ settings.advanced_api_settings.frequency_penalty.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.frequency_penalty.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.frequency_penalty.recommended }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.frequency_penalty.quality_impact }}
+                        <strong>Explanation:</strong> {{ settings.advanced_api_settings.frequency_penalty.explanation }}
                     </div>
                 </div>
                 
-                <!-- Max Tokens -->
+                <!-- RANKER Max Tokens -->
                 <div class="setting-item">
-                    <div class="setting-name">Max Response Tokens</div>
+                    <div class="setting-name">RANKER Max Tokens<span class="agent-badge ranker-badge">OUTPUT LIMIT</span></div>
                     <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="max_tokens" class="form-range flex-grow-1" 
-                               min="500" max="2000" step="100" value="{{ settings.max_tokens.value }}"
+                        <input type="range" name="ranker_max_tokens" class="form-range flex-grow-1" 
+                               min="200" max="500" step="50" value="{{ settings.advanced_api_settings.ranker_max_tokens.value }}"
                                oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
-                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.max_tokens.value }}</output>
+                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.advanced_api_settings.ranker_max_tokens.value }}</output>
                     </div>
                     <div class="range-labels">
-                        <span>500 (Minimal)</span>
-                        <span>1000 (Recommended)</span>
-                        <span>2000 (Maximum)</span>
+                        <span>200 (Minimal)</span>
+                        <span>300 (Recommended)</span>
+                        <span>500 (Detailed)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.max_tokens.description }}</div>
+                    <div class="setting-desc">{{ settings.advanced_api_settings.ranker_max_tokens.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.max_tokens.explanation }}
+                        <strong>Explanation:</strong> {{ settings.advanced_api_settings.ranker_max_tokens.explanation }}
                     </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.max_tokens.cost_impact }}
+                </div>
+                
+                <!-- INSIGHT Max Tokens -->
+                <div class="setting-item">
+                    <div class="setting-name">INSIGHT Max Tokens<span class="agent-badge insight-badge">OUTPUT LIMIT</span></div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="insight_max_tokens" class="form-range flex-grow-1" 
+                               min="500" max="2000" step="100" value="{{ settings.advanced_api_settings.insight_max_tokens.value }}"
+                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
+                        <output class="setting-value" style="min-width: 100px; text-align: center;">{{ settings.advanced_api_settings.insight_max_tokens.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>500 (Brief)</span>
+                        <span>1000 (Recommended)</span>
+                        <span>2000 (Detailed)</span>
+                    </div>
+                    <div class="setting-desc">{{ settings.advanced_api_settings.insight_max_tokens.description }}</div>
+                    <div class="setting-explanation">
+                        <strong>Explanation:</strong> {{ settings.advanced_api_settings.insight_max_tokens.explanation }}
                     </div>
                 </div>
                 </div>
             </div>
             
-            <!-- Context Settings -->
+            <!-- Text Processing -->
             <div class="settings-card">
                 <div class="section-header" onclick="toggleSection(this)">
                     <div>
-                        <h3 class="mb-0">📄 Context & Evidence Settings<span class="section-badge">8 settings</span></h3>
+                        <h3 class="mb-0">📄 Text Processing<span class="section-badge">Cost Control</span></h3>
                     </div>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="section-content">
                 
-                <!-- Evidence Snippet Length -->
+                <!-- Candidate Text Chars -->
                 <div class="setting-item">
-                    <div class="setting-name">Evidence Snippet Characters</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="evidence_snippet_chars" class="form-range flex-grow-1" 
-                               min="200" max="1000" step="100" value="{{ settings.evidence_snippet_chars.value }}"
-                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
-                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.evidence_snippet_chars.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>200 (Brief)</span>
-                        <span>600 (Recommended)</span>
-                        <span>1000 (Detailed)</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.evidence_snippet_chars.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.evidence_snippet_chars.explanation }}
-                    </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.evidence_snippet_chars.cost_impact }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.evidence_snippet_chars.quality_impact }}
-                    </div>
-                    <div class="alert alert-info mt-2 mb-0" style="font-size: 13px; padding: 10px 15px;">
-                        <strong>📌 Note:</strong> Evidence snippets are extracted from the <strong>entire resume</strong> based on semantic similarity scoring. They are <strong>not limited</strong> by the "Candidate Resume Text Characters" setting below, which only affects the full resume context sent to GPT.
-                    </div>
-                </div>
-                
-                <!-- Candidate Text Length -->
-                <div class="setting-item">
-                    <div class="setting-name">Candidate Resume Text Characters</div>
+                    <div class="setting-name">Resume Character Limit</div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="candidate_text_chars" class="form-range flex-grow-1" 
-                               min="1000" max="10000" step="1000" value="{{ settings.candidate_text_chars.value }}"
-                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
-                        <output class="setting-value" style="min-width: 100px; text-align: center;">{{ settings.candidate_text_chars.value }}</output>
+                               min="4000" max="20000" step="1000" value="{{ settings.text_processing.candidate_text_chars.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.text_processing.candidate_text_chars.value }}</output>
                     </div>
                     <div class="range-labels">
-                        <span>1000</span>
-                        <span>3000 (Recommended)</span>
-                        <span>10000</span>
+                        <span>4k (Minimal)</span>
+                        <span>12k (Recommended)</span>
+                        <span>20k (Detailed)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.candidate_text_chars.description }}</div>
+                    <div class="setting-desc">{{ settings.text_processing.candidate_text_chars.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.candidate_text_chars.explanation }}
+                        <strong>Explanation:</strong> {{ settings.text_processing.candidate_text_chars.explanation }}
                     </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.candidate_text_chars.cost_impact }}
+                    <div class="setting-explanation" style="background: #fff9e6; border-left-color: #ffc107;">
+                        <strong>💰 Cost:</strong> {{ settings.text_processing.candidate_text_chars.cost_impact }}
                     </div>
                 </div>
                 
-                <!-- JD Text Length -->
+                <!-- JD Text Chars -->
                 <div class="setting-item">
-                    <div class="setting-name">Job Description Text Characters</div>
+                    <div class="setting-name">Job Description Character Limit</div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="jd_text_chars" class="form-range flex-grow-1" 
-                               min="1000" max="10000" step="1000" value="{{ settings.jd_text_chars.value }}"
-                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
-                        <output class="setting-value" style="min-width: 100px; text-align: center;">{{ settings.jd_text_chars.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>1000</span>
-                        <span>3000 (Recommended)</span>
-                        <span>10000</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.jd_text_chars.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.jd_text_chars.explanation }}
-                    </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.jd_text_chars.cost_impact }}
-                    </div>
-                </div>
-                
-                <!-- Top Evidence Items -->
-                <div class="setting-item">
-                    <div class="setting-name">Number of Evidence Items to Include</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="top_evidence_items" class="form-range flex-grow-1" 
-                               min="5" max="20" step="1" value="{{ settings.advanced_settings.top_evidence_items.value }}"
-                               oninput="this.nextElementSibling.value = this.value; updateCostEstimate()">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.top_evidence_items.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>5 (Minimal)</span>
-                        <span>10 (Recommended)</span>
-                        <span>20 (Maximum)</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.top_evidence_items.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.top_evidence_items.explanation }}
-                    </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.advanced_settings.top_evidence_items.cost_impact }}
-                    </div>
-                </div>
-                
-                <!-- Evidence Filter Strategy -->
-                <div class="setting-item">
-                    <div class="setting-name">Evidence Filter Strategy</div>
-                    <select name="evidence_filter_strategy" class="form-select mt-2">
-                        {% for option in settings.advanced_settings.evidence_filter_strategy.options %}
-                        <option value="{{ option }}" {% if option == settings.advanced_settings.evidence_filter_strategy.value %}selected{% endif %}>
-                            {{ option.replace('_', ' ').title() }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <div class="setting-desc">{{ settings.advanced_settings.evidence_filter_strategy.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_filter_strategy.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.evidence_filter_strategy.recommended }}
-                    </div>
-                    <div class="cost-impact">
-                        <strong>💰 Cost Impact:</strong> {{ settings.advanced_settings.evidence_filter_strategy.cost_impact }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.evidence_filter_strategy.quality_impact }}
-                    </div>
-                </div>
-                
-                <!-- Evidence Score Threshold High -->
-                <div class="setting-item">
-                    <div class="setting-name">Evidence Threshold - High (for threshold_based strategy)</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="evidence_score_threshold_high" class="form-range flex-grow-1" 
-                               min="0.5" max="0.85" step="0.05" value="{{ settings.advanced_settings.evidence_score_threshold_high.value }}"
+                               min="1000" max="15000" step="1000" value="{{ settings.text_processing.jd_text_chars.value }}"
                                oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.evidence_score_threshold_high.value }}</output>
+                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.text_processing.jd_text_chars.value }}</output>
                     </div>
                     <div class="range-labels">
-                        <span>0.5</span>
-                        <span>0.65 (Recommended)</span>
-                        <span>0.85</span>
+                        <span>1k (Brief)</span>
+                        <span>5k (Recommended)</span>
+                        <span>15k (Comprehensive)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.evidence_score_threshold_high.description }}</div>
+                    <div class="setting-desc">{{ settings.text_processing.jd_text_chars.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_score_threshold_high.explanation }}
+                        <strong>Explanation:</strong> {{ settings.text_processing.jd_text_chars.explanation }}
                     </div>
                 </div>
                 
-                <!-- Evidence Score Threshold Low -->
+                <!-- Evidence Snippet Chars -->
                 <div class="setting-item">
-                    <div class="setting-name">Evidence Threshold - Low (for threshold_based strategy)</div>
+                    <div class="setting-name">Evidence Snippet Display Limit</div>
                     <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="evidence_score_threshold_low" class="form-range flex-grow-1" 
-                               min="0.15" max="0.50" step="0.05" value="{{ settings.advanced_settings.evidence_score_threshold_low.value }}"
+                        <input type="range" name="evidence_snippet_chars" class="form-range flex-grow-1" 
+                               min="300" max="1000" step="100" value="{{ settings.text_processing.evidence_snippet_chars.value }}"
                                oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.evidence_score_threshold_low.value }}</output>
+                        <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.text_processing.evidence_snippet_chars.value }}</output>
                     </div>
                     <div class="range-labels">
-                        <span>0.15</span>
-                        <span>0.40 (Recommended)</span>
-                        <span>0.50</span>
+                        <span>300 (Brief)</span>
+                        <span>500 (Recommended)</span>
+                        <span>1000 (Full)</span>
                     </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.evidence_score_threshold_low.description }}</div>
+                    <div class="setting-desc">{{ settings.text_processing.evidence_snippet_chars.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.evidence_score_threshold_low.explanation }}
-                    </div>
-                </div>
-                
-                <!-- Chunk Overlap -->
-                <div class="setting-item">
-                    <div class="setting-name">Text Chunk Overlap Characters</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="chunk_overlap_chars" class="form-range flex-grow-1" 
-                               min="50" max="300" step="25" value="{{ settings.advanced_settings.chunk_overlap_chars.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.chunk_overlap_chars.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>50</span>
-                        <span>150 (Recommended)</span>
-                        <span>300</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.chunk_overlap_chars.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.chunk_overlap_chars.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.chunk_overlap_chars.recommended }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.chunk_overlap_chars.quality_impact }}
+                        <strong>Explanation:</strong> {{ settings.text_processing.evidence_snippet_chars.explanation }}
                     </div>
                 </div>
                 </div>
             </div>
             
-            <!-- Output Format Settings -->
+            <!-- Insight Formatting -->
             <div class="settings-card">
                 <div class="section-header" onclick="toggleSection(this)">
                     <div>
-                        <h3 class="mb-0">📝 Output Format Settings<span class="section-badge">6 settings</span></h3>
+                        <h3 class="mb-0">✍️ Insight Formatting<span class="section-badge">Output Style</span></h3>
                     </div>
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="section-content">
-                
-                <!-- Min Strengths -->
-                <div class="setting-item">
-                    <div class="setting-name">Minimum Number of Strengths</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="min_strengths" class="form-range flex-grow-1" 
-                               min="2" max="8" step="1" value="{{ settings.advanced_settings.min_strengths.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.min_strengths.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>2</span>
-                        <span>3 (Recommended)</span>
-                        <span>8</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.min_strengths.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.min_strengths.explanation }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.min_strengths.quality_impact }}
-                    </div>
-                </div>
-                
-                <!-- Max Strengths -->
-                <div class="setting-item">
-                    <div class="setting-name">Maximum Number of Strengths</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="max_strengths" class="form-range flex-grow-1" 
-                               min="4" max="10" step="1" value="{{ settings.advanced_settings.max_strengths.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.max_strengths.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>4</span>
-                        <span>6 (Recommended)</span>
-                        <span>10</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.max_strengths.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.max_strengths.explanation }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.max_strengths.quality_impact }}
-                    </div>
-                </div>
-                
-                <!-- Min Gaps -->
-                <div class="setting-item">
-                    <div class="setting-name">Minimum Number of Gaps</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="min_gaps" class="form-range flex-grow-1" 
-                               min="2" max="8" step="1" value="{{ settings.advanced_settings.min_gaps.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.min_gaps.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>2</span>
-                        <span>3 (Recommended)</span>
-                        <span>8</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.min_gaps.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.min_gaps.explanation }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.min_gaps.quality_impact }}
-                    </div>
-                </div>
-                
-                <!-- Max Gaps -->
-                <div class="setting-item">
-                    <div class="setting-name">Maximum Number of Gaps</div>
-                    <div class="d-flex align-items-center gap-3 mt-2">
-                        <input type="range" name="max_gaps" class="form-range flex-grow-1" 
-                               min="4" max="10" step="1" value="{{ settings.advanced_settings.max_gaps.value }}"
-                               oninput="this.nextElementSibling.value = this.value">
-                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.advanced_settings.max_gaps.value }}</output>
-                    </div>
-                    <div class="range-labels">
-                        <span>4</span>
-                        <span>6 (Recommended)</span>
-                        <span>10</span>
-                    </div>
-                    <div class="setting-desc">{{ settings.advanced_settings.max_gaps.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.max_gaps.explanation }}
-                    </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.max_gaps.quality_impact }}
-                    </div>
-                </div>
                 
                 <!-- Notes Length -->
                 <div class="setting-item">
                     <div class="setting-name">Overall Notes Length</div>
                     <select name="notes_length" class="form-select mt-2">
-                        {% for option in settings.advanced_settings.notes_length.options %}
-                        <option value="{{ option }}" {% if option == settings.advanced_settings.notes_length.value %}selected{% endif %}>
-                            {{ option.title() }}
+                        {% for option in settings.insight_formatting.notes_length.options %}
+                        <option value="{{ option }}" {% if option == settings.insight_formatting.notes_length.value %}selected{% endif %}>
+                            {{ option|capitalize }}
                         </option>
                         {% endfor %}
                     </select>
-                    <div class="setting-desc">{{ settings.advanced_settings.notes_length.description }}</div>
+                    <div class="setting-desc">{{ settings.insight_formatting.notes_length.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.notes_length.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.notes_length.recommended }}
+                        <strong>Explanation:</strong> {{ settings.insight_formatting.notes_length.explanation }}
                     </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.notes_length.quality_impact }}
+                    <div class="setting-explanation" style="background: #fff9e6; border-left-color: #ffc107;">
+                        <strong>💰 Cost:</strong> {{ settings.insight_formatting.notes_length.cost_impact }}
                     </div>
                 </div>
                 
                 <!-- Insight Tone -->
                 <div class="setting-item">
-                    <div class="setting-name">Insight Tone/Style</div>
+                    <div class="setting-name">Insight Tone & Style</div>
                     <select name="insight_tone" class="form-select mt-2">
-                        {% for option in settings.advanced_settings.insight_tone.options %}
-                        <option value="{{ option }}" {% if option == settings.advanced_settings.insight_tone.value %}selected{% endif %}>
-                            {{ option.title() }}
+                        {% for option in settings.insight_formatting.insight_tone.options %}
+                        <option value="{{ option }}" {% if option == settings.insight_formatting.insight_tone.value %}selected{% endif %}>
+                            {{ option|capitalize }}
                         </option>
                         {% endfor %}
                     </select>
-                    <div class="setting-desc">{{ settings.advanced_settings.insight_tone.description }}</div>
+                    <div class="setting-desc">{{ settings.insight_formatting.insight_tone.description }}</div>
                     <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.advanced_settings.insight_tone.explanation }}
-                        <br><strong>Recommended:</strong> {{ settings.advanced_settings.insight_tone.recommended }}
+                        <strong>Explanation:</strong> {{ settings.insight_formatting.insight_tone.explanation }}
                     </div>
-                    <div class="quality-impact">
-                        <strong>✨ Quality Impact:</strong> {{ settings.advanced_settings.insight_tone.quality_impact }}
+                    <div class="setting-explanation" style="background: #e8f5e9; border-left-color: #4caf50;">
+                        <strong>✨ Quality:</strong> {{ settings.insight_formatting.insight_tone.quality_impact }}
                     </div>
                 </div>
+                </div>
+            </div>
+            
+            <!-- Report Balance -->
+            <div class="settings-card">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">📊 Report Balance<span class="section-badge">Output Control</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                
+                <div class="setting-item">
+                    <div class="setting-name">Minimum Strengths</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="min_strengths" class="form-range flex-grow-1" 
+                               min="1" max="6" step="1" value="{{ settings.report_balance.min_strengths.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.report_balance.min_strengths.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>1 (Minimal)</span>
+                        <span>3 (Recommended)</span>
+                        <span>6 (Comprehensive)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.report_balance.min_strengths.description }}</div>
+                    <div class="setting-explanation">{{ settings.report_balance.min_strengths.explanation }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Maximum Strengths</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="max_strengths" class="form-range flex-grow-1" 
+                               min="3" max="10" step="1" value="{{ settings.report_balance.max_strengths.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.report_balance.max_strengths.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>3 (Concise)</span>
+                        <span>6 (Recommended)</span>
+                        <span>10 (Exhaustive)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.report_balance.max_strengths.description }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Minimum Gaps/Concerns</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="min_gaps" class="form-range flex-grow-1" 
+                               min="1" max="6" step="1" value="{{ settings.report_balance.min_gaps.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.report_balance.min_gaps.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>1 (Minimal)</span>
+                        <span>3 (Recommended)</span>
+                        <span>6 (Comprehensive)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.report_balance.min_gaps.description }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Maximum Gaps/Concerns</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="max_gaps" class="form-range flex-grow-1" 
+                               min="3" max="10" step="1" value="{{ settings.report_balance.max_gaps.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.report_balance.max_gaps.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>3 (Concise)</span>
+                        <span>6 (Recommended)</span>
+                        <span>10 (Exhaustive)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.report_balance.max_gaps.description }}</div>
+                    <div class="cost-impact">{{ settings.report_balance.max_gaps.cost_impact }}</div>
+                </div>
+                
+                </div>
+            </div>
+            
+            <!-- Evidence Depth -->
+            <div class="settings-card">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">🔍 Evidence Depth<span class="section-badge">UI Display</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                
+                <div class="setting-item">
+                    <div class="setting-name">Evidence Items Per Criterion</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="top_evidence_items" class="form-range flex-grow-1" 
+                               min="1" max="10" step="1" value="{{ settings.evidence_depth.top_evidence_items.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.evidence_depth.top_evidence_items.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>1 (Minimal)</span>
+                        <span>5 (Recommended)</span>
+                        <span>10 (Exhaustive)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.evidence_depth.top_evidence_items.description }}</div>
+                    <div class="setting-explanation">{{ settings.evidence_depth.top_evidence_items.explanation }}</div>
+                    <div class="quality-impact">{{ settings.evidence_depth.top_evidence_items.quality_impact }}</div>
+                </div>
+                
+                </div>
+            </div>
+            
+            <!-- Evidence Thresholds -->
+            <div class="settings-card">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div>
+                        <h3 class="mb-0">⚖️ Evidence Match Quality<span class="section-badge">Classification</span></h3>
+                    </div>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="section-content">
+                
+                <div class="setting-item">
+                    <div class="setting-name">Strong Match Threshold</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="strong_match_threshold" class="form-range flex-grow-1" 
+                               min="0.6" max="0.9" step="0.05" value="{{ settings.evidence_thresholds.strong_match_threshold.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.evidence_thresholds.strong_match_threshold.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.6 (Lenient)</span>
+                        <span>0.75 (Recommended)</span>
+                        <span>0.9 (Strict)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.evidence_thresholds.strong_match_threshold.description }}</div>
+                    <div class="setting-explanation">{{ settings.evidence_thresholds.strong_match_threshold.explanation }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Good Match Threshold</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="good_match_threshold" class="form-range flex-grow-1" 
+                               min="0.4" max="0.7" step="0.05" value="{{ settings.evidence_thresholds.good_match_threshold.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.evidence_thresholds.good_match_threshold.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.4 (Lenient)</span>
+                        <span>0.5 (Recommended)</span>
+                        <span>0.7 (Strict)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.evidence_thresholds.good_match_threshold.description }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Moderate Match Threshold</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="moderate_match_threshold" class="form-range flex-grow-1" 
+                               min="0.25" max="0.5" step="0.05" value="{{ settings.evidence_thresholds.moderate_match_threshold.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.evidence_thresholds.moderate_match_threshold.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.25 (Lenient)</span>
+                        <span>0.35 (Recommended)</span>
+                        <span>0.5 (Strict)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.evidence_thresholds.moderate_match_threshold.description }}</div>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-name">Weak Match Threshold</div>
+                    <div class="d-flex align-items-center gap-3 mt-2">
+                        <input type="range" name="weak_match_threshold" class="form-range flex-grow-1" 
+                               min="0.1" max="0.3" step="0.05" value="{{ settings.evidence_thresholds.weak_match_threshold.value }}"
+                               oninput="this.nextElementSibling.value = this.value">
+                        <output class="setting-value" style="min-width: 60px; text-align: center;">{{ settings.evidence_thresholds.weak_match_threshold.value }}</output>
+                    </div>
+                    <div class="range-labels">
+                        <span>0.1 (Lenient)</span>
+                        <span>0.15 (Recommended)</span>
+                        <span>0.3 (Strict)</span>
+                    </div>
+                    <div class="setting-description">{{ settings.evidence_thresholds.weak_match_threshold.description }}</div>
+                    <div class="setting-explanation">{{ settings.evidence_thresholds.weak_match_threshold.explanation }}</div>
+                    <div class="quality-impact">{{ settings.evidence_thresholds.weak_match_threshold.quality_impact }}</div>
+                </div>
+                
                 </div>
             </div>
             
@@ -603,7 +660,7 @@
             <div class="settings-card">
                 <div class="section-header" onclick="toggleSection(this)">
                     <div>
-                        <h3 class="mb-0">🎯 Score Thresholds<span class="section-badge">2 settings</span></h3>
+                        <h3 class="mb-0">🎯 Score Thresholds<span class="section-badge">UI Display</span></h3>
                     </div>
                     <span class="toggle-icon">▼</span>
                 </div>
@@ -624,9 +681,6 @@
                         <span>0.9 (Strict)</span>
                     </div>
                     <div class="setting-desc">{{ settings.score_thresholds.high_threshold.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.score_thresholds.high_threshold.explanation }}
-                    </div>
                 </div>
                 
                 <!-- Low Threshold -->
@@ -644,43 +698,31 @@
                         <span>0.5 (Lenient)</span>
                     </div>
                     <div class="setting-desc">{{ settings.score_thresholds.low_threshold.description }}</div>
-                    <div class="setting-explanation">
-                        <strong>Explanation:</strong> {{ settings.score_thresholds.low_threshold.explanation }}
-                    </div>
                 </div>
                 </div>
             </div>
             
             <!-- Usage Notes -->
             <div class="settings-card" style="background: #f8f9fa;">
-                <h4>📚 Usage Notes & Recommendations</h4>
+                <h4>📚 Business Intelligence</h4>
                 <div class="mt-3">
-                    <p><strong>Current Cost Per Insight:</strong> {{ settings._usage_notes.current_cost_per_insight }}</p>
-                    <p><strong>Recommended Workflow:</strong> {{ settings._usage_notes.recommended_workflow }}</p>
+                    <p><strong>Current Architecture:</strong> {{ settings._usage_notes.current_architecture }}</p>
+                    <p><strong>Typical Analysis Cost:</strong> {{ settings._usage_notes.typical_analysis_cost }}</p>
                     <p><strong>Optimization Priority:</strong> {{ settings._usage_notes.optimization_priority }}</p>
                     <p><strong>Cost Saving Tips:</strong> {{ settings._usage_notes.cost_saving_tips }}</p>
-                    <p><strong>Quality Improvement Tips:</strong> {{ settings._usage_notes.quality_improvement_tips }}</p>
+                    <p><strong>Quality Improvement:</strong> {{ settings._usage_notes.quality_improvement_tips }}</p>
                 </div>
             </div>
             
-            <!-- Environment Warning -->
-            {% if config.get('ENV') == 'production' or config.get('FLASK_ENV') == 'production' %}
-            <div class="alert alert-warning" style="margin: 20px 0; border-left: 4px solid #ff9800;">
-                <strong>⚠️ Production Environment:</strong> Changes saved here will be stored in the production database and config files. However, these files may be <strong>overwritten</strong> on the next deployment if the settings in your development repository are different. To preserve these settings long-term, make sure to update them in your local development environment and push to GitHub.
-            </div>
-            {% else %}
-            <div class="alert alert-info" style="margin: 20px 0; border-left: 4px solid #2196F3;">
-                <strong>ℹ️ Development Environment:</strong> Changes saved here will be written to the local config files and can be committed to your repository. When you push these changes to GitHub, they will <strong>overwrite</strong> the current settings on production during the next deployment. Test thoroughly before pushing to production.
-            </div>
-            {% endif %}
-            
             <div class="text-center">
-                <button type="submit" class="btn btn-primary btn-save">💾 Save All Settings</button>
+                <button type="submit" class="btn btn-primary btn-save">💾 Save Configuration</button>
             </div>
         </form>
     </div>
     
     <script>
+        console.log('Script is running');
+        
         // Toggle section collapse
         function toggleSection(header) {
             const content = header.nextElementSibling;
@@ -695,41 +737,42 @@
             }
         }
         
-        function updateCostEstimate() {
-            // Get current values
-            const model = document.querySelector('select[name="gpt_model"]').value;
-            const maxTokens = parseInt(document.querySelector('input[name="max_tokens"]').value);
-            const evidenceChars = parseInt(document.querySelector('input[name="evidence_snippet_chars"]').value);
-            const candidateChars = parseInt(document.querySelector('input[name="candidate_text_chars"]').value);
-            const jdChars = parseInt(document.querySelector('input[name="jd_text_chars"]').value);
-            const evidenceItems = parseInt(document.querySelector('input[name="top_evidence_items"]').value);
+        // Finance dropdown functionality
+        const financeContainer = document.querySelector('.finance-menu-container');
+        const dropdown = document.querySelector('.finance-dropdown');
+        
+        console.log('Finance container:', financeContainer);
+        console.log('Dropdown:', dropdown);
+        
+        if (financeContainer && dropdown) {
+            console.log('Setting up dropdown event listeners');
             
-            // Model costs (per million tokens)
-            const costs = {
-                'gpt-4o': { input: 2.5, output: 10.0 },
-                'gpt-4o-mini': { input: 0.15, output: 0.6 },
-                'gpt-4-turbo': { input: 10.0, output: 30.0 },
-                'gpt-4': { input: 30.0, output: 60.0 }
-            };
+            financeContainer.addEventListener('mouseenter', () => {
+                console.log('Mouse entered finance container');
+                dropdown.style.display = 'block';
+            });
             
-            // Estimate tokens (~4 chars per token)
-            const evidenceTokens = (evidenceChars * evidenceItems) / 4;
-            const candidateTokens = candidateChars / 4;
-            const jdTokens = jdChars / 4;
-            const promptOverhead = 200; // System prompt, schema, formatting
-            
-            const totalInputTokens = evidenceTokens + candidateTokens + jdTokens + promptOverhead;
-            const outputTokens = maxTokens * 0.5; // Typically use ~50% of max
-            
-            const inputCost = (totalInputTokens / 1000000) * costs[model].input;
-            const outputCost = (outputTokens / 1000000) * costs[model].output;
-            const totalCost = inputCost + outputCost;
-            
-            document.getElementById('currentCost').textContent = '~$' + totalCost.toFixed(3);
+            financeContainer.addEventListener('mouseleave', () => {
+                console.log('Mouse left finance container');
+                dropdown.style.display = 'none';
+            });
+        } else {
+            console.error('Finance container or dropdown not found!');
         }
         
-        // Update cost estimate on page load
-        updateCostEstimate();
+        // System Settings dropdown functionality
+        const systemContainer = document.querySelector('.system-settings-menu-container');
+        const systemDropdown = document.querySelector('.system-settings-dropdown');
+        
+        if (systemContainer && systemDropdown) {
+            systemContainer.addEventListener('mouseenter', () => {
+                systemDropdown.style.display = 'block';
+            });
+            
+            systemContainer.addEventListener('mouseleave', () => {
+                systemDropdown.style.display = 'none';
+            });
+        }
     </script>
 </body>
 </html>

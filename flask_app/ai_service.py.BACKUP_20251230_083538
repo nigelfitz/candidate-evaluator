@@ -13,26 +13,10 @@ from config import Config
 
 
 # ============================================
-# AI Model Configuration (from config/gpt_settings.json)
+# AI Model Configuration (Admin-Configurable)
 # ============================================
-
-def load_ai_config() -> Dict[str, Any]:
-    """Load AI agent configuration from gpt_settings.json"""
-    settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
-    with open(settings_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
-
-# Load configuration on module import
-_ai_config = load_ai_config()
-
-RANKER_AGENT = _ai_config['ranker_model']['value']          # Fast, cost-effective for bulk scoring
-INSIGHT_AGENT = _ai_config['insight_model']['value']        # Premium model for deep analysis
-RANKER_TEMPERATURE = _ai_config['ranker_temperature']['value']  # Consistency for scoring
-INSIGHT_TEMPERATURE = _ai_config['insight_temperature']['value']  # Readability for insights
-RANKER_MAX_TOKENS = _ai_config['advanced_api_settings']['ranker_max_tokens']['value']
-INSIGHT_MAX_TOKENS = _ai_config['advanced_api_settings']['insight_max_tokens']['value']
-PRESENCE_PENALTY = _ai_config['advanced_api_settings']['presence_penalty']['value']
-FREQUENCY_PENALTY = _ai_config['advanced_api_settings']['frequency_penalty']['value']
+RANKER_AGENT = 'gpt-4o-mini'    # Fast, cost-effective for bulk scoring
+INSIGHT_AGENT = 'gpt-4o'        # Premium model for deep analysis
 
 
 @dataclass
@@ -41,7 +25,6 @@ class CriterionScore:
     criterion: str
     score: int  # 0-100
     justification: str
-    raw_evidence: str  # Verbatim quotes from resume supporting the score
     is_anchor: bool = False  # Binary requirement (degree, certification, etc.)
 
 
@@ -114,7 +97,7 @@ Extract all requirements and identify which are anchors (mandatory binary requir
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=RANKER_TEMPERATURE,
+            temperature=0.2,
             response_format={"type": "json_object"}
         )
         
@@ -149,21 +132,11 @@ NON-ANCHOR CRITERIA:
 - Recent relevant experience = higher score
 - Outdated/weak evidence = lower score
 
-CRITICAL: You must extract verbatim quotes from the resume as proof.
-
 Return JSON:
 {
     "score": integer (0-100),
-    "justification": "1-sentence reasoning explaining your score",
-    "raw_evidence": "Direct verbatim quotes from resume that prove this criterion. If evidence spans multiple jobs, include quotes from each separated by double line breaks."
-}
-
-Example raw_evidence for multi-job evidence:
-"Advanced Excel skills including VLOOKUP, pivot tables, and macros (Finance Manager, 2020-2023)
-
-Created complex financial models using Excel (Senior Analyst, 2018-2020)"
-
-If no direct quote exists, extract the most relevant sentence that implies the skill."""
+    "justification": "1-sentence evidence-based reasoning"
+}"""
 
         anchor_note = "\n\nIMPORTANT: This is an ANCHOR criterion (binary requirement). Score 100 if present, 0-20 if missing." if is_anchor else ""
         
@@ -189,8 +162,8 @@ Provide your evaluation."""
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=RANKER_TEMPERATURE,
-                    max_tokens=RANKER_MAX_TOKENS,
+                    temperature=0.2,
+                    max_tokens=150,
                     response_format={"type": "json_object"}
                 )
                 
@@ -200,7 +173,6 @@ Provide your evaluation."""
                     criterion=criterion,
                     score=max(0, min(100, int(result.get("score", 0)))),
                     justification=result.get("justification", "No justification provided"),
-                    raw_evidence=result.get("raw_evidence", "No evidence extracted"),
                     is_anchor=is_anchor
                 )
                 
@@ -221,7 +193,6 @@ Provide your evaluation."""
                             criterion=criterion,
                             score=0,
                             justification=f"Rate limit error after {max_retries} retries",
-                            raw_evidence="Unable to extract evidence due to rate limiting",
                             is_anchor=is_anchor
                         )
                 else:
@@ -231,7 +202,6 @@ Provide your evaluation."""
                         criterion=criterion,
                         score=0,
                         justification=f"Evaluation error: {error_str[:100]}",
-                        raw_evidence="Unable to extract evidence due to evaluation error",
                         is_anchor=is_anchor
                     )
     
@@ -312,7 +282,7 @@ Generate comprehensive insights:
 1. Top Strengths (3-6 bullet points)
 2. Key Gaps/Concerns (3-6 bullet points)
 3. Overall Assessment (2-4 sentences)
-4. Refined Justifications - CRITICAL: Rewrite ALL draft justifications with more polish and evidence. You MUST provide a refined justification for EVERY criterion listed in Phase 1 Draft Scores.
+4. Refined Justifications (rewrite the draft justifications with more polish and evidence)
 5. Suggested Interview Questions (3-5 questions to probe key areas)
 
 Return JSON:
@@ -320,11 +290,9 @@ Return JSON:
     "top": ["strength 1", "strength 2", ...],
     "gaps": ["gap 1", "gap 2", ...],
     "notes": "overall assessment",
-    "justifications": {"criterion name": "polished justification", ...},
+    "justifications": {"criterion": "polished justification", ...},
     "interview_questions": ["question 1", "question 2", ...]
-}
-
-IMPORTANT: The "justifications" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key."""
+}"""
 
         user_prompt = f"""Candidate: {candidate_name}
 Overall Score: {evaluation.overall_score:.1f}/100
@@ -352,42 +320,12 @@ Provide deep insights with refined justifications."""
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=INSIGHT_TEMPERATURE,
-                    max_tokens=INSIGHT_MAX_TOKENS,
-                    presence_penalty=PRESENCE_PENALTY,
-                    frequency_penalty=FREQUENCY_PENALTY,
+                    temperature=0.3,
+                    max_tokens=2000,
                     response_format={"type": "json_object"}
                 )
                 
-                # Parse JSON with aggressive error recovery
-                raw_content = response.choices[0].message.content
-                
-                try:
-                    result = json.loads(raw_content)
-                except json.JSONDecodeError as e:
-                    # JSON parsing failed - try sanitization
-                    sanitized = raw_content
-                    sanitized = sanitized.replace('\u2018', "'").replace('\u2019', "'")
-                    sanitized = sanitized.replace('\u201c', '"').replace('\u201d', '"')
-                    sanitized = sanitized.replace('\u201a', "'").replace('\u201e', '"')
-                    
-                    try:
-                        result = json.loads(sanitized)
-                    except json.JSONDecodeError as e2:
-                        # Extract JSON object
-                        first_brace = sanitized.find('{')
-                        last_brace = sanitized.rfind('}')
-                        
-                        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-                            json_only = sanitized[first_brace:last_brace+1]
-                            try:
-                                result = json.loads(json_only)
-                            except json.JSONDecodeError:
-                                # Complete failure - raise original error
-                                raise e
-                        else:
-                            raise e
-                
+                result = json.loads(response.choices[0].message.content)
                 return result
                 
             except Exception as e:

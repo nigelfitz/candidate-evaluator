@@ -415,35 +415,6 @@
                 </div>
             </div>
 
-            <!-- Evidence Explorer -->
-            <div class="card mb-4">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">🔍 Evidence & Justifications</h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-3">Select a candidate and criterion to view AI-generated justifications and source evidence</p>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="evidenceCandidate" class="form-label">👤 Candidate</label>
-                            <select id="evidenceCandidate" class="form-select">
-                                <!-- Populated by JavaScript -->
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="evidenceCriterion" class="form-label">📋 Criterion</label>
-                            <select id="evidenceCriterion" class="form-select">
-                                <!-- Populated by JavaScript -->
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="evidenceDisplay">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-
             <!-- Passive Feedback Section -->
             <div class="feedback-box" id="feedbackBox">
                 <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
@@ -480,53 +451,77 @@
 </div>
 </div><!-- Close results-container -->
 
-<!-- Unlock Insights Modal -->
-<div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center;">
-    <div style="background: white; border-radius: 16px; padding: 40px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-        <div style="text-align: center; margin-bottom: 24px;">
-            <i data-lucide="sparkles" style="width: 64px; height: 64px; color: #3b82f6; margin-bottom: 16px;"></i>
-            <h3 style="margin-bottom: 8px; color: #1e293b;">Unlock Deep Insights</h3>
-            <p style="color: #64748b; font-size: 1.05rem; margin-bottom: 0;" id="unlockCandidateName"></p>
-        </div>
-        
-        <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <span style="color: #475569;">Current Balance:</span>
-                <strong style="color: #1e293b;">${{ "%.2f"|format(current_user.balance_usd) }}</strong>
+<!-- Side Drawer for Evidence -->
+<div id="evidenceDrawer" style="position: fixed; top: 0; right: -600px; width: 600px; height: 100vh; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); z-index: 10000; transition: right 0.3s ease; overflow-y: auto;">
+    <!-- Drawer Header -->
+    <div style="position: sticky; top: 0; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 24px; border-bottom: 2px solid #e5e7eb; z-index: 10;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h4 style="color: white; margin: 0; font-weight: 700; font-size: 20px;">Source Evidence</h4>
+                <p id="drawerTitle" style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 13px; font-weight: 600;">Criterion Name</p>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                <span style="color: #475569;">Cost to Unlock:</span>
-                <strong style="color: #dc2626;">-$1.00</strong>
-            </div>
-            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 16px 0;">
-            <div style="display: flex; justify-content: space-between;">
-                <span style="color: #475569; font-weight: 600;">New Balance:</span>
-                <strong style="color: #059669; font-size: 1.2rem;">${{ "%.2f"|format(current_user.balance_usd - 1) }}</strong>
-            </div>
-        </div>
-        
-        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-            <p style="color: #1e40af; font-size: 0.95rem; margin: 0;">
-                <strong>Includes:</strong> AI-generated strengths, gaps, overall assessment, and detailed evidence justifications for all criteria.
-            </p>
-        </div>
-        
-        {% if current_user.balance_usd >= 1 %}
-        <div style="display: flex; gap: 12px;">
-            <button onclick="closeUnlockModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
-            <button onclick="confirmUnlock()" class="btn btn-primary" style="flex: 1;">
-                <i data-lucide="unlock" style="width: 16px; height: 16px; margin-right: 6px;"></i>
-                Unlock Now
+            <button onclick="closeEvidenceDrawer()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
             </button>
         </div>
-        {% else %}
-        <div style="text-align: center;">
-            <p style="color: #dc2626; margin-bottom: 16px;">Insufficient balance. Please add funds to continue.</p>
-            <a href="{{ url_for('buy_credits') }}" class="btn btn-primary" style="width: 100%;">
-                Add Funds
-            </a>
+    </div>
+    
+    <!-- Drawer Content -->
+    <div id="drawerContentWrapper" style="padding: 24px;">
+        <!-- Content will be dynamically inserted here -->
+    </div>
+</div>
+
+<!-- Drawer Overlay -->
+<div id="drawerOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s ease;" onclick="closeEvidenceDrawer()"></div>
+
+<!-- Unlock Insights Modal -->
+<div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 480px; width: 90%; overflow: hidden;">
+        <!-- Header with gradient -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px 32px 24px; text-align: center;">
+            <div style="font-size: 64px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">🔓</div>
+            <h3 style="color: white; margin: 0; font-weight: 700; font-size: 24px;">Unlock Insights?</h3>
         </div>
-        {% endif %}
+        
+        <!-- Content -->
+        <div style="padding: 32px;">
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="color: #64748b; font-size: 14px;">Current Balance</span>
+                    <span id="modalCurrentBalance" style="color: #059669; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(current_user.balance_usd) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="color: #64748b; font-size: 14px;">Unlock Cost</span>
+                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</span>
+                </div>
+                <div style="border-top: 2px solid #e2e8f0; margin: 12px 0; padding-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #1f2937; font-weight: 600;">New Balance</span>
+                        <span id="modalNewBalance" style="color: #1f2937; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(current_user.balance_usd|float - pricing['EXTRA_INSIGHT_PRICE']) }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+                <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                    <strong>AI will generate for <span id="modalCandidateName">candidate</span>:</strong><br>
+                    ✓ Top Strengths matching the role<br>
+                    ✓ Gaps & Risk areas to consider<br>
+                    ✓ Overall Assessment & Recommendation
+                </p>
+            </div>
+            
+            <!-- Buttons -->
+            <div style="display: flex; gap: 12px;">
+                <button onclick="closeUnlockModal()" style="flex: 1; padding: 14px 24px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
+                    Cancel
+                </button>
+                <button id="confirmUnlockBtn" onclick="confirmUnlock()" style="flex: 1; padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.2s;">
+                    🔓 Unlock Now
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -622,7 +617,6 @@ function switchToInsightsTab(candidateName) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeTopCandidates();
     initializeCoverageMatrix();
-    initializeEvidenceExplorer();
     attachEventListeners();
     
     // Initialize Lucide icons
@@ -847,8 +841,9 @@ function updateEvidenceDisplay() {
         return;
     }
     
-    const snippet = evidence[0];
-    const densityCount = evidence[2] || 0; // New: chunk count for density indicator
+    // Evidence tuple structure: [raw_evidence, justification, score, density_count]
+    const rawEvidence = evidence[0];      // Verbatim quotes from resume
+    const densityCount = evidence[3] || 0;     // Deprecated density metric
     
     // Get actual score from coverage data
     const row = coverageData.find(r => r.Candidate === candidate);
@@ -868,7 +863,32 @@ function updateEvidenceDisplay() {
     // Check if this candidate has insights (Top 5 with justifications)
     const candidateInsights = insightsData ? insightsData[candidate] : null;
     const justifications = candidateInsights && candidateInsights.justifications ? candidateInsights.justifications : {};
-    const justification = justifications[criterion];
+    
+    // FIXED: Try to find justification with flexible matching
+    // Sometimes GPT returns criterion names with slight differences or with score suffixes
+    let justification = justifications[criterion];  // Try exact match first
+    
+    if (!justification && Object.keys(justifications).length > 0) {
+        // Try case-insensitive match
+        const criterionLower = criterion.toLowerCase().trim();
+        const matchingKey = Object.keys(justifications).find(key => 
+            key.toLowerCase().trim() === criterionLower
+        );
+        if (matchingKey) {
+            justification = justifications[matchingKey];
+        }
+    }
+    
+    if (!justification && Object.keys(justifications).length > 0) {
+        // Try removing any score suffix like " (SCORE: 20% - WEAK match)"
+        const criterionClean = criterion.replace(/\s*\(SCORE:.*?\)/, '').trim();
+        const matchingKey = Object.keys(justifications).find(key => 
+            key.replace(/\s*\(SCORE:.*?\)/, '').trim().toLowerCase() === criterionClean.toLowerCase()
+        );
+        if (matchingKey) {
+            justification = justifications[matchingKey];
+        }
+    }
     
     // DEBUG: Log to console to help troubleshoot
     console.log('Evidence Display Debug:', {
@@ -879,7 +899,8 @@ function updateEvidenceDisplay() {
         hasJustifications: !!justifications,
         justificationKeys: Object.keys(justifications),
         specificJustification: justification,
-        densityCount: densityCount
+        densityCount: densityCount,
+        matchAttempted: !justifications[criterion] && !!justification ? 'fuzzy match succeeded' : 'exact match or not found'
     });
     
     let html = `
@@ -889,7 +910,7 @@ function updateEvidenceDisplay() {
     `;
     
     if (candidateInsights && justification) {
-        // TOP 5 WITH JUSTIFICATIONS: Show GPT justification + collapsible raw source
+        // TOP 5 WITH JUSTIFICATIONS: Show refined Phase 2 justification + raw evidence
         html += `
             <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
                 <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
@@ -901,7 +922,7 @@ function updateEvidenceDisplay() {
                 </div>
             </div>
             
-            <details class="card">
+            <details class="card mb-3">
                 <summary class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer; user-select: none;">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
@@ -915,23 +936,23 @@ function updateEvidenceDisplay() {
                             📄 View Full Resume
                         </a>
                     </div>
-                    <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px;">${snippet}</div>
+                    <div style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px; margin: 0;">${rawEvidence}</div>
                 </div>
             </details>
         `;
     } else if (candidateInsights && !justification) {
-        // HAS INSIGHTS BUT NO JUSTIFICATION (old analysis before justifications were implemented)
+        // HAS INSIGHTS BUT NO REFINED JUSTIFICATION (shouldn't happen with current pipeline)
         html += `
-            <div class="alert alert-warning" style="border-left: 4px solid #f59e0b;">
+            <div class="alert alert-info" style="border-left: 4px solid #3b82f6;">
                 <div class="d-flex align-items-start" style="gap: 12px;">
-                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; color: #f59e0b; flex-shrink: 0; margin-top: 2px;"></i>
+                    <i data-lucide="info" style="width: 20px; height: 20px; color: #3b82f6; flex-shrink: 0; margin-top: 2px;"></i>
                     <div>
-                        <strong>Old Analysis Format</strong>
-                        <p class="mb-0 mt-1" style="font-size: 0.95rem;">This analysis was run before AI justifications were added. Re-run the analysis to generate score-calibrated justifications for all criteria.</p>
+                        <strong>Evidence Available</strong>
+                        <p class="mb-0 mt-1" style="font-size: 0.95rem;">This candidate has deep insights unlocked. View the evidence below.</p>
                     </div>
                 </div>
             </div>
-            <details class="card">
+            <details class="card mb-3">
                 <summary class="card-header" style="cursor: pointer; user-select: none;">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
@@ -939,25 +960,32 @@ function updateEvidenceDisplay() {
                     </span>
                 </summary>
                 <div class="card-body">
-                    <div class="mb-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px;">${snippet}</div>
+                    <div class="mb-2 d-flex justify-content-end">
+                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            📄 View Full Resume
+                        </a>
+                    </div>
+                    <div style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px; margin: 0;">${rawEvidence}</div>
                 </div>
             </details>
         `;
     } else {
-        // NOT TOP 5: Show "Unlock" CTA with modal trigger
+        // NOT TOP 5: Show "Unlock" CTA with premium styling matching insights page
         html += `
-            <div class="card text-center" style="border: 2px dashed #cbd5e1; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
-                <div class="card-body py-5">
-                    <i data-lucide="lock" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 16px;"></i>
-                    <h5 class="mb-3" style="color: #475569;">Deep Insights Available</h5>
-                    <p class="text-muted mb-4">Unlock AI-powered justifications and detailed evidence analysis for this candidate.</p>
-                    <button onclick="showUnlockModal('${candidate}')" 
-                       class="btn btn-primary" 
-                       style="padding: 12px 32px; font-weight: 600;">
-                        <i data-lucide="unlock" style="width: 18px; height: 18px; margin-right: 8px;"></i>
-                        Unlock Deep Insights ($1.00)
-                    </button>
-                    <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">Includes strengths, gaps, overall assessment, and evidence justifications</p>
+            <div class="card text-center" style="background: white; padding: 48px 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);">
+                <div class="lock-icon" style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));">🔐</div>
+                <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
+                <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
+                    Unlock AI-generated strengths, gaps, and detailed evidence justifications for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
+                </p>
+                <button onclick="showUnlockModal('${candidate}')" 
+                   style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border: none; color: #1f2937; padding: 16px 36px; font-weight: 700; font-size: 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(212,175,55,0.4); transition: all 0.3s ease; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" 
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(212,175,55,0.5)';" 
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(212,175,55,0.4)';">
+                    🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
+                </button>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 16px; border: 1px solid #bbf7d0;">
+                    💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
                 </div>
             </div>
         `;
@@ -1000,27 +1028,20 @@ function attachEventListeners() {
             const candidate = cell.dataset.candidate;
             const criterion = cell.dataset.criterion;
             if (candidate && criterion) {
-                // Update Evidence Explorer dropdowns
-                document.getElementById('evidenceCandidate').value = candidate;
-                document.getElementById('evidenceCriterion').value = criterion;
-                // Trigger evidence display update
-                updateEvidenceDisplay();
-                // Smooth scroll to Evidence Explorer - use reliable selector
-                const evidenceExplorer = document.getElementById('evidenceCandidate').closest('.card');
-                if (evidenceExplorer) {
-                    evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    // Brief highlight effect
-                    evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
-                    evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
-                    setTimeout(() => { evidenceExplorer.style.boxShadow = ''; }, 2000);
-                }
+                // Get evidence from evidence_map
+                const evidenceKey = `${candidate}|||${criterion}`;
+                const evidence = evidenceMap[evidenceKey] || ['', '', 0, 0];
+                const rawEvidence = evidence[0] || '';
+                const justification = evidence[1] || '';
+                
+                // Check if candidate is unlocked (has insights)
+                const isUnlocked = insightsData && insightsData[candidate] ? true : false;
+                
+                // Open side drawer
+                openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidate);
             }
         }
     });
-    
-    // Evidence Explorer dropdown change listeners
-    document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
-    document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
     
     document.getElementById('sortBy').addEventListener('change', (e) => {
         currentSort = e.target.value;
@@ -1226,14 +1247,132 @@ async function submitVote(voteType) {
     }
 }
 
+// Side Drawer Functions
+function openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidateName) {
+    const drawer = document.getElementById('evidenceDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    const title = document.getElementById('drawerTitle');
+    const contentWrapper = document.getElementById('drawerContentWrapper');
+    
+    // Set title with candidate name and criterion
+    title.textContent = `${candidateName} - ${criterion}`;
+    
+    // Build content based on lock status
+    let content = '';
+    
+    if (isUnlocked) {
+        // UNLOCKED: Show AI Justification + Raw Source Text
+        content = `
+            <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
+                <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #3b82f6;"></i>
+                    <strong>AI Justification</strong>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="font-size: 1.05rem; line-height: 1.6;">${justification || 'No justification available'}</p>
+                </div>
+            </div>
+            
+            <details class="card" open>
+                <summary class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer; user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                        <strong>Raw Source Text</strong>
+                    </span>
+                    <small class="text-muted">Click to expand/collapse</small>
+                </summary>
+                <div class="card-body">
+                    <div style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px; margin: 0;">${rawEvidence || 'No evidence available'}</div>
+                </div>
+            </details>
+        `;
+    } else {
+        // LOCKED: Show premium lock card
+        content = `
+            <div class="card text-center" style="background: white; padding: 48px 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);">
+                <div class="lock-icon" style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));">🔐</div>
+                <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
+                <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
+                    Unlock AI-generated justifications and detailed evidence for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
+                </p>
+                <button onclick="unlockCandidateFromDrawer('${candidateName}')" 
+                   style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border: none; color: #1f2937; padding: 16px 36px; font-weight: 700; font-size: 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(212,175,55,0.4); transition: all 0.3s ease; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" 
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(212,175,55,0.5)';" 
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(212,175,55,0.4)';">
+                    🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
+                </button>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 16px; border: 1px solid #bbf7d0;">
+                    💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+                </div>
+            </div>
+        `;
+    }
+    
+    contentWrapper.innerHTML = content;
+    
+    // Show overlay
+    overlay.style.display = 'block';
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+    }, 10);
+    
+    // Slide in drawer
+    setTimeout(() => {
+        drawer.style.right = '0';
+    }, 10);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function closeEvidenceDrawer() {
+    const drawer = document.getElementById('evidenceDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    
+    // Slide out drawer
+    drawer.style.right = '-600px';
+    
+    // Fade out overlay
+    overlay.style.opacity = '0';
+    
+    // Hide overlay after transition
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 300);
+    
+    // Restore body scroll
+    document.body.style.overflow = 'auto';
+}
+
+function unlockCandidateFromDrawer(candidateName) {
+    // Close drawer first
+    closeEvidenceDrawer();
+    
+    // Trigger the main unlock flow
+    showUnlockModal(candidateName);
+}
+
+// Close drawer with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeEvidenceDrawer();
+    }
+});
+
 // Unlock Modal Functions
 let unlockCandidateName = '';
+const unlockAnalysisId = {{ analysis.id }};
 
 function showUnlockModal(candidateName) {
     unlockCandidateName = candidateName;
-    document.getElementById('unlockCandidateName').textContent = candidateName;
+    document.getElementById('modalCandidateName').textContent = candidateName;
     const modal = document.getElementById('unlockModal');
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
     
     // Re-initialize Lucide icons in modal
     if (typeof lucide !== 'undefined') {
@@ -1246,37 +1385,58 @@ function closeUnlockModal() {
     unlockCandidateName = '';
 }
 
-async function confirmUnlock() {
-    if (!unlockCandidateName) return;
+function confirmUnlock() {
+    // Find the unlock button and show loading state
+    const confirmBtn = document.getElementById('confirmUnlockBtn');
+    const originalText = confirmBtn.innerHTML;
     
-    try {
-        const response = await fetch(`/unlock-candidate/{{ analysis.id }}/${encodeURIComponent(unlockCandidateName)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Close modal
-            closeUnlockModal();
-            
-            // Reload page to show updated insights
-            window.location.reload();
-        } else {
-            if (data.redirect) {
-                // Insufficient balance - redirect to buy credits
-                window.location.href = data.redirect;
-            } else {
-                alert(data.error || 'Failed to unlock insights. Please try again.');
-            }
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    confirmBtn.disabled = true;
+    
+    // Make AJAX request to unlock
+    fetch(`/unlock-candidate/${unlockAnalysisId}/${encodeURIComponent(unlockCandidateName)}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
         }
-    } catch (error) {
-        console.error('Unlock error:', error);
-        alert('Failed to unlock insights. Please check your connection and try again.');
-    }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update balance in header
+            const balanceEl = document.querySelector('.balance-amount');
+            if (balanceEl) {
+                balanceEl.textContent = `$${data.new_balance.toFixed(2)}`;
+            }
+            
+            // Show success message in modal
+            confirmBtn.innerHTML = '✓ Success! Reloading...';
+            confirmBtn.style.background = '#10b981';
+            
+            // Reload the page to show new insights (maintains scroll position)
+            const scrollPos = window.scrollY;
+            sessionStorage.setItem('scrollPosition', scrollPos);
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        } else if (data.error === 'Insufficient balance') {
+            closeUnlockModal();
+            alert('Insufficient balance. Redirecting to top-up page...');
+            window.location.href = data.redirect;
+        } else {
+            closeUnlockModal();
+            alert(`Error: ${data.error}\n\nPlease check the browser console for details or try again.`);
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error unlocking candidate:', error);
+        closeUnlockModal();
+        alert('Failed to unlock insights. Please try again.\n\nMake sure Flask server is running and check browser console for details.');
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    });
 }
 
 // Close modal when clicking outside

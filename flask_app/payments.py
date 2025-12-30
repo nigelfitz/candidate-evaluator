@@ -27,10 +27,12 @@ def wallet():
     is_dev_mode = os.environ.get('FLASK_ENV') == 'development'
     return_to = request.args.get('return_to', 'dashboard')
     
+    pricing = Config.get_pricing()
     return render_template('wallet.html', 
                          stripe_configured=stripe_configured,
                          is_dev_mode=is_dev_mode,
-                         return_to=return_to)
+                         return_to=return_to,
+                         pricing=pricing)
 
 
 @payments.route('/add-test-funds', methods=['POST'])
@@ -182,8 +184,9 @@ def create_checkout_session():
         stripe.api_key = Config.STRIPE_SECRET_KEY
         
         data = request.get_json()
-        charge_amount = float(data.get('amount', 0))
-        credit_amount = float(data.get('credit_amount', charge_amount))
+        # Use Decimal for precise currency handling
+        charge_amount = Decimal(str(data.get('amount', 0)))
+        credit_amount = Decimal(str(data.get('credit_amount', charge_amount)))
         is_bundle = data.get('is_bundle', False)
         plan_name = data.get('plan_name', 'Custom Amount')
         return_url = data.get('return_url', url_for('dashboard', _external=True))
@@ -200,6 +203,7 @@ def create_checkout_session():
             product_description = f'Add ${credit_amount:.2f} to your account'
         
         # Create Stripe Checkout Session with custom success URL
+        # Convert to cents using Decimal for precision
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{

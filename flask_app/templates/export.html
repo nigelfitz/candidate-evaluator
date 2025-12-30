@@ -328,11 +328,11 @@
                                 </div>
                             </div>
 
-                            <!-- Include Evidence Option -->
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="includeEvidence" {% if user_settings.include_evidence_by_default %}checked{% endif %}>
-                                <label class="form-check-label" for="includeEvidence">
-                                    Include evidence snippets in reports
+                            <!-- Include Justifications Option -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="includeJustifications">
+                                <label class="form-check-label" for="includeJustifications">
+                                    Include criteria justifications in reports
                                 </label>
                             </div>
 
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Export Individual PDFs
     document.getElementById('exportIndividualPDF').addEventListener('click', function() {
         const candidates = getSelectedCandidates();
-        const includeEvidence = document.getElementById('includeEvidence').checked;
+        const includeJustifications = document.getElementById('includeJustifications').checked;
         
         if (candidates.length === 0) {
             alert('Please select at least one candidate');
@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 candidates: candidates,
-                include_evidence: includeEvidence
+                include_justifications: includeJustifications
             })
         })
         .then(response => response.blob())
@@ -531,6 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Export Individual Word Docs
     document.getElementById('exportIndividualDOCX').addEventListener('click', function() {
         const candidates = getSelectedCandidates();
+        const includeJustifications = document.getElementById('includeJustifications').checked;
         
         if (candidates.length === 0) {
             alert('Please select at least one candidate');
@@ -552,7 +553,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                candidates: candidates
+                candidates: candidates,
+                include_justifications: includeJustifications
             })
         })
         .then(response => response.blob())

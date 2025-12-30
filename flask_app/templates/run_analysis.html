@@ -46,7 +46,7 @@
                         <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$0.00</div>
                         <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Free Trial</div>
                         {% else %}
-                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$10.00</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</div>
                         <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Base Price</div>
                         {% endif %}
                     </div>
@@ -77,8 +77,8 @@
                 <select name="insights_mode" id="insightsMode" onchange="updateInsightsPrice()"
                         style="display: block; width: 100%; padding: 14px; border: 2px solid #d1d5db; border-radius: 8px; background: white; font-size: 15px; cursor: pointer; line-height: 1.4;">
                     <option value="standard" selected>Standard (Included): Full Ranking of all candidates + Deep Insights for Top 5. (Perfect for initial shortlisting)</option>
-                    <option value="deep_dive">Deep Dive (+$10.00): Full Ranking of all candidates + Deep Insights for Top 15. (Best for high-volume roles)</option>
-                    <option value="full_radar">Full Radar (+$1/candidate over 5): Full Ranking + Deep Insights for every single candidate</option>
+                    <option value="deep_dive">Deep Dive (+${{ "%.2f"|format(pricing['DEEP_DIVE_PRICE']) }}): Full Ranking of all candidates + Deep Insights for Top 15. (Best for high-volume roles)</option>
+                    <option value="full_radar">Full Radar (+${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}/candidate over 5): Full Ranking + Deep Insights for every single candidate</option>
                 </select>
                 <div style="margin-top: 12px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #3b82f6;">
                     <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.5;">
@@ -93,11 +93,11 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Cost</div>
-                        <div id="totalCostValue" style="font-size: 36px; font-weight: 700; line-height: 1;">{% if current_user.is_test_drive %}$0.00{% else %}$10.00{% endif %}</div>
+                        <div id="totalCostValue" style="font-size: 36px; font-weight: 700; line-height: 1;">{% if current_user.is_test_drive %}$0.00{% else %}${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}{% endif %}</div>
                     </div>
                     <div style="text-align: right; opacity: 0.9; font-size: 14px;">
                         <div>Your Balance: <strong>${{ "%.2f"|format(current_user.balance_usd) }}</strong></div>
-                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd - 10) }}</strong></div>
+                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd - pricing['BASE_ANALYSIS_PRICE']) }}</strong></div>
                     </div>
                 </div>
             </div>
@@ -153,10 +153,8 @@ function startProgressTracking(totalCandidates) {
     // Add initial status
     addStatusItem('Validating job criteria...');
     
-    // Start polling after 2 seconds (give server time to start)
-    setTimeout(() => {
-        progressInterval = setInterval(() => checkProgress(totalCandidates), 1000);
-    }, 2000);
+    // Start polling immediately with faster interval (every 500ms)
+    progressInterval = setInterval(() => checkProgress(totalCandidates), 500);
 }
 
 function checkProgress(totalCandidates) {
@@ -172,9 +170,22 @@ function checkProgress(totalCandidates) {
         const currentProgress = data.resumes_processed;
         const total = data.total_candidates || totalCandidates;
         const isComplete = data.is_complete;
+        const phase = data.phase || 'phase1';
         
-        // Calculate and update progress percentage
-        const percentage = total > 0 ? Math.round((currentProgress / total) * 100) : 0;
+        // Calculate progress based on phase:
+        // Phase 1: 0-70% (based on candidates scored)
+        // Phase 2: 70-100% (fixed at 85% while running, 100% when complete)
+        let percentage = 0;
+        if (phase === 'phase1') {
+            // Phase 1: Scale to 70%
+            percentage = total > 0 ? Math.round((currentProgress / total) * 70) : 0;
+        } else if (phase === 'phase2') {
+            // Phase 2: Show 85% while running
+            percentage = 85;
+            isPhase2 = true;
+        } else if (phase === 'complete' || isComplete) {
+            percentage = 100;
+        }
         const progressBar = document.getElementById('progressBar');
         const progressPercentage = document.getElementById('progressPercentage');
         
@@ -205,12 +216,12 @@ function checkProgress(totalCandidates) {
             lastProgressValue = currentProgress;
             lastProgressTime = Date.now();
             
-            // Check if Phase 1 is complete (all candidates scored)
-            if (currentProgress >= total && !isPhase2) {
+            // Check if Phase 2 started
+            if (phase === 'phase2' && !isPhase2) {
                 isPhase2 = true;
-                addStatusItem('Phase 1 complete! Starting deep insights...');
+                addStatusItem('✨ Phase 1 complete! Starting deep insights...');
                 updateProgressText('🎯 Finalizing Deep Insights & Reports...');
-            } else if (currentProgress > 0) {
+            } else if (phase === 'phase1' && currentProgress > 0) {
                 updateProgressText(`📊 Scanned ${currentProgress} of ${total} candidates...`);
                 
                 // Add milestone status items
@@ -287,7 +298,7 @@ function updateProgressText(text) {
         <div style="margin-bottom: 25px;">
             <p style="color: #374151; font-weight: 600; margin-bottom: 12px; text-align: center;">Quick Add:</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="quickAddFunds(10)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $10</button>
+                <button onclick="quickAddFunds({{ \"%.0f\"|format(pricing['BASE_ANALYSIS_PRICE']) }})" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ ${{ "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</button>
                 <button onclick="quickAddFunds(25)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $25</button>
                 <button onclick="quickAddFunds(50)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $50</button>
                 <button onclick="quickAddFunds(100)" class="btn btn-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $100</button>
@@ -305,6 +316,9 @@ function updateProgressText(text) {
 const resumeCount = {{ resume_count }};
 const userBalance = {{ current_user.balance_usd }};
 const isTestDrive = {{ 'true' if current_user.is_test_drive else 'false' }};
+const baseCost = {{ pricing['BASE_ANALYSIS_PRICE'] }};
+const deepDiveCost = {{ pricing['DEEP_DIVE_PRICE'] }};
+const extraInsightCost = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
 
 // Update insights pricing
 function updateInsightsPrice() {
@@ -315,13 +329,13 @@ function updateInsightsPrice() {
     let totalCost = 0.00;
     
     if (!isTestDrive) {
-        totalCost = 10.00; // Base job cost
+        totalCost = baseCost; // Base job cost
         
         if (insightsMode === 'deep_dive') {
-            totalCost += 10.00; // +$10 for Top 15
+            totalCost += deepDiveCost; // Deep dive upgrade
         } else if (insightsMode === 'full_radar' && resumeCount > 5) {
             const extraCandidates = resumeCount - 5;
-            totalCost += extraCandidates * 1.00; // +$1 per candidate over 5
+            totalCost += extraCandidates * extraInsightCost; // Extra insights per candidate over 5
         }
     }
     
@@ -503,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
     {% set continue_text = 'Run Your Free Analysis →' %}
     {% set continue_disabled = False %}
 {% else %}
-    {% set continue_text = 'Run Analysis Now ($10.00)' %}
+    {% set continue_text = 'Run Analysis Now ($' + \"%.2f\"|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
     {% set continue_disabled = False %}
 {% endif %}
 {% include 'workflow_bottom_bar.html' %}
@@ -543,45 +557,47 @@ document.addEventListener('DOMContentLoaded', function() {
             const overlay = document.getElementById('processingOverlay');
             overlay.style.display = 'flex';
             
-            // Start dynamic progress tracking
+            // Start dynamic progress tracking immediately (don't wait for form submit)
             startProgressTracking({{ resume_count }});
             
-            // Submit form via AJAX to keep page active for progress updates
-            const form = document.getElementById('runAnalysisForm');
-            const formData = new FormData(form);
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
-            })
-            .then(response => {
-                if (response.redirected) {
-                    // Analysis complete - navigate to results
-                    window.location.href = response.url;
-                } else if (response.ok) {
-                    // Check if we got JSON or HTML response
-                    return response.text().then(text => {
-                        try {
-                            const data = JSON.parse(text);
-                            if (data.redirect) {
-                                window.location.href = data.redirect;
+            // Submit form via AJAX after a 100ms delay (let first poll fire first)
+            setTimeout(() => {
+                const form = document.getElementById('runAnalysisForm');
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        // Analysis complete - navigate to results
+                        window.location.href = response.url;
+                    } else if (response.ok) {
+                        // Check if we got JSON or HTML response
+                        return response.text().then(text => {
+                            try {
+                                const data = JSON.parse(text);
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                }
+                            } catch (e) {
+                                // HTML response - likely a redirect page
+                                window.location.reload();
                             }
-                        } catch (e) {
-                            // HTML response - likely a redirect page
-                            window.location.reload();
-                        }
-                    });
-                } else {
-                    throw new Error('Analysis failed');
-                }
-            })
-            .catch(error => {
-                console.error('Analysis error:', error);
-                clearInterval(progressInterval);
-                alert('An error occurred during analysis. Please try again.');
-                overlay.style.display = 'none';
-            });
+                        });
+                    } else {
+                        throw new Error('Analysis failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Analysis error:', error);
+                    clearInterval(progressInterval);
+                    alert('An error occurred during analysis. Please try again.');
+                    overlay.style.display = 'none';
+                });
+            }, 100);
         };
     }
     

@@ -1,140 +1,328 @@
 {
   "_metadata": {
-    "description": "GPT Configuration for Candidate Insights Generation",
-    "last_updated": "2025-12-26 13:12:22 UTC",
-    "warning": "Changes to these settings affect both quality and cost. Test with small batches first."
+    "description": "Two-Agent AI Configuration for Candidate Evaluation System",
+    "last_updated": "2025-12-30 00:00:00 UTC",
+    "version": "2.0",
+    "warning": "Changes to these settings affect both quality and cost. Test with small batches first.",
+    "architecture": "RANKER_AGENT handles bulk scoring (all candidates × all criteria). INSIGHT_AGENT generates deep insights for selected candidates only."
   },
-  "gpt_model": {
+  "ranker_model": {
+    "value": "gpt-4o-mini",
+    "description": "Model for RANKER_AGENT - handles bulk scoring and criteria extraction",
+    "options": [
+      "gpt-4o-mini",
+      "gpt-4o",
+      "gpt-4-turbo",
+      "gpt-4"
+    ],
+    "explanation": "gpt-4o-mini: RECOMMENDED for ranker. 10x cheaper than gpt-4o, sufficient quality for scoring. gpt-4o: Higher quality but expensive for bulk work. Use only if quality issues with mini.",
+    "cost_impact": "gpt-4o-mini: $0.15 per 1M input, $0.60 per 1M output. gpt-4o: $2.50/$10. For 50 candidates × 20 criteria (1000 calls), mini=$0.30, gpt-4o=$3.00.",
+    "quality_impact": "gpt-4o-mini provides reliable 0-100 scores and justifications. gpt-4o offers marginally better evidence extraction but rarely worth 10x cost for bulk scoring.",
+    "usage": "Called (# candidates × # criteria) times per analysis. This is your highest-volume operation."
+  },
+  "insight_model": {
     "value": "gpt-4o",
-    "description": "OpenAI model to use for generating candidate insights",
+    "description": "Model for INSIGHT_AGENT - generates deep insights for selected candidates",
     "options": [
       "gpt-4o",
       "gpt-4o-mini",
       "gpt-4-turbo",
       "gpt-4"
     ],
-    "explanation": "gpt-4o: Best balance of quality and cost (RECOMMENDED). gpt-4o-mini: 60% cheaper but lower quality. gpt-4-turbo: Same cost as gpt-4o, slightly different outputs. gpt-4: More expensive, no benefit for this task.",
-    "cost_impact": "gpt-4o: $2.50 per 1M input tokens, $10 per 1M output. gpt-4o-mini: $0.15/$0.60. gpt-4-turbo: $10/$30. gpt-4: $30/$60.",
-    "quality_impact": "gpt-4o provides personalized, specific insights. gpt-4o-mini may be more generic. gpt-4/turbo offer no quality advantage here."
+    "explanation": "gpt-4o: RECOMMENDED for insights. Best readability and personalization. gpt-4o-mini: 60% cheaper but generic phrasing. gpt-4-turbo: Same cost as gpt-4o, similar quality. gpt-4: More expensive, no benefit.",
+    "cost_impact": "gpt-4o: ~$0.03 per insight (3000 tokens in, 800 tokens out). gpt-4o-mini: ~$0.01 per insight. For 5 insights, difference is $0.10.",
+    "quality_impact": "gpt-4o produces professional, specific insights with natural phrasing. gpt-4o-mini works but tends toward generic language ('demonstrates strong skills...').",
+    "usage": "Called only for candidates you select for 'Deep Insights' (typically top 3-10). Low volume, high value."
   },
-  "temperature": {
-    "value": 0.2,
-    "description": "Controls randomness in GPT responses (0.0 = deterministic, 2.0 = very creative)",
+  "ranker_temperature": {
+    "value": 0.1,
+    "description": "Temperature for RANKER_AGENT (0.0 = deterministic, 2.0 = creative)",
     "range": [
       0.0,
       2.0
     ],
-    "explanation": "Lower values (0.0-0.3) produce consistent, focused insights. Higher values (0.7-1.0) produce more varied, creative responses. For professional hiring insights, keep LOW.",
-    "recommended": 0.2,
-    "cost_impact": "No cost impact - only affects output style",
-    "quality_impact": "0.2 ensures consistent, professional insights. Higher temps may introduce unnecessary creativity or inconsistency."
+    "explanation": "RANKER needs consistency across thousands of scoring calls. 0.1 ensures same resume+criterion always gets same score. Higher values introduce randomness.",
+    "recommended": 0.1,
+    "cost_impact": "No cost impact - only affects consistency",
+    "quality_impact": "0.1 = highly consistent scoring. 0.3+ = scores may vary on re-run. Keep LOW for ranker."
   },
-  "presence_penalty": {
+  "insight_temperature": {
     "value": 0.4,
-    "description": "Reduces repetitive phrasing across insights (0.0 = no penalty, 2.0 = max penalty)",
+    "description": "Temperature for INSIGHT_AGENT (0.0 = deterministic, 2.0 = creative)",
     "range": [
       0.0,
       2.0
     ],
-    "explanation": "Penalizes using the same phrases repeatedly. Higher values = more unique phrasing per candidate. Helps avoid 'demonstrates strong...' being used for everyone.",
+    "explanation": "INSIGHT benefits from readability and natural phrasing. 0.4 balances consistency with engaging language. Too low (0.1) = robotic. Too high (0.8) = inconsistent.",
     "recommended": 0.4,
-    "cost_impact": "No cost impact - only affects output style",
-    "quality_impact": "0.3-0.6 produces more personalized, varied insights. Too high (>1.0) may produce awkward phrasing."
+    "cost_impact": "No cost impact - only affects writing style",
+    "quality_impact": "0.4 produces professional, readable insights without excessive creativity. Sweet spot for hiring assessments."
   },
-  "frequency_penalty": {
-    "value": 0.3,
-    "description": "Discourages repeating the same words within a response (0.0 = no penalty, 2.0 = max penalty)",
-    "range": [
-      0.0,
-      2.0
-    ],
-    "explanation": "Reduces word repetition within each insight. Prevents 'Python experience... experienced with Python... Python skills' redundancy.",
-    "recommended": 0.3,
-    "cost_impact": "No cost impact - only affects output style",
-    "quality_impact": "0.2-0.4 produces more natural, varied language. Too high (>0.8) may lose important keyword repetition."
+  "advanced_api_settings": {
+    "presence_penalty": {
+      "value": 0.4,
+      "description": "Reduces repetitive phrasing across insights (0.0 = no penalty, 2.0 = max penalty)",
+      "range": [
+        0.0,
+        2.0
+      ],
+      "explanation": "Penalizes using the same phrases repeatedly across multiple candidates. Helps avoid 'demonstrates strong...' appearing in every insight.",
+      "recommended": 0.4,
+      "applies_to": "INSIGHT_AGENT only",
+      "cost_impact": "No cost impact - only affects output style",
+      "quality_impact": "0.3-0.6 produces more personalized, varied insights. Too high (>1.0) may produce awkward phrasing."
+    },
+    "frequency_penalty": {
+      "value": 0.3,
+      "description": "Discourages repeating words within a single response (0.0 = no penalty, 2.0 = max penalty)",
+      "range": [
+        0.0,
+        2.0
+      ],
+      "explanation": "Reduces word repetition within each insight. Prevents 'Python experience... experienced with Python... Python skills' redundancy.",
+      "recommended": 0.3,
+      "applies_to": "INSIGHT_AGENT only",
+      "cost_impact": "No cost impact - only affects output style",
+      "quality_impact": "0.2-0.4 produces more natural, varied language. Too high (>0.8) may lose important keyword emphasis."
+    },
+    "ranker_max_tokens": {
+      "value": 300,
+      "description": "Max tokens for RANKER responses (score + justification + evidence)",
+      "range": [
+        200,
+        500
+      ],
+      "explanation": "RANKER returns: score (integer), justification (1 sentence), raw_evidence (verbatim quotes). 300 tokens = ~225 words, sufficient for detailed evidence.",
+      "recommended": 300,
+      "cost_impact": "Each token costs $0.0000006 (gpt-4o-mini). 300 tokens = $0.00018 per call. For 1000 calls, difference between 200 and 300 tokens is $0.06.",
+      "quality_impact": "300 tokens ensures complete evidence extraction. 200 may truncate quotes. 500 is overkill and wastes money."
+    },
+    "insight_max_tokens": {
+      "value": 1500,
+      "description": "Max tokens for INSIGHT responses (strengths + gaps + notes + justifications)",
+      "range": [
+        500,
+        2000
+      ],
+      "explanation": "INSIGHT returns: 3-6 strength bullets, 3-6 gap bullets, 2-4 sentence notes, plus justifications dict. With larger context windows, need more output tokens. Typical output: 600-1000 tokens. 1500 provides safety margin.",
+      "recommended": 1500,
+      "cost_impact": "Each token costs $0.00001 (gpt-4o). 1500 tokens = $0.015 per insight. 2000 tokens = $0.02. Increased from 1000 to handle justifications dict.",
+      "quality_impact": "Too low (<800) may truncate JSON response mid-string. 1500 ensures complete response with justifications. 2000 is maximum safety but usually unnecessary."
+    }
   },
-  "max_tokens": {
-    "value": 1000,
-    "description": "Maximum number of tokens (words) in GPT response",
-    "range": [
-      500,
-      2000
-    ],
-    "explanation": "Current insights need ~400-600 tokens (3-6 bullets for strengths, 3-6 for gaps, 2-4 sentence notes). 1000 provides safety margin without waste.",
-    "recommended": 1000,
-    "cost_impact": "Linear cost increase. 1000 tokens = ~$0.01 per insight with gpt-4o. 2000 tokens = ~$0.02. We typically only use ~500.",
-    "quality_impact": "Too low (<500) may truncate insights. Too high (>1500) wastes money with no benefit."
+  "text_processing": {
+    "candidate_text_chars": {
+      "value": 12000,
+      "description": "Maximum resume text sent to AI (character limit)",
+      "range": [
+        4000,
+        20000
+      ],
+      "explanation": "Truncates long resumes to control token costs. Most resumes are 2-5k chars. 12000 captures comprehensive context.",
+      "recommended": 12000,
+      "cost_impact": "Each 1000 chars ≈ 250 tokens. 12000 chars = 3000 tokens input per scoring call. For 1000 RANKER calls: 12k=$0.45, 20k=$0.75.",
+      "quality_impact": "Too low (<6000) may miss relevant experience. 12000 captures full career history. 20000 only needed for extremely detailed CVs (rare)."
+    },
+    "jd_text_chars": {
+      "value": 5000,
+      "description": "Maximum JD text sent to AI (character limit)",
+      "range": [
+        1000,
+        15000
+      ],
+      "explanation": "Truncates long job descriptions. 5000 chars captures comprehensive requirements without excessive context.",
+      "recommended": 5000,
+      "cost_impact": "Each 1000 chars ≈ 250 tokens. 5000 chars = 1250 tokens per call. Moderate impact on total cost.",
+      "quality_impact": "Too low (<2000) may miss important requirements. 5000 captures detailed JDs. 15000 for exceptionally comprehensive job descriptions."
+    },
+    "evidence_snippet_chars": {
+      "value": 500,
+      "description": "Maximum characters per evidence snippet displayed in UI",
+      "range": [
+        300,
+        1000
+      ],
+      "explanation": "Controls how much of the raw_evidence text is shown to users. Doesn't affect AI processing, only UI display.",
+      "recommended": 500,
+      "cost_impact": "No cost impact - UI only",
+      "quality_impact": "Too low (<400) may truncate context. 500 shows adequate proof. 1000 can be overwhelming."
+    }
   },
-  "evidence_snippet_chars": {
-    "value": 600,
-    "description": "Characters per criterion in evidence snippets sent to GPT",
-    "range": [
-      200,
-      1000
-    ],
-    "explanation": "Each criterion gets a snippet of resume text showing why the candidate scored well/poorly. More chars = better context but higher cost.",
-    "recommended": 600,
-    "cost_impact": "With 20 criteria: 400 chars = ~4000 input tokens. 600 chars = ~5000 tokens (+$0.002 per insight). 1000 chars = ~8000 tokens (+$0.010).",
-    "quality_impact": "400 chars: Often cuts mid-sentence. 600 chars: Good context, complete thoughts. 1000 chars: Diminishing returns - GPT gets enough from 600."
+  "insight_formatting": {
+    "notes_length": {
+      "value": "concise",
+      "description": "Length of the 'Overall Notes' section in candidate insights",
+      "options": [
+        "brief",
+        "concise",
+        "detailed"
+      ],
+      "explanation": "Controls how much detail the AI includes in the overall assessment notes. Brief=1-2 sentences, Concise=2-4 sentences, Detailed=4-6 sentences (one paragraph).",
+      "recommended": "concise",
+      "cost_impact": "Minimal - only affects INSIGHT output length. Brief saves ~50 tokens per insight, Detailed adds ~100 tokens. For 5 insights: Brief=$0.005 savings, Detailed=$0.01 extra cost.",
+      "quality_impact": "Brief may feel rushed. Concise balances detail and readability. Detailed provides more context but can be verbose."
+    },
+    "insight_tone": {
+      "value": "professional",
+      "description": "Writing style and tone for generated insights",
+      "options": [
+        "professional",
+        "conversational",
+        "technical",
+        "executive"
+      ],
+      "explanation": "Professional: Standard hiring language. Conversational: Friendly, approachable tone. Technical: Tech-focused with specific details. Executive: High-level strategic assessment for C-suite roles.",
+      "recommended": "professional",
+      "cost_impact": "No cost impact - only affects phrasing style",
+      "quality_impact": "Professional works for most roles. Technical better for engineering/dev roles. Executive better for senior leadership. Conversational for startup/casual environments."
+    }
   },
-  "candidate_text_chars": {
-    "value": 4000,
-    "description": "Characters of candidate resume text sent to GPT for context",
-    "range": [
-      1000,
-      10000
-    ],
-    "explanation": "Full resume is sent (truncated to this limit) to give GPT overall context about candidate. First 3000 chars usually captures name, summary, recent experience.",
-    "recommended": 3000,
-    "cost_impact": "3000 chars = ~750 tokens. 5000 chars = ~1250 tokens (+$0.001). 10000 chars = ~2500 tokens (+$0.004).",
-    "quality_impact": "3000 chars captures critical info (header, summary, recent roles). More doesn't significantly improve insights since evidence snippets provide specifics."
+  "report_balance": {
+    "min_strengths": {
+      "value": 3,
+      "description": "Minimum number of strengths to generate per candidate",
+      "range": [
+        1,
+        6
+      ],
+      "explanation": "Controls minimum length of 'Top Strengths' section. Lower values allow more concise reports. Higher values ensure comprehensive coverage.",
+      "recommended": 3,
+      "cost_impact": "Minimal - affects INSIGHT output length. Each strength ~30 tokens. 3 strengths = 90 tokens, 6 strengths = 180 tokens. Cost difference: ~$0.001 per insight.",
+      "quality_impact": "Too low (<3) may miss important strengths. 3-4 is balanced. 5-6 provides exhaustive coverage but can be redundant."
+    },
+    "max_strengths": {
+      "value": 6,
+      "description": "Maximum number of strengths to generate per candidate",
+      "range": [
+        3,
+        10
+      ],
+      "explanation": "Controls maximum length of 'Top Strengths' section. Prevents overly long reports.",
+      "recommended": 6,
+      "cost_impact": "Higher max increases output tokens. 6 strengths = 180 tokens, 10 strengths = 300 tokens. Cost difference: ~$0.001-0.002 per insight.",
+      "quality_impact": "6 is optimal for most roles. 8-10 useful for complex senior roles with many requirements."
+    },
+    "min_gaps": {
+      "value": 3,
+      "description": "Minimum number of gaps/concerns to generate per candidate",
+      "range": [
+        1,
+        6
+      ],
+      "explanation": "Controls minimum length of 'Gaps & Risks' section. Ensures concerns are flagged.",
+      "recommended": 3,
+      "cost_impact": "Minimal - affects INSIGHT output length. Each gap ~30 tokens. 3 gaps = 90 tokens, 6 gaps = 180 tokens. Cost difference: ~$0.001 per insight.",
+      "quality_impact": "Too low (<3) may miss red flags. 3-4 is balanced. 5-6 provides thorough risk assessment."
+    },
+    "max_gaps": {
+      "value": 6,
+      "description": "Maximum number of gaps/concerns to generate per candidate",
+      "range": [
+        3,
+        10
+      ],
+      "explanation": "Controls maximum length of 'Gaps & Risks' section. Prevents overwhelming negative feedback.",
+      "recommended": 6,
+      "cost_impact": "Higher max increases output tokens. 6 gaps = 180 tokens, 10 gaps = 300 tokens. Cost difference: ~$0.001-0.002 per insight.",
+      "quality_impact": "6 is optimal. Too many gaps can feel overly critical. 8-10 only for extremely mismatched candidates."
+    }
   },
-  "jd_text_chars": {
-    "value": 4000,
-    "description": "Characters of Job Description sent to GPT for context",
-    "range": [
-      1000,
-      10000
-    ],
-    "explanation": "Job description is sent (truncated) so GPT understands what role we're hiring for. First 3000 chars captures overview and key requirements.",
-    "recommended": 3000,
-    "cost_impact": "Same as candidate_text_chars - 3000 = ~750 tokens. Linear increase with length.",
-    "quality_impact": "3000 chars sufficient for most JDs. Longer JDs don't improve insights much since criteria are explicitly scored."
+  "evidence_depth": {
+    "top_evidence_items": {
+      "value": 5,
+      "description": "Number of evidence items to show per criterion in detailed view",
+      "range": [
+        1,
+        10
+      ],
+      "explanation": "Controls how many evidence snippets are displayed per criterion in the UI. Higher values provide more context but can overwhelm.",
+      "recommended": 5,
+      "cost_impact": "No direct cost impact - UI only. Does not affect AI processing.",
+      "quality_impact": "3 is minimal. 5 provides good context. 7-10 can be excessive for most criteria."
+    }
   },
-  "score_thresholds": {
-    "high_threshold": {
+  "evidence_thresholds": {
+    "strong_match_threshold": {
       "value": 0.75,
-      "description": "Score above this = 'High' or 'Strong' match (green in UI)",
+      "description": "Score threshold for 'STRONG match' classification",
       "range": [
         0.6,
         0.9
       ],
-      "explanation": "Criteria with scores \u00e2\u2030\u00a50.75 are considered strong matches. Lower threshold = more criteria marked 'strong'. Higher = more selective.",
+      "explanation": "Scores at or above this value are classified as 'STRONG match' (75%+ by default). Affects AI's tone when writing justifications and how evidence is labeled in UI.",
       "recommended": 0.75,
-      "quality_impact": "Affects UI color coding and what GPT considers a 'strength'. Too low dilutes meaning of 'strong'."
+      "cost_impact": "No cost impact - only affects classification logic",
+      "quality_impact": "Too low (<0.70) dilutes 'strong' meaning. 0.75 is balanced. Too high (>0.80) makes strong matches rare."
+    },
+    "good_match_threshold": {
+      "value": 0.50,
+      "description": "Score threshold for 'GOOD match' classification",
+      "range": [
+        0.4,
+        0.7
+      ],
+      "explanation": "Scores between this and strong_threshold are 'GOOD match' (50-74% by default).",
+      "recommended": 0.50,
+      "cost_impact": "No cost impact - only affects classification logic",
+      "quality_impact": "0.50 is balanced. Too low (<0.45) makes 'good' too easy. Too high (>0.60) makes moderate matches rare."
+    },
+    "moderate_match_threshold": {
+      "value": 0.35,
+      "description": "Score threshold for 'MODERATE match' classification",
+      "range": [
+        0.25,
+        0.5
+      ],
+      "explanation": "Scores between this and good_threshold are 'MODERATE match' (35-49% by default).",
+      "recommended": 0.35,
+      "cost_impact": "No cost impact - only affects classification logic",
+      "quality_impact": "0.35 is balanced. Adjust based on how strict you want the 'moderate' band to be."
+    },
+    "weak_match_threshold": {
+      "value": 0.15,
+      "description": "Score threshold for 'WEAK match' classification",
+      "range": [
+        0.1,
+        0.3
+      ],
+      "explanation": "Scores between this and moderate_threshold are 'WEAK match' (15-34% by default). Below this is 'MINIMAL match'.",
+      "recommended": 0.15,
+      "cost_impact": "No cost impact - only affects classification logic",
+      "quality_impact": "0.15 is balanced. Below this, evidence is truly minimal or absent."
+    }
+  },
+  "score_thresholds": {
+    "high_threshold": {
+      "value": 0.75,
+      "description": "Score ≥75% = 'Strong Match' (green in UI)",
+      "range": [
+        0.6,
+        0.9
+      ],
+      "explanation": "Criteria scoring 75+ are highlighted as strengths. Lower threshold = more 'strengths'. Higher = more selective.",
+      "recommended": 0.75
     },
     "low_threshold": {
       "value": 0.35,
-      "description": "Score below this = 'Low' or 'Weak' match (red in UI)",
+      "description": "Score <35% = 'Weak Match' (red in UI)",
       "range": [
         0.2,
         0.5
       ],
-      "explanation": "Criteria with scores <0.35 are considered weak/gaps. Lower threshold = fewer marked as gaps. Higher = more gaps shown.",
-      "recommended": 0.35,
-      "quality_impact": "Affects UI color coding and what GPT considers a 'gap'. Too high creates false negatives."
+      "explanation": "Criteria scoring below 35 are flagged as gaps. Lower threshold = fewer gaps. Higher = more critical assessment.",
+      "recommended": 0.35
     }
   },
   "pricing_config": {
-    "base_price_usd": {
-      "value": 4.0,
-      "description": "Base price for analysis (JD extraction + scoring all candidates + top 3 insights)",
-      "explanation": "This covers OpenAI costs for JD extraction (~$0.05) + semantic scoring (~$0.01 per candidate) + 3 insights (~$0.054). Rest is profit margin."
+    "standard_tier_price": {
+      "value": 10.0,
+      "description": "Price for Standard tier analysis (full scoring + top 3 insights)",
+      "explanation": "Covers: JD extraction, scoring all candidates × all criteria, generating 3 insights. Includes profit margin over OpenAI costs."
     },
-    "extra_insight_price_usd": {
+    "deep_dive_unlock_price": {
       "value": 1.0,
-      "description": "Price per additional insight beyond top 3",
-      "explanation": "Each extra insight costs ~$0.018 in OpenAI fees. $1.00 provides 98% profit margin while staying affordable."
+      "description": "Price to unlock Deep Insights for one additional candidate",
+      "explanation": "Each additional insight costs ~$0.03 in OpenAI fees. $1.00 provides healthy profit margin while staying affordable."
     },
     "model_costs": {
       "gpt-4o": {
@@ -155,155 +343,43 @@
       }
     }
   },
-  "advanced_settings": {
-    "prompt_style": {
-      "value": "concise_professional",
-      "description": "Style of insights generated",
-      "options": [
-        "concise_professional",
-        "detailed_analytical",
-        "bullet_points_only"
-      ],
-      "explanation": "concise_professional: 3-6 bullets + paragraph (CURRENT). detailed_analytical: Longer, more verbose. bullet_points_only: Skip the notes paragraph.",
-      "note": "Changing this requires modifying the prompt template in analysis.py - not yet implemented in admin UI."
+  "calculator_settings": {
+    "avg_candidates_per_job": {
+      "value": 50,
+      "description": "Average number of candidates per job for cost estimation",
+      "range": [10, 200],
+      "explanation": "Used by Business Health Monitor to estimate typical analysis costs. Adjust to match your typical job posting volume."
     },
-    "include_candidate_name_in_prompt": {
-      "value": true,
-      "description": "Whether to include candidate name in GPT prompt",
-      "explanation": "Including the name helps GPT personalize insights ('Nigel has...' vs 'The candidate has...'). Recommended: true.",
-      "quality_impact": "Significantly improves personalization and readability of insights."
+    "avg_criteria_per_job": {
+      "value": 20,
+      "description": "Average number of criteria per job description",
+      "range": [5, 40],
+      "explanation": "Typical JD has 15-25 criteria. More criteria = more RANKER calls = higher cost. Formula: candidates × criteria = ranker_calls."
     },
-    "top_evidence_items": {
-      "value": 10,
-      "description": "Number of criteria evidence snippets to include (sorted by score)",
-      "range": [
-        5,
-        20
-      ],
-      "explanation": "We send top N criteria by score to GPT. More = better context but higher cost. 10 balances both.",
-      "recommended": 10,
-      "cost_impact": "Directly multiplies evidence_snippet_chars cost. 10 items × 600 chars = 6000 chars. 20 items = 12000 chars (double cost)."
+    "insights_generated": {
+      "value": 5,
+      "description": "Number of insights generated per analysis (Standard tier)",
+      "range": [3, 10],
+      "explanation": "Each insight costs ~$0.03 with gpt-4o. Standard tier includes 3-5 insights. User can unlock more."
     },
-    "min_strengths": {
-      "value": 3,
-      "description": "Minimum number of strengths to generate",
-      "range": [
-        2,
-        8
-      ],
-      "explanation": "GPT will generate at least this many strength items. Ensures consistent output length.",
-      "recommended": 3,
-      "quality_impact": "Prevents too-short insights. Most candidates have 3-6 notable strengths."
+    "standard_tier_revenue": {
+      "value": 10.0,
+      "description": "Revenue per Standard tier analysis",
+      "range": [5.0, 20.0],
+      "explanation": "Current pricing: $10.00 for full analysis with 3-5 insights. Calculator shows profit margin at this price point."
     },
-    "max_strengths": {
-      "value": 6,
-      "description": "Maximum number of strengths to generate",
-      "range": [
-        4,
-        10
-      ],
-      "explanation": "GPT will generate at most this many strength items. Prevents overly long insights.",
-      "recommended": 6,
-      "quality_impact": "Keeps insights focused on most important points. Too many dilutes impact."
-    },
-    "min_gaps": {
-      "value": 3,
-      "description": "Minimum number of gaps/concerns to generate",
-      "range": [
-        2,
-        8
-      ],
-      "explanation": "GPT will generate at least this many gap items. Ensures balanced assessment.",
-      "recommended": 3,
-      "quality_impact": "Prevents overly positive assessments. Every candidate has areas of concern."
-    },
-    "max_gaps": {
-      "value": 6,
-      "description": "Maximum number of gaps/concerns to generate",
-      "range": [
-        4,
-        10
-      ],
-      "explanation": "GPT will generate at most this many gap items. Prevents overly negative assessments.",
-      "recommended": 6,
-      "quality_impact": "Keeps assessment constructive. Too many gaps can seem unfairly critical."
-    },
-    "notes_length": {
-      "value": "medium",
-      "description": "Length of overall assessment notes",
-      "options": [
-        "brief",
-        "medium",
-        "detailed"
-      ],
-      "explanation": "brief: 1-2 sentences. medium: 2-4 sentences (CURRENT). detailed: 1 paragraph (4-6 sentences).",
-      "recommended": "medium",
-      "quality_impact": "Medium provides good context without overwhelming. Brief for quick screening, detailed for final rounds."
-    },
-    "insight_tone": {
-      "value": "professional",
-      "description": "Tone/style of insights",
-      "options": [
-        "professional",
-        "conversational",
-        "technical",
-        "executive"
-      ],
-      "explanation": "professional: Standard hiring language (CURRENT). conversational: More casual/friendly. technical: Focus on tech details. executive: High-level strategic focus.",
-      "recommended": "professional",
-      "quality_impact": "Match tone to audience. Technical for eng managers, executive for C-suite roles."
-    },
-    "evidence_filter_strategy": {
-      "value": "threshold_based",
-      "description": "How to select which criteria evidence to send to GPT",
-      "options": [
-        "top_n_by_score",
-        "strengths_and_gaps",
-        "threshold_based",
-        "all_criteria"
-      ],
-      "explanation": "top_n_by_score: Send top N highest scores. strengths_and_gaps: Top 5 + Bottom 5. threshold_based: Only scores ≥0.40 (CURRENT - positive evidence only). all_criteria: Send everything.",
-      "recommended": "threshold_based",
-      "cost_impact": "all_criteria doubles token costs. threshold_based is most efficient by focusing on meaningful matches only.",
-      "quality_impact": "threshold_based generates justifications only where candidate has real evidence to support the criterion."
-    },
-    "evidence_score_threshold_high": {
-      "value": 0.40,
-      "description": "When using threshold_based strategy, only scores above this get justifications",
-      "range": [
-        0.3,
-        0.85
-      ],
-      "explanation": "Criteria scoring above this get AI justifications. Set to 0.40 (40%) to include moderate-to-strong matches. Scores below this show 'insufficient evidence' message.",
-      "recommended": 0.40
-    },
-    "evidence_score_threshold_low": {
-      "value": 0.0,
-      "description": "NOT USED - set to 0.0 to disable gap justifications",
-      "range": [
-        0.15,
-        0.50
-      ],
-      "explanation": "Only used if evidence_filter_strategy = 'threshold_based'. Criteria scoring below this are sent to GPT.",
-      "recommended": 0.40
-    },
-    "chunk_overlap_chars": {
-      "value": 150,
-      "description": "Overlap between text chunks when processing long documents",
-      "range": [
-        50,
-        300
-      ],
-      "explanation": "When splitting resumes into chunks, this many characters overlap between adjacent chunks. Prevents missing context at boundaries.",
-      "recommended": 150,
-      "quality_impact": "100-200 chars provides good context preservation. Too low may split sentences poorly. Too high wastes processing."
+    "token_estimation_formulas": {
+      "ranker_input_formula": "(jd_text_chars + candidate_text_chars) / 4",
+      "insight_input_formula": "(jd_text_chars + candidate_text_chars + (criteria_count * 500)) / 4",
+      "explanation": "Token estimation: ~4 characters per token. RANKER gets JD + candidate. INSIGHT gets JD + candidate + evidence (500 chars per criterion)."
     }
   },
   "_usage_notes": {
-    "current_cost_per_insight": "~$0.018 with current settings (gpt-4o, 600 char evidence, 3000 char context)",
-    "recommended_workflow": "1. Test changes with 'Top 3' insights first. 2. Check quality in Insights page. 3. Monitor costs in analysis history. 4. Adjust gradually.",
-    "optimization_priority": "1. Keep model=gpt-4o (best quality/cost). 2. Adjust evidence_snippet_chars if quality issues (600-800 range). 3. Keep temperature low (0.1-0.3). 4. Don't touch candidate/jd text limits unless necessary.",
-    "cost_saving_tips": "Switch to gpt-4o-mini for 60% cost reduction (test quality first). Reduce evidence snippets to 400-500 chars. Lower top_evidence_items to 8.",
-    "quality_improvement_tips": "Increase evidence_snippet_chars to 800. Include more evidence items (15-20). Keep temperature at 0.2. Ensure candidate_text includes full resume header."
+    "current_architecture": "TWO-AGENT SYSTEM: RANKER (bulk scoring) + INSIGHT (deep analysis for selected candidates)",
+    "typical_analysis_cost": "50 candidates, 20 criteria: RANKER costs vary with text limits. With 12k+5k chars: ranker input ~4250 tokens, insight input ~5000 tokens. See Calculator Settings for live estimates.",
+    "recommended_workflow": "1. Test changes with small job (10 candidates). 2. Check quality in Insights page. 3. Monitor costs in Stats page. 4. Adjust gradually.",
+    "optimization_priority": "1. Keep RANKER=gpt-4o-mini (already optimized). 2. Keep INSIGHT=gpt-4o (quality matters here). 3. Adjust temperatures only if quality issues. 4. Don't change max_tokens unless truncation occurs.",
+    "cost_saving_tips": "For budget jobs: Use gpt-4o-mini for both agents (saves 60% on insights). Reduce ranker_max_tokens to 200 (saves 33%). Skip Deep Insights for weak candidates.",
+    "quality_improvement_tips": "If scores seem inconsistent: Lower ranker_temperature to 0.05. If insights seem generic: Increase insight_temperature to 0.5. If evidence incomplete: Raise ranker_max_tokens to 400."
   }
 }

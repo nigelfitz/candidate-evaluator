@@ -17,9 +17,25 @@
     "candidate_insights_field_names": {
       "WARNING": "The code looks for specific field names in the JSON response. You can use ANY of the variants listed below, but the response MUST include at least one variant for each category.",
       "ACCEPTED_VARIANTS": {
-        "strengths": ["top", "top_strengths", "Top strengths", "strengths"],
-        "gaps": ["gaps", "gaps_risks", "Gaps / risks", "risks", "concerns"],
-        "notes": ["notes", "overall_notes", "Overall notes", "assessment"]
+        "strengths": [
+          "top",
+          "top_strengths",
+          "Top strengths",
+          "strengths"
+        ],
+        "gaps": [
+          "gaps",
+          "gaps_risks",
+          "Gaps / risks",
+          "risks",
+          "concerns"
+        ],
+        "notes": [
+          "notes",
+          "overall_notes",
+          "Overall notes",
+          "assessment"
+        ]
       },
       "RECOMMENDED": "Use 'top', 'gaps', and 'notes' (first in each list) to avoid issues",
       "SAFE_TO_CHANGE": [
@@ -45,11 +61,13 @@
       "description": "Sets the AI's role and behavior"
     },
     "user_prompt_template": {
-      "value": "Extract the following JD into four sections (key_skills, responsibilities, qualifications, experience_required). Return ONLY JSON matching the provided schema.\n\nJD:\n{jd_text}",
+      "value": "Extract the following JD into five sections: job_title (the position/role name), key_skills, responsibilities, qualifications, experience_required. Return ONLY JSON matching the provided schema.\n\nJD:\n{jd_text}",
       "label": "User Prompt Template",
       "description": "Instructions sent to AI. Use {jd_text} as placeholder for job description content.",
-      "placeholders": ["{jd_text}"],
-      "CRITICAL_REMINDER": "⚠️ DO NOT change field names: key_skills, responsibilities, qualifications, experience_required - they are hardcoded in analysis.py"
+      "placeholders": [
+        "{jd_text}"
+      ],
+      "CRITICAL_REMINDER": "⚠️ DO NOT change field names: job_title, key_skills, responsibilities, qualifications, experience_required - they are hardcoded in analysis.py"
     }
   },
   "candidate_insights": {
@@ -61,21 +79,113 @@
       "description": "Sets the AI's role and behavior"
     },
     "user_prompt_template": {
-      "value": "Job Description (excerpted):\n{jd_text}\n\nCandidate: {candidate_name}\nCandidate content (excerpted):\n{candidate_text}\n\nEvidence by criterion (top {top_n} by similarity):\n{evidence_lines}\n\nTask:\n- Provide 3–6 bullet **Top strengths** tied to criteria and tangible evidence.\n- Provide 3–6 bullet **Gaps / risks** with rationale.\n- Provide 2–4 sentence **Overall notes**.\nReturn JSON matching schema.",
+      "value": "Job Description (excerpted):\n{jd_text}\n\nCandidate: {candidate_name}\nCandidate content (excerpted):\n{candidate_text}\n\nEvidence by criterion:\n{evidence_lines}\n\nTask:\n- Provide 3–6 bullet **Top strengths** tied to criteria and tangible evidence.\n- Provide 3–6 bullet **Gaps / risks** with rationale.\n- Provide 2–4 sentence **Overall notes**.\nReturn JSON matching schema.",
       "label": "User Prompt Template",
-      "description": "Instructions sent to AI. Use placeholders: {jd_text}, {candidate_name}, {candidate_text}, {evidence_lines}, {top_n}",
-      "placeholders": ["{jd_text}", "{candidate_name}", "{candidate_text}", "{evidence_lines}", "{top_n}"],
+      "description": "Instructions sent to AI. Use placeholders: {jd_text}, {candidate_name}, {candidate_text}, {evidence_lines}",
+      "placeholders": [
+        "{jd_text}",
+        "{candidate_name}",
+        "{candidate_text}",
+        "{evidence_lines}"
+      ],
       "CRITICAL_REMINDER": "⚠️ JSON response must include fields using these accepted variants: 'top'/'top_strengths'/'strengths' for strengths, 'gaps'/'gaps_risks'/'concerns' for gaps, 'notes'/'overall_notes'/'assessment' for notes"
-    }
+    },
+    "_LEGACY_NOTICE": "This section is kept for backward compatibility with old analysis.py code. New code should use 'insight_generation' section above."
   },
   "_metadata": {
-    "last_updated": "2025-01-19 05:00:00 UTC",
+    "last_updated": "2025-12-30 00:00:00 UTC",
     "updated_by": "system",
-    "version": "1.1",
+    "version": "2.0",
     "description": "Prompt templates for analysis workflows. READ THE _CRITICAL_WARNING SECTION AT THE TOP BEFORE EDITING!",
     "changelog": [
       "v1.1 (2025-01-19): Added comprehensive warnings about hardcoded field names and safe/unsafe modifications",
-      "v1.0 (2025-12-22): Initial prompt structure"
+      "v1.0 (2025-12-22): Initial prompt structure",
+      "v2.0 (2025-12-30): Added ranker_scoring and insight_generation sections for two-agent architecture. Added comprehensive developer notes and pro-tips."
     ]
+  },
+  "ranker_scoring": {
+    "name": "RANKER Agent - Bulk Candidate Scoring",
+    "description": "Scores individual candidates against specific criteria (0-100). Called once per candidate × criterion combination.",
+    "developer_notes": {
+      "purpose": "This is your HIGHEST-VOLUME operation. For 50 candidates × 20 criteria, this runs 1,000 times per analysis. Keep it fast and consistent.",
+      "model_used": "RANKER_AGENT (gpt-4o-mini by default)",
+      "temperature": "0.1 (very low for consistency - same resume+criterion should always get same score)",
+      "critical_features": [
+        "Returns 0-100 integer score",
+        "Provides 1-sentence justification explaining the score",
+        "Extracts verbatim resume quotes as raw_evidence (proof of the score)",
+        "Handles 'anchor' criteria (binary requirements like degrees) with harsh penalties if missing"
+      ],
+      "cost_per_call": "~$0.0003 with gpt-4o-mini (500 tokens in, 100 tokens out)",
+      "pro_tip": "If scores seem random/inconsistent, lower ranker_temperature to 0.05. If evidence seems incomplete, increase ranker_max_tokens to 400."
+    },
+    "system_prompt": {
+      "value": "You are a senior recruiter scoring candidates. Evaluate the candidate's resume against a specific job requirement.\n\nANCHOR CRITERIA (degrees, certifications, licenses):\n- If the candidate HAS the requirement: score 100\n- If the candidate LACKS the requirement: score 0-20 (harsh penalty for missing binary requirement)\n\nNON-ANCHOR CRITERIA:\n- Score 0-100 based on evidence quality\n- Multiple roles showing the skill = higher score\n- Recent relevant experience = higher score\n- Outdated/weak evidence = lower score\n\nCRITICAL: You must extract verbatim quotes from the resume as proof.\n\nReturn JSON:\n{\n    \"score\": integer (0-100),\n    \"justification\": \"1-sentence reasoning explaining your score\",\n    \"raw_evidence\": \"Direct verbatim quotes from resume that prove this criterion. If evidence spans multiple jobs, include quotes from each separated by double line breaks.\"\n}\n\nExample raw_evidence for multi-job evidence:\n\"Advanced Excel skills including VLOOKUP, pivot tables, and macros (Finance Manager, 2020-2023)\n\nCreated complex financial models using Excel (Senior Analyst, 2018-2020)\"\n\nIf no direct quote exists, extract the most relevant sentence that implies the skill.",
+      "label": "System Prompt",
+      "description": "Defines the RANKER's role and scoring methodology",
+      "variables_used": "None - this is the foundational instruction"
+    },
+    "user_prompt_template": {
+      "value": "Criterion: {criterion}{anchor_note}\n\nJob Description Context:\n{jd_text}\n\nCandidate Resume:\n{resume_text}\n\nProvide your evaluation.",
+      "label": "User Prompt Template",
+      "description": "The actual scoring request sent per candidate-criterion pair",
+      "placeholders": [
+        "{criterion}",
+        "{anchor_note}",
+        "{jd_text}",
+        "{resume_text}"
+      ],
+      "variable_details": {
+        "{criterion}": "The specific requirement being scored (e.g., 'Python programming experience')",
+        "{anchor_note}": "Empty string for normal criteria. For anchors, adds: 'IMPORTANT: This is an ANCHOR criterion (binary requirement). Score 100 if present, 0-20 if missing.'",
+        "{jd_text}": "Truncated job description (first 1000 chars) for context",
+        "{resume_text}": "Full candidate resume text"
+      },
+      "CRITICAL_REMINDER": "⚠️ The response must match the exact JSON schema defined in system_prompt. Changing field names will break ai_service.py parsing."
+    }
+  },
+  "insight_generation": {
+    "name": "INSIGHT Agent - Deep Candidate Analysis",
+    "description": "Generates comprehensive insights (strengths, gaps, notes, justifications) for selected candidates only.",
+    "developer_notes": {
+      "purpose": "This is your LOW-VOLUME, HIGH-VALUE operation. Only runs for candidates you select for 'Deep Insights' (typically top 3-10).",
+      "model_used": "INSIGHT_AGENT (gpt-4o by default)",
+      "temperature": "0.4 (moderate for natural, readable phrasing)",
+      "critical_features": [
+        "Generates 3-6 strength bullet points tied to specific evidence",
+        "Generates 3-6 gap/risk bullet points with constructive feedback",
+        "Provides 2-4 sentence overall assessment",
+        "Refines ALL criterion justifications from Phase 1 for polished, professional phrasing",
+        "Optionally generates interview questions (if requested)"
+      ],
+      "cost_per_call": "~$0.03 with gpt-4o (3000 tokens in, 800 tokens out)",
+      "pro_tip": "If insights feel generic/robotic, increase insight_temperature to 0.5. If too creative/inconsistent, lower to 0.3. Use presence_penalty=0.4 to avoid repetitive phrasing across candidates."
+    },
+    "system_prompt": {
+      "value": "You are a senior hiring analyst. You receive Phase 1 draft scores and must:\n1. Generate high-quality strengths (3-6 bullets) tied to specific evidence\n2. Identify gaps/concerns (3-6 bullets) with constructive feedback\n3. Provide overall assessment notes (2-4 sentences)\n4. REFINE all criterion justifications to be polished and professional\n\nReturn JSON:\n{\n    \"top\": [\"strength 1\", \"strength 2\", ...],\n    \"gaps\": [\"gap 1\", \"gap 2\", ...],\n    \"notes\": \"overall assessment\",\n    \"justifications\": {\"criterion name\": \"polished justification\", ...},\n    \"interview_questions\": [\"question 1\", \"question 2\", ...]\n}\n\nIMPORTANT: The \"justifications\" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key.",
+      "label": "System Prompt",
+      "description": "Defines the INSIGHT agent's role and output format",
+      "variables_used": "None - this is the foundational instruction"
+    },
+    "user_prompt_template": {
+      "value": "Candidate: {candidate_name}\nOverall Score: {overall_score}/100\n\nJob Description:\n{jd_text}\n\nResume:\n{resume_text}\n\nPhase 1 Draft Scores:\n{scores_context}\n\nProvide deep insights with refined justifications.",
+      "label": "User Prompt Template",
+      "description": "The deep analysis request for selected candidates",
+      "placeholders": [
+        "{candidate_name}",
+        "{overall_score}",
+        "{jd_text}",
+        "{resume_text}",
+        "{scores_context}"
+      ],
+      "variable_details": {
+        "{candidate_name}": "Full name of the candidate being analyzed",
+        "{overall_score}": "Weighted average score (0-100) from Phase 1 RANKER scoring",
+        "{jd_text}": "Full or truncated job description text",
+        "{resume_text}": "Full or truncated candidate resume text",
+        "{scores_context}": "Formatted list of all Phase 1 scores with draft justifications, e.g.:\n- Python Programming (85/100): Strong evidence across multiple projects...\n- Team Leadership (45/100): Limited management experience..."
+      },
+      "CRITICAL_REMINDER": "⚠️ The response must match the exact JSON schema. The code expects fields: 'top'/'top_strengths'/'strengths', 'gaps'/'gaps_risks'/'concerns', 'notes'/'overall_notes'/'assessment', 'justifications' (object), 'interview_questions' (array)."
+    }
   }
 }

@@ -242,7 +242,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span style="color: #64748b; font-size: 14px;">Unlock Cost</span>
-                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- $1.00</span>
+                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</span>
                 </div>
                 <div style="border-top: 2px solid #e2e8f0; margin: 12px 0; padding-top: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -290,13 +290,8 @@
     </div>
     
     <!-- Drawer Content -->
-    <div style="padding: 24px;">
-        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0; color: #1e40af; font-size: 13px; line-height: 1.6; font-style: italic;">
-                This is the raw data extracted directly from the candidate's uploaded documents used to calculate the score for this criterion.
-            </p>
-        </div>
-        <pre id="drawerContent" style="background: #f8fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; font-size: 14px; border: 1px solid #e5e7eb; font-family: 'Courier New', monospace; color: #1f2937;"></pre>
+    <div id="drawerContentWrapper" style="padding: 24px;">
+        <!-- Content will be dynamically inserted here -->
     </div>
 </div>
 
@@ -367,40 +362,69 @@
     <div class="insights-container">
 
     <!-- Slim Executive Summary Header -->
-    <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
-        <div class="card-body py-3">
-            <!-- Row 1: Candidate Name and Download PDF Button -->
-            <div class="mb-2" style="overflow: hidden;">
-                <a href="{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}" 
-                   class="btn btn-sm btn-primary candidate-pdf-btn" 
-                   style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Download PDF
-                </a>
-                <h3 class="mb-0" style="color: #1f2937; font-weight: 700; font-size: 1.75rem;">👤 {{ current_candidate.name }}</h3>
-            </div>
-            <!-- Row 2: Overall Score/Badges and Prev/Next Buttons -->
-            <div style="overflow: hidden;">
-                <div class="candidate-nav-btns" style="display: flex; gap: 10px; align-items: center;">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
-                            {% if current_idx == 0 %}disabled{% endif %}
-                            style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        Prev
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(1)"
-                            {% if current_idx == candidates|length - 1 %}disabled{% endif %}
-                            style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; white-space: nowrap;">
-                        Next
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
+    <div class="card mb-3" style="background: white; border-left: 4px solid #3b82f6;">
+        <div class="card-body py-2">
+            <!-- Navigation Strip -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                <!-- LEFT: Navigation Controls -->
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px;">
+                    <!-- Prev/Next Buttons -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(-1)" 
+                                {% if current_idx == 0 %}disabled{% endif %}
+                                style="display: flex; align-items: center; gap: 4px; padding: 6px 12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            Prev
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="navigateCandidate(1)"
+                                {% if current_idx == candidates|length - 1 %}disabled{% endif %}
+                                style="display: flex; align-items: center; gap: 4px; padding: 6px 12px;">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Candidate Selector Dropdown -->
+                    <select id="candidateSelector" class="form-select form-select-sm" 
+                            onchange="jumpToCandidate(this.value)"
+                            style="width: auto; min-width: 200px; max-width: 300px;">
+                        <option value="" disabled>Jump to Candidate...</option>
+                        {% for candidate in candidates %}
+                        <option value="{{ candidate.name }}" {% if candidate.name == current_candidate.name %}selected{% endif %}>
+                            {{ candidate.name }} ({{ (candidate.score * 100)|int }}%)
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="text-muted small">
-                    <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
-                    <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
-                    <span class="badge bg-success me-1">✅ {{ current_candidate.strong_count }}</span>
-                    <span class="badge bg-warning text-dark me-1">⚠️ {{ current_candidate.moderate_count }}</span>
-                    <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
+                
+                <!-- RIGHT: Download Controls -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="form-check" style="margin: 0;">
+                        <input class="form-check-input" type="checkbox" id="includeJustificationsToggle" style="cursor: pointer;">
+                        <label class="form-check-label" for="includeJustificationsToggle" style="cursor: pointer; font-size: 0.875rem; white-space: nowrap;">
+                            Include justifications
+                        </label>
+                    </div>
+                    <a href="#" id="downloadPdfBtn"
+                       class="btn btn-sm btn-primary" 
+                       style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; white-space: nowrap;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Candidate Info -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="mb-1" style="color: #1f2937; font-weight: 700; font-size: 1.5rem;">👤 {{ current_candidate.name }}</h3>
+                    <div class="text-muted" style="font-size: 0.9rem;">
+                        <span class="me-3"><strong>Overall Score:</strong> {{ (current_candidate.score * 100)|int }}%</span>
+                        <span class="me-3"><strong>Rank:</strong> #{{ current_candidate.rank }} of {{ candidates|length }}</span>
+                        <span class="badge bg-success me-1">✅ {{ current_candidate.strong_count }}</span>
+                        <span class="badge bg-warning text-dark me-1">⚠️ {{ current_candidate.moderate_count }}</span>
+                        <span class="badge bg-danger">⛔ {{ current_candidate.weak_count }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -473,17 +497,14 @@
                         <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
                         <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
                             This candidate ranked <strong>#{{ current_candidate.rank }}</strong>. 
-                            Unlock AI-generated strengths, gaps, and recommendations for just <strong>$1.00</strong>.
+                            Unlock AI-generated strengths, gaps, and recommendations for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
                         </p>
                         <button onclick="unlockCandidate({{ analysis_id }}, '{{ current_candidate.name }}', {{ '%.2f' % current_user.balance_usd }})" class="unlock-btn-primary">
-                            🔓 Unlock Deep Insight ($1.00)
+                            🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
                         </button>
                         <div class="balance-display">
                             💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
                         </div>
-                        <p style="margin-top: 20px; font-size: 13px; color: #94a3b8;">
-                            <a href="{{ url_for('account') }}" style="color: #3b82f6; text-decoration: none;">Top up balance</a> if needed
-                        </p>
                     </div>
                 </div>
             </div>
@@ -551,7 +572,7 @@
                                 {% endif %}
                             </td>
                             <td style="text-align: center;">
-                                <button class="btn btn-sm" onclick="openEvidenceDrawer('{{ item.criterion|e }}', `{{ item.snippet|e }}`)"
+                                <button class="btn btn-sm" onclick="openEvidenceDrawer('{{ item.criterion|e }}', `{{ item.raw_evidence|e }}`, `{{ item.justification|e }}`, {{ current_candidate.has_gpt_insights|lower }})"
                                         style="background: none; border: none; padding: 4px; cursor: pointer; transition: opacity 0.2s;"
                                         onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
                                     <i data-lucide="search" style="width: 18px; height: 18px; color: #64748b;"></i>
@@ -672,15 +693,67 @@
 
 <script>
 // Side Drawer Functions
-function openEvidenceDrawer(criterion, snippet) {
+function openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked) {
     const drawer = document.getElementById('evidenceDrawer');
     const overlay = document.getElementById('drawerOverlay');
     const title = document.getElementById('drawerTitle');
-    const content = document.getElementById('drawerContent');
+    const contentWrapper = document.getElementById('drawerContentWrapper');
     
-    // Set content
+    // Set title
     title.textContent = criterion;
-    content.textContent = snippet;
+    
+    // Build content based on lock status
+    let content = '';
+    
+    if (isUnlocked) {
+        // UNLOCKED: Show AI Justification + Raw Source Text
+        content = `
+            <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
+                <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
+                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #3b82f6;"></i>
+                    <strong>AI Justification</strong>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="font-size: 1.05rem; line-height: 1.6;">${justification || 'No justification available'}</p>
+                </div>
+            </div>
+            
+            <details class="card" open>
+                <summary class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer; user-select: none;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                        <strong>Raw Source Text</strong>
+                    </span>
+                    <small class="text-muted">Click to expand/collapse</small>
+                </summary>
+                <div class="card-body">
+                    <div style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px; margin: 0;">${rawEvidence || 'No evidence available'}</div>
+                </div>
+            </details>
+        `;
+    } else {
+        // LOCKED: Show premium lock card
+        content = `
+            <div class="card text-center" style="background: white; padding: 48px 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);">
+                <div class="lock-icon" style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));">🔐</div>
+                <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
+                <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
+                    Unlock AI-generated justifications and detailed evidence for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
+                </p>
+                <button onclick="unlockCandidateFromDrawer()" 
+                   style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border: none; color: #1f2937; padding: 16px 36px; font-weight: 700; font-size: 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(212,175,55,0.4); transition: all 0.3s ease; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" 
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(212,175,55,0.5)';" 
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(212,175,55,0.4)';">
+                    🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
+                </button>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 16px; border: 1px solid #bbf7d0;">
+                    💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+                </div>
+            </div>
+        `;
+    }
+    
+    contentWrapper.innerHTML = content;
     
     // Show overlay
     overlay.style.display = 'block';
@@ -696,10 +769,18 @@ function openEvidenceDrawer(criterion, snippet) {
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
     
-    // Re-initialize Lucide icons for the close button
+    // Re-initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+}
+
+function unlockCandidateFromDrawer() {
+    // Close drawer first
+    closeEvidenceDrawer();
+    
+    // Trigger the main unlock flow
+    unlockCandidate({{ analysis_id }}, '{{ current_candidate.name }}', {{ '%.2f' % current_user.balance_usd }});
 }
 
 function closeEvidenceDrawer() {
@@ -821,6 +902,14 @@ const candidates = {{ candidates | tojson | safe }};
 const currentCandidateName = "{{ current_candidate.name }}";
 const currentIdx = candidates.findIndex(c => c.name === currentCandidateName);
 
+// Handle PDF download with justifications toggle
+document.getElementById('downloadPdfBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const includeJustifications = document.getElementById('includeJustificationsToggle').checked;
+    const url = `{{ url_for('download_candidate_pdf', analysis_id=analysis_id, candidate_name=current_candidate.name) }}?include_justifications=${includeJustifications}`;
+    window.location.href = url;
+});
+
 function navigateCandidate(direction) {
     const newIndex = currentIdx + direction;
     if (newIndex >= 0 && newIndex < candidates.length) {
@@ -829,12 +918,21 @@ function navigateCandidate(direction) {
     }
 }
 
+function jumpToCandidate(candidateName) {
+    if (candidateName && candidateName !== currentCandidateName) {
+        window.location.href = `{{ url_for('insights', analysis_id=analysis_id) }}?candidate=${encodeURIComponent(candidateName)}`;
+    }
+}
+
+// Pricing constants from backend
+const extraInsightCost = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
+
 // Show custom unlock modal
 function unlockCandidate(analysisId, candidateName, userBalance) {
     // Convert balance to number and check
     userBalance = parseFloat(userBalance);
     
-    if (userBalance < 1.00) {
+    if (userBalance < extraInsightCost) {
         // Store the current insights page URL in session storage for return after payment
         const currentUrl = window.location.href;
         sessionStorage.setItem('payment_return_url', currentUrl);
@@ -852,7 +950,7 @@ function unlockCandidate(analysisId, candidateName, userBalance) {
     
     // Update modal content
     document.getElementById('modalCurrentBalance').textContent = `$${unlockUserBalance.toFixed(2)}`;
-    document.getElementById('modalNewBalance').textContent = `$${(unlockUserBalance - 1.00).toFixed(2)}`;
+    document.getElementById('modalNewBalance').textContent = `$${(unlockUserBalance - extraInsightCost).toFixed(2)}`;
     document.getElementById('modalCandidateName').textContent = candidateName;
     
     // Show modal with animation

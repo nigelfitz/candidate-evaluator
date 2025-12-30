@@ -16,6 +16,7 @@ try:
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from reportlab.lib import colors
     from reportlab.lib.units import cm
+    from reportlab.pdfgen import canvas
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
@@ -30,6 +31,33 @@ except ImportError:
 
 
 # ============================================================================
+# PDF FOOTER FUNCTION
+# ============================================================================
+
+def add_page_footer(canvas_obj, doc, candidate_name):
+    """
+    Add footer to each page with candidate name and page number
+    
+    Args:
+        canvas_obj: ReportLab canvas object
+        doc: Document object
+        candidate_name: Name of candidate for footer
+    """
+    canvas_obj.saveState()
+    canvas_obj.setFont('Helvetica', 9)
+    canvas_obj.setFillColor(colors.grey)
+    
+    # Footer text: "Candidate Name | Page X"
+    footer_text = f"{candidate_name} | Page {doc.page}"
+    
+    # Center the footer
+    page_width = A4[0]
+    canvas_obj.drawCentredString(page_width / 2, 1.5*cm, footer_text)
+    
+    canvas_obj.restoreState()
+
+
+# ============================================================================
 # PDF EXPORT - Individual Candidate Report
 # ============================================================================
 
@@ -37,29 +65,29 @@ def to_individual_candidate_pdf(
     candidate_name: str,
     coverage_row: pd.Series,
     insights: Dict[str, Any],
-    evidence_map: Dict[Tuple[str,str], Tuple[str,float]],
+    evidence_map: Dict[Tuple[str,str], Tuple[str,str,float,int]],
     cat_map: Dict[str, str],
     hi: float = 0.75,
     lo: float = 0.35,
-    include_evidence: bool = False,
+    include_justifications: bool = False,
     job_title: str = "",
     gpt_candidates: List[str] = None,
     job_number: int = None
 ) -> Optional[bytes]:
     """
-    Generate individual candidate report PDF with disclaimer for non-AI candidates.
+    Generate individual candidate report PDF with tier enforcement.
     
     Args:
         candidate_name: Full name of candidate
         coverage_row: Pandas Series with scores for all criteria + Overall
         insights: Dict with 'top', 'gaps', 'notes' keys
-        evidence_map: Dict[(candidate, criterion)] -> (snippet, score)
+        evidence_map: Dict[(candidate, criterion)] -> (raw_evidence, justification, score, density)
         cat_map: Criterion -> category mapping
         hi: High threshold
         lo: Low threshold
-        include_evidence: Whether to include evidence snippets
+        include_justifications: Whether to include AI justifications for all criteria
         job_title: Job title for header
-        gpt_candidates: List of candidates that had AI insights generated
+        gpt_candidates: List of candidates that had Deep Insights unlocked
         job_number: Job number for header (e.g., 18 for "Job #0018")
     
     Returns:
@@ -70,7 +98,7 @@ def to_individual_candidate_pdf(
     
     try:
         buf = io.BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
+        doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=2*cm, bottomMargin=2.5*cm)
         story = []
         styles = getSampleStyleSheet()
         
@@ -220,38 +248,62 @@ def to_individual_candidate_pdf(
             story.append(crit_table)
             story.append(Spacer(1, 0.3*cm))
         
-        # Evidence snippets (optional)
-        if include_evidence and evidence_map:
-            story.append(Paragraph("Evidence Snippets (Selected)", heading_style))
-            story.append(Paragraph("<i>Showing evidence for top-scored criteria</i>", styles['Normal']))
+        # Criteria Justifications section (with tier enforcement)
+        if include_justifications and evidence_map:
+            story.append(Paragraph("Criteria Justifications", heading_style))
             
-            # Get top 5 criteria by score
-            top_criteria = sorted(
+            # Check if candidate has Deep Insights unlocked
+            if has_ai_insights:
+                story.append(Paragraph("<i>AI-generated reasoning for each criterion</i>", styles['Normal']))
+            else:
+                story.append(Paragraph("<i>Deep Insights locked. Upgrade to view AI justifications.</i>", styles['Normal']))
+            story.append(Spacer(1, 0.2*cm))
+            
+            # Get ALL criteria sorted by score (not just top 5)
+            all_criteria = sorted(
                 [(col, coverage_row[col]) for col in coverage_row.index if col not in ('Candidate', 'Overall')],
                 key=lambda x: x[1],
                 reverse=True
-            )[:5]
+            )
             
-            for crit, score in top_criteria:
+            for crit, score in all_criteria:
                 evidence_key = (candidate_name, crit)
                 if evidence_key in evidence_map:
                     evidence_tuple = evidence_map[evidence_key]
-                    # Handle both old format (snippet, score) and new format (snippet, score, density)
-                    snippet = evidence_tuple[0]
-                    # Clean and truncate snippet, ensuring we get unique content
-                    clean_snippet = snippet.strip()
-                    if len(clean_snippet) > 300:
-                        # Try to find a sentence boundary near 300 chars
-                        truncate_pos = clean_snippet.rfind('.', 200, 300)
-                        if truncate_pos == -1:
-                            truncate_pos = 300
-                        clean_snippet = clean_snippet[:truncate_pos+1]
+                    # New 4-tuple format: (raw_evidence, justification, score, density)
+                    justification = evidence_tuple[1] if len(evidence_tuple) > 1 else ''
+                    
                     story.append(Paragraph(f"<b>{crit}</b> (Score: {score * 100:.0f}%)", styles['Heading4']))
-                    story.append(Paragraph(f"<i>{clean_snippet}</i>", styles['Normal']))
+                    
+                    if has_ai_insights:
+                        # UNLOCKED: Show AI Justification only (no raw evidence)
+                        if justification:
+                            story.append(Paragraph(justification, styles['Normal']))
+                        else:
+                            story.append(Paragraph("<i>No justification available</i>", styles['Normal']))
+                    else:
+                        # LOCKED: Show tier enforcement message
+                        locked_style = ParagraphStyle(
+                            'LockedText',
+                            parent=styles['Normal'],
+                            fontSize=9,
+                            textColor=colors.HexColor('#64748b'),
+                            backColor=colors.HexColor('#F8FAFC'),
+                            borderColor=colors.HexColor('#CBD5E1'),
+                            borderWidth=1,
+                            borderPadding=8
+                        )
+                        story.append(Paragraph(
+                            "🔒 <b>Detailed analysis available in Deep Dive tier.</b><br/>"
+                            "Unlock to view AI-generated justifications.",
+                            locked_style
+                        ))
+                    
                     story.append(Spacer(1, 0.2*cm))
         
-        # Build PDF
-        doc.build(story)
+        # Build PDF with footer on each page
+        doc.build(story, onFirstPage=lambda c, d: add_page_footer(c, d, candidate_name),
+                  onLaterPages=lambda c, d: add_page_footer(c, d, candidate_name))
         buf.seek(0)
         pdf_bytes = buf.getvalue()
         print(f"✓ Individual PDF built successfully, size: {len(pdf_bytes)} bytes")
@@ -272,11 +324,11 @@ def to_individual_candidate_docx(
     candidate_name: str,
     coverage_row: pd.Series,
     insights: Dict[str, Any],
-    evidence_map: Dict[Tuple[str,str], Tuple[str,float]],
+    evidence_map: Dict[Tuple[str,str], Tuple[str,str,float,int]],
     cat_map: Dict[str, str],
     hi: float = 0.75,
     lo: float = 0.35,
-    include_evidence: bool = False,
+    include_justifications: bool = False,
     job_title: str = "",
     gpt_candidates: List[str] = None,
     job_number: int = None
@@ -450,32 +502,32 @@ def to_individual_candidate_docx(
                 # Center align status
                 status_cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         
-        # Evidence snippets (optional) - matching PDF structure
-        if include_evidence and evidence_map:
-            doc.add_heading('Detailed Scores & Evidence', 1)
-            doc.add_paragraph('Showing evidence for top-scored criteria', style='Intense Quote')
+        # Criteria Justifications section (optional, ALL criteria, no raw source text)
+        if include_justifications and evidence_map:
+            doc.add_heading('Criteria Justifications', 1)
             
-            # Get top 5 criteria by score
-            all_criteria = [(col, coverage_row[col]) for col in coverage_row.index if col not in ('Candidate', 'Overall')]
-            top_criteria = sorted(all_criteria, key=lambda x: x[1], reverse=True)[:5]
-            
-            for crit, score in top_criteria:
-                evidence_key = (candidate_name, crit)
-                if evidence_key in evidence_map:
-                    evidence_tuple = evidence_map[evidence_key]
-                    # Handle both old format (snippet, score) and new format (snippet, score, density)
-                    snippet = evidence_tuple[0]
-                    # Clean and truncate snippet
-                    clean_snippet = snippet.strip()
-                    if len(clean_snippet) > 300:
-                        truncate_pos = clean_snippet.rfind('.', 200, 300)
-                        if truncate_pos == -1:
-                            truncate_pos = 300
-                        clean_snippet = clean_snippet[:truncate_pos+1]
-                    
-                    doc.add_heading(f"{crit} (Score: {score * 100:.0f}%)", 2)
-                    para = doc.add_paragraph(clean_snippet)
-                    para.style = 'Intense Quote'
+            # Check if candidate has Deep Insights unlocked
+            if has_ai_insights:
+                # UNLOCKED: Show AI justifications for ALL criteria (no raw source text)
+                # Get ALL criteria sorted by score
+                all_criteria = [(col, coverage_row[col]) for col in coverage_row.index if col not in ('Candidate', 'Overall')]
+                all_criteria = sorted(all_criteria, key=lambda x: x[1], reverse=True)
+                
+                for crit, score in all_criteria:
+                    evidence_key = (candidate_name, crit)
+                    if evidence_key in evidence_map:
+                        evidence_tuple = evidence_map[evidence_key]
+                        # 4-tuple format: (raw_evidence, justification, score, density)
+                        justification = evidence_tuple[1] if len(evidence_tuple) > 1 else ''
+                        
+                        if justification:
+                            doc.add_heading(f"{crit} (Score: {score * 100:.0f}%)", 2)
+                            doc.add_paragraph(justification)
+            else:
+                # LOCKED: Show tier enforcement message
+                locked_para = doc.add_paragraph()
+                locked_para.add_run('🔒 Deep Insights Required').bold = True
+                locked_para.add_run('\nThis candidate was not included in the GPT Insights analysis. Include them in your selection and re-run the analysis to view detailed AI justifications.')
         
         # Save to buffer
         buf = io.BytesIO()

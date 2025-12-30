@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing & Revenue - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px 0; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
+        .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
+        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; position: relative; }
+        .admin-tabs a:hover { color: #667eea; }
+        .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
+        
+        /* System Settings Menu Container */
+        .system-settings-menu-container { display: inline-block; position: relative; }
+        
+        /* System Settings Dropdown */
+        .system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0; padding-top: 8px; }
+        .system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0 !important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none !important; }
+        .system-settings-dropdown a:last-child { border-bottom: none !important; }
+        .system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+        
+        /* Finance Menu Container */
+        .finance-menu-container { display: inline-block; position: relative; }
+        
+        /* Finance Dropdown */
+        .finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0; padding-top: 8px; }
+        .finance-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0 !important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none !important; }
+        .finance-dropdown a:last-child { border-bottom: none !important; }
+        .finance-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+        
+        .settings-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .success-msg { background: #d4edda; padding: 12px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 20px; }
+        .pricing-section { background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #667eea; }
+        .pricing-section h4 { color: #667eea; margin-bottom: 20px; font-size: 1.3rem; }
+        .price-input-group { margin-bottom: 20px; }
+        .price-input-group label { font-weight: 600; color: #333; display: block; margin-bottom: 8px; }
+        .price-input-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+        .price-input-group input:focus { outline: none; border-color: #667eea; }
+        .price-input-group .help-text { font-size: 0.9rem; color: #666; margin-top: 5px; }
+        .bundle-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 14px 40px; font-size: 1.1rem; color: white; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); color: white; }
+        .warning-box { background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 20px; margin-bottom: 25px; }
+        .warning-box h5 { color: #856404; margin: 0 0 10px 0; }
+        .warning-box p { color: #856404; margin: 0; }
+        .impact-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; margin-left: 10px; }
+        .impact-critical { background: #dc3545; color: white; }
+        .impact-high { background: #ffc107; color: #000; }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🔒 Logout</a>
+    
+    <div class="admin-container">
+        <!-- Tab Navigation -->
+        <div class="admin-tabs">
+            <div class="system-settings-menu-container">
+                <a href="#" class="{% if active_tab in ['gpt', 'prompts', 'system', 'pricing'] %}active{% endif %}">⚙️ System Settings ▾</a>
+                <div class="system-settings-dropdown">
+                    <a href="{{ url_for('admin_gpt_settings') }}">🤖 GPT Settings</a>
+                    <a href="{{ url_for('admin_prompts') }}">💬 Prompts</a>
+                    <a href="{{ url_for('admin_system') }}">🔧 General Settings</a>
+                    <a href="{{ url_for('admin_pricing') }}">💰 Pricing & Revenue</a>
+                </div>
+            </div>
+            <a href="{{ url_for('admin_users') }}" class="{% if active_tab == 'users' %}active{% endif %}">👥 Users</a>
+            <a href="{{ url_for('admin_feedback') }}" class="{% if active_tab == 'feedback' %}active{% endif %}">💬 Feedback</a>
+            <div class="finance-menu-container">
+                <a href="#" class="{% if active_tab in ['stats', 'audit', 'business_health', 'balance_audit'] %}active{% endif %}">💰 Finance ▾</a>
+                <div class="finance-dropdown">
+                    <a href="{{ url_for('admin_stats') }}">📊 Stats</a>
+                    <a href="{{ url_for('admin_audit_logs') }}">🔍 Audit Logs</a>
+                    <a href="{{ url_for('admin_business_health') }}">💚 Business Health</a>
+                    <a href="{{ url_for('admin_balance_audit') }}">⚖️ Balance Audit</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-card">
+            <h1 class="text-center mb-4">💰 Pricing & Revenue Configuration</h1>
+            
+            {% if message %}
+            <div class="success-msg">
+                ✅ {{ message }}
+            </div>
+            {% endif %}
+            
+            <div class="warning-box">
+                <h5>⚠️ Single Source of Truth</h5>
+                <p>Changes here immediately affect: customer-facing prices, backend billing, profit calculations, and the Business Health Monitor. Test changes carefully before saving.</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin_save_pricing') }}">
+                <!-- Standard Analysis Pricing -->
+                <div class="pricing-section">
+                    <h4>📊 Standard Analysis Pricing <span class="impact-badge impact-critical">CRITICAL IMPACT</span></h4>
+                    
+                    <div class="price-input-group">
+                        <label for="standard_tier_price">Standard Tier Revenue (Base Analysis Price)</label>
+                        <input type="number" id="standard_tier_price" name="standard_tier_price" 
+                               value="{{ pricing.standard_tier_price.value }}" 
+                               min="1" max="100" step="0.01" required>
+                        <div class="help-text">{{ pricing.standard_tier_price.description }}</div>
+                    </div>
+                    
+                    <div class="price-input-group">
+                        <label for="deep_dive_price">Deep Dive Upgrade Price</label>
+                        <input type="number" id="deep_dive_price" name="deep_dive_price" 
+                               value="{{ pricing.deep_dive_price.value }}" 
+                               min="0" max="100" step="0.01" required>
+                        <div class="help-text">{{ pricing.deep_dive_price.description }}</div>
+                    </div>
+                </div>
+                
+                <!-- Individual Insights -->
+                <div class="pricing-section">
+                    <h4>🔍 Individual Insight Pricing <span class="impact-badge impact-high">HIGH IMPACT</span></h4>
+                    
+                    <div class="price-input-group">
+                        <label for="individual_insight_price">Per-Insight Unlock Price</label>
+                        <input type="number" id="individual_insight_price" name="individual_insight_price" 
+                               value="{{ pricing.individual_insight_price.value }}" 
+                               min="0.10" max="10" step="0.10" required>
+                        <div class="help-text">{{ pricing.individual_insight_price.description }}</div>
+                    </div>
+                </div>
+                
+                <!-- Bundle Pricing -->
+                <div class="pricing-section">
+                    <h4>🚀 Hiring Sprint Bundle <span class="impact-badge impact-high">HIGH IMPACT</span></h4>
+                    
+                    <div class="bundle-inputs">
+                        <div class="price-input-group">
+                            <label for="hiring_sprint_charge">Charge Amount (What Customer Pays)</label>
+                            <input type="number" id="hiring_sprint_charge" name="hiring_sprint_charge" 
+                                   value="{{ pricing.hiring_sprint_charge.value }}" 
+                                   min="1" max="500" step="1" required>
+                            <div class="help-text">{{ pricing.hiring_sprint_charge.description }}</div>
+                        </div>
+                        
+                        <div class="price-input-group">
+                            <label for="hiring_sprint_credit">Credit Amount (Balance Added)</label>
+                            <input type="number" id="hiring_sprint_credit" name="hiring_sprint_credit" 
+                                   value="{{ pricing.hiring_sprint_credit.value }}" 
+                                   min="1" max="500" step="1" required>
+                            <div class="help-text">{{ pricing.hiring_sprint_credit.description }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <strong>Bonus Calculation:</strong> 
+                        Current bonus = $<span id="bonus-amount">{{ pricing.hiring_sprint_credit.value - pricing.hiring_sprint_charge.value }}</span>
+                        (<span id="bonus-percent">{{ "%.1f"|format(((pricing.hiring_sprint_credit.value - pricing.hiring_sprint_charge.value) / pricing.hiring_sprint_charge.value * 100) if pricing.hiring_sprint_charge.value > 0 else 0) }}</span>% extra value)
+                    </div>
+                </div>
+                
+                <!-- Volume Bonus for Custom Top-Ups -->
+                <div class="card p-4 mb-4">
+                    <h4 class="mb-3">💰 Volume Bonus (Custom Top-Ups)</h4>
+                    <p class="text-muted">Incentivize larger top-ups with automatic bonus credits for custom amounts above a threshold.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="volume_bonus_threshold">Minimum Amount for Bonus</label>
+                            <input type="number" id="volume_bonus_threshold" name="volume_bonus_threshold" 
+                                   value="{{ pricing.volume_bonus_threshold.value }}" 
+                                   min="1" max="1000" step="1" required>
+                            <div class="help-text">{{ pricing.volume_bonus_threshold.description }}</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="volume_bonus_percentage">Bonus Percentage</label>
+                            <input type="number" id="volume_bonus_percentage" name="volume_bonus_percentage" 
+                                   value="{{ pricing.volume_bonus_percentage.value }}" 
+                                   min="0" max="50" step="0.5" required>
+                            <div class="help-text">{{ pricing.volume_bonus_percentage.description }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success mt-3">
+                        <strong>Example:</strong> If a customer tops up $<span id="threshold-display">{{ pricing.volume_bonus_threshold.value }}</span>, 
+                        they get an additional $<span id="example-bonus">{{ "%.2f"|format(pricing.volume_bonus_threshold.value * pricing.volume_bonus_percentage.value / 100) }}</span> 
+                        bonus (<span id="percent-display">{{ pricing.volume_bonus_percentage.value }}</span>%), 
+                        for a total balance of $<span id="example-total">{{ "%.2f"|format(pricing.volume_bonus_threshold.value * (1 + pricing.volume_bonus_percentage.value / 100)) }}</span>.
+                    </div>
+                </div>
+                
+                <!-- Minimum Top-Up Amount -->
+                <div class="card p-4 mb-4">
+                    <h4 class="mb-3">💳 Minimum Top-Up Amount</h4>
+                    <p class="text-muted">Set the minimum amount customers can add via Stripe. Higher minimums help reduce payment processing fees.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="minimum_topup_amount">Minimum Payment Amount</label>
+                            <input type="number" id="minimum_topup_amount" name="minimum_topup_amount" 
+                                   value="{{ pricing.minimum_topup_amount.value }}" 
+                                   min="1" max="100" step="1" required>
+                            <div class="help-text">{{ pricing.minimum_topup_amount.description }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <strong>💡 Tip:</strong> Stripe charges approximately 2.9% + $0.30 per transaction. 
+                        Setting a higher minimum (e.g., $10-$20) reduces the percentage of revenue lost to fees.
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-save">💾 Save Pricing Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // System Settings dropdown hover functionality
+        const systemContainer = document.querySelector('.system-settings-menu-container');
+        const systemDropdown = document.querySelector('.system-settings-dropdown');
+        if (systemContainer && systemDropdown) {
+            systemContainer.addEventListener('mouseenter', () => {
+                systemDropdown.style.display = 'block';
+            });
+            systemContainer.addEventListener('mouseleave', () => {
+                systemDropdown.style.display = 'none';
+            });
+        }
+        
+        // Finance dropdown hover functionality
+        const financeContainer = document.querySelector('.finance-menu-container');
+        const dropdown = document.querySelector('.finance-dropdown');
+        if (financeContainer && dropdown) {
+            financeContainer.addEventListener('mouseenter', () => {
+                dropdown.style.display = 'block';
+            });
+            financeContainer.addEventListener('mouseleave', () => {
+                dropdown.style.display = 'none';
+            });
+        }
+        
+        // Update bonus calculation on input change
+        document.getElementById('hiring_sprint_charge').addEventListener('input', updateBonus);
+        document.getElementById('hiring_sprint_credit').addEventListener('input', updateBonus);
+        
+        function updateBonus() {
+            const charge = parseFloat(document.getElementById('hiring_sprint_charge').value) || 0;
+            const credit = parseFloat(document.getElementById('hiring_sprint_credit').value) || 0;
+            const bonus = credit - charge;
+            const percent = charge > 0 ? ((bonus / charge) * 100).toFixed(1) : 0;
+            
+            document.getElementById('bonus-amount').textContent = bonus.toFixed(0);
+            document.getElementById('bonus-percent').textContent = percent;
+        }
+        
+        // Update volume bonus example on input change
+        document.getElementById('volume_bonus_threshold').addEventListener('input', updateVolumeBonus);
+        document.getElementById('volume_bonus_percentage').addEventListener('input', updateVolumeBonus);
+        
+        function updateVolumeBonus() {
+            const threshold = parseFloat(document.getElementById('volume_bonus_threshold').value) || 0;
+            const percentage = parseFloat(document.getElementById('volume_bonus_percentage').value) || 0;
+            const bonus = threshold * (percentage / 100);
+            const total = threshold + bonus;
+            
+            document.getElementById('threshold-display').textContent = threshold.toFixed(0);
+            document.getElementById('percent-display').textContent = percentage.toFixed(1);
+            document.getElementById('example-bonus').textContent = bonus.toFixed(2);
+            document.getElementById('example-total').textContent = total.toFixed(2);
+        }
+    </script>
+</body>
+</html>

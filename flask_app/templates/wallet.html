@@ -6,7 +6,7 @@
 <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 40px 20px;">
     <h1 style="text-align: center; color: #1f2937; margin-bottom: 10px;">Your Wallet</h1>
     <p style="text-align: center; color: #6b7280; margin-bottom: 40px;">
-        Add funds once, use whenever you need. All analyses cost $10 each.
+        Add funds once, use whenever you need. All analyses cost ${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }} each.
     </p>
     
     <!-- Current Balance Card -->
@@ -20,7 +20,7 @@
         <div style="font-size: 15px; opacity: 0.95; margin-bottom: 8px; letter-spacing: 0.5px;">CURRENT BALANCE</div>
         <div style="font-size: 48px; font-weight: bold; margin-bottom: 10px;">${{ "%.2f"|format(current_user.balance_usd) }}</div>
         <div style="font-size: 14px; opacity: 0.85;">
-            {% set analyses_remaining = (current_user.balance_usd / 10)|int %}
+            {% set analyses_remaining = (current_user.balance_usd|float / pricing['BASE_ANALYSIS_PRICE'])|int %}
             {% if analyses_remaining == 0 %}
                 Add funds to run your first analysis
             {% elif analyses_remaining == 1 %}
@@ -46,7 +46,7 @@
                 </div>
                 
                 <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 48px; font-weight: bold; color: #1f2937;">$10</div>
+                    <div style="font-size: 48px; font-weight: bold; color: #1f2937;">${{ "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) if pricing['BASE_ANALYSIS_PRICE'] == pricing['BASE_ANALYSIS_PRICE']|int else "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</div>
                     <div style="color: #6b7280; font-size: 14px; margin-top: 5px;">1 complete analysis</div>
                 </div>
                 
@@ -61,7 +61,7 @@
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        Unlock more insights for $1 each
+                        Unlock more insights for ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }} each
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
@@ -73,9 +73,9 @@
                     </li>
                 </ul>
                 
-                <button class="select-plan-btn" data-amount="10" data-plan-name="Single Job" 
+                <button class="select-plan-btn" data-amount="{{ '%.2f'|format(pricing['BASE_ANALYSIS_PRICE']) }}" data-plan-name="Single Job" 
                         style="width: 100%; padding: 14px; background: #6366f1; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                    Select Plan
+                    Select & Pay
                 </button>
             </div>
         </div>
@@ -84,7 +84,7 @@
         <div class="pricing-card recommended" data-plan="sprint">
             <div style="background: white; border: 3px solid #6366f1; border-radius: 12px; padding: 30px; height: 100%; display: flex; flex-direction: column; transition: all 0.3s; cursor: pointer; position: relative; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);">
                 <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 6px 20px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);">
-                    BEST VALUE • $5 BONUS
+                    {% set bonus = pricing['HIRING_SPRINT_CREDIT'] - pricing['HIRING_SPRINT_CHARGE'] %}BEST VALUE • ${{ "%.0f"|format(bonus) if bonus == bonus|int else "%.2f"|format(bonus) }} BONUS
                 </div>
                 
                 <div style="text-align: center; margin-bottom: 20px; margin-top: 10px;">
@@ -95,11 +95,11 @@
                 
                 <div style="text-align: center; margin-bottom: 25px;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;">
-                        <div style="font-size: 24px; color: #9ca3af; text-decoration: line-through;">$50</div>
-                        <div style="font-size: 48px; font-weight: bold; color: #6366f1;">$45</div>
+                        <div style="font-size: 24px; color: #9ca3af; text-decoration: line-through;">${{ "%.0f"|format(pricing['HIRING_SPRINT_CREDIT']) if pricing['HIRING_SPRINT_CREDIT'] == pricing['HIRING_SPRINT_CREDIT']|int else "%.2f"|format(pricing['HIRING_SPRINT_CREDIT']) }}</div>
+                        <div style="font-size: 48px; font-weight: bold; color: #6366f1;">${{ "%.0f"|format(pricing['HIRING_SPRINT_CHARGE']) if pricing['HIRING_SPRINT_CHARGE'] == pricing['HIRING_SPRINT_CHARGE']|int else "%.2f"|format(pricing['HIRING_SPRINT_CHARGE']) }}</div>
                     </div>
                     <div style="background: #eff6ff; color: #1e40af; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
-                        Pay $45 → Get $50 balance
+                        Pay ${{ "%.0f"|format(pricing['HIRING_SPRINT_CHARGE']) if pricing['HIRING_SPRINT_CHARGE'] == pricing['HIRING_SPRINT_CHARGE']|int else "%.2f"|format(pricing['HIRING_SPRINT_CHARGE']) }} → Get ${{ "%.0f"|format(pricing['HIRING_SPRINT_CREDIT']) if pricing['HIRING_SPRINT_CREDIT'] == pricing['HIRING_SPRINT_CREDIT']|int else "%.2f"|format(pricing['HIRING_SPRINT_CREDIT']) }} balance
                     </div>
                 </div>
                 
@@ -114,7 +114,7 @@
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        Unlock more insights for $1 each
+                        Unlock more insights for ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }} each
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
@@ -126,13 +126,13 @@
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="gift" style="width: 20px; height: 20px; color: #8b5cf6; margin-right: 10px; flex-shrink: 0;"></i>
-                        <strong>Save $5. Spend as you wish</strong>
+                        {% set bonus = pricing['HIRING_SPRINT_CREDIT'] - pricing['HIRING_SPRINT_CHARGE'] %}<strong>Save ${{ "%.0f"|format(bonus) if bonus == bonus|int else "%.2f"|format(bonus) }}. Spend as you wish</strong>
                     </li>
                 </ul>
                 
-                <button class="select-plan-btn" data-amount="45" data-plan-name="Hiring Sprint" data-bundle="true" data-credit-amount="50"
+                <button class="select-plan-btn" data-amount="{{ '%.2f'|format(pricing['HIRING_SPRINT_CHARGE']) }}" data-plan-name="Hiring Sprint" data-bundle="true" data-credit-amount="{{ '%.2f'|format(pricing['HIRING_SPRINT_CREDIT']) }}"
                         style="width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
-                    Select Plan
+                    Select & Pay
                 </button>
             </div>
         </div>
@@ -151,13 +151,13 @@
                         <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 24px; font-weight: 600;">$</span>
                         <input type="number" 
                                id="customAmountInput" 
-                               min="5" 
+                               min="{{ pricing['MINIMUM_TOPUP_AMOUNT'] }}" 
                                step="1" 
-                               placeholder="50"
+                               placeholder=""
                                style="width: 100%; padding: 16px 16px 16px 40px; font-size: 24px; font-weight: 600; border: 2px solid #e5e7eb; border-radius: 8px; text-align: center; color: #1f2937;">
                     </div>
                     <div id="bonusFeedback" style="color: #10b981; font-size: 14px; font-weight: 600; min-height: 20px; margin-bottom: 8px;"></div>
-                    <div style="color: #6b7280; font-size: 14px;">Minimum: $5</div>
+                    <div style="color: #6b7280; font-size: 14px;">Minimum: ${{ "%.0f"|format(pricing['MINIMUM_TOPUP_AMOUNT']) }}</div>
                 </div>
                 
                 <ul style="list-style: none; padding: 0; margin-bottom: 25px; flex-grow: 1;">
@@ -171,7 +171,7 @@
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
-                        Unlock more insights for $1 each
+                        Unlock more insights for ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }} each
                     </li>
                     <li style="padding: 10px 0; color: #4b5563; display: flex; align-items: center;">
                         <i data-lucide="check" style="width: 20px; height: 20px; color: #10b981; margin-right: 10px; flex-shrink: 0;"></i>
@@ -185,7 +185,7 @@
                 
                 <button class="select-plan-btn" id="customPlanBtn" data-plan-name="Custom Amount"
                         style="width: 100%; padding: 14px; background: #6366f1; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
-                    Select Plan
+                    Select & Pay
                 </button>
             </div>
         </div>
@@ -251,10 +251,15 @@
     // Initialize Lucide icons
     lucide.createIcons();
     
+    // Pricing from backend
+    const volumeBonusThreshold = {{ pricing['VOLUME_BONUS_THRESHOLD'] }};
+    const volumeBonusPercentage = {{ pricing['VOLUME_BONUS_PERCENTAGE'] }};
+    const minimumTopup = {{ pricing['MINIMUM_TOPUP_AMOUNT'] }};
+    
     // Calculate bonus based on amount
     function calculateBonus(amount) {
-        if (amount >= 50) {
-            return Math.floor(amount * 0.15 * 100) / 100; // 15% bonus, rounded to 2 decimals
+        if (amount >= volumeBonusThreshold) {
+            return Math.floor(amount * (volumeBonusPercentage / 100) * 100) / 100; // Bonus percentage, rounded to 2 decimals
         }
         return 0;
     }
@@ -269,7 +274,7 @@
         
         if (bonus > 0) {
             const totalBalance = amount + bonus;
-            bonusFeedback.innerHTML = `✨ 15% Volume Bonus Applied: +$${bonus.toFixed(2)}. Pay $${amount.toFixed(2)}, Get $${totalBalance.toFixed(2)} Value`;
+            bonusFeedback.innerHTML = `✨ ${volumeBonusPercentage}% Volume Bonus Applied: +$${bonus.toFixed(2)}. Pay $${amount.toFixed(2)}, Get $${totalBalance.toFixed(2)} Value`;
             bonusFeedback.style.color = '#10b981';
         } else {
             bonusFeedback.innerHTML = '';
@@ -282,23 +287,30 @@
             e.stopPropagation();
             
             const isBundle = this.dataset.bundle === 'true';
-            let chargeAmount = parseFloat(this.dataset.amount || document.getElementById('customAmountInput').value);
+            // Keep as string to preserve precision, only parse for validation
+            let chargeAmountStr = this.dataset.amount || document.getElementById('customAmountInput').value;
+            let chargeAmount = parseFloat(chargeAmountStr);
+            let creditAmountStr;
             let creditAmount;
+            
+            console.log('Button clicked:', { chargeAmount, minimumTopup, dataAmount: this.dataset.amount });
             
             if (isBundle) {
                 // Preset bundle (Hiring Sprint: $45 → $50)
-                creditAmount = parseFloat(this.dataset.creditAmount);
+                creditAmountStr = this.dataset.creditAmount;
+                creditAmount = parseFloat(creditAmountStr);
             } else {
                 // Custom amount: apply 15% bonus if >= $50
                 const bonus = calculateBonus(chargeAmount);
                 creditAmount = chargeAmount + bonus;
+                creditAmountStr = creditAmount.toFixed(2);
             }
             
             const planName = this.dataset.planName;
             
-            // Validation
-            if (!chargeAmount || chargeAmount < 5) {
-                alert('Please enter an amount of at least $5');
+            // Validation - only check minimum for custom amounts (no data-amount)
+            if (!this.dataset.amount && (!chargeAmount || chargeAmount < minimumTopup)) {
+                alert(`Please enter an amount of at least $${minimumTopup}`);
                 document.getElementById('customAmountInput').focus();
                 return;
             }
@@ -307,15 +319,15 @@
             this.disabled = true;
             this.innerHTML = '<span style="display: inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px;"></span>Processing...';
             
-            // Create checkout session
+            // Create checkout session - send strings to preserve precision
             fetch('/create-checkout-session', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    amount: chargeAmount,
-                    credit_amount: creditAmount,
+                    amount: chargeAmountStr,
+                    credit_amount: creditAmountStr,
                     is_bundle: isBundle,
                     plan_name: planName,
                     return_url: window.location.href
@@ -328,14 +340,14 @@
                 } else if (data.error) {
                     alert('Error: ' + data.error);
                     this.disabled = false;
-                    this.innerHTML = 'Select Plan';
+                    this.innerHTML = 'Select & Pay';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred. Please try again.');
                 this.disabled = false;
-                this.innerHTML = 'Select Plan';
+                this.innerHTML = 'Select & Pay';
             });
         });
     });

@@ -1,0 +1,42 @@
+{
+  "standard_tier_price": {
+    "value": 10.0,
+    "label": "Standard Tier Revenue",
+    "description": "Base price for one complete analysis (Full Ranking + Top 5 Insights)"
+  },
+  "deep_dive_price": {
+    "value": 10.0,
+    "label": "Deep Dive Upgrade Price",
+    "description": "Additional cost to unlock Top 15 insights (instead of Top 5)"
+  },
+  "individual_insight_price": {
+    "value": 1.0,
+    "label": "Individual Insight Unlock Price",
+    "description": "Cost per additional candidate insight in Full Radar mode"
+  },
+  "hiring_sprint_charge": {
+    "value": 45.0,
+    "label": "Hiring Sprint Bundle - Charge Amount",
+    "description": "Amount charged to customer for Hiring Sprint bundle"
+  },
+  "hiring_sprint_credit": {
+    "value": 50.0,
+    "label": "Hiring Sprint Bundle - Credit Amount",
+    "description": "Account balance credited for Hiring Sprint bundle ($5 bonus)"
+  },
+  "volume_bonus_threshold": {
+    "value": 50.0,
+    "label": "Volume Bonus Threshold",
+    "description": "Minimum custom top-up amount to qualify for volume bonus"
+  },
+  "volume_bonus_percentage": {
+    "value": 15.0,
+    "label": "Volume Bonus Percentage",
+    "description": "Percentage bonus applied to custom top-ups above threshold (e.g., 15 = 15%)"
+  },
+  "minimum_topup_amount": {
+    "value": 10.0,
+    "label": "Minimum Top-Up Amount",
+    "description": "Minimum amount customers can add via Stripe payment (helps manage transaction fees)"
+  }
+}

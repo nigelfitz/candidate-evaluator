@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+# Generate new admin_prompts.html with Prompts Manager "Control Tower"
+
+html_content = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,26 +15,9 @@
         .prompts-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 30px; margin-bottom: 20px; }
         .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
         .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
-        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; position: relative; }
+        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; }
         .admin-tabs a:hover { color: #667eea; }
         .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
-        
-        /* Finance Menu Container */
-        .finance-menu-container { display: inline-block; position: relative; }
-        
-        /* System Settings Menu Container */
-        .system-settings-menu-container { display: inline-block; position: relative; }
-        
-        /* System Settings Dropdown */
-        .system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0; padding-top: 8px; }
-        .system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0 !important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none !important; }
-        .system-settings-dropdown a:last-child { border-bottom: none !important; }
-        .system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
-        
-        /* Finance Dropdown */
-        .finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 1000; top: 100%; left: 0; padding-top: 8px; border: 1px solid #e0e0e0; }
-        .finance-dropdown a { display: block; padding: 12px 20px; border-bottom: none !important; font-size: 0.95rem; }
-        .finance-dropdown a:hover { background: #f8f9fa; color: #667eea; }
         .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
         .session-info .timeout { font-weight: 600; color: #667eea; }
         .prompt-tabs { border-bottom: 2px solid #e0e0e0; margin-bottom: 30px; }
@@ -66,31 +51,21 @@
     </style>
 </head>
 <body>
+    <div class="session-info">
+        ⏱️ Session timeout: <span class="timeout">30 min inactivity</span>
+    </div>
     <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🔒 Logout</a>
     
     <div class="admin-container">
         <!-- Tab Navigation -->
         <div class="admin-tabs">
-            <div class="system-settings-menu-container">
-                <a href="#" class="{% if active_tab in ['gpt', 'prompts', 'system', 'pricing'] %}active{% endif %}">⚙️ System Settings ▾</a>
-                <div class="system-settings-dropdown">
-                    <a href="{{ url_for('admin_gpt_settings') }}">🤖 GPT Settings</a>
-                    <a href="{{ url_for('admin_prompts') }}">💬 Prompts</a>
-                    <a href="{{ url_for('admin_system') }}">🔧 General Settings</a>
-                    <a href="{{ url_for('admin_pricing') }}">💰 Pricing & Revenue</a>
-                </div>
-            </div>
+            <a href="{{ url_for('admin_gpt_settings') }}" class="{% if active_tab == 'gpt' %}active{% endif %}">🤖 GPT Settings</a>
+            <a href="{{ url_for('admin_prompts') }}" class="{% if active_tab == 'prompts' %}active{% endif %}">💬 Prompts</a>
             <a href="{{ url_for('admin_users') }}" class="{% if active_tab == 'users' %}active{% endif %}">👥 Users</a>
+            <a href="{{ url_for('admin_system') }}" class="{% if active_tab == 'system' %}active{% endif %}">⚙️ System</a>
+            <a href="{{ url_for('admin_stats') }}" class="{% if active_tab == 'stats' %}active{% endif %}">📊 Stats</a>
             <a href="{{ url_for('admin_feedback') }}" class="{% if active_tab == 'feedback' %}active{% endif %}">💬 Feedback</a>
-            <div class="finance-menu-container">
-                <a href="#" class="{% if active_tab in ['stats', 'audit', 'business_health', 'balance_audit'] %}active{% endif %}">💰 Finance ▾</a>
-                <div class="finance-dropdown">
-                    <a href="{{ url_for('admin_stats') }}">📊 Stats</a>
-                    <a href="{{ url_for('admin_audit_logs') }}">🔍 Audit Logs</a>
-                    <a href="{{ url_for('admin_business_health') }}">💚 Business Health</a>
-                    <a href="{{ url_for('admin_balance_audit') }}">⚖️ Balance Audit</a>
-                </div>
-            </div>
+            <a href="{{ url_for('admin_audit_logs') }}" class="{% if active_tab == 'audit' %}active{% endif %}">🔍 Audit Logs</a>
         </div>
         
         <div class="prompts-card">
@@ -105,20 +80,20 @@
             
             <!-- Prompt Agent Tabs -->
             <div class="prompt-tabs">
-                <div class="prompt-tab jd active" onclick="switchPromptTab('jd')">
-                    📄 JD EXTRACTION
-                </div>
-                <div class="prompt-tab ranker" onclick="switchPromptTab('ranker')">
+                <div class="prompt-tab ranker active" onclick="switchPromptTab('ranker')">
                     🎯 RANKER AGENT
                 </div>
                 <div class="prompt-tab insight" onclick="switchPromptTab('insight')">
                     💡 INSIGHT AGENT
                 </div>
+                <div class="prompt-tab jd" onclick="switchPromptTab('jd')">
+                    📄 JD EXTRACTION
+                </div>
             </div>
             
             <form method="POST" action="{{ url_for('admin_save_prompts') }}">
-                <!-- JD EXTRACTION TAB -->
-                <div id="jd-content" class="prompt-content active">
+                <!-- RANKER AGENT TAB -->
+                <div id="ranker-content" class="prompt-content active">
                     <div class="dev-notes-box">
                         <h4>🧠 Developer Notes - RANKER AGENT</h4>
                         <div class="dev-note-item">
@@ -142,7 +117,7 @@
                     
                     <div class="variable-docs">
                         <h5>📋 Variable Dependencies</h5>
-                        {% for var, desc in prompts.ranker_scoring.user_prompt_template.variable_details.items() %}
+                        {% for var, desc in prompts.ranker_scoring.variable_details.items() %}
                         <div class="variable-item">
                             <div class="variable-name">{{ var }}</div>
                             <div class="variable-desc">{{ desc }}</div>
@@ -152,17 +127,17 @@
                     
                     <div class="prompt-editor">
                         <h5>System Prompt (RANKER)</h5>
-                        <textarea name="ranker_system_prompt" id="ranker_system_prompt">{{ prompts.ranker_scoring.system_prompt.value }}</textarea>
+                        <textarea name="ranker_system_prompt" id="ranker_system_prompt">{{ prompts.ranker_scoring.system_prompt }}</textarea>
                     </div>
                     
                     <div class="prompt-editor">
                         <h5>User Prompt Template (RANKER)</h5>
-                        <textarea name="ranker_user_prompt" id="ranker_user_prompt">{{ prompts.ranker_scoring.user_prompt_template.value }}</textarea>
+                        <textarea name="ranker_user_prompt" id="ranker_user_prompt">{{ prompts.ranker_scoring.user_prompt_template }}</textarea>
                     </div>
                 </div>
                 
-                <!-- RANKER AGENT TAB -->
-                <div id="ranker-content" class="prompt-content">
+                <!-- INSIGHT AGENT TAB -->
+                <div id="insight-content" class="prompt-content">
                     <div class="dev-notes-box">
                         <h4>🧠 Developer Notes - INSIGHT AGENT</h4>
                         <div class="dev-note-item">
@@ -186,7 +161,7 @@
                     
                     <div class="variable-docs">
                         <h5>📋 Variable Dependencies</h5>
-                        {% for var, desc in prompts.insight_generation.user_prompt_template.variable_details.items() %}
+                        {% for var, desc in prompts.insight_generation.variable_details.items() %}
                         <div class="variable-item">
                             <div class="variable-name">{{ var }}</div>
                             <div class="variable-desc">{{ desc }}</div>
@@ -196,12 +171,12 @@
                     
                     <div class="prompt-editor">
                         <h5>System Prompt (INSIGHT)</h5>
-                        <textarea name="insight_system_prompt" id="insight_system_prompt">{{ prompts.insight_generation.system_prompt.value }}</textarea>
+                        <textarea name="insight_system_prompt" id="insight_system_prompt">{{ prompts.insight_generation.system_prompt }}</textarea>
                     </div>
                     
                     <div class="prompt-editor">
                         <h5>User Prompt Template (INSIGHT)</h5>
-                        <textarea name="insight_user_prompt" id="insight_user_prompt">{{ prompts.insight_generation.user_prompt_template.value }}</textarea>
+                        <textarea name="insight_user_prompt" id="insight_user_prompt">{{ prompts.insight_generation.user_prompt_template }}</textarea>
                     </div>
                 </div>
                 
@@ -230,29 +205,20 @@
                     
                     <div class="variable-docs">
                         <h5>📋 Variable Dependencies</h5>
-                        {% if prompts.jd_extraction.user_prompt_template.placeholders %}
-                            {% for placeholder in prompts.jd_extraction.user_prompt_template.placeholders %}
-                            <div class="variable-item">
-                                <div class="variable-name">{{ placeholder }}</div>
-                                <div class="variable-desc">{% if placeholder == '{jd_text}' %}Full text of the job description provided by the user{% endif %}</div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="variable-item">
-                                <div class="variable-name">{jd_text}</div>
-                                <div class="variable-desc">Full text of the job description provided by the user</div>
-                            </div>
-                        {% endif %}
+                        <div class="variable-item">
+                            <div class="variable-name">{jd_text}</div>
+                            <div class="variable-desc">Full text of the job description provided by the user</div>
+                        </div>
                     </div>
                     
                     <div class="prompt-editor">
                         <h5>System Prompt (JD Extraction)</h5>
-                        <textarea name="jd_system_prompt" id="jd_system_prompt">{{ prompts.jd_extraction.system_prompt.value }}</textarea>
+                        <textarea name="jd_system_prompt" id="jd_system_prompt">{{ prompts.jd_extraction.system_prompt }}</textarea>
                     </div>
                     
                     <div class="prompt-editor">
                         <h5>User Prompt Template (JD Extraction)</h5>
-                        <textarea name="jd_user_prompt" id="jd_user_prompt">{{ prompts.jd_extraction.user_prompt_template.value }}</textarea>
+                        <textarea name="jd_user_prompt" id="jd_user_prompt">{{ prompts.jd_extraction.user_prompt_template }}</textarea>
                     </div>
                 </div>
                 
@@ -281,22 +247,16 @@
             // Activate selected tab
             document.querySelector('.prompt-tab.' + tabName).classList.add('active');
         }
-        
-        // Finance dropdown hover functionality
-        const financeContainer = document.querySelector('.finance-menu-container');
-        const dropdown = document.querySelector('.finance-dropdown');
-        if (financeContainer && dropdown) {
-            financeContainer.addEventListener('mouseenter', () => { dropdown.style.display = 'block'; });
-            financeContainer.addEventListener('mouseleave', () => { dropdown.style.display = 'none'; });
-        }
-        
-        // System Settings dropdown hover functionality
-        const systemContainer = document.querySelector('.system-settings-menu-container');
-        const systemDropdown = document.querySelector('.system-settings-dropdown');
-        if (systemContainer && systemDropdown) {
-            systemContainer.addEventListener('mouseenter', () => { systemDropdown.style.display = 'block'; });
-            systemContainer.addEventListener('mouseleave', () => { systemDropdown.style.display = 'none'; });
-        }
     </script>
 </body>
 </html>
+'''
+
+# Write to file
+with open('flask_app/templates/admin_prompts.html', 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print("✅ admin_prompts.html updated with Prompts Manager Control Tower!")
+print("🎯 Includes RANKER, INSIGHT, and JD Extraction tabs")
+print("💡 Developer notes and pro-tips displayed prominently")
+print("📋 Variable dependencies documented for each agent")

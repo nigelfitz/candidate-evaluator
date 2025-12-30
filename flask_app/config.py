@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+import json
 
 class Config:
     """Base configuration"""
@@ -38,10 +39,37 @@ class Config:
     STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
     STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
-    # Pricing (in USD)
-    BASE_ANALYSIS_PRICE = 10.00  # Standard tier: Full ranking + Top 5 insights included
-    DEEP_DIVE_PRICE = 10.00  # Additional cost for Deep Dive (Top 15 insights)
-    EXTRA_INSIGHT_PRICE = 1.00  # Per additional candidate insight in Full Radar mode (beyond Top 5)
+    # Pricing (Dynamically loaded from pricing_settings.json - Single Source of Truth)
+    @staticmethod
+    def get_pricing():
+        """Load pricing configuration from JSON file"""
+        pricing_file = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
+        try:
+            with open(pricing_file, 'r') as f:
+                pricing_data = json.load(f)
+            return {
+                'BASE_ANALYSIS_PRICE': pricing_data['standard_tier_price']['value'],
+                'DEEP_DIVE_PRICE': pricing_data['deep_dive_price']['value'],
+                'EXTRA_INSIGHT_PRICE': pricing_data['individual_insight_price']['value'],
+                'HIRING_SPRINT_CHARGE': pricing_data['hiring_sprint_charge']['value'],
+                'HIRING_SPRINT_CREDIT': pricing_data['hiring_sprint_credit']['value'],
+                'VOLUME_BONUS_THRESHOLD': pricing_data['volume_bonus_threshold']['value'],
+                'VOLUME_BONUS_PERCENTAGE': pricing_data['volume_bonus_percentage']['value'],
+                'MINIMUM_TOPUP_AMOUNT': pricing_data['minimum_topup_amount']['value']
+            }
+        except Exception as e:
+            print(f"ERROR loading pricing_settings.json: {e}")
+            # Fallback to defaults if file is missing
+            return {
+                'BASE_ANALYSIS_PRICE': 10.0,
+                'DEEP_DIVE_PRICE': 10.0,
+                'EXTRA_INSIGHT_PRICE': 1.0,
+                'HIRING_SPRINT_CHARGE': 45.0,
+                'HIRING_SPRINT_CREDIT': 50.0,
+                'VOLUME_BONUS_THRESHOLD': 50.0,
+                'VOLUME_BONUS_PERCENTAGE': 15.0,
+                'MINIMUM_TOPUP_AMOUNT': 5.0
+            }
     
     # Suggested fund amounts for "Add Funds" page
     SUGGESTED_AMOUNTS = [10, 25, 50, 100]

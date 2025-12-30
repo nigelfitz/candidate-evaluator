@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify, current_app
+from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import LoginManager, login_required, current_user
 from config import config
 from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback, AdminLoginAttempt, AdminAuditLog
@@ -437,10 +437,9 @@ def create_app(config_name=None):
                 
                 # Calculate cost
                 from config import Config
-                pricing = Config.get_pricing()
-                total_cost = pricing['BASE_ANALYSIS_PRICE']
+                total_cost = Config.BASE_ANALYSIS_PRICE
                 num_extra_insights = max(0, num_insights - 3)
-                total_cost += num_extra_insights * pricing['EXTRA_INSIGHT_PRICE']
+                total_cost += num_extra_insights * Config.EXTRA_INSIGHT_PRICE
                 total_cost = Decimal(str(total_cost))
                 
                 # Check funds
@@ -766,8 +765,6 @@ def create_app(config_name=None):
                 form_token = existing_token
                 print(f"DEBUG: Reusing existing form token: {form_token}")
             
-            from config import Config
-            pricing = Config.get_pricing()
             return render_template('run_analysis.html', 
                                  user=current_user,
                                  resume_count=resume_count,
@@ -775,8 +772,7 @@ def create_app(config_name=None):
                                  in_workflow=True, has_unsaved_work=True,
                                  analysis_completed=analysis_completed,
                                  draft_modified_after_analysis=draft_modified_after_analysis,
-                                 form_token=form_token,
-                                 pricing=pricing)
+                                 form_token=form_token)
         
         # POST - Run the analysis
         try:
@@ -886,8 +882,6 @@ def create_app(config_name=None):
                 
                 # Don't redirect - show modal to add funds and continue
                 resume_count = len(candidates)
-                from config import Config
-                pricing = Config.get_pricing()
                 return render_template('run_analysis.html',
                                      user=current_user,
                                      resume_count=resume_count,
@@ -899,8 +893,7 @@ def create_app(config_name=None):
                                      required_amount=float(estimated_cost),
                                      current_balance=float(current_user.balance_usd),
                                      shortfall=float(estimated_cost - current_user.balance_usd),
-                                     selected_insights_mode=insights_mode,
-                                     pricing=pricing)
+                                     selected_insights_mode=insights_mode)
             
             # ============================================
             # NEW AI PIPELINE: Production-Grade Scoring
@@ -978,6 +971,14 @@ def create_app(config_name=None):
                 gpt_candidates_list = list(insights_data.keys())
                 print(f"Phase 2 complete. Generated insights for {len(insights_data)} candidates")
                 
+                # Mark Phase 2 complete
+                analysis.analysis_size = 'complete'
+                db.session.commit()
+            else:
+                # No Phase 2, mark as complete
+                analysis.analysis_size = 'complete'
+                db.session.commit()
+                
                 # CRITICAL: Overwrite draft justifications with INSIGHT_AGENT versions
                 for candidate_name, insights in insights_data.items():
                     # Find evaluation for this candidate
@@ -989,14 +990,6 @@ def create_app(config_name=None):
                             score_obj = next((s for s in eval_obj.criterion_scores if s.criterion == criterion), None)
                             if score_obj:
                                 score_obj.justification = refined_justification
-                
-                # Mark Phase 2 complete
-                analysis.analysis_size = 'complete'
-                db.session.commit()
-            else:
-                # No Phase 2, mark as complete
-                analysis.analysis_size = 'complete'
-                db.session.commit()
             
             # Convert evaluations to DataFrame format (for existing UI compatibility)
             import pandas as pd
@@ -1010,13 +1003,11 @@ def create_app(config_name=None):
                 for score in eval_obj.criterion_scores:
                     row[score.criterion] = score.score / 100.0  # Convert to 0-1
                     
-                    # Store evidence in new structure: (raw_evidence, justification, score, density_count)
-                    # NOTE: justification already contains Phase 2 refined version if insights were generated
+                    # Store justification as evidence (for UI compatibility)
                     evidence_map[(eval_obj.candidate_name, score.criterion)] = (
-                        score.raw_evidence,     # [0] Verbatim quotes from resume ("Raw Source Text")
-                        score.justification,    # [1] AI reasoning (Phase 2 refined for top N, Phase 1 for others)
-                        score.score / 100.0,    # [2] Score
-                        1                       # [3] Density count (deprecated but kept for compatibility)
+                        score.justification,  # Justification text (premium version for unlocked candidates)
+                        score.score / 100.0,  # Score
+                        1  # Density count (not applicable in AI pipeline)
                     )
                 
                 row["Overall"] = eval_obj.overall_score / 100.0
@@ -1143,10 +1134,6 @@ def create_app(config_name=None):
         if draft and draft.created_at < analysis.created_at and (not draft.updated_at or draft.updated_at <= analysis.created_at):
             is_current_draft_analysis = True
         
-        # Get pricing for unlock cost display
-        from config import Config
-        pricing = Config.get_pricing()
-        
         return render_template('results_enhanced.html',
                              analysis=analysis,
                              coverage_data=coverage_data,
@@ -1158,8 +1145,7 @@ def create_app(config_name=None):
                              in_workflow=is_current_draft_analysis,
                              has_unsaved_work=False,
                              analysis_completed=True,
-                             is_current_draft_analysis=is_current_draft_analysis,
-                             pricing=pricing)
+                             is_current_draft_analysis=is_current_draft_analysis)
     
     @app.route('/submit_feedback', methods=['POST'])
     @login_required
@@ -1605,11 +1591,9 @@ def create_app(config_name=None):
             category = cat_map.get(criterion, 'Other Requirements')
             score = current_candidate_data['data'][criterion]
             
-            # Get evidence from 4-tuple structure
+            # Get snippet for this criterion
             key = f"{selected_candidate}|||{criterion}"
-            evidence_tuple = evidence_data.get(key, ("", "", 0, 0))
-            raw_evidence = evidence_tuple[0] if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 0 else ""
-            justification = evidence_tuple[1] if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 1 else ""
+            snippet = evidence_data.get(key, "No evidence available")
             
             # Determine color and rating
             if score >= hi_threshold:
@@ -1630,8 +1614,7 @@ def create_app(config_name=None):
                 'score': score,
                 'color': color,
                 'rating': rating,
-                'raw_evidence': raw_evidence,
-                'justification': justification
+                'snippet': snippet
             })
         
         # Build evidence list for backward compatibility
@@ -1652,11 +1635,7 @@ def create_app(config_name=None):
         for criterion in criteria_cols:
             key = f"{selected_candidate}|||{criterion}"
             if key in evidence_data:
-                evidence_tuple = evidence_data[key]
-                # evidence_tuple structure: [0]=raw_evidence, [1]=justification, [2]=score, [3]=density
-                raw_evidence = evidence_tuple[0] if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 0 else ""
-                justification = evidence_tuple[1] if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 1 else ""
-                
+                snippet = evidence_data[key]
                 score = current_candidate_data['data'][criterion]
                 
                 if score >= hi_threshold:
@@ -1668,8 +1647,7 @@ def create_app(config_name=None):
                 
                 evidence_list.append({
                     'criterion': criterion,
-                    'raw_evidence': raw_evidence,
-                    'justification': justification,
+                    'snippet': snippet[:500],  # Limit snippet length
                     'score': score,
                     'color': color
                 })
@@ -1716,8 +1694,6 @@ def create_app(config_name=None):
         # Full Radar if all candidates have insights or no restriction was set
         has_full_radar = (len(gpt_candidates_list) == 0 or len(gpt_candidates_list) >= analysis.num_candidates)
         
-        from config import Config
-        pricing = Config.get_pricing()
         return render_template('insights.html',
                              analysis=analysis,
                              analysis_id=analysis_id,
@@ -1729,27 +1705,21 @@ def create_app(config_name=None):
                              has_unsaved_work=False,
                              analysis_completed=True,
                              is_current_draft_analysis=is_current_draft_analysis,
-                             has_full_radar=has_full_radar,
-                             pricing=pricing)
+                             has_full_radar=has_full_radar)
     
     @app.route('/unlock-candidate/<int:analysis_id>/<candidate_name>', methods=['POST'])
     @login_required
     def unlock_candidate(analysis_id, candidate_name):
-        """Unlock insights for a single candidate by generating AI insights and deducting the configured price"""
+        """Unlock insights for a single candidate by generating AI insights and deducting $1.00"""
         from decimal import Decimal
-        from config import Config
         
         try:
-            # Get dynamic pricing
-            pricing = Config.get_pricing()
-            unlock_price = Decimal(str(pricing['EXTRA_INSIGHT_PRICE']))
-            
             analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
             if not analysis:
                 return jsonify({'success': False, 'error': 'Analysis not found'}), 404
             
             # Check balance (compare Decimal with Decimal)
-            if current_user.balance_usd < unlock_price:
+            if current_user.balance_usd < Decimal('1.00'):
                 return jsonify({
                     'success': False, 
                     'error': 'Insufficient balance',
@@ -1837,11 +1807,9 @@ def create_app(config_name=None):
                 gpt_candidates_list.append(candidate_name)
             analysis.gpt_candidates = json.dumps(gpt_candidates_list)
             
-            # Deduct from balance using proper transaction recording
-            current_user.deduct_funds(
-                amount_usd=unlock_price,
-                description=f'Unlock Insights - {candidate_name} (Job: {analysis.job_title or "Analysis #" + str(analysis_id)})'
-            )
+            # Deduct $1.00 from balance (using Decimal type)
+            from decimal import Decimal
+            current_user.balance_usd -= Decimal('1.00')
             
             db.session.commit()
             
@@ -1864,9 +1832,6 @@ def create_app(config_name=None):
         """Download individual candidate report as PDF"""
         from flask import send_file
         from export_candidate import to_individual_candidate_pdf
-        
-        # Check if include_justifications parameter is passed
-        include_justifications = request.args.get('include_justifications', 'false').lower() == 'true'
         
         analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
         if not analysis:
@@ -1925,7 +1890,7 @@ def create_app(config_name=None):
             cat_map=category_map,
             hi=0.75,
             lo=0.35,
-            include_justifications=include_justifications,
+            include_evidence=True,  # Include evidence by default for individual downloads
             job_title=analysis.job_title,
             gpt_candidates=gpt_candidates_raw,
             job_number=analysis.id
@@ -2015,7 +1980,6 @@ def create_app(config_name=None):
     @login_required
     def account():
         """Account balance and transaction history"""
-        # Get transactions ordered newest first for display
         transactions = current_user.transactions.order_by(
             db.desc('created_at')
         ).limit(50).all()
@@ -2029,34 +1993,13 @@ def create_app(config_name=None):
             existing_analyses = {a.id for a in all_analyses}
             transactions_analyses = {a.id: a for a in all_analyses}
         
-        # Calculate running balance for display (forward in time: oldest to newest)
-        # Reverse the list to process oldest first, then reverse back
-        transactions_reversed = list(reversed(transactions))
-        
-        # Start with zero and calculate forward
-        running_balance = Decimal('0')
-        balances_forward = []
-        
-        for txn in transactions_reversed:
-            # Add this transaction amount
-            running_balance += Decimal(str(txn.amount_usd))
-            # Store the balance AFTER this transaction
-            balances_forward.append(float(running_balance))
-        
-        # Reverse balances back to match the newest-first display order
-        balances = list(reversed(balances_forward))
-        
-        # Verify final balance matches user's actual balance
-        if balances and abs(float(current_user.balance_usd) - balances[0]) > 0.01:
-            discrepancy = float(current_user.balance_usd) - balances[0]
-            print(f"⚠️ WARNING: Balance mismatch for user {current_user.id} ({current_user.email}). "
-                  f"Calculated: ${balances[0]:.2f}, Actual: ${float(current_user.balance_usd):.2f}, "
-                  f"Discrepancy: ${discrepancy:.2f}")
-            
-            # Send alert to admin (only once per user per session to avoid spam)
-            if not hasattr(current_user, '_balance_alert_sent'):
-                send_balance_mismatch_alert(current_user, float(current_user.balance_usd), balances[0], discrepancy)
-                current_user._balance_alert_sent = True
+        # Calculate running balance for each transaction (newest first)
+        running_balance = float(current_user.balance_usd)
+        balances = []
+        for txn in transactions:
+            balances.append(running_balance)
+            # Move backwards in time: subtract this transaction to get previous balance
+            running_balance -= float(txn.amount_usd)
         
         return render_template('account.html', 
                              user=current_user,
@@ -2614,7 +2557,7 @@ def create_app(config_name=None):
         # Get request data
         data = request.get_json()
         candidates = data.get('candidates', [])
-        include_justifications = data.get('include_justifications', False)
+        include_evidence = data.get('include_evidence', False)
         
         if not candidates:
             return {'error': 'No candidates selected'}, 400
@@ -2673,7 +2616,7 @@ def create_app(config_name=None):
                 cat_map=category_map,
                 hi=0.75,
                 lo=0.35,
-                include_justifications=include_justifications,
+                include_evidence=include_evidence,
                 job_title=analysis.job_title,
                 gpt_candidates=gpt_candidates_raw,
                 job_number=analysis.id
@@ -2749,7 +2692,7 @@ def create_app(config_name=None):
         # Get request data
         data = request.get_json()
         candidates = data.get('candidates', [])
-        include_justifications = data.get('include_justifications', False)
+        include_evidence = data.get('include_evidence', False)
         
         if not candidates:
             return {'error': 'No candidates selected'}, 400
@@ -2807,7 +2750,7 @@ def create_app(config_name=None):
                 cat_map=category_map,
                 hi=0.75,
                 lo=0.35,
-                include_justifications=include_justifications,
+                include_evidence=include_evidence,
                 job_title=analysis.job_title,
                 gpt_candidates=gpt_candidates_raw,
                 job_number=analysis.id
@@ -3016,7 +2959,7 @@ def create_app(config_name=None):
             session['admin_last_activity'] = datetime.now(timezone.utc).isoformat()
             session.permanent = True
             log_admin_action('login_success', {'ip': client_ip})
-            # No flash message - prevents it from showing on user pages if they navigate there
+            flash('✅ Admin access granted', 'success')
             return redirect(url_for('admin_settings'))
         
         # Check if 2FA is enabled
@@ -3107,93 +3050,7 @@ def create_app(config_name=None):
             AdminAuditLog.created_at.desc()
         ).paginate(page=page, per_page=per_page, error_out=False)
         
-        return render_template('admin_audit_logs.html', logs=logs, active_tab='audit')
-    
-    
-    @app.route('/admin/business-health')
-    @admin_required
-    def admin_business_health():
-        """Business Health Monitor and Calculator Settings"""
-        settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
-        with open(settings_path, 'r', encoding='utf-8') as f:
-            settings = json.load(f)
-        
-        # Load pricing from single source of truth
-        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
-        with open(pricing_path, 'r', encoding='utf-8') as f:
-            pricing = json.load(f)
-        
-        message = request.args.get('message')
-        return render_template('admin_business_health.html', 
-                             settings=settings, 
-                             pricing=pricing,
-                             active_tab='business_health',
-                             message=message)
-    
-    
-    @app.route('/admin/business-health/save', methods=['POST'])
-    @admin_required
-    def admin_save_business_health():
-        """Save calculator settings"""
-        settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
-        
-        with open(settings_path, 'r', encoding='utf-8') as f:
-            settings = json.load(f)
-        
-        # Save calculator settings
-        settings['calculator_settings']['avg_candidates_per_job']['value'] = int(request.form.get('avg_candidates', 50))
-        settings['calculator_settings']['avg_criteria_per_job']['value'] = int(request.form.get('avg_criteria', 20))
-        settings['calculator_settings']['insights_generated']['value'] = int(request.form.get('insights_generated', 5))
-        
-        # Update metadata
-        settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-        
-        # Save back to file
-        with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=2, ensure_ascii=False)
-        
-        return redirect(url_for('admin_business_health', message='Calculator settings saved successfully!'))
-    
-    
-    @app.route('/admin/pricing')
-    @admin_required
-    def admin_pricing():
-        """Pricing & Revenue Configuration - Single Source of Truth"""
-        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
-        with open(pricing_path, 'r', encoding='utf-8') as f:
-            pricing = json.load(f)
-        
-        message = request.args.get('message')
-        return render_template('admin_pricing.html', 
-                             pricing=pricing, 
-                             active_tab='pricing',
-                             message=message)
-    
-    
-    @app.route('/admin/pricing/save', methods=['POST'])
-    @admin_required
-    def admin_save_pricing():
-        """Save pricing configuration"""
-        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
-        
-        with open(pricing_path, 'r', encoding='utf-8') as f:
-            pricing = json.load(f)
-        
-        # Update pricing values
-        pricing['standard_tier_price']['value'] = float(request.form.get('standard_tier_price', 10.0))
-        pricing['deep_dive_price']['value'] = float(request.form.get('deep_dive_price', 10.0))
-        pricing['individual_insight_price']['value'] = float(request.form.get('individual_insight_price', 1.0))
-        pricing['hiring_sprint_charge']['value'] = float(request.form.get('hiring_sprint_charge', 45.0))
-        pricing['hiring_sprint_credit']['value'] = float(request.form.get('hiring_sprint_credit', 50.0))
-        pricing['volume_bonus_threshold']['value'] = float(request.form.get('volume_bonus_threshold', 50.0))
-        pricing['volume_bonus_percentage']['value'] = float(request.form.get('volume_bonus_percentage', 15.0))
-        pricing['minimum_topup_amount']['value'] = float(request.form.get('minimum_topup_amount', 5.0))
-        
-        # Save back to file
-        with open(pricing_path, 'w', encoding='utf-8') as f:
-            json.dump(pricing, f, indent=2, ensure_ascii=False)
-        
-        return redirect(url_for('admin_pricing', message='Pricing configuration saved successfully! Changes are now live across the platform.'))
+        return render_template('admin_audit_logs.html', logs=logs)
     
     
     @app.route('/admin')
@@ -3206,10 +3063,10 @@ def create_app(config_name=None):
     @app.route('/admin/gpt')
     @admin_required
     def admin_gpt_settings():
-        """Display GPT settings tab with two-agent configuration"""
+        """Display GPT settings tab"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
         
-        with open(settings_path, 'r', encoding='utf-8') as f:
+        with open(settings_path, 'r') as f:
             settings = json.load(f)
         
         message = request.args.get('message')
@@ -3265,61 +3122,32 @@ def create_app(config_name=None):
     @app.route('/admin/save', methods=['POST'])
     @admin_required
     def admin_save_settings():
-        """Save updated two-agent settings"""
+        """Save updated settings"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'gpt_settings.json')
         
         # Load current settings
-        with open(settings_path, 'r', encoding='utf-8') as f:
+        with open(settings_path, 'r') as f:
             settings = json.load(f)
         
-        # Update two-agent core settings
-        settings['ranker_model']['value'] = request.form.get('ranker_model')
-        settings['insight_model']['value'] = request.form.get('insight_model')
-        settings['ranker_temperature']['value'] = float(request.form.get('ranker_temperature'))
-        settings['insight_temperature']['value'] = float(request.form.get('insight_temperature'))
-        
-        # Update advanced API settings
-        settings['advanced_api_settings']['presence_penalty']['value'] = float(request.form.get('presence_penalty'))
-        settings['advanced_api_settings']['frequency_penalty']['value'] = float(request.form.get('frequency_penalty'))
-        settings['advanced_api_settings']['ranker_max_tokens']['value'] = int(request.form.get('ranker_max_tokens'))
-        settings['advanced_api_settings']['insight_max_tokens']['value'] = int(request.form.get('insight_max_tokens'))
-        
-        # Update text processing settings
-        settings['text_processing']['candidate_text_chars']['value'] = int(request.form.get('candidate_text_chars'))
-        settings['text_processing']['jd_text_chars']['value'] = int(request.form.get('jd_text_chars'))
-        settings['text_processing']['evidence_snippet_chars']['value'] = int(request.form.get('evidence_snippet_chars'))
-        
-        # Update insight formatting
-        settings['insight_formatting']['notes_length']['value'] = request.form.get('notes_length')
-        settings['insight_formatting']['insight_tone']['value'] = request.form.get('insight_tone')
-        
-        # Update report balance
-        settings['report_balance']['min_strengths']['value'] = int(request.form.get('min_strengths'))
-        settings['report_balance']['max_strengths']['value'] = int(request.form.get('max_strengths'))
-        settings['report_balance']['min_gaps']['value'] = int(request.form.get('min_gaps'))
-        settings['report_balance']['max_gaps']['value'] = int(request.form.get('max_gaps'))
-        
-        # Update evidence depth
-        settings['evidence_depth']['top_evidence_items']['value'] = int(request.form.get('top_evidence_items'))
-        
-        # Update evidence thresholds
-        settings['evidence_thresholds']['strong_match_threshold']['value'] = float(request.form.get('strong_match_threshold'))
-        settings['evidence_thresholds']['good_match_threshold']['value'] = float(request.form.get('good_match_threshold'))
-        settings['evidence_thresholds']['moderate_match_threshold']['value'] = float(request.form.get('moderate_match_threshold'))
-        settings['evidence_thresholds']['weak_match_threshold']['value'] = float(request.form.get('weak_match_threshold'))
-        
-        # Update score thresholds
+        # Update values from form
+        settings['gpt_model']['value'] = request.form.get('gpt_model')
+        settings['temperature']['value'] = float(request.form.get('temperature'))
+        settings['max_tokens']['value'] = int(request.form.get('max_tokens'))
+        settings['evidence_snippet_chars']['value'] = int(request.form.get('evidence_snippet_chars'))
+        settings['candidate_text_chars']['value'] = int(request.form.get('candidate_text_chars'))
+        settings['jd_text_chars']['value'] = int(request.form.get('jd_text_chars'))
         settings['score_thresholds']['high_threshold']['value'] = float(request.form.get('high_threshold'))
         settings['score_thresholds']['low_threshold']['value'] = float(request.form.get('low_threshold'))
+        settings['advanced_settings']['top_evidence_items']['value'] = int(request.form.get('top_evidence_items'))
         
         # Update metadata
         settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         
         # Save back to file
-        with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=2, ensure_ascii=False)
+        with open(settings_path, 'w') as f:
+            json.dump(settings, f, indent=2)
         
-        flash('✅ Settings saved successfully! Two-agent configuration active.', 'admin')
+        flash('✅ Settings saved successfully! Changes take effect immediately.', 'admin')
         return redirect(url_for('admin_gpt_settings'))
     
     
@@ -3341,45 +3169,32 @@ def create_app(config_name=None):
     
     @app.route('/admin/prompts/save', methods=['POST'])
     @admin_required
-    def admin_save_prompts():
-        """Save updated prompts for two-agent system"""
+    def admin_prompts_save():
+        """Save updated prompts"""
         prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
         
         # Load current prompts
         with open(prompts_path, 'r', encoding='utf-8') as f:
             prompts = json.load(f)
         
-        # Update RANKER prompts (nested structure with .value)
-        if 'ranker_scoring' in prompts:
-            if 'system_prompt' in prompts['ranker_scoring']:
-                prompts['ranker_scoring']['system_prompt']['value'] = request.form.get('ranker_system_prompt', prompts['ranker_scoring']['system_prompt'].get('value', ''))
-            if 'user_prompt_template' in prompts['ranker_scoring']:
-                prompts['ranker_scoring']['user_prompt_template']['value'] = request.form.get('ranker_user_prompt', prompts['ranker_scoring']['user_prompt_template'].get('value', ''))
+        # Update JD Extraction prompts
+        prompts['jd_extraction']['system_prompt']['value'] = request.form.get('jd_extraction_system')
+        prompts['jd_extraction']['user_prompt_template']['value'] = request.form.get('jd_extraction_user')
         
-        # Update INSIGHT prompts (nested structure with .value)
-        if 'insight_generation' in prompts:
-            if 'system_prompt' in prompts['insight_generation']:
-                prompts['insight_generation']['system_prompt']['value'] = request.form.get('insight_system_prompt', prompts['insight_generation']['system_prompt'].get('value', ''))
-            if 'user_prompt_template' in prompts['insight_generation']:
-                prompts['insight_generation']['user_prompt_template']['value'] = request.form.get('insight_user_prompt', prompts['insight_generation']['user_prompt_template'].get('value', ''))
+        # Update Candidate Insights prompts
+        prompts['candidate_insights']['system_prompt']['value'] = request.form.get('candidate_insights_system')
+        prompts['candidate_insights']['user_prompt_template']['value'] = request.form.get('candidate_insights_user')
         
-        # Update JD Extraction prompts (nested structure with .value)
-        if 'jd_extraction' in prompts:
-            if 'system_prompt' in prompts['jd_extraction']:
-                prompts['jd_extraction']['system_prompt']['value'] = request.form.get('jd_system_prompt', prompts['jd_extraction']['system_prompt'].get('value', ''))
-            if 'user_prompt_template' in prompts['jd_extraction']:
-                prompts['jd_extraction']['user_prompt_template']['value'] = request.form.get('jd_user_prompt', prompts['jd_extraction']['user_prompt_template'].get('value', ''))
-        
-        # Update metadata if it exists
-        if '_metadata' in prompts:
-            prompts['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-            prompts['_metadata']['updated_by'] = 'admin'
+        # Update metadata
+        prompts['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        prompts['_metadata']['updated_by'] = 'admin'
         
         # Save back to file
         with open(prompts_path, 'w', encoding='utf-8') as f:
             json.dump(prompts, f, indent=2, ensure_ascii=False)
         
-        return redirect(url_for('admin_prompts') + '?message=Prompts saved successfully! Two-agent configuration active.')
+        flash('✅ Prompts saved successfully! Changes take effect immediately.', 'admin')
+        return redirect(url_for('admin_prompts'))
     
     
     @app.route('/admin/users')
@@ -3501,156 +3316,10 @@ def create_app(config_name=None):
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
     
-    # ============================================================================
-    # BALANCE MONITORING & RECONCILIATION
-    # ============================================================================
-    
-    def check_user_balance_integrity(user_id):
-        """
-        Check if a user's balance matches their transaction history.
-        Returns (is_valid, actual_balance, calculated_balance, discrepancy)
-        """
-        from decimal import Decimal
-        
-        user = User.query.get(user_id)
-        if not user:
-            return (False, 0, 0, 0)
-        
-        # Calculate balance from transaction history
-        transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at).all()
-        calculated_balance = Decimal('0')
-        for txn in transactions:
-            calculated_balance += Decimal(str(txn.amount_usd))
-        
-        actual_balance = Decimal(str(user.balance_usd))
-        discrepancy = actual_balance - calculated_balance
-        
-        # Allow 1 cent tolerance for floating point rounding
-        is_valid = abs(discrepancy) < Decimal('0.01')
-        
-        return (is_valid, float(actual_balance), float(calculated_balance), float(discrepancy))
-    
-    
-    def send_balance_mismatch_alert(user, actual_balance, calculated_balance, discrepancy):
-        """Send email alert to admin about balance mismatch"""
-        try:
-            from email_utils import send_email
-            
-            admin_email = os.environ.get('ADMIN_EMAIL', 'admin@candidateevaluator.com')
-            
-            html_body = f"""
-            <h2>🚨 Balance Mismatch Detected</h2>
-            <p>A balance discrepancy has been detected for a user account.</p>
-            
-            <h3>User Details:</h3>
-            <ul>
-                <li><strong>User ID:</strong> {user.id}</li>
-                <li><strong>Email:</strong> {user.email}</li>
-                <li><strong>Registration:</strong> {user.created_at.strftime('%Y-%m-%d %H:%M UTC')}</li>
-            </ul>
-            
-            <h3>Balance Information:</h3>
-            <ul>
-                <li><strong>Actual Balance (Database):</strong> ${actual_balance:.2f}</li>
-                <li><strong>Calculated Balance (Transactions):</strong> ${calculated_balance:.2f}</li>
-                <li><strong>Discrepancy:</strong> ${discrepancy:.2f}</li>
-            </ul>
-            
-            <p><a href="{url_for('admin_balance_audit', _external=True)}">View Balance Audit Dashboard</a></p>
-            
-            <p style="color: #666; font-size: 12px;">This alert was generated automatically by the balance monitoring system.</p>
-            """
-            
-            send_email(
-                subject=f'🚨 Balance Mismatch Alert - User {user.email}',
-                recipients=[admin_email],
-                html_body=html_body
-            )
-            print(f"✅ Balance mismatch alert sent to {admin_email}")
-        except Exception as e:
-            print(f"❌ Failed to send balance mismatch alert: {e}")
-    
-    
-    @app.route('/admin/balance-audit')
-    @admin_required
-    def admin_balance_audit():
-        """Admin dashboard showing users with balance mismatches"""
-        users_with_issues = []
-        
-        # Check all users with transactions
-        all_users = User.query.all()
-        for user in all_users:
-            is_valid, actual, calculated, discrepancy = check_user_balance_integrity(user.id)
-            if not is_valid:
-                users_with_issues.append({
-                    'user': user,
-                    'actual_balance': actual,
-                    'calculated_balance': calculated,
-                    'discrepancy': discrepancy,
-                    'transaction_count': Transaction.query.filter_by(user_id=user.id).count()
-                })
-        
-        return render_template('admin_balance_audit.html', 
-                             users_with_issues=users_with_issues,
-                             active_tab='balance_audit')
-    
-    
-    @app.route('/admin/balance-adjustment/<int:user_id>', methods=['GET', 'POST'])
-    @admin_required
-    def admin_balance_adjustment(user_id):
-        """Create manual balance adjustment transaction"""
-        user = User.query.get_or_404(user_id)
-        
-        if request.method == 'POST':
-            from decimal import Decimal
-            
-            adjustment_amount = Decimal(str(request.form.get('adjustment_amount', 0)))
-            reason = request.form.get('reason', 'Manual balance adjustment by admin')
-            
-            if abs(adjustment_amount) < Decimal('0.01'):
-                flash('Adjustment amount must be at least $0.01', 'danger')
-                return redirect(url_for('admin_balance_adjustment', user_id=user_id))
-            
-            # Create adjustment transaction
-            if adjustment_amount > 0:
-                user.add_funds(
-                    amount_usd=adjustment_amount,
-                    description=f'Admin Balance Adjustment: {reason}'
-                )
-            else:
-                user.deduct_funds(
-                    amount_usd=abs(adjustment_amount),
-                    description=f'Admin Balance Adjustment: {reason}'
-                )
-            
-            db.session.commit()
-            
-            log_admin_action('balance_adjustment', {
-                'user_id': user_id,
-                'user_email': user.email,
-                'adjustment_amount': float(adjustment_amount),
-                'reason': reason,
-                'new_balance': float(user.balance_usd)
-            })
-            
-            flash(f'✅ Balance adjusted by ${adjustment_amount:.2f} for {user.email}', 'success')
-            return redirect(url_for('admin_balance_audit'))
-        
-        # GET request - show adjustment form
-        is_valid, actual, calculated, discrepancy = check_user_balance_integrity(user_id)
-        
-        return render_template('admin_balance_adjustment.html',
-                             user=user,
-                             actual_balance=actual,
-                             calculated_balance=calculated,
-                             discrepancy=discrepancy,
-                             suggested_adjustment=-discrepancy,  # Negative of discrepancy to fix it
-                             active_tab='balance_audit')
-    
-    
     @app.route('/admin/system')
     @admin_required
     def admin_system():
+        """System controls and settings"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
         
         with open(settings_path, 'r') as f:
