@@ -815,24 +815,30 @@ def create_app(config_name=None):
             pricing = Config.get_pricing()
             
             # Check if we should show truncation warning (from POST redirect)
-            truncation_warning_data = session.pop('truncation_warning', None)
-            if truncation_warning_data and request.args.get('show_warning') == '1':
-                print(f"DEBUG: Displaying truncation warning from session")
-                return render_template('run_analysis.html', 
-                                     user=current_user,
-                                     resume_count=resume_count,
-                                     latest_analysis_id=current_draft_analysis_id,
-                                     in_workflow=True,
-                                     has_unsaved_work=True,
-                                     analysis_completed=False,
-                                     draft_modified_after_analysis=False,
-                                     form_token=form_token,
-                                     pricing=pricing,
-                                     truncation_warning=True,
-                                     truncated_docs=truncation_warning_data['docs'],
-                                     jd_limit=truncation_warning_data['jd_limit'],
-                                     resume_limit=truncation_warning_data['resume_limit'],
-                                     selected_insights_mode=truncation_warning_data['insights_mode'])
+            show_warning = request.args.get('show_warning')
+            if show_warning == '1':
+                truncation_warning_data = session.pop('truncation_warning', None)
+                if truncation_warning_data:
+                    print(f"DEBUG: Displaying truncation warning from session with {len(truncation_warning_data['docs'])} docs")
+                    return render_template('run_analysis.html', 
+                                         user=current_user,
+                                         resume_count=resume_count,
+                                         latest_analysis_id=current_draft_analysis_id,
+                                         in_workflow=True,
+                                         has_unsaved_work=True,
+                                         analysis_completed=False,
+                                         draft_modified_after_analysis=False,
+                                         form_token=form_token,
+                                         pricing=pricing,
+                                         truncation_warning=True,
+                                         truncated_docs=truncation_warning_data['docs'],
+                                         jd_limit=truncation_warning_data['jd_limit'],
+                                         resume_limit=truncation_warning_data['resume_limit'],
+                                         selected_insights_mode=truncation_warning_data['insights_mode'])
+                else:
+                    print(f"DEBUG: show_warning=1 but no truncation data in session - may have been consumed already")
+            
+            print(f"DEBUG: Rendering normal page (no truncation warning)")
             
             return render_template('run_analysis.html', 
                                  user=current_user,
