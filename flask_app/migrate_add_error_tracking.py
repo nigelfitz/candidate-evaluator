@@ -31,7 +31,7 @@ def migrate():
             print("📝 Adding 'failed_at' column to analyses table...")
             db.session.execute(text("""
                 ALTER TABLE analyses 
-                ADD COLUMN failed_at DATETIME;
+                ADD COLUMN failed_at TIMESTAMP;
             """))
             columns_added.append('failed_at')
         else:

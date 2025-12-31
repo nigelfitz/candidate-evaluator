@@ -20,7 +20,7 @@ def migrate():
         if 'last_seen' not in columns:
             print("  ➕ Adding last_seen column...")
             with db.engine.connect() as conn:
-                conn.execute(text('ALTER TABLE users ADD COLUMN last_seen DATETIME'))
+                conn.execute(text('ALTER TABLE users ADD COLUMN last_seen TIMESTAMP'))
                 conn.commit()
             print("  ✅ Added last_seen column")
         else:
