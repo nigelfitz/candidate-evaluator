@@ -220,6 +220,32 @@ def create_app(config_name=None):
         return render_template('jd_length_warning.html',
                              jd_length=jd_length,
                              jd_limit=jd_limit)
+    
+    @app.route('/resume-length-warning')
+    @login_required
+    def resume_length_warning_route():
+        """Show resume length warning page"""
+        truncated_count = request.args.get('truncated_count', type=int)
+        resume_limit = request.args.get('resume_limit', type=int)
+        
+        if not session.get('show_resume_length_warning'):
+            flash('Invalid access to warning page', 'error')
+            return redirect(url_for('analyze', step='resumes'))
+        
+        # Get actual truncated resume details from database
+        draft = Draft.query.filter_by(user_id=current_user.id).first()
+        truncated_resumes = []
+        if draft:
+            for resume in DraftResume.query.filter_by(draft_id=draft.id).all():
+                if len(resume.extracted_text or '') > resume_limit:
+                    truncated_resumes.append({
+                        'name': resume.candidate_name,
+                        'length': len(resume.extracted_text)
+                    })
+        
+        return render_template('resume_length_warning.html',
+                             truncated_resumes=truncated_resumes,
+                             resume_limit=resume_limit)
 
 
     @app.route('/analyze', methods=['GET', 'POST'])
@@ -513,13 +539,28 @@ def create_app(config_name=None):
                             })
                     
                     if truncated_resumes:
-                        # Store resumes in session for after confirmation
-                        session['pending_resumes'] = processed_resumes
+                        # Store resumes in draft_resume table (not session - too large)
+                        for resume in processed_resumes:
+                            draft_resume = DraftResume(
+                                draft_id=draft.id,
+                                file_name=resume['filename'],
+                                file_bytes=resume['bytes'],
+                                extracted_text=resume['text'],
+                                candidate_name=resume['name'],
+                                file_hash=resume['hash']
+                            )
+                            db.session.add(draft_resume)
+                        
+                        db.session.commit()
+                        
+                        # Just flag in session that we need to show warning
+                        session['show_resume_length_warning'] = True
+                        session['resumes_added'] = resumes_added
                         session.modified = True
-                        # Show warning page
-                        return render_template('resume_length_warning.html',
-                                             truncated_resumes=truncated_resumes,
-                                             resume_limit=resume_limit)
+                        # Redirect to warning page
+                        return redirect(url_for('resume_length_warning_route',
+                                              truncated_count=len(truncated_resumes),
+                                              resume_limit=resume_limit))
                 
                 # No warnings needed or warnings disabled - commit resumes
                 for resume in processed_resumes:
@@ -551,13 +592,10 @@ def create_app(config_name=None):
                 return redirect(url_for('analyze', step='resumes'))
         
         elif action == 'confirm_resume_length':
-            # User confirmed to proceed with long resumes
+            # User confirmed to proceed with long resumes (already saved in DB)
             try:
-                from analysis import read_file_bytes, hash_bytes
-                
-                # Retrieve resume data from session
-                processed_resumes = session.get('pending_resumes')
-                if not processed_resumes:
+                # Check we have the session flag
+                if not session.get('show_resume_length_warning'):
                     flash('Session expired. Please upload your resumes again.', 'error')
                     return redirect(url_for('analyze', step='resumes'))
                 
@@ -567,31 +605,20 @@ def create_app(config_name=None):
                     flash('Draft not found. Please start over.', 'error')
                     return redirect(url_for('analyze'))
                 
-                # Clear session
-                session.pop('pending_resumes', None)
+                # Resumes already in database, just clear session flags
+                resumes_added = session.get('resumes_added', 0)
+                session.pop('show_resume_length_warning', None)
+                session.pop('resumes_added', None)
                 
-                # Add resumes to database
-                for resume in processed_resumes:
-                    draft_resume = DraftResume(
-                        draft_id=draft.id,
-                        file_name=resume['filename'],
-                        file_bytes=resume['bytes'],
-                        extracted_text=resume['text'],
-                        candidate_name=resume['name'],
-                        file_hash=resume['hash']
-                    )
-                    db.session.add(draft_resume)
-                
-                db.session.commit()
-                
-                flash(f'✅ {len(processed_resumes)} resume(s) uploaded successfully!', 'success')
+                flash(f'✅ {resumes_added} resume(s) uploaded successfully!', 'success')
                 return redirect(url_for('run_analysis_route'))
                 
             except Exception as e:
                 db.session.rollback()
-                flash(f'Resume upload failed: {str(e)}', 'error')
+                flash(f'Resume confirmation failed: {str(e)}', 'error')
                 import traceback
                 traceback.print_exc()
+                return redirect(url_for('analyze', step='resumes'))
                 return redirect(url_for('analyze', step='resumes'))
         
         elif action == 'run_analysis':
