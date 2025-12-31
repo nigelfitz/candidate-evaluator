@@ -960,8 +960,10 @@ def create_app(config_name=None):
             # Check document lengths and warn user if truncation will occur
             from analysis import load_gpt_settings
             gpt_settings = load_gpt_settings()
+            print(f"DEBUG: Loaded gpt_settings: {list(gpt_settings.keys())}")
             jd_limit = gpt_settings['jd_text_chars']
             resume_limit = gpt_settings['candidate_text_chars']
+            print(f"DEBUG: jd_limit={jd_limit}, resume_limit={resume_limit}, jd_length={len(jd_text)}")
             
             jd_length = len(jd_text)
             truncated_docs = []
@@ -984,9 +986,12 @@ def create_app(config_name=None):
                 })
             
             # If documents exceed limits, show confirmation page FIRST
-            if truncated_docs and not request.form.get('confirm_truncation'):
+            confirm_truncation = request.form.get('confirm_truncation')
+            print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
+            if truncated_docs and not confirm_truncation:
                 # Restore the form token so user can resubmit after confirmation
                 session['analysis_form_token'] = submitted_token
+                print(f"DEBUG: Showing truncation warning page, restoring token: {submitted_token}")
                 
                 # Show confirmation page with warning
                 from config import Config
