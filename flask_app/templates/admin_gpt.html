@@ -335,14 +335,14 @@
                     <div class="setting-name">Resume Character Limit</div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="candidate_text_chars" class="form-range flex-grow-1" 
-                               min="4000" max="20000" step="1000" value="{{ settings.text_processing.candidate_text_chars.value }}"
+                               min="4000" max="40000" step="1000" value="{{ settings.text_processing.candidate_text_chars.value }}"
                                oninput="this.nextElementSibling.value = this.value">
                         <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.text_processing.candidate_text_chars.value }}</output>
                     </div>
                     <div class="range-labels">
                         <span>4k (Minimal)</span>
                         <span>12k (Recommended)</span>
-                        <span>20k (Detailed)</span>
+                        <span>40k (Maximum)</span>
                     </div>
                     <div class="setting-desc">{{ settings.text_processing.candidate_text_chars.description }}</div>
                     <div class="setting-explanation">
@@ -358,14 +358,14 @@
                     <div class="setting-name">Job Description Character Limit</div>
                     <div class="d-flex align-items-center gap-3 mt-2">
                         <input type="range" name="jd_text_chars" class="form-range flex-grow-1" 
-                               min="1000" max="15000" step="1000" value="{{ settings.text_processing.jd_text_chars.value }}"
+                               min="1000" max="30000" step="1000" value="{{ settings.text_processing.jd_text_chars.value }}"
                                oninput="this.nextElementSibling.value = this.value">
                         <output class="setting-value" style="min-width: 80px; text-align: center;">{{ settings.text_processing.jd_text_chars.value }}</output>
                     </div>
                     <div class="range-labels">
                         <span>1k (Brief)</span>
                         <span>5k (Recommended)</span>
-                        <span>15k (Comprehensive)</span>
+                        <span>30k (Maximum)</span>
                     </div>
                     <div class="setting-desc">{{ settings.text_processing.jd_text_chars.description }}</div>
                     <div class="setting-explanation">
