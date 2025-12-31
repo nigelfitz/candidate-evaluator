@@ -206,7 +206,23 @@ def create_app(config_name=None):
                 'new_user_welcome_credit': 0.0
             }
     
-    @app.route('/analyze', methods=['GET', 'POST'])
+    @app.route('/jd-length-warning')
+@login_required
+def jd_length_warning_route():
+    """Show JD length warning page"""
+    jd_length = request.args.get('jd_length', type=int)
+    jd_limit = request.args.get('jd_limit', type=int)
+    
+    if not session.get('show_jd_length_warning'):
+        flash('Invalid access to warning page', 'error')
+        return redirect(url_for('analyze'))
+    
+    return render_template('jd_length_warning.html',
+                         jd_length=jd_length,
+                         jd_limit=jd_limit)
+
+
+@app.route('/analyze', methods=['GET', 'POST'])
 
     @login_required
     def analyze():
@@ -315,19 +331,24 @@ def create_app(config_name=None):
                         print(f"DEBUG: JD length check: {jd_length} > {jd_limit} = {jd_length > jd_limit}")
                         
                         if jd_length > jd_limit:
-                            # Store JD data in session for after confirmation
-                            session['pending_jd'] = {
-                                'filename': jd_filename,
-                                'text': jd_text_content,
-                                'hash': jd_hash,
-                                'bytes': base64.b64encode(jd_bytes).decode('utf-8')  # Encode bytes for JSON storage
-                            }
+                            # Store JD data in draft (not session - too large for cookies)
+                            draft = Draft.query.filter_by(user_id=current_user.id).first()
+                            if not draft:
+                                draft = Draft(user_id=current_user.id)
+                                db.session.add(draft)
+                            
+                            draft.jd_filename = jd_filename
+                            draft.jd_text = jd_text_content
+                            draft.jd_hash = jd_hash
+                            draft.jd_bytes = jd_bytes
+                            db.session.commit()
+                            
+                            # Just flag in session that we need to show warning
+                            session['show_jd_length_warning'] = True
                             session.modified = True
-                            print(f"DEBUG: Showing JD length warning page")
-                            # Show warning page
-                            return render_template('jd_length_warning.html',
-                                                 jd_length=jd_length,
-                                                 jd_limit=jd_limit)
+                            print(f"DEBUG: JD stored in draft, redirecting to warning page")
+                            # Redirect to warning page (GET request)
+                            return redirect(url_for('jd_length_warning_route', jd_length=jd_length, jd_limit=jd_limit))
                     except Exception as e:
                         print(f"ERROR in JD length warning check: {e}")
                         import traceback
@@ -380,19 +401,17 @@ def create_app(config_name=None):
             try:
                 from analysis import read_file_bytes, hash_bytes, extract_jd_sections_with_gpt, build_criteria_from_sections
                 
-                # Retrieve JD data from session
-                pending_jd = session.get('pending_jd')
-                if not pending_jd:
+                # Retrieve JD data from draft (stored during warning display)
+                draft = Draft.query.filter_by(user_id=current_user.id).first()
+                if not draft or not draft.jd_text:
                     flash('Session expired. Please upload your JD again.', 'error')
                     return redirect(url_for('analyze'))
                 
-                jd_filename = pending_jd['filename']
-                jd_text_content = pending_jd['text']
-                jd_hash = pending_jd['hash']
-                jd_bytes = base64.b64decode(pending_jd['bytes'])
+                # Clear session flag
+                session.pop('show_jd_length_warning', None)
                 
-                # Clear session
-                session.pop('pending_jd', None)
+                jd_text_content = draft.jd_text
+                jd_hash = draft.jd_hash
                 
                 # Extract criteria
                 print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
@@ -408,16 +427,7 @@ def create_app(config_name=None):
                 # Use AI-extracted job title from sections
                 job_title = sections.job_title or "Position Not Specified"
                 
-                # Store in database
-                draft = Draft.query.filter_by(user_id=current_user.id).first()
-                if not draft:
-                    draft = Draft(user_id=current_user.id)
-                    db.session.add(draft)
-                
-                draft.jd_filename = jd_filename
-                draft.jd_text = jd_text_content
-                draft.jd_hash = jd_hash
-                draft.jd_bytes = jd_bytes
+                # Draft already exists with JD data, just update criteria
                 draft.job_title = job_title
                 draft.criteria_data = json.dumps([
                     {'criterion': crit, 'category': cat_map.get(crit, 'Other Requirements'), 'use': True}
