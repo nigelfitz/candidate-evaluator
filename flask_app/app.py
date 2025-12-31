@@ -1002,6 +1002,7 @@ def create_app(config_name=None):
                                      in_workflow=True,
                                      has_unsaved_work=True,
                                      analysis_completed=False,
+                                     draft_modified_after_analysis=False,
                                      form_token=submitted_token,
                                      pricing=pricing,
                                      truncation_warning=True,
