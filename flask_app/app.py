@@ -813,6 +813,27 @@ def create_app(config_name=None):
             
             from config import Config
             pricing = Config.get_pricing()
+            
+            # Check if we should show truncation warning (from POST redirect)
+            truncation_warning_data = session.pop('truncation_warning', None)
+            if truncation_warning_data and request.args.get('show_warning') == '1':
+                print(f"DEBUG: Displaying truncation warning from session")
+                return render_template('run_analysis.html', 
+                                     user=current_user,
+                                     resume_count=resume_count,
+                                     latest_analysis_id=current_draft_analysis_id,
+                                     in_workflow=True,
+                                     has_unsaved_work=True,
+                                     analysis_completed=False,
+                                     draft_modified_after_analysis=False,
+                                     form_token=form_token,
+                                     pricing=pricing,
+                                     truncation_warning=True,
+                                     truncated_docs=truncation_warning_data['docs'],
+                                     jd_limit=truncation_warning_data['jd_limit'],
+                                     resume_limit=truncation_warning_data['resume_limit'],
+                                     selected_insights_mode=truncation_warning_data['insights_mode'])
+            
             return render_template('run_analysis.html', 
                                  user=current_user,
                                  resume_count=resume_count,
@@ -991,29 +1012,18 @@ def create_app(config_name=None):
             if truncated_docs and not confirm_truncation:
                 # DON'T consume token yet - restore it so user can resubmit
                 session['analysis_form_token'] = submitted_token
-                print(f"DEBUG: Showing truncation warning page, token NOT consumed, will be reused")
-                print(f"DEBUG: About to return template with truncation_warning=True and {len(truncated_docs)} truncated_docs")
                 
-                # Show confirmation page with warning
-                from config import Config
-                pricing = Config.get_pricing()
-                result = render_template('run_analysis.html',
-                                     user=current_user,
-                                     resume_count=len(candidates),
-                                     latest_analysis_id=None,
-                                     in_workflow=True,
-                                     has_unsaved_work=True,
-                                     analysis_completed=False,
-                                     draft_modified_after_analysis=False,
-                                     form_token=submitted_token,
-                                     pricing=pricing,
-                                     truncation_warning=True,
-                                     truncated_docs=truncated_docs,
-                                     jd_limit=jd_limit,
-                                     resume_limit=resume_limit,
-                                     selected_insights_mode=insights_mode)
-                print(f"DEBUG: Template rendered, returning response (should show warning banner)")
-                return result
+                # Store truncation warning data in session for redirect
+                session['truncation_warning'] = {
+                    'docs': truncated_docs,
+                    'jd_limit': jd_limit,
+                    'resume_limit': resume_limit,
+                    'insights_mode': insights_mode
+                }
+                print(f"DEBUG: Stored truncation warning in session, redirecting to GET")
+                
+                # Use Post/Redirect/Get pattern to avoid browser refresh issues
+                return redirect(url_for('run_analysis_route', show_warning='1'))
             
             # User has confirmed truncation (or no truncation needed)
             # NOW consume the token
