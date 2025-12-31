@@ -499,7 +499,7 @@ def create_app(config_name=None):
                 print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
                 
                 # Check document lengths and warn user if truncation will occur
-                from config import load_gpt_settings
+                from analysis import load_gpt_settings
                 gpt_settings = load_gpt_settings()
                 jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
                 resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
@@ -958,7 +958,7 @@ def create_app(config_name=None):
             print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
             
             # Check document lengths and warn user if truncation will occur
-            from config import load_gpt_settings
+            from analysis import load_gpt_settings
             gpt_settings = load_gpt_settings()
             jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
             resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
