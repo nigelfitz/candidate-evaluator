@@ -24,6 +24,9 @@
         {% if truncation_warning %}
         <!-- Hidden field to confirm user has seen truncation warning -->
         <input type="hidden" name="confirm_truncation" value="yes">
+        <script>console.log('TRUNCATION WARNING ACTIVE: Banner should be visible');</script>
+        {% else %}
+        <script>console.log('NO TRUNCATION WARNING: truncation_warning =', {{ truncation_warning|tojson }});</script>
         {% endif %}
         
         <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
