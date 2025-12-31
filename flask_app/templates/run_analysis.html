@@ -617,21 +617,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     credentials: 'same-origin'
                 })
                 .then(response => {
+                    console.log('[DEBUG] Fetch response:', { redirected: response.redirected, ok: response.ok, status: response.status, url: response.url });
                     if (response.redirected) {
                         // Fetch automatically followed redirect - use the final URL
+                        console.log('[DEBUG] Following redirect to:', response.url);
                         window.location.href = response.url;
                     } else if (response.ok) {
                         // Check if we got JSON or HTML response
                         return response.text().then(text => {
+                            console.log('[DEBUG] Response text (first 200 chars):', text.substring(0, 200));
                             try {
                                 const data = JSON.parse(text);
                                 if (data.redirect) {
+                                    console.log('[DEBUG] JSON redirect to:', data.redirect);
                                     window.location.href = data.redirect;
                                 }
                             } catch (e) {
                                 // HTML response - shouldn't happen normally
                                 // This might be an error page, so reload to show it
-                                console.error('Unexpected HTML response:', text.substring(0, 200));
+                                console.error('[DEBUG] Unexpected HTML response, calling reload()');
                                 window.location.reload();
                             }
                         });
