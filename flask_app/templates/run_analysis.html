@@ -611,6 +611,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const form = document.getElementById('runAnalysisForm');
                 const formData = new FormData(form);
                 
+                // Debug: Log what's in the FormData
+                console.log('[DEBUG] FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}: ${value}`);
+                }
+                
                 fetch(form.action, {
                     method: 'POST',
                     body: formData,
