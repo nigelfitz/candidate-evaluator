@@ -1020,6 +1020,7 @@ def create_app(config_name=None):
             # If documents exceed limits, show confirmation page FIRST
             confirm_truncation = request.form.get('confirm_truncation')
             print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
+            print(f"DEBUG: All form data keys: {list(request.form.keys())}")
             if truncated_docs and not confirm_truncation:
                 # DON'T consume token yet - restore it so user can resubmit
                 session['analysis_form_token'] = submitted_token
