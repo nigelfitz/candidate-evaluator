@@ -207,22 +207,22 @@ def create_app(config_name=None):
             }
     
     @app.route('/jd-length-warning')
-@login_required
-def jd_length_warning_route():
-    """Show JD length warning page"""
-    jd_length = request.args.get('jd_length', type=int)
-    jd_limit = request.args.get('jd_limit', type=int)
-    
-    if not session.get('show_jd_length_warning'):
-        flash('Invalid access to warning page', 'error')
-        return redirect(url_for('analyze'))
-    
-    return render_template('jd_length_warning.html',
-                         jd_length=jd_length,
-                         jd_limit=jd_limit)
+    @login_required
+    def jd_length_warning_route():
+        """Show JD length warning page"""
+        jd_length = request.args.get('jd_length', type=int)
+        jd_limit = request.args.get('jd_limit', type=int)
+        
+        if not session.get('show_jd_length_warning'):
+            flash('Invalid access to warning page', 'error')
+            return redirect(url_for('analyze'))
+        
+        return render_template('jd_length_warning.html',
+                             jd_length=jd_length,
+                             jd_limit=jd_limit)
 
 
-@app.route('/analyze', methods=['GET', 'POST'])
+    @app.route('/analyze', methods=['GET', 'POST'])
 
     @login_required
     def analyze():
