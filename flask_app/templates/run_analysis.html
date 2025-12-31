@@ -630,6 +630,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const data = JSON.parse(text);
                                 if (data.redirect) {
                                     console.log('[DEBUG] JSON redirect to:', data.redirect);
+                                    // Stop progress tracking since we're showing warning page
+                                    clearInterval(progressInterval);
+                                    // Navigate to warning page
                                     window.location.href = data.redirect;
                                 }
                             } catch (e) {

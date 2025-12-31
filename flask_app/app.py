@@ -1032,10 +1032,10 @@ def create_app(config_name=None):
                     'insights_mode': insights_mode,
                     'consumed': False  # Track if warning has been displayed
                 }
-                print(f"DEBUG: Stored truncation warning in session, redirecting to GET")
+                print(f"DEBUG: Stored truncation warning in session, returning JSON redirect")
                 
-                # Use Post/Redirect/Get pattern to avoid browser refresh issues
-                return redirect(url_for('run_analysis_route', show_warning='1'))
+                # Return JSON redirect for fetch to handle cleanly
+                return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
             
             # User has confirmed truncation (or no truncation needed)
             # Clear any lingering truncation warning from session
