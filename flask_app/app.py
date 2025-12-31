@@ -1209,7 +1209,9 @@ def create_app(config_name=None):
             print(f"DEBUG: Transaction committed! User charged successfully. New balance: ${current_user.balance_usd}")
             
             flash(f'✅ Analysis complete! Cost: ${estimated_cost:.2f}. Remaining balance: ${current_user.balance_usd:.2f}', 'success')
-            return redirect(url_for('results', analysis_id=analysis.id))
+            
+            # Return JSON redirect for fetch to handle cleanly
+            return jsonify({'redirect': url_for('results', analysis_id=analysis.id)})
             
         except Exception as e:
             # Capture error details for admin diagnostics
