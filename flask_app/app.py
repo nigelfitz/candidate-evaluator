@@ -768,6 +768,7 @@ def create_app(config_name=None):
         import secrets
         
         if request.method == 'GET':
+            print(f"DEBUG: GET /run-analysis - Loading page")
             # Check we have draft with JD, criteria, and resumes
             draft = Draft.query.filter_by(user_id=current_user.id).first()
             if not draft or not draft.criteria_data:
@@ -991,11 +992,12 @@ def create_app(config_name=None):
                 # DON'T consume token yet - restore it so user can resubmit
                 session['analysis_form_token'] = submitted_token
                 print(f"DEBUG: Showing truncation warning page, token NOT consumed, will be reused")
+                print(f"DEBUG: About to return template with truncation_warning=True and {len(truncated_docs)} truncated_docs")
                 
                 # Show confirmation page with warning
                 from config import Config
                 pricing = Config.get_pricing()
-                return render_template('run_analysis.html',
+                result = render_template('run_analysis.html',
                                      user=current_user,
                                      resume_count=len(candidates),
                                      latest_analysis_id=None,
@@ -1010,6 +1012,8 @@ def create_app(config_name=None):
                                      jd_limit=jd_limit,
                                      resume_limit=resume_limit,
                                      selected_insights_mode=insights_mode)
+                print(f"DEBUG: Template rendered, returning response (should show warning banner)")
+                return result
             
             # User has confirmed truncation (or no truncation needed)
             # NOW consume the token
