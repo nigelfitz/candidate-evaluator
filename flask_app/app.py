@@ -501,8 +501,8 @@ def create_app(config_name=None):
                 # Check document lengths and warn user if truncation will occur
                 from analysis import load_gpt_settings
                 gpt_settings = load_gpt_settings()
-                jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
-                resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
+                jd_limit = gpt_settings['jd_text_chars']
+                resume_limit = gpt_settings['candidate_text_chars']
                 
                 jd_length = len(jd_text)
                 truncated_docs = []
@@ -960,8 +960,8 @@ def create_app(config_name=None):
             # Check document lengths and warn user if truncation will occur
             from analysis import load_gpt_settings
             gpt_settings = load_gpt_settings()
-            jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
-            resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
+            jd_limit = gpt_settings['jd_text_chars']
+            resume_limit = gpt_settings['candidate_text_chars']
             
             jd_length = len(jd_text)
             truncated_docs = []
