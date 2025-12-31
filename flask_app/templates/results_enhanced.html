@@ -1049,10 +1049,13 @@ function attachEventListeners() {
         }
     });
     
-    document.getElementById('sortBy').addEventListener('change', (e) => {
-        currentSort = e.target.value;
-        renderMatrix();
-    });
+    const sortBy = document.getElementById('sortBy');
+    if (sortBy) {
+        sortBy.addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            renderMatrix();
+        });
+    }
     
     document.getElementById('filterBy').addEventListener('change', (e) => {
         currentFilter = e.target.value;
@@ -1067,19 +1070,32 @@ function attachEventListeners() {
         renderMatrix();
     });
     
-    document.getElementById('showScores').addEventListener('change', (e) => {
-        showScores = e.target.checked;
-        renderMatrix();
-        initializeTopCandidates(); // Update top candidates display too
-    });
+    const showScores = document.getElementById('showScores');
+    if (showScores) {
+        showScores.addEventListener('change', (e) => {
+            showScores = e.target.checked;
+            renderMatrix();
+            initializeTopCandidates(); // Update top candidates display too
+        });
+    }
     
-    document.getElementById('expandCategories').addEventListener('change', (e) => {
-        expandCategories = e.target.checked;
-        renderMatrix();
-    });
+    const expandCategoriesEl = document.getElementById('expandCategories');
+    if (expandCategoriesEl) {
+        expandCategoriesEl.addEventListener('change', (e) => {
+            expandCategories = e.target.checked;
+            renderMatrix();
+        });
+    }
     
-    document.getElementById('evidenceCandidate').addEventListener('change', updateEvidenceDisplay);
-    document.getElementById('evidenceCriterion').addEventListener('change', updateEvidenceDisplay);
+    const evidenceCandidate = document.getElementById('evidenceCandidate');
+    if (evidenceCandidate) {
+        evidenceCandidate.addEventListener('change', updateEvidenceDisplay);
+    }
+    
+    const evidenceCriterion = document.getElementById('evidenceCriterion');
+    if (evidenceCriterion) {
+        evidenceCriterion.addEventListener('change', updateEvidenceDisplay);
+    }
 }
 
 // Attach download button listener separately to ensure element exists
