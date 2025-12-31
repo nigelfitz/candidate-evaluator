@@ -268,6 +268,10 @@ def create_app(config_name=None):
                     db.session.delete(draft)
                     db.session.commit()
                     flash('Started new analysis. Previous draft cleared.', 'info')
+                # Clear any warning-related session flags
+                session.pop('truncation_confirmed', None)
+                session.pop('show_jd_length_warning', None)
+                session.pop('show_resume_length_warning', None)
                 return render_template('analyze.html', user=current_user, jd_data=None, criteria_count=0, current_step='jd',
                                      in_workflow=False, has_unsaved_work=False, analysis_completed=False)
             
@@ -605,10 +609,15 @@ def create_app(config_name=None):
                     flash('Draft not found. Please start over.', 'error')
                     return redirect(url_for('analyze'))
                 
-                # Resumes already in database, just clear session flags
+                # Resumes already in database, clear session flags
                 resumes_added = session.get('resumes_added', 0)
                 session.pop('show_resume_length_warning', None)
                 session.pop('resumes_added', None)
+                
+                # Mark that user has already confirmed truncation for this draft
+                # So run_analysis doesn't show the warning again
+                session['truncation_confirmed'] = True
+                session.modified = True
                 
                 flash(f'✅ {resumes_added} resume(s) uploaded successfully!', 'success')
                 return redirect(url_for('run_analysis_route'))
@@ -1234,7 +1243,10 @@ def create_app(config_name=None):
             system_settings = load_system_settings()
             warnings_enabled = system_settings.get('enable_document_length_warnings', True)
             
-            if warnings_enabled:
+            # Check if user already confirmed truncation at upload step
+            truncation_already_confirmed = session.get('truncation_confirmed', False)
+            
+            if warnings_enabled and not truncation_already_confirmed:
                 from analysis import load_gpt_settings
                 gpt_settings = load_gpt_settings()
                 print(f"DEBUG: Loaded gpt_settings: {list(gpt_settings.keys())}")
@@ -1283,9 +1295,10 @@ def create_app(config_name=None):
                     # Return JSON redirect for fetch to handle cleanly
                     return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
             
-            # User has confirmed truncation (or warnings disabled, or no truncation needed)
+            # User has confirmed truncation (or warnings disabled, or truncation already confirmed, or no truncation needed)
             # Clear any lingering truncation warning from session
             session.pop('truncation_warning', None)
+            session.pop('truncation_confirmed', None)  # Clear the early confirmation flag
             # NOW consume the token
             session.pop('analysis_form_token', None)
             print(f"DEBUG: Token consumed. Proceeding with analysis.")
