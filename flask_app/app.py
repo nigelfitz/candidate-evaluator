@@ -845,9 +845,8 @@ def create_app(config_name=None):
                 else:
                     return redirect(url_for('dashboard'))
             
-            # Consume the token (invalidate it immediately after validation)
-            session.pop('analysis_form_token', None)
-            print(f"DEBUG: Token consumed successfully. Proceeding with analysis.")
+            # NOTE: Token will be consumed AFTER document length check
+            # (so it can be restored if we need to show truncation warning)
             
             # Get configuration
             insights_mode = request.form.get('insights_mode', 'top3')
@@ -989,9 +988,9 @@ def create_app(config_name=None):
             confirm_truncation = request.form.get('confirm_truncation')
             print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
             if truncated_docs and not confirm_truncation:
-                # Restore the form token so user can resubmit after confirmation
+                # DON'T consume token yet - restore it so user can resubmit
                 session['analysis_form_token'] = submitted_token
-                print(f"DEBUG: Showing truncation warning page, restoring token: {submitted_token}")
+                print(f"DEBUG: Showing truncation warning page, token NOT consumed, will be reused")
                 
                 # Show confirmation page with warning
                 from config import Config
@@ -1010,6 +1009,11 @@ def create_app(config_name=None):
                                      jd_limit=jd_limit,
                                      resume_limit=resume_limit,
                                      selected_insights_mode=insights_mode)
+            
+            # User has confirmed truncation (or no truncation needed)
+            # NOW consume the token
+            session.pop('analysis_form_token', None)
+            print(f"DEBUG: Token consumed. Proceeding with analysis.")
             
             # Create Analysis record for progress tracking
             analysis = Analysis(
