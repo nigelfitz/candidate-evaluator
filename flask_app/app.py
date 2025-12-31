@@ -186,12 +186,10 @@ def create_app(config_name=None):
         """Load system settings from JSON file"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
         try:
-            print(f"DEBUG: Loading system settings from {settings_path}")
             with open(settings_path, 'r') as f:
                 settings_data = json.load(f)
             # Return simple dict of setting_name -> value
             result = {key: val['value'] for key, val in settings_data.items() if key != '_metadata'}
-            print(f"DEBUG: System settings loaded successfully: {list(result.keys())}")
             return result
         except Exception as e:
             print(f"ERROR loading system settings: {e}")
@@ -349,16 +347,12 @@ def create_app(config_name=None):
                 system_settings = load_system_settings()
                 warnings_enabled = system_settings.get('enable_document_length_warnings', True)
                 
-                print(f"DEBUG: warnings_enabled={warnings_enabled}, jd_length={len(jd_text_content)}")
-                
                 if warnings_enabled:
                     try:
                         from analysis import load_gpt_settings
                         gpt_settings = load_gpt_settings()
                         jd_limit = gpt_settings.get('jd_text_chars', 5000)
                         jd_length = len(jd_text_content)
-                        
-                        print(f"DEBUG: JD length check: {jd_length} > {jd_limit} = {jd_length > jd_limit}")
                         
                         if jd_length > jd_limit:
                             # Store JD data in draft (not session - too large for cookies)
@@ -376,7 +370,6 @@ def create_app(config_name=None):
                             # Just flag in session that we need to show warning
                             session['show_jd_length_warning'] = True
                             session.modified = True
-                            print(f"DEBUG: JD stored in draft, redirecting to warning page")
                             # Redirect to warning page (GET request)
                             return redirect(url_for('jd_length_warning_route', jd_length=jd_length, jd_limit=jd_limit))
                     except Exception as e:
@@ -386,11 +379,8 @@ def create_app(config_name=None):
                         # Continue without warning if there's an error
                 
                 # Extract criteria (no limit - let user uncheck unwanted ones)
-                print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
                 sections = extract_jd_sections_with_gpt(jd_text_content)
-                print(f"DEBUG: Sections extracted: {sections}")
                 criteria, cat_map = build_criteria_from_sections(sections, per_section=999, cap_total=10000)
-                print(f"DEBUG: Criteria extracted: {len(criteria)} items")
                 
                 if not criteria:
                     flash('Could not extract criteria from job description', 'error')
@@ -444,11 +434,8 @@ def create_app(config_name=None):
                 jd_hash = draft.jd_hash
                 
                 # Extract criteria
-                print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
                 sections = extract_jd_sections_with_gpt(jd_text_content)
-                print(f"DEBUG: Sections extracted: {sections}")
                 criteria, cat_map = build_criteria_from_sections(sections, per_section=999, cap_total=10000)
-                print(f"DEBUG: Criteria extracted: {len(criteria)} items")
                 
                 if not criteria:
                     flash('Could not extract criteria from job description', 'error')
@@ -746,8 +733,6 @@ def create_app(config_name=None):
                 import asyncio
                 from ai_service import run_global_ranking, run_deep_insights
                 
-                print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
-                
                 # Check document lengths and warn user if truncation will occur
                 from analysis import load_gpt_settings
                 gpt_settings = load_gpt_settings()
@@ -1018,7 +1003,6 @@ def create_app(config_name=None):
         import secrets
         
         if request.method == 'GET':
-            print(f"DEBUG: GET /run-analysis - Loading page")
             # Check we have draft with JD, criteria, and resumes
             draft = Draft.query.filter_by(user_id=current_user.id).first()
             if not draft or not draft.criteria_data:
@@ -1056,10 +1040,8 @@ def create_app(config_name=None):
             if not existing_token:
                 form_token = secrets.token_hex(16)
                 session['analysis_form_token'] = form_token
-                print(f"DEBUG: Generated NEW form token: {form_token}")
             else:
                 form_token = existing_token
-                print(f"DEBUG: Reusing existing form token: {form_token}")
             
             from config import Config
             pricing = Config.get_pricing()
@@ -1074,7 +1056,6 @@ def create_app(config_name=None):
                     session['truncation_warning'] = truncation_warning_data
                     session.modified = True
                     
-                    print(f"DEBUG: Displaying truncation warning from session with {len(truncation_warning_data['docs'])} docs")
                     return render_template('run_analysis.html', 
                                          user=current_user,
                                          resume_count=resume_count,
@@ -1090,10 +1071,6 @@ def create_app(config_name=None):
                                          jd_limit=truncation_warning_data['jd_limit'],
                                          resume_limit=truncation_warning_data['resume_limit'],
                                          selected_insights_mode=truncation_warning_data['insights_mode'])
-                else:
-                    print(f"DEBUG: show_warning=1 but warning already consumed or missing")
-            
-            print(f"DEBUG: Rendering normal page (no truncation warning)")
             
             return render_template('run_analysis.html', 
                                  user=current_user,
@@ -1114,12 +1091,8 @@ def create_app(config_name=None):
             submitted_token = request.form.get('form_token')
             expected_token = session.get('analysis_form_token')
             
-            print(f"DEBUG: Submitted token: {submitted_token}")
-            print(f"DEBUG: Expected token: {expected_token}")
-            
             if not submitted_token or submitted_token != expected_token:
                 # Token missing or invalid - likely duplicate submission
-                print(f"DEBUG: DUPLICATE SUBMISSION BLOCKED! Token mismatch.")
                 flash('This analysis has already been processed. Redirecting to results...', 'info')
                 # Try to find the most recent analysis for this user
                 recent_analysis = Analysis.query.filter_by(user_id=current_user.id).order_by(Analysis.created_at.desc()).first()
@@ -1168,7 +1141,6 @@ def create_app(config_name=None):
             
             # CRITICAL: Calculate cost and check balance BEFORE running analysis
             num_candidates = len(candidates)
-            print(f"DEBUG: insights_mode='{insights_mode}', num_candidates={num_candidates}")
             
             # Initialize cost variable
             estimated_cost = Decimal('10.00')  # Default to standard tier
@@ -1201,8 +1173,6 @@ def create_app(config_name=None):
             else:
                 estimated_cost = Decimal('10.00')
                 num_insights = 0
-            
-            print(f"DEBUG: num_insights={num_insights}, estimated_cost=${estimated_cost}")
             
             # Check funds BEFORE running analysis
             if current_user.balance_usd < estimated_cost:
@@ -1237,8 +1207,6 @@ def create_app(config_name=None):
             # Use job title from draft (already extracted/edited by user)
             job_title = draft.job_title or "Position Not Specified"
             
-            print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
-            
             # Check document lengths and warn user if truncation will occur
             system_settings = load_system_settings()
             warnings_enabled = system_settings.get('enable_document_length_warnings', True)
@@ -1249,10 +1217,8 @@ def create_app(config_name=None):
             if warnings_enabled and not truncation_already_confirmed:
                 from analysis import load_gpt_settings
                 gpt_settings = load_gpt_settings()
-                print(f"DEBUG: Loaded gpt_settings: {list(gpt_settings.keys())}")
                 jd_limit = gpt_settings['jd_text_chars']
                 resume_limit = gpt_settings['candidate_text_chars']
-                print(f"DEBUG: jd_limit={jd_limit}, resume_limit={resume_limit}, jd_length={len(jd_text)}")
                 
                 jd_length = len(jd_text)
                 truncated_docs = []
@@ -1276,8 +1242,6 @@ def create_app(config_name=None):
                 
                 # If documents exceed limits, show confirmation page FIRST
                 confirm_truncation = request.form.get('confirm_truncation')
-                print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
-                print(f"DEBUG: All form data keys: {list(request.form.keys())}")
                 if truncated_docs and not confirm_truncation:
                     # DON'T consume token yet - restore it so user can resubmit
                     session['analysis_form_token'] = submitted_token
@@ -1290,7 +1254,6 @@ def create_app(config_name=None):
                         'insights_mode': insights_mode,
                         'consumed': False  # Track if warning has been displayed
                     }
-                    print(f"DEBUG: Stored truncation warning in session, returning JSON redirect")
                     
                     # Return JSON redirect for fetch to handle cleanly
                     return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
@@ -1301,7 +1264,6 @@ def create_app(config_name=None):
             session.pop('truncation_confirmed', None)  # Clear the early confirmation flag
             # NOW consume the token
             session.pop('analysis_form_token', None)
-            print(f"DEBUG: Token consumed. Proceeding with analysis.")
             
             # Create Analysis record for progress tracking
             analysis = Analysis(
@@ -1336,9 +1298,7 @@ def create_app(config_name=None):
             
             # PHASE 1: Global Ranking (All Candidates)
             print("Phase 1: AI scoring all candidates...")
-            print(f"DEBUG: Building candidate tuples from {len(candidates)} candidates")
             candidate_tuples = [(c.name, c.text) for c in candidates]
-            print(f"DEBUG: About to call run_global_ranking with {len(candidate_tuples)} tuples, {len(criteria_list)} criteria")
             
             evaluations = asyncio.run(
                 run_global_ranking(
@@ -1348,7 +1308,6 @@ def create_app(config_name=None):
                     progress_callback=update_progress
                 )
             )
-            print(f"DEBUG: run_global_ranking returned {len(evaluations)} evaluations")
             
             print(f"Phase 1 complete. Top candidate: {evaluations[0].candidate_name} ({evaluations[0].overall_score:.1f}/100)")
             
@@ -1445,7 +1404,6 @@ def create_app(config_name=None):
             
             # CRITICAL: Charge user ONLY after all work succeeded
             # If anything above failed, we never reach this point (exception caught below)
-            print(f"DEBUG: All work complete! NOW charging user ${estimated_cost}...")
             current_user.balance_usd -= estimated_cost
             
             # Create transaction record (linked to analysis)
@@ -1464,7 +1422,6 @@ def create_app(config_name=None):
             
             # Commit everything atomically (if this fails, EVERYTHING rolls back including charge)
             db.session.commit()
-            print(f"DEBUG: Transaction committed! User charged successfully. New balance: ${current_user.balance_usd}")
             
             flash(f'✅ Analysis complete! Cost: ${estimated_cost:.2f}. Remaining balance: ${current_user.balance_usd:.2f}', 'success')
             
