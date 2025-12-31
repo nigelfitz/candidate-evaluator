@@ -817,8 +817,13 @@ def create_app(config_name=None):
             # Check if we should show truncation warning (from POST redirect)
             show_warning = request.args.get('show_warning')
             if show_warning == '1':
-                truncation_warning_data = session.pop('truncation_warning', None)
-                if truncation_warning_data:
+                truncation_warning_data = session.get('truncation_warning', None)
+                if truncation_warning_data and not truncation_warning_data.get('consumed', False):
+                    # Mark as consumed to prevent double-display
+                    truncation_warning_data['consumed'] = True
+                    session['truncation_warning'] = truncation_warning_data
+                    session.modified = True
+                    
                     print(f"DEBUG: Displaying truncation warning from session with {len(truncation_warning_data['docs'])} docs")
                     return render_template('run_analysis.html', 
                                          user=current_user,
@@ -836,7 +841,7 @@ def create_app(config_name=None):
                                          resume_limit=truncation_warning_data['resume_limit'],
                                          selected_insights_mode=truncation_warning_data['insights_mode'])
                 else:
-                    print(f"DEBUG: show_warning=1 but no truncation data in session - may have been consumed already")
+                    print(f"DEBUG: show_warning=1 but warning already consumed or missing")
             
             print(f"DEBUG: Rendering normal page (no truncation warning)")
             
@@ -1024,7 +1029,8 @@ def create_app(config_name=None):
                     'docs': truncated_docs,
                     'jd_limit': jd_limit,
                     'resume_limit': resume_limit,
-                    'insights_mode': insights_mode
+                    'insights_mode': insights_mode,
+                    'consumed': False  # Track if warning has been displayed
                 }
                 print(f"DEBUG: Stored truncation warning in session, redirecting to GET")
                 
@@ -1032,6 +1038,8 @@ def create_app(config_name=None):
                 return redirect(url_for('run_analysis_route', show_warning='1'))
             
             # User has confirmed truncation (or no truncation needed)
+            # Clear any lingering truncation warning from session
+            session.pop('truncation_warning', None)
             # NOW consume the token
             session.pop('analysis_form_token', None)
             print(f"DEBUG: Token consumed. Proceeding with analysis.")
