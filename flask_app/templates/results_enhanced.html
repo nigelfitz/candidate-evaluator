@@ -1022,7 +1022,13 @@ function scrollToEvidenceExplorer(candidateName) {
 
 function attachEventListeners() {
     // Matrix cell click handler (event delegation)
-    document.getElementById('matrixBody').addEventListener('click', (e) => {
+    const matrixBody = document.getElementById('matrixBody');
+    if (!matrixBody) {
+        console.error('[ERROR] matrixBody element not found - skipping event listeners');
+        return;
+    }
+    
+    matrixBody.addEventListener('click', (e) => {
         const cell = e.target.closest('.matrix-cell');
         if (cell) {
             const candidate = cell.dataset.candidate;
