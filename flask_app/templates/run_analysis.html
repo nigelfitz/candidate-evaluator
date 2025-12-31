@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => {
                     if (response.redirected) {
-                        // Analysis complete - navigate to results
+                        // Fetch automatically followed redirect - use the final URL
                         window.location.href = response.url;
                     } else if (response.ok) {
                         // Check if we got JSON or HTML response
@@ -629,7 +629,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     window.location.href = data.redirect;
                                 }
                             } catch (e) {
-                                // HTML response - likely a redirect page
+                                // HTML response - shouldn't happen normally
+                                // This might be an error page, so reload to show it
+                                console.error('Unexpected HTML response:', text.substring(0, 200));
                                 window.location.reload();
                             }
                         });
