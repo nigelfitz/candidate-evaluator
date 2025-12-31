@@ -1039,7 +1039,9 @@ def create_app(config_name=None):
             
             # PHASE 1: Global Ranking (All Candidates)
             print("Phase 1: AI scoring all candidates...")
+            print(f"DEBUG: Building candidate tuples from {len(candidates)} candidates")
             candidate_tuples = [(c.name, c.text) for c in candidates]
+            print(f"DEBUG: About to call run_global_ranking with {len(candidate_tuples)} tuples, {len(criteria_list)} criteria")
             
             evaluations = asyncio.run(
                 run_global_ranking(
@@ -1049,6 +1051,7 @@ def create_app(config_name=None):
                     progress_callback=update_progress
                 )
             )
+            print(f"DEBUG: run_global_ranking returned {len(evaluations)} evaluations")
             
             print(f"Phase 1 complete. Top candidate: {evaluations[0].candidate_name} ({evaluations[0].overall_score:.1f}/100)")
             
