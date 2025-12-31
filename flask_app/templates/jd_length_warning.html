@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <!-- Warning Banner -->
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 32px; margin-bottom: 30px; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+            <div style="display: flex; gap: 20px;">
+                <i data-lucide="info" style="width: 56px; height: 56px; color: #1e40af; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h2 style="color: #1e40af; margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">
+                        📄 Job Description Length Notice
+                    </h2>
+                    <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">
+                        Your job description contains <strong>{{ "{:,}".format(jd_length) }} characters</strong>, 
+                        which exceeds our recommended limit of <strong>{{ "{:,}".format(jd_limit) }} characters</strong>.
+                    </p>
+                    
+                    <!-- Don't Worry Section -->
+                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a; margin-bottom: 16px;">
+                        <p style="color: #065f46; margin: 0 0 12px 0; font-size: 15px; font-weight: 600;">
+                            ✅ Don't worry - you're in good hands!
+                        </p>
+                        <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
+                            Our generous {{ "{:,}".format(jd_limit) }}-character limit is designed to capture all essential information while maintaining optimal AI performance. The analysis will still be comprehensive and accurate.
+                        </p>
+                    </div>
+
+                    <!-- What Happens Section -->
+                    <div style="background: #eff6ff; border-radius: 8px; padding: 16px; border-left: 4px solid #3b82f6; margin-bottom: 16px;">
+                        <p style="color: #1e40af; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+                            📋 What will happen:
+                        </p>
+                        <ul style="color: #1e40af; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                            <li>We'll use the first {{ "{:,}".format(jd_limit) }} characters of your JD</li>
+                            <li>All key requirements and criteria will still be extracted</li>
+                            <li>You can review and edit the criteria on the next page</li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+                        <form method="POST" action="{{ url_for('analyze') }}" style="flex: 1; min-width: 200px;">
+                            <input type="hidden" name="action" value="confirm_jd_length">
+                            <button type="submit" 
+                                    style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.transform='translateY(0)'">
+                                ✅ Continue to Criteria Review
+                            </button>
+                        </form>
+                        
+                        <a href="{{ url_for('analyze', step='jd') }}" 
+                           style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; padding: 14px 24px; background: white; border: 2px solid #f59e0b; border-radius: 8px; color: #78350f; font-size: 16px; font-weight: 600; text-decoration: none; transition: background 0.2s;"
+                           onmouseover="this.style.background='#fef3c7'"
+                           onmouseout="this.style.background='white'">
+                            🔄 Upload Different JD
+                        </a>
+                    </div>
+
+                    <!-- Abandon Job Button -->
+                    <div style="margin-top: 16px; text-align: center; padding-top: 16px; border-top: 1px solid #bfdbfe;">
+                        <a href="{{ url_for('analyze', new='1') }}" 
+                           style="display: inline-block; padding: 8px 16px; background: transparent; border: 1px solid #cbd5e1; border-radius: 6px; color: #64748b; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s;"
+                           onmouseover="this.style.borderColor='#94a3b8'; this.style.color='#475569'"
+                           onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b'">
+                            🚫 Abandon Job & Start Fresh
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div style="background: #f8fafc; border-radius: 8px; padding: 20px; border-left: 4px solid #64748b;">
+            <p style="color: #475569; margin: 0; font-size: 14px; line-height: 1.6;">
+                <strong>💡 Tip:</strong> No charges have been applied yet. Charges only occur when your analysis completes successfully. You're free to abandon or restart at any time before clicking "Run Analysis".
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}

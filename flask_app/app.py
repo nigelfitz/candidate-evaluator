@@ -182,7 +182,27 @@ def create_app(config_name=None):
             'user_id': current_user.id
         })
     
+    def load_system_settings():
+        """Load system settings from JSON file"""
+        settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
+        try:
+            with open(settings_path, 'r') as f:
+                settings_data = json.load(f)
+            # Return simple dict of setting_name -> value
+            return {key: val['value'] for key, val in settings_data.items() if key != '_metadata'}
+        except Exception as e:
+            print(f"ERROR loading system settings: {e}")
+            # Return defaults
+            return {
+                'enable_document_length_warnings': True,
+                'registration_enabled': False,
+                'maintenance_mode': False,
+                'max_file_size_mb': 10,
+                'new_user_welcome_credit': 0.0
+            }
+    
     @app.route('/analyze', methods=['GET', 'POST'])
+
     @login_required
     def analyze():
         """Analysis page - Step 1: Upload JD, extract criteria OR Step 2: Upload resumes and run analysis"""
@@ -274,7 +294,91 @@ def create_app(config_name=None):
                 
                 jd_hash = hash_bytes(jd_bytes)
                 
+                # Check JD length and show warning if needed
+                system_settings = load_system_settings()
+                warnings_enabled = system_settings.get('enable_document_length_warnings', True)
+                
+                if warnings_enabled:
+                    from analysis import load_gpt_settings
+                    gpt_settings = load_gpt_settings()
+                    jd_limit = gpt_settings.get('jd_text_chars', 5000)
+                    jd_length = len(jd_text_content)
+                    
+                    if jd_length > jd_limit:
+                        # Store JD data in session for after confirmation
+                        session['pending_jd'] = {
+                            'filename': jd_filename,
+                            'text': jd_text_content,
+                            'hash': jd_hash,
+                            'bytes': base64.b64encode(jd_bytes).decode('utf-8')  # Encode bytes for JSON storage
+                        }
+                        session.modified = True
+                        # Show warning page
+                        return render_template('jd_length_warning.html',
+                                             jd_length=jd_length,
+                                             jd_limit=jd_limit)
+                
                 # Extract criteria (no limit - let user uncheck unwanted ones)
+                print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
+                sections = extract_jd_sections_with_gpt(jd_text_content)
+                print(f"DEBUG: Sections extracted: {sections}")
+                criteria, cat_map = build_criteria_from_sections(sections, per_section=999, cap_total=10000)
+                print(f"DEBUG: Criteria extracted: {len(criteria)} items")
+                
+                if not criteria:
+                    flash('Could not extract criteria from job description', 'error')
+                    return redirect(url_for('analyze'))
+                
+                # Use AI-extracted job title from sections
+                job_title = sections.job_title or "Position Not Specified"
+                
+                # Store in database
+                draft = Draft.query.filter_by(user_id=current_user.id).first()
+                if not draft:
+                    draft = Draft(user_id=current_user.id)
+                    db.session.add(draft)
+                
+                draft.jd_filename = jd_filename
+                draft.jd_text = jd_text_content
+                draft.jd_hash = jd_hash
+                draft.jd_bytes = jd_bytes
+                draft.job_title = job_title
+                draft.criteria_data = json.dumps([
+                    {'criterion': crit, 'category': cat_map.get(crit, 'Other Requirements'), 'use': True}
+                    for crit in criteria
+                ])
+                
+                db.session.commit()
+                
+                flash(f'✅ JD processed! Extracted {len(criteria)} criteria. Review them on the Job Criteria page.', 'success')
+                return redirect(url_for('review_criteria'))
+                
+            except Exception as e:
+                flash(f'JD processing failed: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
+                return redirect(url_for('analyze'))
+        
+        elif action == 'confirm_jd_length':
+            # User confirmed to proceed with long JD
+            try:
+                from analysis import read_file_bytes, hash_bytes, extract_jd_sections_with_gpt, build_criteria_from_sections
+                
+                # Retrieve JD data from session
+                pending_jd = session.get('pending_jd')
+                if not pending_jd:
+                    flash('Session expired. Please upload your JD again.', 'error')
+                    return redirect(url_for('analyze'))
+                
+                jd_filename = pending_jd['filename']
+                jd_text_content = pending_jd['text']
+                jd_hash = pending_jd['hash']
+                jd_bytes = base64.b64decode(pending_jd['bytes'])
+                
+                # Clear session
+                session.pop('pending_jd', None)
+                
+                # Extract criteria
                 print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
                 sections = extract_jd_sections_with_gpt(jd_text_content)
                 print(f"DEBUG: Sections extracted: {sections}")
@@ -332,8 +436,10 @@ def create_app(config_name=None):
                     flash('Please select at least one resume file', 'error')
                     return redirect(url_for('analyze', step='resumes'))
                 
-                # Process and store resumes
+                # Process and store resumes temporarily
                 resumes_added = 0
+                processed_resumes = []  # Store for length checking
+                
                 for resume_file in resume_files:
                     if not resume_file.filename:
                         continue
@@ -352,16 +458,54 @@ def create_app(config_name=None):
                     from analysis import extract_candidate_name_with_gpt
                     candidate_name = extract_candidate_name_with_gpt(resume_text, resume_file.filename)
                     
+                    # Store for potential length warning
+                    processed_resumes.append({
+                        'filename': resume_file.filename,
+                        'bytes': resume_bytes,
+                        'text': resume_text,
+                        'name': candidate_name,
+                        'hash': resume_hash
+                    })
+                    
+                    resumes_added += 1
+                
+                # Check resume lengths and show warning if needed
+                system_settings = load_system_settings()
+                warnings_enabled = system_settings.get('enable_document_length_warnings', True)
+                
+                if warnings_enabled and processed_resumes:
+                    from analysis import load_gpt_settings
+                    gpt_settings = load_gpt_settings()
+                    resume_limit = gpt_settings.get('candidate_text_chars', 12000)
+                    
+                    truncated_resumes = []
+                    for resume in processed_resumes:
+                        if len(resume['text']) > resume_limit:
+                            truncated_resumes.append({
+                                'name': resume['name'],
+                                'length': len(resume['text'])
+                            })
+                    
+                    if truncated_resumes:
+                        # Store resumes in session for after confirmation
+                        session['pending_resumes'] = processed_resumes
+                        session.modified = True
+                        # Show warning page
+                        return render_template('resume_length_warning.html',
+                                             truncated_resumes=truncated_resumes,
+                                             resume_limit=resume_limit)
+                
+                # No warnings needed or warnings disabled - commit resumes
+                for resume in processed_resumes:
                     draft_resume = DraftResume(
                         draft_id=draft.id,
-                        file_name=resume_file.filename,
-                        file_bytes=resume_bytes,
-                        extracted_text=resume_text,
-                        candidate_name=candidate_name,
-                        file_hash=resume_hash
+                        file_name=resume['filename'],
+                        file_bytes=resume['bytes'],
+                        extracted_text=resume['text'],
+                        candidate_name=resume['name'],
+                        file_hash=resume['hash']
                     )
                     db.session.add(draft_resume)
-                    resumes_added += 1
                 
                 db.session.commit()
                 
@@ -371,6 +515,50 @@ def create_app(config_name=None):
                     flash(f'✅ {resumes_added} resume(s) uploaded successfully!', 'success')
                 
                 # Redirect to Run Analysis page
+                return redirect(url_for('run_analysis_route'))
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Resume upload failed: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
+                return redirect(url_for('analyze', step='resumes'))
+        
+        elif action == 'confirm_resume_length':
+            # User confirmed to proceed with long resumes
+            try:
+                from analysis import read_file_bytes, hash_bytes
+                
+                # Retrieve resume data from session
+                processed_resumes = session.get('pending_resumes')
+                if not processed_resumes:
+                    flash('Session expired. Please upload your resumes again.', 'error')
+                    return redirect(url_for('analyze', step='resumes'))
+                
+                # Get draft
+                draft = Draft.query.filter_by(user_id=current_user.id).first()
+                if not draft:
+                    flash('Draft not found. Please start over.', 'error')
+                    return redirect(url_for('analyze'))
+                
+                # Clear session
+                session.pop('pending_resumes', None)
+                
+                # Add resumes to database
+                for resume in processed_resumes:
+                    draft_resume = DraftResume(
+                        draft_id=draft.id,
+                        file_name=resume['filename'],
+                        file_bytes=resume['bytes'],
+                        extracted_text=resume['text'],
+                        candidate_name=resume['name'],
+                        file_hash=resume['hash']
+                    )
+                    db.session.add(draft_resume)
+                
+                db.session.commit()
+                
+                flash(f'✅ {len(processed_resumes)} resume(s) uploaded successfully!', 'success')
                 return redirect(url_for('run_analysis_route'))
                 
             except Exception as e:
@@ -990,55 +1178,59 @@ def create_app(config_name=None):
             print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
             
             # Check document lengths and warn user if truncation will occur
-            from analysis import load_gpt_settings
-            gpt_settings = load_gpt_settings()
-            print(f"DEBUG: Loaded gpt_settings: {list(gpt_settings.keys())}")
-            jd_limit = gpt_settings['jd_text_chars']
-            resume_limit = gpt_settings['candidate_text_chars']
-            print(f"DEBUG: jd_limit={jd_limit}, resume_limit={resume_limit}, jd_length={len(jd_text)}")
+            system_settings = load_system_settings()
+            warnings_enabled = system_settings.get('enable_document_length_warnings', True)
             
-            jd_length = len(jd_text)
-            truncated_docs = []
-            
-            # Check JD length
-            if jd_length > jd_limit:
-                truncated_docs.append({
-                    'name': 'Job Description',
-                    'length': jd_length,
-                    'limit': jd_limit
-                })
-            
-            # Check resume lengths
-            long_resumes = [(c.name, len(c.text)) for c in candidates if len(c.text) > resume_limit]
-            for name, length in long_resumes:
-                truncated_docs.append({
-                    'name': f'Resume: {name}',
-                    'length': length,
-                    'limit': resume_limit
-                })
-            
-            # If documents exceed limits, show confirmation page FIRST
-            confirm_truncation = request.form.get('confirm_truncation')
-            print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
-            print(f"DEBUG: All form data keys: {list(request.form.keys())}")
-            if truncated_docs and not confirm_truncation:
-                # DON'T consume token yet - restore it so user can resubmit
-                session['analysis_form_token'] = submitted_token
+            if warnings_enabled:
+                from analysis import load_gpt_settings
+                gpt_settings = load_gpt_settings()
+                print(f"DEBUG: Loaded gpt_settings: {list(gpt_settings.keys())}")
+                jd_limit = gpt_settings['jd_text_chars']
+                resume_limit = gpt_settings['candidate_text_chars']
+                print(f"DEBUG: jd_limit={jd_limit}, resume_limit={resume_limit}, jd_length={len(jd_text)}")
                 
-                # Store truncation warning data in session for redirect
-                session['truncation_warning'] = {
-                    'docs': truncated_docs,
-                    'jd_limit': jd_limit,
-                    'resume_limit': resume_limit,
-                    'insights_mode': insights_mode,
-                    'consumed': False  # Track if warning has been displayed
-                }
-                print(f"DEBUG: Stored truncation warning in session, returning JSON redirect")
+                jd_length = len(jd_text)
+                truncated_docs = []
                 
-                # Return JSON redirect for fetch to handle cleanly
-                return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
+                # Check JD length
+                if jd_length > jd_limit:
+                    truncated_docs.append({
+                        'name': 'Job Description',
+                        'length': jd_length,
+                        'limit': jd_limit
+                    })
+                
+                # Check resume lengths
+                long_resumes = [(c.name, len(c.text)) for c in candidates if len(c.text) > resume_limit]
+                for name, length in long_resumes:
+                    truncated_docs.append({
+                        'name': f'Resume: {name}',
+                        'length': length,
+                        'limit': resume_limit
+                    })
+                
+                # If documents exceed limits, show confirmation page FIRST
+                confirm_truncation = request.form.get('confirm_truncation')
+                print(f"DEBUG: truncated_docs count={len(truncated_docs)}, confirm_truncation={confirm_truncation}")
+                print(f"DEBUG: All form data keys: {list(request.form.keys())}")
+                if truncated_docs and not confirm_truncation:
+                    # DON'T consume token yet - restore it so user can resubmit
+                    session['analysis_form_token'] = submitted_token
+                    
+                    # Store truncation warning data in session for redirect
+                    session['truncation_warning'] = {
+                        'docs': truncated_docs,
+                        'jd_limit': jd_limit,
+                        'resume_limit': resume_limit,
+                        'insights_mode': insights_mode,
+                        'consumed': False  # Track if warning has been displayed
+                    }
+                    print(f"DEBUG: Stored truncation warning in session, returning JSON redirect")
+                    
+                    # Return JSON redirect for fetch to handle cleanly
+                    return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
             
-            # User has confirmed truncation (or no truncation needed)
+            # User has confirmed truncation (or warnings disabled, or no truncation needed)
             # Clear any lingering truncation warning from session
             session.pop('truncation_warning', None)
             # NOW consume the token
@@ -3922,6 +4114,7 @@ def create_app(config_name=None):
         settings['maintenance_mode']['value'] = request.form.get('maintenance_mode') == 'on'
         settings['max_file_size_mb']['value'] = int(request.form.get('max_file_size_mb', 10))
         settings['new_user_welcome_credit']['value'] = float(request.form.get('new_user_welcome_credit', 0))
+        settings['enable_document_length_warnings']['value'] = request.form.get('enable_document_length_warnings') == 'on'
         
         # Update metadata
         settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')

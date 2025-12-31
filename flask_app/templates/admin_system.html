@@ -142,6 +142,28 @@
                     </div>
                 </div>
                 
+                <!-- Document Length Warnings Toggle -->
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-name">{{ settings.enable_document_length_warnings.label }}</div>
+                            <div class="setting-desc">{{ settings.enable_document_length_warnings.description }}</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="enable_document_length_warnings" {% if settings.enable_document_length_warnings.value %}checked{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
+                        <strong>Current Status:</strong> 
+                        {% if settings.enable_document_length_warnings.value %}
+                            <span style="color: #28a745;">✓ Warnings ENABLED</span> - Users will see warnings when JD or resumes exceed character limits (at Step 1, Step 3, and Step 4)
+                        {% else %}
+                            <span style="color: #dc3545;">✕ Warnings DISABLED</span> - Documents will be automatically trimmed without user confirmation
+                        {% endif %}
+                    </div>
+                </div>
+                
                 <!-- Metadata -->
                 <div class="setting-item">
                     <div class="setting-name">Last Updated</div>

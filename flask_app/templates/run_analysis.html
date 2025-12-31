@@ -64,6 +64,14 @@
                             <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
                                 <strong>💡 Important:</strong> If you'd prefer to review and manually shorten these documents first, you can do so now and then re-run the job later. You have <strong>NOT been charged yet</strong> (charges only apply when analysis completes successfully).
                             </p>
+                            <div style="margin-top: 12px; text-align: right;">
+                                <a href="{{ url_for('analyze', new='1') }}" 
+                                   style="display: inline-block; padding: 8px 16px; background: white; border: 2px solid #f59e0b; border-radius: 6px; color: #78350f; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;"
+                                   onmouseover="this.style.background='#fef3c7'"
+                                   onmouseout="this.style.background='white'">
+                                    🚫 Abandon Job
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

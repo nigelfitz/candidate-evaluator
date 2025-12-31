@@ -19,6 +19,11 @@
     "label": "Welcome Credit for New Users (USD)",
     "description": "Starting balance given to new accounts. Set to 0 for production."
   },
+  "enable_document_length_warnings": {
+    "value": true,
+    "label": "Enable Document Length Warnings",
+    "description": "Show warnings when JD or resumes exceed character limits. Disable to allow full-length documents without user confirmation."
+  },
   "_metadata": {
     "last_updated": "2025-12-23 23:04:26 UTC",
     "updated_by": "admin"
