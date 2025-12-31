@@ -164,6 +164,31 @@
                     </div>
                 </div>
                 
+                <!-- Maximum Resumes Per Upload -->
+                <div class="setting-item">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="setting-name">{{ settings.max_resumes_per_upload.label }}</div>
+                            <div class="setting-desc">{{ settings.max_resumes_per_upload.description }}</div>
+                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
+                                <input type="range" name="max_resumes_per_upload" id="maxResumesSlider" class="form-range" 
+                                       min="50" max="500" step="50" value="{{ settings.max_resumes_per_upload.value }}"
+                                       style="flex: 1; max-width: 300px;"
+                                       oninput="document.getElementById('maxResumesValue').textContent = this.value">
+                                <span id="maxResumesValue" style="font-weight: 600; color: #2563eb; min-width: 80px; text-align: center; font-size: 1.1rem;">{{ settings.max_resumes_per_upload.value }}</span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.85rem; color: #64748b;">
+                                <span style="float: left;">50 (Quick)</span>
+                                <span style="float: right;">500 (Enterprise)</span>
+                                <div style="clear: both;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: #fff9e6; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #ffc107;">
+                        <strong>⚠️ Processing Impact:</strong> Higher limits allow users to upload more resumes per batch, but may increase processing time and API usage. The system will show helpful guidance to users approaching or exceeding this limit.
+                    </div>
+                </div>
+                
                 <!-- Metadata -->
                 <div class="setting-item">
                     <div class="setting-name">Last Updated</div>

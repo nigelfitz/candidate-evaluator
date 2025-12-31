@@ -24,6 +24,11 @@
     "label": "Enable Document Length Warnings",
     "description": "Show warnings when JD or resumes exceed character limits. Disable to allow full-length documents without user confirmation."
   },
+  "max_resumes_per_upload": {
+    "value": 200,
+    "label": "Maximum Resumes Per Upload",
+    "description": "Maximum number of resume files a user can upload in a single batch. Recommended: 50-200. Higher limits may cause longer processing times."
+  },
   "_metadata": {
     "last_updated": "2025-12-23 23:04:26 UTC",
     "updated_by": "admin"

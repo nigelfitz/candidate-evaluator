@@ -196,6 +196,11 @@
             btnText.textContent = 'Processing...';
             continueBtn.disabled = true;
             
+            // If it's the resume upload form, show the overlay
+            if (formId === 'resumeUploadForm' && typeof showResumeUploadOverlay === 'function') {
+                showResumeUploadOverlay();
+            }
+            
             // Submit form
             form.submit();
         }

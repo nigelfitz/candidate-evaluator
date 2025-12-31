@@ -270,8 +270,9 @@ def create_app(config_name=None):
                 session.pop('truncation_confirmed', None)
                 session.pop('show_jd_length_warning', None)
                 session.pop('show_resume_length_warning', None)
+                system_settings = load_system_settings()
                 return render_template('analyze.html', user=current_user, jd_data=None, criteria_count=0, current_step='jd',
-                                     in_workflow=False, has_unsaved_work=False, analysis_completed=False)
+                                     in_workflow=False, has_unsaved_work=False, analysis_completed=False, system_settings=system_settings)
             
             # Get draft data if exists
             draft = Draft.query.filter_by(user_id=current_user.id).first()
@@ -302,6 +303,7 @@ def create_app(config_name=None):
                     step = 'resumes' if criteria_data else 'jd'
                 
                 has_unsaved_work = draft is not None
+                system_settings = load_system_settings()
                     
                 return render_template('analyze.html', user=current_user, jd_data=jd_data, 
                                      criteria_count=len(criteria_data), current_step=step,
@@ -309,12 +311,14 @@ def create_app(config_name=None):
                                      uploaded_resumes=uploaded_resumes,
                                      in_workflow=True, has_unsaved_work=has_unsaved_work,
                                      analysis_completed=analysis_completed,
-                                     draft_modified_after_analysis=draft_modified_after_analysis)
+                                     draft_modified_after_analysis=draft_modified_after_analysis,
+                                     system_settings=system_settings)
             else:
+                system_settings = load_system_settings()
                 return render_template('analyze.html', user=current_user, jd_data=None, 
                                      criteria_count=0, current_step='jd', latest_analysis_id=None,
                                      uploaded_resumes=[], in_workflow=False, has_unsaved_work=False,
-                                     analysis_completed=False)
+                                     analysis_completed=False, system_settings=system_settings)
         
         # POST - handle JD upload, resume upload, or full analysis
         action = request.form.get('action')
@@ -4138,6 +4142,7 @@ def create_app(config_name=None):
         settings['max_file_size_mb']['value'] = int(request.form.get('max_file_size_mb', 10))
         settings['new_user_welcome_credit']['value'] = float(request.form.get('new_user_welcome_credit', 0))
         settings['enable_document_length_warnings']['value'] = request.form.get('enable_document_length_warnings') == 'on'
+        settings['max_resumes_per_upload']['value'] = int(request.form.get('max_resumes_per_upload', 200))
         
         # Update metadata
         settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
