@@ -21,8 +21,51 @@
         <!-- Hidden form token to prevent duplicate submissions -->
         <input type="hidden" name="form_token" value="{{ form_token }}">
         
+        {% if truncation_warning %}
+        <!-- Hidden field to confirm user has seen truncation warning -->
+        <input type="hidden" name="confirm_truncation" value="yes">
+        {% endif %}
+        
         <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">Step 4: Run Analysis</h2>
+            
+            {% if truncation_warning %}
+            <!-- Document Length Warning Banner -->
+            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; margin-bottom: 30px; border: 2px solid #3b82f6;">
+                <div style="display: flex; gap: 16px;">
+                    <i data-lucide="info" style="width: 48px; height: 48px; color: #1e40af; flex-shrink: 0;"></i>
+                    <div style="flex: 1;">
+                        <h3 style="color: #1e40af; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">
+                            📄 Document Length Notice
+                        </h3>
+                        <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
+                            The following documents exceed our character limits and will be automatically trimmed:
+                        </p>
+                        <ul style="color: #1e40af; margin: 0 0 16px 0; padding-left: 20px; font-size: 14px;">
+                            {% for doc in truncated_docs %}
+                            <li style="margin-bottom: 8px;">
+                                <strong>{{ doc.name }}</strong>: {{ "{:,}".format(doc.length) }} characters 
+                                <span style="color: #3b82f6;">→ will use first {{ "{:,}".format(doc.limit) }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a;">
+                            <p style="color: #065f46; margin: 0 0 12px 0; font-size: 15px; font-weight: 600;">
+                                ✅ Don't worry - you're in good hands!
+                            </p>
+                            <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
+                                Our generous limits ({{ "{:,}".format(jd_limit) }} chars for JDs, {{ "{:,}".format(resume_limit) }} chars for resumes) are designed to capture all essential information while maintaining optimal performance. Your analysis will still be comprehensive and accurate.
+                            </p>
+                        </div>
+                        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                            <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
+                                <strong>💡 Important:</strong> If you'd prefer to review and manually shorten these documents first, you can do so now and then re-run the job later. You have <strong>NOT been charged yet</strong> (charges only apply when analysis completes successfully).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
             
             <div style="background: #eff6ff; padding: 24px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #3b82f6;">
                 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
@@ -97,7 +140,7 @@
                     </div>
                     <div style="text-align: right; opacity: 0.9; font-size: 14px;">
                         <div>Your Balance: <strong>${{ "%.2f"|format(current_user.balance_usd) }}</strong></div>
-                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd - pricing['BASE_ANALYSIS_PRICE']) }}</strong></div>
+                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd|float - pricing['BASE_ANALYSIS_PRICE']) }}</strong></div>
                     </div>
                 </div>
             </div>
@@ -114,27 +157,12 @@
             <p style="color: #64748b; font-size: 16px;">Analyzing candidates with AI reasoning...</p>
         </div>
         
-        <!-- Progress Bar -->
-        <div style="background: #f1f5f9; border-radius: 12px; padding: 12px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-size: 13px; color: #64748b; font-weight: 500;">Progress</span>
-                <span id="progressPercentage" style="font-size: 13px; color: #3b82f6; font-weight: 600;">0%</span>
-            </div>
-            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s ease;"></div>
-            </div>
-        </div>
-        
         <!-- Live Status Log -->
         <div id="statusLog" style="background: #f8fafc; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; border: 2px solid #e2e8f0;">
             <div class="status-item" style="color: #16a34a; margin-bottom: 8px;">
                 <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
                 <span>Initializing analysis engine...</span>
             </div>
-        </div>
-        
-        <div style="margin-top: 24px; text-align: center;">
-            <div id="progressText" style="color: #3b82f6; font-weight: 600; font-size: 16px;">Initializing analysis...</div>
         </div>
     </div>
 </div>
@@ -145,8 +173,34 @@ let progressInterval = null;
 let lastProgressValue = 0;
 let lastProgressTime = Date.now();
 let isPhase2 = false;
+let shownMilestones = new Set(); // Track which milestones we've already shown
+let milestonesArray = []; // Store milestones for this analysis
 
 function startProgressTracking(totalCandidates) {
+    // Build milestone array once at start
+    milestonesArray = [
+        { progress: 1, key: 'first', messages: ['Reading first candidate...', 'Extracting candidate information...'] },
+        { progress: Math.floor(totalCandidates * 0.10), key: '10pct', messages: ['10% complete - Analyzing resumes...'] },
+        { progress: Math.floor(totalCandidates * 0.25), key: '25pct', messages: ['25% complete - Processing continues...'] },
+        { progress: Math.floor(totalCandidates * 0.40), key: '40pct', messages: ['40% complete - Evaluating candidates against criteria...'] },
+        { progress: Math.floor(totalCandidates * 0.5), key: '50pct', messages: ['Halfway through candidate scoring...'] },
+        { progress: Math.floor(totalCandidates * 0.60), key: '60pct', messages: ['60% complete - Ranking candidates...'] },
+        { progress: Math.floor(totalCandidates * 0.75), key: '75pct', messages: ['75% complete - Almost there...'] },
+        { progress: Math.floor(totalCandidates * 0.90), key: '90pct', messages: ['90% complete - Finalizing scores...'] },
+        { progress: totalCandidates, key: 'complete', messages: [`All ${totalCandidates} candidates scored! ✨`, 'Preparing detailed analysis results...'] }
+    ];
+    
+    // Remove duplicates (happens with small candidate counts)
+    const uniqueMilestones = [];
+    const seenProgress = new Set();
+    milestonesArray.forEach(m => {
+        if (!seenProgress.has(m.progress) && m.progress > 0) {
+            seenProgress.add(m.progress);
+            uniqueMilestones.push(m);
+        }
+    });
+    milestonesArray = uniqueMilestones;
+    
     const statusLog = document.getElementById('statusLog');
     const progressText = document.getElementById('progressText');
     
@@ -186,57 +240,38 @@ function checkProgress(totalCandidates) {
         } else if (phase === 'complete' || isComplete) {
             percentage = 100;
         }
-        const progressBar = document.getElementById('progressBar');
-        const progressPercentage = document.getElementById('progressPercentage');
-        
-        if (progressBar) {
-            progressBar.style.width = percentage + '%';
-        }
-        if (progressPercentage) {
-            progressPercentage.textContent = percentage + '%';
-        }
         
         // Update progress text
         if (isComplete) {
             clearInterval(progressInterval);
-            updateProgressText('✅ Analysis complete! Redirecting...');
-            if (progressBar) progressBar.style.width = '100%';
-            if (progressPercentage) progressPercentage.textContent = '100%';
             return;
         }
         
         // Check for stall (no progress for 10+ seconds)
         if (currentProgress === lastProgressValue) {
             const stallTime = Date.now() - lastProgressTime;
-            if (stallTime > 10000 && !isPhase2) {
-                updateProgressText('⚡ Optimizing speed for high-volume analysis...');
-            }
+            // Stall detected but no longer showing progress text
         } else {
             // Progress moved - update tracking
             lastProgressValue = currentProgress;
             lastProgressTime = Date.now();
-            
-            // Check if Phase 2 started
-            if (phase === 'phase2' && !isPhase2) {
-                isPhase2 = true;
-                addStatusItem('✨ Phase 1 complete! Starting deep insights...');
-                updateProgressText('🎯 Finalizing Deep Insights & Reports...');
-            } else if (phase === 'phase1' && currentProgress > 0) {
-                updateProgressText(`📊 Scanned ${currentProgress} of ${total} candidates...`);
-                
-                // Add milestone status items
-                if (currentProgress === 1) {
-                    addStatusItem('Reading first candidate...');
-                } else if (currentProgress === Math.floor(total * 0.25)) {
-                    addStatusItem('25% complete - Processing continues...');
-                } else if (currentProgress === Math.floor(total * 0.5)) {
-                    addStatusItem('Halfway through candidate scoring...');
-                } else if (currentProgress === Math.floor(total * 0.75)) {
-                    addStatusItem('75% complete - Almost there...');
-                } else if (currentProgress === total) {
-                    addStatusItem(`All ${total} candidates scored! ✨`);
+        }
+        
+        // Check milestones on EVERY poll (not just when progress changes)
+        // This ensures we catch all milestones even if progress jumps
+        if (phase === 'phase2' && !isPhase2) {
+            isPhase2 = true;
+            addStatusItem('✨ Phase 1 complete! Starting deep insights...');
+            addStatusItem('Analyzing candidate strengths and weaknesses...');
+            addStatusItem('Generating detailed feedback and recommendations...');
+        } else if (phase === 'phase1') {
+            // Check each milestone and show if we've reached it but haven't shown it yet
+            milestonesArray.forEach(milestone => {
+                if (currentProgress >= milestone.progress && !shownMilestones.has(milestone.key)) {
+                    milestone.messages.forEach(msg => addStatusItem(msg));
+                    shownMilestones.add(milestone.key);
                 }
-            }
+            });
         }
     })
     .catch(error => {
@@ -298,7 +333,7 @@ function updateProgressText(text) {
         <div style="margin-bottom: 25px;">
             <p style="color: #374151; font-weight: 600; margin-bottom: 12px; text-align: center;">Quick Add:</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="quickAddFunds({{ \"%.0f\"|format(pricing['BASE_ANALYSIS_PRICE']) }})" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ ${{ "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</button>
+                <button onclick="quickAddFunds({{ '%.0f'|format(pricing['BASE_ANALYSIS_PRICE']) }})" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ ${{ "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</button>
                 <button onclick="quickAddFunds(25)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $25</button>
                 <button onclick="quickAddFunds(50)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $50</button>
                 <button onclick="quickAddFunds(100)" class="btn btn-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $100</button>
@@ -514,10 +549,18 @@ document.addEventListener('DOMContentLoaded', function() {
 {% set show_back_button = True %}
 {% set back_url = url_for('analyze', step='resumes') %}
 {% if current_user.is_test_drive %}
-    {% set continue_text = 'Run Your Free Analysis →' %}
+    {% if truncation_warning %}
+        {% set continue_text = 'Continue with Free Analysis →' %}
+    {% else %}
+        {% set continue_text = 'Run Your Free Analysis →' %}
+    {% endif %}
     {% set continue_disabled = False %}
 {% else %}
-    {% set continue_text = 'Run Analysis Now ($' + \"%.2f\"|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
+    {% if truncation_warning %}
+        {% set continue_text = 'Continue Analysis ($' + '%.2f'|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
+    {% else %}
+        {% set continue_text = 'Run Analysis Now ($' + '%.2f'|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
+    {% endif %}
     {% set continue_disabled = False %}
 {% endif %}
 {% include 'workflow_bottom_bar.html' %}

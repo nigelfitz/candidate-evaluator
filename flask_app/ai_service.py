@@ -315,7 +315,7 @@ Generate comprehensive insights:
 4. Refined Justifications - CRITICAL: Rewrite ALL draft justifications with more polish and evidence. You MUST provide a refined justification for EVERY criterion listed in Phase 1 Draft Scores.
 5. Suggested Interview Questions (3-5 questions to probe key areas)
 
-Return JSON:
+Return ONLY valid JSON in this exact format:
 {
     "top": ["strength 1", "strength 2", ...],
     "gaps": ["gap 1", "gap 2", ...],
@@ -324,7 +324,13 @@ Return JSON:
     "interview_questions": ["question 1", "question 2", ...]
 }
 
-IMPORTANT: The "justifications" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key."""
+CRITICAL JSON RULES:
+- Escape all quotes inside strings using backslash: "He said \\"hello\\""
+- Escape all backslashes: use \\\\ for single backslash
+- Do not use smart quotes or unicode quotes - use only straight quotes
+- Ensure all strings are properly terminated with closing quotes
+- Do not include any text before or after the JSON object
+- The "justifications" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key."""
 
         user_prompt = f"""Candidate: {candidate_name}
 Overall Score: {evaluation.overall_score:.1f}/100
@@ -365,28 +371,75 @@ Provide deep insights with refined justifications."""
                 try:
                     result = json.loads(raw_content)
                 except json.JSONDecodeError as e:
-                    # JSON parsing failed - try sanitization
+                    # JSON parsing failed - log details and try sanitization
+                    print(f"WARNING: JSON parse error for {candidate_name}: {str(e)}")
+                    print(f"WARNING: Error at line {e.lineno} column {e.colno} (char {e.pos})")
+                    if e.pos and e.pos < len(raw_content):
+                        start = max(0, e.pos - 150)
+                        end = min(len(raw_content), e.pos + 150)
+                        print(f"WARNING: Context around error: ...{raw_content[start:end]}...")
+                    
+                    # Try sanitization strategies
                     sanitized = raw_content
+                    
+                    # Strategy 1: Fix smart quotes
                     sanitized = sanitized.replace('\u2018', "'").replace('\u2019', "'")
                     sanitized = sanitized.replace('\u201c', '"').replace('\u201d', '"')
                     sanitized = sanitized.replace('\u201a', "'").replace('\u201e', '"')
                     
-                    try:
-                        result = json.loads(sanitized)
-                    except json.JSONDecodeError as e2:
-                        # Extract JSON object
-                        first_brace = sanitized.find('{')
-                        last_brace = sanitized.rfind('}')
+                    # Strategy 2: Extract JSON object if GPT added extra text
+                    first_brace = sanitized.find('{')
+                    last_brace = sanitized.rfind('}')
+                    
+                    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                        json_only = sanitized[first_brace:last_brace+1]
                         
-                        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-                            json_only = sanitized[first_brace:last_brace+1]
+                        try:
+                            result = json.loads(json_only)
+                            print(f"SUCCESS: JSON parsing recovered by extracting object")
+                        except json.JSONDecodeError as e2:
+                            # Strategy 3: More aggressive sanitization - fix unterminated strings
+                            print(f"WARNING: Trying aggressive string termination fix...")
+                            
+                            # Try to detect and fix unterminated strings by ensuring proper closure
+                            import re
+                            
+                            # Replace problematic patterns that cause unterminated strings
+                            fixed = json_only
+                            
+                            # Fix newlines inside strings (common GPT issue)
+                            # Find strings and replace literal newlines with \n
+                            def fix_string_content(match):
+                                quote = match.group(1)  # Opening quote
+                                content = match.group(2)  # String content
+                                # Replace literal newlines with escaped version
+                                content = content.replace('\n', '\\n')
+                                content = content.replace('\r', '\\r')
+                                content = content.replace('\t', '\\t')
+                                return f'{quote}{content}{quote}'
+                            
+                            # This regex finds quoted strings and fixes newlines inside them
+                            fixed = re.sub(r'(["\'])([^"\'\}]*?)\1', fix_string_content, fixed, flags=re.DOTALL)
+                            
                             try:
-                                result = json.loads(json_only)
-                            except json.JSONDecodeError:
-                                # Complete failure - raise original error
-                                raise e
-                        else:
-                            raise e
+                                result = json.loads(fixed)
+                                print(f"SUCCESS: JSON parsing recovered after newline fix")
+                            except json.JSONDecodeError as e3:
+                                # Final fallback: Log everything and RAISE exception
+                                # We do NOT want to return fake data - fail the analysis
+                                print(f"CRITICAL: All JSON recovery strategies failed for {candidate_name}")
+                                print(f"FULL RESPONSE ({len(raw_content)} chars):")
+                                print(raw_content)
+                                print(f"Original error: {str(e)}")
+                                print(f"After sanitization: {str(e2)}")
+                                print(f"After newline fix: {str(e3)}")
+                                # RAISE the exception instead of returning error message
+                                raise Exception(f"Failed to parse GPT response as JSON for {candidate_name}. {str(e)}") from e
+                    else:
+                        # No JSON object found at all
+                        print(f"CRITICAL: No JSON object found in response")
+                        print(f"FULL RESPONSE: {raw_content[:500]}...")
+                        raise Exception(f"No valid JSON object found in GPT response for {candidate_name}")
                 
                 return result
                 
@@ -401,25 +454,16 @@ Provide deep insights with refined justifications."""
                         await asyncio.sleep(wait_time)
                         continue
                     else:
-                        # All retries exhausted - return empty insights with error
-                        print(f"Rate limit error after {max_retries} retries for {candidate_name}")
-                        return {
-                            "top": ["Unable to generate insights due to rate limits"],
-                            "gaps": ["Unable to generate insights due to rate limits"],
-                            "notes": f"Rate limit error after {max_retries} retries",
-                            "justifications": {},
-                            "interview_questions": []
-                        }
+                        # All retries exhausted - RAISE exception instead of returning error message
+                        error_msg = f"Rate limit error after {max_retries} retries for {candidate_name}"
+                        print(f"CRITICAL: {error_msg}")
+                        raise Exception(error_msg) from e
                 else:
-                    # Non-rate-limit error - fail immediately
-                    print(f"Insights generation error for {candidate_name}: {error_str[:100]}")
-                    return {
-                        "top": ["Unable to generate insights due to error"],
-                        "gaps": ["Unable to generate insights due to error"],
-                        "notes": f"Evaluation error: {error_str[:100]}",
-                        "justifications": {},
-                        "interview_questions": []
-                    }
+                    # Non-rate-limit error - RAISE immediately instead of returning error message
+                    print(f"CRITICAL: Insights generation failed for {candidate_name}")
+                    print(f"ERROR: {error_str}")
+                    # Re-raise the exception to trigger analysis failure and rollback
+                    raise
 
 
 # ============================================

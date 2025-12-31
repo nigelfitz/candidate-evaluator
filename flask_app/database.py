@@ -25,6 +25,7 @@ class User(UserMixin, db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_login = db.Column(db.DateTime)
+    last_seen = db.Column(db.DateTime)  # Track last activity for "online" status
     
     # Marketing & Analytics tracking
     signup_source = db.Column(db.String(100))  # e.g., 'organic', 'google-ad', 'referral', 'linkedin'
@@ -132,6 +133,10 @@ class Analysis(db.Model):
     
     # Progress tracking (for live progress bar during AI pipeline)
     resumes_processed = db.Column(db.Integer, default=0)  # Number of resumes scored so far
+    
+    # Error tracking for failed analyses
+    error_message = db.Column(db.Text)  # Full error details including stack trace
+    failed_at = db.Column(db.DateTime)  # When the failure occurred
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)

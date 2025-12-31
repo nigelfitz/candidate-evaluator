@@ -44,6 +44,10 @@ def create_app(config_name=None):
         # Block suspended users from logging in
         if user and user.is_suspended:
             return None
+        # Update last_seen timestamp for online status tracking (naive UTC)
+        if user:
+            user.last_seen = datetime.utcnow()
+            db.session.commit()
         return user
     
     # Add template filters
@@ -61,6 +65,14 @@ def create_app(config_name=None):
             from datetime import timedelta
             return dt + timedelta(hours=10)
         return dt
+    
+    # Make datetime and timedelta available in templates
+    @app.context_processor
+    def inject_datetime():
+        return {
+            'now': datetime.utcnow,
+            'timedelta': timedelta
+        }
     
     @app.template_filter('number_format')
     def number_format(value):
@@ -485,6 +497,38 @@ def create_app(config_name=None):
                 from ai_service import run_global_ranking, run_deep_insights
                 
                 print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
+                
+                # Check document lengths and warn user if truncation will occur
+                from config import load_gpt_settings
+                gpt_settings = load_gpt_settings()
+                jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
+                resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
+                
+                jd_length = len(jd_text)
+                truncated_docs = []
+                
+                # Check JD length
+                if jd_length > jd_limit:
+                    truncated_docs.append({
+                        'name': 'Job Description',
+                        'length': jd_length,
+                        'limit': jd_limit
+                    })
+                
+                # Check resume lengths
+                long_resumes = [(c.name, len(c.text)) for c in candidates if len(c.text) > resume_limit]
+                for name, length in long_resumes:
+                    truncated_docs.append({
+                        'name': f'Resume: {name}',
+                        'length': length,
+                        'limit': resume_limit
+                    })
+                
+                # If documents exceed limits, show warning banner but continue
+                # (This is the demo/analyze route - no payment involved, so just inform)
+                if truncated_docs:
+                    doc_list = ", ".join([f"{d['name']} ({d['length']:,} chars)" for d in truncated_docs])
+                    flash(f"ℹ️ Document length notice: {doc_list} exceed our limits and will be automatically trimmed to maintain optimal performance. Analysis quality remains high.", 'info')
                 
                 # Create Analysis record for progress tracking
                 analysis = Analysis(
@@ -913,6 +957,55 @@ def create_app(config_name=None):
             
             print(f"DEBUG: Starting AI Pipeline - {len(candidates)} candidates, {len(criteria)} criteria")
             
+            # Check document lengths and warn user if truncation will occur
+            from config import load_gpt_settings
+            gpt_settings = load_gpt_settings()
+            jd_limit = gpt_settings['text_processing']['jd_text_chars']['value']
+            resume_limit = gpt_settings['text_processing']['candidate_text_chars']['value']
+            
+            jd_length = len(jd_text)
+            truncated_docs = []
+            
+            # Check JD length
+            if jd_length > jd_limit:
+                truncated_docs.append({
+                    'name': 'Job Description',
+                    'length': jd_length,
+                    'limit': jd_limit
+                })
+            
+            # Check resume lengths
+            long_resumes = [(c.name, len(c.text)) for c in candidates if len(c.text) > resume_limit]
+            for name, length in long_resumes:
+                truncated_docs.append({
+                    'name': f'Resume: {name}',
+                    'length': length,
+                    'limit': resume_limit
+                })
+            
+            # If documents exceed limits, show confirmation page FIRST
+            if truncated_docs and not request.form.get('confirm_truncation'):
+                # Restore the form token so user can resubmit after confirmation
+                session['analysis_form_token'] = submitted_token
+                
+                # Show confirmation page with warning
+                from config import Config
+                pricing = Config.get_pricing()
+                return render_template('run_analysis.html',
+                                     user=current_user,
+                                     resume_count=len(candidates),
+                                     latest_analysis_id=None,
+                                     in_workflow=True,
+                                     has_unsaved_work=True,
+                                     analysis_completed=False,
+                                     form_token=submitted_token,
+                                     pricing=pricing,
+                                     truncation_warning=True,
+                                     truncated_docs=truncated_docs,
+                                     jd_limit=jd_limit,
+                                     resume_limit=resume_limit,
+                                     selected_insights_mode=insights_mode)
+            
             # Create Analysis record for progress tracking
             analysis = Analysis(
                 user_id=current_user.id,
@@ -932,6 +1025,10 @@ def create_app(config_name=None):
             )
             db.session.add(analysis)
             db.session.flush()  # Get analysis.id
+            db.session.commit()  # Commit so frontend polling can see progress
+            # NOTE: This creates an "incomplete" analysis record. If the job fails,
+            # it won't be rolled back, but we filter job history to only show
+            # completed analyses (those with coverage_data populated).
             
             # Progress callback for live updates
             def update_progress(completed, total):
@@ -1073,12 +1170,45 @@ def create_app(config_name=None):
             return redirect(url_for('results', analysis_id=analysis.id))
             
         except Exception as e:
-            # If ANYTHING fails above, rollback everything (including any charge)
-            db.session.rollback()
-            print(f"ERROR: Analysis failed, rolling back transaction. User NOT charged.")
-            flash(f'Analysis failed: {str(e)}', 'error')
+            # Capture error details for admin diagnostics
             import traceback
+            error_trace = traceback.format_exc()
+            
+            try:
+                # Save error info to the analysis record before rollback
+                analysis.error_message = f"{str(e)}\n\n{error_trace}"
+                analysis.failed_at = datetime.utcnow()
+                db.session.commit()  # Commit error details
+                print(f"ERROR: Analysis #{analysis.id} failed. Error details saved.")
+            except:
+                print(f"ERROR: Could not save error details for analysis")
+            
+            # Rollback the main transaction (user not charged, no results saved)
+            db.session.rollback()
+            print(f"ERROR: Analysis failed, transaction rolled back. User NOT charged.")
+            print(f"ERROR: {str(e)}")
             traceback.print_exc()
+            
+            # Try to extract candidate name from error message for actionable feedback
+            error_msg = str(e)
+            candidate_name = None
+            
+            # Check if error mentions a specific candidate
+            if "for " in error_msg and ("candidate" in error_msg.lower() or "resume" in error_msg.lower()):
+                # Try to extract candidate name from patterns like "...for John Smith" or "...candidate John Smith..."
+                import re
+                # Pattern: "for [name]" at end of sentence or before punctuation
+                match = re.search(r'for\s+([A-Z][a-zA-Z\s]+?)(?:\.|$|,|\s+\()', error_msg)
+                if match:
+                    candidate_name = match.group(1).strip()
+            
+            # Build user-friendly error message
+            if candidate_name:
+                flash(f'⚠️ Analysis failed while processing candidate "{candidate_name}". This resume may contain unusual formatting or characters. You have NOT been charged. Try: (1) Remove this candidate and re-run, or (2) Re-upload their resume with simpler formatting (plain text works best).', 'error')
+            else:
+                # Generic error message when we can't identify the problematic candidate
+                flash('⚠️ Analysis failed due to a processing error. You have NOT been charged. Our team has been notified. Please try again with different resumes or a simplified job description, or contact support if the issue persists.', 'error')
+            
             return redirect(url_for('run_analysis_route'))
     
     @app.route('/results/<int:analysis_id>')
@@ -2105,10 +2235,14 @@ def create_app(config_name=None):
     @app.route('/job-history')
     @login_required
     def job_history():
-        """Job analysis history"""
-        analyses = current_user.analyses.order_by(
-            db.desc('created_at')
-        ).limit(50).all()
+        """Job analysis history - only show completed analyses"""
+        # Filter to only show analyses with coverage_data (completed jobs)
+        # This excludes incomplete analyses where the job failed
+        analyses = Analysis.query.filter_by(user_id=current_user.id).filter(
+            Analysis.coverage_data != '',
+            Analysis.coverage_data.isnot(None)
+        ).order_by(db.desc(Analysis.created_at)).limit(50).all()
+        
         return render_template('job_history.html', 
                              user=current_user,
                              analyses=analyses)
@@ -3199,8 +3333,8 @@ def create_app(config_name=None):
     @app.route('/admin')
     @admin_required
     def admin_settings():
-        """Display admin settings panel - redirect to GPT settings tab"""
-        return redirect(url_for('admin_gpt_settings'))
+        """Display admin settings panel - redirect to Users page"""
+        return redirect(url_for('admin_users'))
     
     
     @app.route('/admin/gpt')
@@ -3388,8 +3522,22 @@ def create_app(config_name=None):
         """User management panel - list all users"""
         search = request.args.get('search', '').strip()
         sort_by = request.args.get('sort', 'created_at')
+        online_filter = request.args.get('online', '')  # Filter for online users
         
         query = User.query
+        
+        # Online filter (users active in last 5 minutes)
+        if online_filter == 'yes':
+            five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+            query = query.filter(User.last_seen >= five_minutes_ago)
+        elif online_filter == 'no':
+            five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+            query = query.filter(
+                db.or_(
+                    User.last_seen < five_minutes_ago,
+                    User.last_seen.is_(None)
+                )
+            )
         
         # Search filter
         if search:
@@ -3419,12 +3567,25 @@ def create_app(config_name=None):
         total_revenue = db.session.query(db.func.sum(User.total_revenue_usd)).scalar() or 0
         total_analyses = db.session.query(db.func.sum(User.total_analyses_count)).scalar() or 0
         
+        users = query.all()
+        
+        # Calculate stats
+        total_users = User.query.count()
+        total_revenue = db.session.query(db.func.sum(User.total_revenue_usd)).scalar() or 0
+        total_analyses = db.session.query(db.func.sum(User.total_analyses_count)).scalar() or 0
+        
+        # Count online users (active in last 5 minutes)
+        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        online_users = User.query.filter(User.last_seen >= five_minutes_ago).count()
+        
         return render_template('admin_users.html', 
                              users=users, 
                              search=search,
                              sort_by=sort_by,
+                             online_filter=online_filter,
                              active_tab='users',
                              total_users=total_users,
+                             online_users=online_users,
                              total_revenue=total_revenue,
                              total_analyses=total_analyses)
     
@@ -3661,6 +3822,45 @@ def create_app(config_name=None):
                              settings=settings, 
                              message=message,
                              active_tab='system')
+    
+    @app.route('/admin/failed-jobs')
+    @admin_required
+    def admin_failed_jobs():
+        """Admin page showing failed job analyses with error details"""
+        from datetime import timedelta
+        
+        # Get all failed jobs (have error_message but no coverage_data)
+        failed_jobs = Analysis.query.filter(
+            Analysis.error_message.isnot(None),
+            Analysis.error_message != ''
+        ).order_by(db.desc(Analysis.failed_at)).limit(50).all()
+        
+        # Calculate stats
+        now = datetime.utcnow()
+        failed_last_24h = sum(1 for job in failed_jobs if job.failed_at and (now - job.failed_at).total_seconds() < 86400)
+        affected_users = list(set(job.user_id for job in failed_jobs))
+        
+        # Extract common error patterns
+        error_patterns = {}
+        for job in failed_jobs:
+            if job.error_message:
+                # Get first line of error (usually the exception type)
+                error_line = job.error_message.split('\n')[0]
+                error_type = error_line.split(':')[0] if ':' in error_line else error_line[:50]
+                
+                if error_type not in error_patterns:
+                    error_patterns[error_type] = {'count': 0, 'example': error_line}
+                error_patterns[error_type]['count'] += 1
+        
+        common_errors = [(k, v['count'], v['example']) for k, v in sorted(error_patterns.items(), key=lambda x: x[1]['count'], reverse=True)]
+        
+        return render_template('admin_failed_jobs.html',
+                             user=current_user,
+                             failed_jobs=failed_jobs,
+                             failed_last_24h=failed_last_24h,
+                             affected_users=affected_users,
+                             common_errors=common_errors,
+                             active_tab='failed_jobs')
     
     
     @app.route('/admin/system/save', methods=['POST'])

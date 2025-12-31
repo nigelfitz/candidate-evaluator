@@ -1,0 +1,101 @@
+<!-- Admin Navigation Component - Include this in all admin pages -->
+<style>
+    .admin-navbar { 
+        background: #1e293b; 
+        padding: 1rem 2rem; 
+        margin-bottom: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+    }
+    .admin-navbar a { 
+        color: white; 
+        text-decoration: none; 
+        margin-right: 25px; 
+        transition: color 0.2s;
+        white-space: nowrap;
+    }
+    .admin-navbar a:hover { color: #3b82f6; }
+    .admin-navbar .active { color: #3b82f6; font-weight: 600; }
+    .admin-dropdown { 
+        position: relative; 
+        display: inline-block; 
+        margin-right: 25px;
+    }
+    .admin-dropdown-content { 
+        display: none; 
+        position: absolute; 
+        background: #2d3748; 
+        min-width: 220px; 
+        box-shadow: 0 8px 16px rgba(0,0,0,0.3); 
+        z-index: 10000; 
+        border-radius: 4px; 
+        margin-top: 0;
+        padding-top: 8px;
+        top: 100%;
+        left: 0;
+    }
+    .admin-dropdown-content a { 
+        display: block !important; 
+        padding: 12px 20px !important; 
+        margin: 0 !important;
+        border-bottom: 1px solid #374151;
+    }
+    .admin-dropdown-content a:last-child { border-bottom: none; }
+    .admin-dropdown-content a:hover { background: #374151; }
+    .admin-dropdown:hover .admin-dropdown-content { display: block; }
+</style>
+
+<div class="admin-navbar">
+    <div class="admin-dropdown">
+        <a href="#" class="{% if active_tab in ['users'] %}active{% endif %}">👥 User Admin ▾</a>
+        <div class="admin-dropdown-content">
+            <a href="{{ url_for('admin_users') }}">👥 Users</a>
+        </div>
+    </div>
+    
+    <div class="admin-dropdown">
+        <a href="#" class="{% if active_tab in ['pricing', 'gpt', 'prompts', 'system'] %}active{% endif %}">⚙️ System Settings ▾</a>
+        <div class="admin-dropdown-content">
+            <a href="{{ url_for('admin_pricing') }}">💳 Pricing & Revenue</a>
+            <a href="{{ url_for('admin_gpt_settings') }}">🤖 GPT Settings</a>
+            <a href="{{ url_for('admin_prompts') }}">💬 Prompts</a>
+            <a href="{{ url_for('admin_system') }}">🔧 General Settings</a>
+        </div>
+    </div>
+    
+    <div class="admin-dropdown">
+        <a href="#" class="{% if active_tab in ['business_health', 'stats'] %}active{% endif %}">💰 Finance ▾</a>
+        <div class="admin-dropdown-content">
+            <a href="{{ url_for('admin_business_health') }}">💚 Business Health</a>
+            <a href="{{ url_for('admin_stats') }}">📊 Stats</a>
+        </div>
+    </div>
+    
+    <div class="admin-dropdown">
+        <a href="#" class="{% if active_tab in ['feedback', 'balance_audit', 'audit_logs', 'failed_jobs'] %}active{% endif %}">🔍 Auditing ▾</a>
+        <div class="admin-dropdown-content">
+            <a href="{{ url_for('admin_feedback') }}">📝 Feedback</a>
+            <a href="{{ url_for('admin_balance_audit') }}">⚖️ Balance Audit</a>
+            <a href="{{ url_for('admin_audit_logs') }}">📋 Audit Logs</a>
+            <a href="{{ url_for('admin_failed_jobs') }}">❌ Failed Jobs</a>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('dashboard') }}" style="margin-left: auto;">← Back to App</a>
+</div>
+
+<script>
+// Dropdown hover behavior for admin navigation
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.admin-dropdown').forEach(dropdown => {
+        dropdown.addEventListener('mouseenter', function() {
+            this.querySelector('.admin-dropdown-content').style.display = 'block';
+        });
+        dropdown.addEventListener('mouseleave', function() {
+            this.querySelector('.admin-dropdown-content').style.display = 'none';
+        });
+    });
+});
+</script>

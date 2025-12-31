@@ -1079,15 +1079,10 @@ function attachEventListeners() {
 // Attach download button listener separately to ensure element exists
 document.addEventListener('DOMContentLoaded', function() {
     const downloadBtn = document.getElementById('downloadCSV');
-    console.log('Looking for Download button element:', downloadBtn);
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function() {
-            console.log('Download button clicked!');
             downloadCSV();
         });
-        console.log('Download CSV event listener attached');
-    } else {
-        console.error('Download CSV button not found! Available buttons:', document.querySelectorAll('button[id*="download" i]'));
     }
 });
 
