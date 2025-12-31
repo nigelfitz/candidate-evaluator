@@ -186,12 +186,17 @@ def create_app(config_name=None):
         """Load system settings from JSON file"""
         settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
         try:
+            print(f"DEBUG: Loading system settings from {settings_path}")
             with open(settings_path, 'r') as f:
                 settings_data = json.load(f)
             # Return simple dict of setting_name -> value
-            return {key: val['value'] for key, val in settings_data.items() if key != '_metadata'}
+            result = {key: val['value'] for key, val in settings_data.items() if key != '_metadata'}
+            print(f"DEBUG: System settings loaded successfully: {list(result.keys())}")
+            return result
         except Exception as e:
             print(f"ERROR loading system settings: {e}")
+            import traceback
+            traceback.print_exc()
             # Return defaults
             return {
                 'enable_document_length_warnings': True,
@@ -298,25 +303,36 @@ def create_app(config_name=None):
                 system_settings = load_system_settings()
                 warnings_enabled = system_settings.get('enable_document_length_warnings', True)
                 
+                print(f"DEBUG: warnings_enabled={warnings_enabled}, jd_length={len(jd_text_content)}")
+                
                 if warnings_enabled:
-                    from analysis import load_gpt_settings
-                    gpt_settings = load_gpt_settings()
-                    jd_limit = gpt_settings.get('jd_text_chars', 5000)
-                    jd_length = len(jd_text_content)
-                    
-                    if jd_length > jd_limit:
-                        # Store JD data in session for after confirmation
-                        session['pending_jd'] = {
-                            'filename': jd_filename,
-                            'text': jd_text_content,
-                            'hash': jd_hash,
-                            'bytes': base64.b64encode(jd_bytes).decode('utf-8')  # Encode bytes for JSON storage
-                        }
-                        session.modified = True
-                        # Show warning page
-                        return render_template('jd_length_warning.html',
-                                             jd_length=jd_length,
-                                             jd_limit=jd_limit)
+                    try:
+                        from analysis import load_gpt_settings
+                        gpt_settings = load_gpt_settings()
+                        jd_limit = gpt_settings.get('jd_text_chars', 5000)
+                        jd_length = len(jd_text_content)
+                        
+                        print(f"DEBUG: JD length check: {jd_length} > {jd_limit} = {jd_length > jd_limit}")
+                        
+                        if jd_length > jd_limit:
+                            # Store JD data in session for after confirmation
+                            session['pending_jd'] = {
+                                'filename': jd_filename,
+                                'text': jd_text_content,
+                                'hash': jd_hash,
+                                'bytes': base64.b64encode(jd_bytes).decode('utf-8')  # Encode bytes for JSON storage
+                            }
+                            session.modified = True
+                            print(f"DEBUG: Showing JD length warning page")
+                            # Show warning page
+                            return render_template('jd_length_warning.html',
+                                                 jd_length=jd_length,
+                                                 jd_limit=jd_limit)
+                    except Exception as e:
+                        print(f"ERROR in JD length warning check: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Continue without warning if there's an error
                 
                 # Extract criteria (no limit - let user uncheck unwanted ones)
                 print(f"DEBUG: Extracting JD sections from text (length: {len(jd_text_content)} chars)")
