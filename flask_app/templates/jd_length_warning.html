@@ -39,8 +39,8 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
-                        <form method="POST" action="{{ url_for('analyze') }}" style="flex: 1; min-width: 200px;">
+                    <div style="margin-top: 24px;">
+                        <form method="POST" action="{{ url_for('analyze') }}">
                             <input type="hidden" name="action" value="confirm_jd_length">
                             <button type="submit" 
                                     style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: transform 0.2s;"
@@ -49,13 +49,6 @@
                                 ✅ Continue to Criteria Review
                             </button>
                         </form>
-                        
-                        <a href="{{ url_for('analyze', step='jd') }}" 
-                           style="flex: 1; min-width: 200px; display: flex; align-items: center; justify-content: center; padding: 14px 24px; background: white; border: 2px solid #f59e0b; border-radius: 8px; color: #78350f; font-size: 16px; font-weight: 600; text-decoration: none; transition: background 0.2s;"
-                           onmouseover="this.style.background='#fef3c7'"
-                           onmouseout="this.style.background='white'">
-                            🔄 Upload Different JD
-                        </a>
                     </div>
 
                     <!-- Abandon Job Button -->
