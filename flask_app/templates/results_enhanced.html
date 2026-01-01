@@ -702,9 +702,28 @@ function renderMatrix() {
     const candidates = data.map(row => row.Candidate);
     const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
     
+    // Candidate file info passed from Flask
+    const candidateFilesInfo = {{ candidate_files_info|tojson|safe }};
+    
     let headerHTML = '<th class="text-center">Category / Criterion</th><th class="text-center">Average</th>';
     candidates.forEach(cand => {
-        headerHTML += `<th class="text-center">${cand}</th>`;
+        const fileInfo = candidateFilesInfo[cand] || {};
+        let icons = '';
+        let title = '';
+        
+        // Check if candidate failed (0% overall score)
+        const candData = data.find(r => r.Candidate === cand);
+        if (candData && candData.Overall === 0) {
+            icons += ' <span style="color: #f59e0b; cursor: help;" title="Analysis failed - file may be corrupted, blank, or a scanned image with no extractable text">⚠️</span>';
+            title = 'Analysis failed - unreadable file';
+        }
+        // Check if resume was truncated
+        else if (fileInfo.was_truncated) {
+            icons += ' <span style="color: #3b82f6; cursor: help;" title="Resume exceeded 12,000 character limit and was automatically trimmed. All key qualifications were still captured and evaluated.">📄✂️</span>';
+            if (!title) title = 'Resume was trimmed to fit character limits';
+        }
+        
+        headerHTML += `<th class="text-center" title="${title}">${cand}${icons}</th>`;
     });
     document.getElementById('matrixHeader').innerHTML = headerHTML;
     

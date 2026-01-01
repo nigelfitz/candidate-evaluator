@@ -490,17 +490,46 @@ async def run_global_ranking(
     ai_service = AIService()
     semaphore = asyncio.Semaphore(25)  # Limit concurrent API calls
     
-    # Create tasks for all candidates
-    tasks = []
-    for candidate_name, resume_text in candidates:
-        task = ai_service.score_candidate_all_criteria(
-            candidate_name=candidate_name,
-            resume_text=resume_text,
-            jd_text=jd_text,
-            criteria=criteria,
-            semaphore=semaphore
-        )
-        tasks.append(task)
+    # Create tasks for all candidates with error handling wrapper
+    async def score_with_error_handling(candidate_name: str, resume_text: str):
+        """Wrap scoring with error handling to prevent one bad candidate from killing entire batch"""
+        try:
+            return await ai_service.score_candidate_all_criteria(
+                candidate_name=candidate_name,
+                resume_text=resume_text,
+                jd_text=jd_text,
+                criteria=criteria,
+                semaphore=semaphore
+            )
+        except Exception as e:
+            print(f"ERROR scoring candidate {candidate_name}: {str(e)}")
+            # Return a failed evaluation with zero scores
+            from dataclasses import dataclass, field
+            from typing import List as TypeList
+            
+            # Create zero-score evaluation for failed candidate
+            zero_scores = [
+                CriterionScore(
+                    criterion=crit["criterion"],
+                    score=0.0,
+                    justification=f"Analysis failed: Unable to process resume (possibly corrupted, scanned image, or invalid format)",
+                    raw_evidence="[Unable to extract evidence - processing error]",
+                    is_anchor=crit.get("is_anchor", False)
+                )
+                for crit in criteria
+            ]
+            
+            return CandidateEvaluation(
+                candidate_name=candidate_name,
+                overall_score=0.0,
+                criterion_scores=zero_scores,
+                missing_anchors=[score.criterion for score in zero_scores if score.is_anchor]
+            )
+    
+    tasks = [
+        score_with_error_handling(candidate_name, resume_text)
+        for candidate_name, resume_text in candidates
+    ]
     
     # Execute with progress tracking
     results = []

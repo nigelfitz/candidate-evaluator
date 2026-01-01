@@ -454,6 +454,13 @@ def infer_candidate_name(file_name: str, text: str) -> str:
     - Compound names with 2-5 parts
     - Filters out resume keywords and common false positives
     """
+    # CRITICAL: Check if text is suspiciously short (likely corrupted/scanned image)
+    # Use obvious placeholder name to alert user
+    if not text or len(text.strip()) < 100:
+        import os
+        base_filename = os.path.basename(file_name)
+        return f"[UNREADABLE FILE - {base_filename}]"
+    
     # Only scan first 10 lines for name patterns (faster, avoids picking up random text later)
     lines = [l.strip() for l in (text or "").splitlines()][:10]
     

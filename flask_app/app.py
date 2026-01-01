@@ -245,6 +245,68 @@ def create_app(config_name=None):
                              truncated_resumes=truncated_resumes,
                              resume_limit=resume_limit)
 
+    @app.route('/document-warnings')
+    @login_required
+    def document_warnings_route():
+        """Show combined document warnings page (too short AND/OR too long)"""
+        if not session.get('show_document_warnings'):
+            flash('Invalid access to warning page', 'error')
+            return redirect(url_for('analyze'))
+        
+        # Get warning details from session
+        jd_length = session.get('jd_length')
+        jd_limit = session.get('jd_limit')
+        resume_limit = session.get('resume_limit')
+        
+        # Only show JD warnings if they haven't been confirmed yet
+        jd_warnings_already_confirmed = session.get('warnings_confirmed', False)
+        short_jd = session.get('short_jd', False) and not jd_warnings_already_confirmed
+        long_jd = session.get('long_jd', False) and not jd_warnings_already_confirmed
+        
+        # Get resume details from database
+        draft = Draft.query.filter_by(user_id=current_user.id).first()
+        short_resumes = []
+        long_resumes = []
+        
+        if draft:
+            for resume in DraftResume.query.filter_by(draft_id=draft.id).all():
+                resume_length = len(resume.extracted_text or '')
+                resume_text = resume.extracted_text or ''
+                
+                # Check for too short with multiple criteria
+                is_too_short = False
+                if resume_length < 50:
+                    is_too_short = True
+                elif resume_length < 500:
+                    non_whitespace = len(resume_text.strip().replace('\n', '').replace(' ', ''))
+                    whitespace_ratio = 1.0 - (non_whitespace / max(resume_length, 1))
+                    if whitespace_ratio > 0.8:
+                        is_too_short = True
+                
+                if is_too_short:
+                    short_resumes.append({
+                        'name': resume.candidate_name,
+                        'length': resume_length
+                    })
+                elif resume_length > resume_limit:  # Too long threshold
+                    long_resumes.append({
+                        'name': resume.candidate_name,
+                        'length': resume_length
+                    })
+        
+        has_short_documents = short_jd or short_resumes
+        has_long_documents = long_jd or long_resumes
+        
+        return render_template('document_warnings.html',
+                             has_short_documents=has_short_documents,
+                             has_long_documents=has_long_documents,
+                             short_jd=short_jd,
+                             long_jd=long_jd,
+                             short_resumes=short_resumes,
+                             long_resumes=long_resumes,
+                             jd_length=jd_length,
+                             jd_limit=jd_limit,
+                             resume_limit=resume_limit)
 
     @app.route('/analyze', methods=['GET', 'POST'])
 
@@ -358,7 +420,23 @@ def create_app(config_name=None):
                         jd_limit = gpt_settings.get('jd_text_chars', 5000)
                         jd_length = len(jd_text_content)
                         
-                        if jd_length > jd_limit:
+                        # Check for too short (likely scanned image/corrupted)
+                        # Multiple checks for robustness:
+                        # 1. Extremely short (< 50 chars)
+                        # 2. High whitespace ratio (> 80% whitespace suggests garbage extraction)
+                        jd_too_short = False
+                        if jd_length < 50:
+                            jd_too_short = True
+                        elif jd_length < 300:  # Only check ratio if suspiciously short
+                            non_whitespace = len(jd_text_content.strip().replace('\n', '').replace(' ', ''))
+                            whitespace_ratio = 1.0 - (non_whitespace / max(jd_length, 1))
+                            if whitespace_ratio > 0.8:
+                                jd_too_short = True
+                        
+                        # Check for too long (will be truncated)
+                        jd_too_long = jd_length > jd_limit
+                        
+                        if jd_too_short or jd_too_long:
                             # Store JD data in draft (not session - too large for cookies)
                             draft = Draft.query.filter_by(user_id=current_user.id).first()
                             if not draft:
@@ -371,11 +449,28 @@ def create_app(config_name=None):
                             draft.jd_bytes = jd_bytes
                             db.session.commit()
                             
-                            # Just flag in session that we need to show warning
-                            session['show_jd_length_warning'] = True
-                            session.modified = True
-                            # Redirect to warning page (GET request)
-                            return redirect(url_for('jd_length_warning_route', jd_length=jd_length, jd_limit=jd_limit))
+                            # Store warning details in session
+                            session['jd_length'] = jd_length
+                            session['jd_limit'] = jd_limit
+                            session['short_jd'] = jd_too_short
+                            session['long_jd'] = jd_too_long
+                            
+                            # Route to appropriate warning page
+                            if jd_too_short and not jd_too_long:
+                                # Only too short - use combined page (may have short resumes later)
+                                session['show_document_warnings'] = True
+                                session.modified = True
+                                return redirect(url_for('document_warnings_route'))
+                            elif jd_too_long and not jd_too_short:
+                                # Only too long - use existing single-issue page
+                                session['show_jd_length_warning'] = True
+                                session.modified = True
+                                return redirect(url_for('jd_length_warning_route', jd_length=jd_length, jd_limit=jd_limit))
+                            else:
+                                # Both issues - use combined page
+                                session['show_document_warnings'] = True
+                                session.modified = True
+                                return redirect(url_for('document_warnings_route'))
                     except Exception as e:
                         print(f"ERROR in JD length warning check: {e}")
                         import traceback
@@ -501,9 +596,15 @@ def create_app(config_name=None):
                     
                     resume_text = read_file_bytes(resume_bytes, resume_file.filename)
                     
-                    # Extract candidate name using AI (with regex fallback)
-                    from analysis import extract_candidate_name_with_gpt
-                    candidate_name = extract_candidate_name_with_gpt(resume_text, resume_file.filename)
+                    # Check if file is unreadable (very short text suggests corrupted/scanned image)
+                    # Use obvious placeholder name instead of trying to extract
+                    import os
+                    if not resume_text or len(resume_text.strip()) < 100:
+                        candidate_name = f"[UNREADABLE FILE - {os.path.basename(resume_file.filename)}]"
+                    else:
+                        # Extract candidate name using AI (with regex fallback)
+                        from analysis import extract_candidate_name_with_gpt
+                        candidate_name = extract_candidate_name_with_gpt(resume_text, resume_file.filename)
                     
                     # Store for potential length warning
                     processed_resumes.append({
@@ -525,15 +626,37 @@ def create_app(config_name=None):
                     gpt_settings = load_gpt_settings()
                     resume_limit = gpt_settings.get('candidate_text_chars', 12000)
                     
-                    truncated_resumes = []
+                    short_resumes = []  # Too short (likely scanned/corrupted)
+                    long_resumes = []   # Too long (will be truncated)
+                    
                     for resume in processed_resumes:
-                        if len(resume['text']) > resume_limit:
-                            truncated_resumes.append({
+                        resume_length = len(resume['text'])
+                        resume_text = resume['text']
+                        
+                        # Check for too short with multiple criteria:
+                        # 1. Extremely short (< 50 chars)
+                        # 2. High whitespace ratio (> 80% whitespace suggests garbage extraction)
+                        is_too_short = False
+                        if resume_length < 50:
+                            is_too_short = True
+                        elif resume_length < 500:  # Only check ratio if suspiciously short
+                            non_whitespace = len(resume_text.strip().replace('\n', '').replace(' ', ''))
+                            whitespace_ratio = 1.0 - (non_whitespace / max(resume_length, 1))
+                            if whitespace_ratio > 0.8:
+                                is_too_short = True
+                        
+                        if is_too_short:
+                            short_resumes.append({
                                 'name': resume['name'],
-                                'length': len(resume['text'])
+                                'length': resume_length
+                            })
+                        elif resume_length > resume_limit:  # Too long threshold
+                            long_resumes.append({
+                                'name': resume['name'],
+                                'length': resume_length
                             })
                     
-                    if truncated_resumes:
+                    if short_resumes or long_resumes:
                         # Store resumes in draft_resume table (not session - too large)
                         for resume in processed_resumes:
                             draft_resume = DraftResume(
@@ -548,14 +671,38 @@ def create_app(config_name=None):
                         
                         db.session.commit()
                         
-                        # Just flag in session that we need to show warning
-                        session['show_resume_length_warning'] = True
+                        # Store warning details in session
                         session['resumes_added'] = resumes_added
-                        session.modified = True
-                        # Redirect to warning page
-                        return redirect(url_for('resume_length_warning_route',
-                                              truncated_count=len(truncated_resumes),
-                                              resume_limit=resume_limit))
+                        session['resume_limit'] = resume_limit
+                        
+                        # Check if we already have JD warnings that haven't been confirmed yet
+                        # Don't re-show JD warnings if user already confirmed them at JD stage
+                        jd_warnings_already_confirmed = session.get('warnings_confirmed', False)
+                        has_jd_warnings = (session.get('short_jd', False) or session.get('long_jd', False)) and not jd_warnings_already_confirmed
+                        
+                        # Route to appropriate warning page
+                        if (short_resumes or long_resumes) and has_jd_warnings:
+                            # Have both JD and resume warnings - use combined page
+                            session['show_document_warnings'] = True
+                            session.modified = True
+                            return redirect(url_for('document_warnings_route'))
+                        elif short_resumes and not long_resumes:
+                            # Only too short - use combined page
+                            session['show_document_warnings'] = True
+                            session.modified = True
+                            return redirect(url_for('document_warnings_route'))
+                        elif long_resumes and not short_resumes:
+                            # Only too long - use existing single-issue page
+                            session['show_resume_length_warning'] = True
+                            session.modified = True
+                            return redirect(url_for('resume_length_warning_route',
+                                                  truncated_count=len(long_resumes),
+                                                  resume_limit=resume_limit))
+                        else:
+                            # Both short and long - use combined page
+                            session['show_document_warnings'] = True
+                            session.modified = True
+                            return redirect(url_for('document_warnings_route'))
                 
                 # No warnings needed or warnings disabled - commit resumes
                 for resume in processed_resumes:
@@ -609,6 +756,94 @@ def create_app(config_name=None):
                 # So run_analysis doesn't show the warning again
                 session['truncation_confirmed'] = True
                 session.modified = True
+                
+                flash(f'✅ {resumes_added} resume(s) added to analysis!', 'success')
+                return redirect(url_for('run_analysis_route'))
+                
+            except Exception as e:
+                flash(f'Error: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
+                return redirect(url_for('analyze', step='resumes'))
+        
+        elif action == 'confirm_document_warnings':
+            # User confirmed to proceed despite document warnings (too short and/or too long)
+            try:
+                # Check we have the session flag
+                if not session.get('show_document_warnings'):
+                    flash('Session expired. Please start over.', 'error')
+                    return redirect(url_for('analyze'))
+                
+                # Get draft
+                draft = Draft.query.filter_by(user_id=current_user.id).first()
+                if not draft:
+                    flash('Draft not found. Please start over.', 'error')
+                    return redirect(url_for('analyze'))
+                
+                # Clear all warning flags
+                short_jd = session.pop('short_jd', False)
+                long_jd = session.pop('long_jd', False)
+                session.pop('show_document_warnings', None)
+                session.pop('jd_length', None)
+                session.pop('jd_limit', None)
+                session.pop('resume_limit', None)
+                
+                # Mark that user has confirmed warnings
+                session['warnings_confirmed'] = True
+                session.modified = True
+                
+                # Determine next step based on what was uploaded
+                has_resumes = DraftResume.query.filter_by(draft_id=draft.id).count() > 0
+                
+                if short_jd or long_jd:
+                    # Had JD warnings - need to extract criteria if not done already
+                    if not draft.criteria_data:
+                        # Extract criteria from JD
+                        from analysis import extract_jd_sections_with_gpt, build_criteria_from_sections
+                        
+                        sections = extract_jd_sections_with_gpt(draft.jd_text)
+                        criteria, cat_map = build_criteria_from_sections(sections, per_section=999, cap_total=10000)
+                        
+                        if not criteria:
+                            flash('Could not extract criteria from job description', 'error')
+                            return redirect(url_for('analyze'))
+                        
+                        # Use AI-extracted job title from sections
+                        job_title = sections.job_title or "Position Not Specified"
+                        
+                        # Update draft with criteria
+                        draft.job_title = job_title
+                        draft.criteria_data = json.dumps([
+                            {'criterion': crit, 'category': cat_map.get(crit, 'Other Requirements'), 'use': True}
+                            for crit in criteria
+                        ])
+                        db.session.commit()
+                        
+                        flash(f'✅ JD processed! Extracted {len(criteria)} criteria. Review them on the Job Criteria page.', 'success')
+                        return redirect(url_for('review_criteria'))
+                    else:
+                        # Criteria already extracted, go to next step
+                        if has_resumes:
+                            # Have everything, go to run analysis
+                            resumes_added = session.pop('resumes_added', 0)
+                            if resumes_added:
+                                flash(f'✅ {resumes_added} resume(s) added to analysis!', 'success')
+                            return redirect(url_for('run_analysis_route'))
+                        else:
+                            # Need resumes
+                            return redirect(url_for('analyze', step='resumes'))
+                else:
+                    # Only had resume warnings
+                    resumes_added = session.pop('resumes_added', 0)
+                    if resumes_added:
+                        flash(f'✅ {resumes_added} resume(s) added to analysis!', 'success')
+                    return redirect(url_for('run_analysis_route'))
+                    
+            except Exception as e:
+                flash(f'Error: {str(e)}', 'error')
+                import traceback
+                traceback.print_exc()
+                return redirect(url_for('analyze'))
                 
                 flash(f'✅ {resumes_added} resume(s) uploaded successfully!', 'success')
                 return redirect(url_for('run_analysis_route'))
@@ -1075,31 +1310,8 @@ def create_app(config_name=None):
             from config import Config
             pricing = Config.get_pricing()
             
-            # Check if we should show truncation warning (from POST redirect)
-            show_warning = request.args.get('show_warning')
-            if show_warning == '1':
-                truncation_warning_data = session.get('truncation_warning', None)
-                if truncation_warning_data and not truncation_warning_data.get('consumed', False):
-                    # Mark as consumed to prevent double-display
-                    truncation_warning_data['consumed'] = True
-                    session['truncation_warning'] = truncation_warning_data
-                    session.modified = True
-                    
-                    return render_template('run_analysis.html', 
-                                         user=current_user,
-                                         resume_count=resume_count,
-                                         latest_analysis_id=current_draft_analysis_id,
-                                         in_workflow=True,
-                                         has_unsaved_work=True,
-                                         analysis_completed=False,
-                                         draft_modified_after_analysis=False,
-                                         form_token=form_token,
-                                         pricing=pricing,
-                                         truncation_warning=True,
-                                         truncated_docs=truncation_warning_data['docs'],
-                                         jd_limit=truncation_warning_data['jd_limit'],
-                                         resume_limit=truncation_warning_data['resume_limit'],
-                                         selected_insights_mode=truncation_warning_data['insights_mode'])
+            # REMOVED: Truncation warning display code
+            # Warnings now handled during upload only (lines 590-650)
             
             return render_template('run_analysis.html', 
                                  user=current_user,
@@ -1236,61 +1448,10 @@ def create_app(config_name=None):
             # Use job title from draft (already extracted/edited by user)
             job_title = draft.job_title or "Position Not Specified"
             
-            # Check document lengths and warn user if truncation will occur
-            system_settings = load_system_settings()
-            warnings_enabled = system_settings.get('enable_document_length_warnings', True)
-            
-            # Check if user already confirmed truncation at upload step
-            truncation_already_confirmed = session.get('truncation_confirmed', False)
-            
-            if warnings_enabled and not truncation_already_confirmed:
-                from analysis import load_gpt_settings
-                gpt_settings = load_gpt_settings()
-                jd_limit = gpt_settings['jd_text_chars']
-                resume_limit = gpt_settings['candidate_text_chars']
-                
-                jd_length = len(jd_text)
-                truncated_docs = []
-                
-                # Check JD length
-                if jd_length > jd_limit:
-                    truncated_docs.append({
-                        'name': 'Job Description',
-                        'length': jd_length,
-                        'limit': jd_limit
-                    })
-                
-                # Check resume lengths
-                long_resumes = [(c.name, len(c.text)) for c in candidates if len(c.text) > resume_limit]
-                for name, length in long_resumes:
-                    truncated_docs.append({
-                        'name': f'Resume: {name}',
-                        'length': length,
-                        'limit': resume_limit
-                    })
-                
-                # If documents exceed limits, show confirmation page FIRST
-                confirm_truncation = request.form.get('confirm_truncation')
-                if truncated_docs and not confirm_truncation:
-                    # DON'T consume token yet - restore it so user can resubmit
-                    session['analysis_form_token'] = submitted_token
-                    
-                    # Store truncation warning data in session for redirect
-                    session['truncation_warning'] = {
-                        'docs': truncated_docs,
-                        'jd_limit': jd_limit,
-                        'resume_limit': resume_limit,
-                        'insights_mode': insights_mode,
-                        'consumed': False  # Track if warning has been displayed
-                    }
-                    
-                    # Return JSON redirect for fetch to handle cleanly
-                    return jsonify({'redirect': url_for('run_analysis_route', show_warning='1')})
-            
-            # User has confirmed truncation (or warnings disabled, or truncation already confirmed, or no truncation needed)
-            # Clear any lingering truncation warning from session
-            session.pop('truncation_warning', None)
-            session.pop('truncation_confirmed', None)  # Clear the early confirmation flag
+            # REMOVED: Redundant truncation warning check
+            # Warnings are now handled comprehensively during upload (lines 590-650)
+            # No need to check again at Run Analysis stage
+            # User already confirmed any warnings before reaching this point
             # NOW consume the token
             session.pop('analysis_form_token', None)
             
@@ -1589,6 +1750,19 @@ def create_app(config_name=None):
         from config import Config
         pricing = Config.get_pricing()
         
+        # Get candidate file information for tooltips (file sizes, truncation warnings)
+        from database import CandidateFile
+        candidate_files_info = {}
+        candidate_files = CandidateFile.query.filter_by(analysis_id=analysis.id).all()
+        resume_limit = 12000  # From gpt_settings
+        for cf in candidate_files:
+            text_length = len(cf.extracted_text or '')
+            candidate_files_info[cf.candidate_name] = {
+                'text_length': text_length,
+                'was_truncated': text_length > resume_limit,
+                'filename': cf.file_name
+            }
+        
         return render_template('results_enhanced.html',
                              analysis=analysis,
                              coverage_data=coverage_data,
@@ -1601,7 +1775,8 @@ def create_app(config_name=None):
                              has_unsaved_work=False,
                              analysis_completed=True,
                              is_current_draft_analysis=is_current_draft_analysis,
-                             pricing=pricing)
+                             pricing=pricing,
+                             candidate_files_info=candidate_files_info)
     
     @app.route('/submit_feedback', methods=['POST'])
     @login_required
