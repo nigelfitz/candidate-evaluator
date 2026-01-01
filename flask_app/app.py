@@ -1295,19 +1295,19 @@ def create_app(config_name=None):
             # NOW consume the token
             session.pop('analysis_form_token', None)
             
-            # Track start time for duration calculation - DISABLED
-            # analysis_start_time = datetime.utcnow()
+            # Track start time for duration calculation
+            analysis_start_time = datetime.utcnow()
             
-            # Check if user exceeded resume limit (for analytics) - DISABLED
-            # exceeded_limit = len(candidates) > 200
-            # chose_override = request.form.get('override_limit') == 'true'
+            # Check if user exceeded resume limit (for analytics)
+            exceeded_limit = len(candidates) > 200
+            chose_override = request.form.get('override_limit') == 'true'
             
-            # Calculate document size metrics for analytics - DISABLED
-            # jd_char_count = len(jd_text)
-            # resume_char_counts = [len(c.text) for c in candidates]
-            # avg_resume_chars = int(sum(resume_char_counts) / len(resume_char_counts)) if resume_char_counts else 0
-            # min_resume_chars = min(resume_char_counts) if resume_char_counts else 0
-            # max_resume_chars = max(resume_char_counts) if resume_char_counts else 0
+            # Calculate document size metrics for analytics
+            jd_char_count = len(jd_text)
+            resume_char_counts = [len(c.text) for c in candidates]
+            avg_resume_chars = int(sum(resume_char_counts) / len(resume_char_counts)) if resume_char_counts else 0
+            min_resume_chars = min(resume_char_counts) if resume_char_counts else 0
+            max_resume_chars = max(resume_char_counts) if resume_char_counts else 0
             
             # Create Analysis record for progress tracking
             analysis = Analysis(
@@ -1324,14 +1324,13 @@ def create_app(config_name=None):
                 criteria_list=json.dumps(criteria),
                 cost_usd=estimated_cost,
                 analysis_size='phase1',  # Track progress phase
-                resumes_processed=0
-                # Analytics fields temporarily disabled:
-                # exceeded_resume_limit=exceeded_limit,
-                # user_chose_override=chose_override,
-                # jd_character_count=jd_char_count,
-                # avg_resume_character_count=avg_resume_chars,
-                # min_resume_character_count=min_resume_chars,
-                # max_resume_character_count=max_resume_chars
+                resumes_processed=0,
+                exceeded_resume_limit=exceeded_limit,
+                user_chose_override=chose_override,
+                jd_character_count=jd_char_count,
+                avg_resume_character_count=avg_resume_chars,
+                min_resume_character_count=min_resume_chars,
+                max_resume_character_count=max_resume_chars
             )
             db.session.add(analysis)
             db.session.flush()  # Get analysis.id
@@ -1441,9 +1440,9 @@ def create_app(config_name=None):
             analysis.category_map = json.dumps(category_map)
             analysis.gpt_candidates = json.dumps(gpt_candidates_list)
             
-            # Capture completion time and duration for analytics - DISABLED
-            # analysis.completed_at = datetime.utcnow()
-            # analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
+            # Capture completion time and duration for analytics
+            analysis.completed_at = datetime.utcnow()
+            analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
             
             # Store candidate files
             from database import CandidateFile

@@ -138,17 +138,17 @@ class Analysis(db.Model):
     error_message = db.Column(db.Text)  # Full error details including stack trace
     failed_at = db.Column(db.DateTime)  # When the failure occurred
     
-    # Analytics tracking fields - TEMPORARILY DISABLED UNTIL MIGRATION RUNS
-    # completed_at = db.Column(db.DateTime)  # When analysis finished processing
-    # processing_duration_seconds = db.Column(db.Integer)  # Total processing time
-    # exceeded_resume_limit = db.Column(db.Boolean, default=False)  # Hit 200+ warning?
-    # user_chose_override = db.Column(db.Boolean, default=False)  # Clicked "Try All Anyway"?
+    # Analytics tracking fields
+    completed_at = db.Column(db.DateTime)  # When analysis finished processing
+    processing_duration_seconds = db.Column(db.Integer)  # Total processing time
+    exceeded_resume_limit = db.Column(db.Boolean, default=False)  # Hit 200+ warning?
+    user_chose_override = db.Column(db.Boolean, default=False)  # Clicked "Try All Anyway"?
     
-    # Document size metrics - TEMPORARILY DISABLED UNTIL MIGRATION RUNS
-    # jd_character_count = db.Column(db.Integer)  # Job description length
-    # avg_resume_character_count = db.Column(db.Integer)  # Average resume length
-    # min_resume_character_count = db.Column(db.Integer)  # Shortest resume
-    # max_resume_character_count = db.Column(db.Integer)  # Longest resume
+    # Document size metrics
+    jd_character_count = db.Column(db.Integer)  # Job description length
+    avg_resume_character_count = db.Column(db.Integer)  # Average resume length
+    min_resume_character_count = db.Column(db.Integer)  # Shortest resume
+    max_resume_character_count = db.Column(db.Integer)  # Longest resume
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
