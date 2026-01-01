@@ -3651,6 +3651,67 @@ def create_app(config_name=None):
         return redirect(url_for('admin_users'))
     
     
+    @app.route('/admin/run-migrations/<secret>')
+    def admin_run_migrations(secret):
+        """Emergency migration endpoint - run analytics migrations via HTTP"""
+        # Security: require secret key
+        if secret != "migrate-analytics-2026":
+            return "Unauthorized", 403
+        
+        from sqlalchemy import text
+        results = []
+        
+        try:
+            # Migration 1: Basic Analytics
+            results.append("📊 Running Basic Analytics Migration...")
+            basic_fields = [
+                ("completed_at", "TIMESTAMP"),
+                ("processing_duration_seconds", "INTEGER"),
+                ("exceeded_resume_limit", "BOOLEAN DEFAULT FALSE"),
+                ("user_chose_override", "BOOLEAN DEFAULT FALSE"),
+            ]
+            
+            for field_name, field_type in basic_fields:
+                try:
+                    sql = f"ALTER TABLE analyses ADD COLUMN {field_name} {field_type}"
+                    db.session.execute(text(sql))
+                    db.session.commit()
+                    results.append(f"✅ Added: {field_name}")
+                except Exception as e:
+                    if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
+                        results.append(f"⏭️ Skipped: {field_name} (already exists)")
+                    else:
+                        results.append(f"❌ Error: {field_name}: {str(e)[:100]}")
+            
+            # Migration 2: Document Metrics
+            results.append("<br><br>📄 Running Document Metrics Migration...")
+            doc_fields = [
+                ("jd_character_count", "INTEGER"),
+                ("avg_resume_character_count", "INTEGER"),
+                ("min_resume_character_count", "INTEGER"),
+                ("max_resume_character_count", "INTEGER"),
+            ]
+            
+            for field_name, field_type in doc_fields:
+                try:
+                    sql = f"ALTER TABLE analyses ADD COLUMN {field_name} {field_type}"
+                    db.session.execute(text(sql))
+                    db.session.commit()
+                    results.append(f"✅ Added: {field_name}")
+                except Exception as e:
+                    if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
+                        results.append(f"⏭️ Skipped: {field_name} (already exists)")
+                    else:
+                        results.append(f"❌ Error: {field_name}: {str(e)[:100]}")
+            
+            results.append("<br><br>✅ Migrations Complete!")
+            return "<br>".join(results), 200
+            
+        except Exception as e:
+            results.append(f"<br><br>❌ CRITICAL ERROR: {str(e)}")
+            return "<br>".join(results), 500
+    
+    
     @app.route('/admin/analytics')
     @admin_required
     def admin_analytics():
