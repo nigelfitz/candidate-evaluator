@@ -46,6 +46,101 @@
         </div>
     </div>
     
+    <!-- Best Practices for Large Batches -->
+    <div class="help-section">
+        <div class="section-header" onclick="toggleSection('bestpractices')">
+            <span class="section-icon">💡</span>
+            <h2>Best Practices for Large Batches</h2>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="section-content" id="bestpractices">
+            <h3>Handling Large Resume Uploads</h3>
+            <p>
+                When screening many candidates (100+), we recommend a strategic approach that gives you faster results, 
+                better reliability, and more control over the hiring process.
+            </p>
+            
+            <div class="best-practice-box">
+                <h4>🎯 Recommended Strategy: Two-Pass Screening</h4>
+                <p>This approach works whether you have all resumes at once, or applications arriving over time:</p>
+                
+                <ol class="guide-steps">
+                    <li>
+                        <strong>Process in smaller batches (50-100 resumes each)</strong>
+                        <p>Break your candidates into manageable groups. This provides faster processing, more reliable results, 
+                        and the ability to spot issues early. Each batch typically completes in 1-3 minutes.</p>
+                    </li>
+                    <li>
+                        <strong>Identify top potential candidates from each batch</strong>
+                        <p>Review the results from each batch and identify the strongest 5-10 candidates. Look for:
+                        <ul>
+                            <li>High overall scores (typically 0.65+)</li>
+                            <li>Strong matches on your critical requirements</li>
+                            <li>Candidates who stand out from the rest of their batch</li>
+                        </ul>
+                        </p>
+                    </li>
+                    <li>
+                        <strong>Run one final comparison with only top candidates</strong>
+                        <p>Once you've identified the strongest candidates from all batches, create a final job with just these 
+                        finalists. This gives you a direct head-to-head comparison of your best candidates, making it easier to 
+                        make your final hiring decision.</p>
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="example-box" style="margin-top: 1.5rem;">
+                <h4>📖 Example Scenario</h4>
+                <p><strong>Situation:</strong> You have 300 applications for a Software Engineer role.</p>
+                
+                <p><strong>Approach:</strong></p>
+                <ul>
+                    <li><strong>Batch 1:</strong> Upload first 100 resumes → Identify top 8 candidates</li>
+                    <li><strong>Batch 2:</strong> Upload next 100 resumes → Identify top 7 candidates</li>
+                    <li><strong>Batch 3:</strong> Upload final 100 resumes → Identify top 10 candidates</li>
+                    <li><strong>Final Round:</strong> Upload just those 25 finalists → Run detailed comparison</li>
+                </ul>
+                
+                <p><strong>Result:</strong> You've efficiently narrowed 300 candidates down to your top 25, then performed a detailed 
+                analysis on just the finalists who truly have potential.</p>
+            </div>
+            
+            <h3>Processing Applications as They Arrive</h3>
+            <p>
+                This same approach works brilliantly if you want to process applications progressively rather than waiting 
+                for all resumes to arrive:
+            </p>
+            <ul>
+                <li><strong>Week 1:</strong> Process your first 80 applications, get early insights into candidate quality</li>
+                <li><strong>Week 2:</strong> Process the next batch that arrived, identify any standout candidates</li>
+                <li><strong>Week 3:</strong> Process final batch after closing date</li>
+                <li><strong>Final:</strong> Compare only the top candidates from each week</li>
+            </ul>
+            
+            <div class="tip-box" style="margin-top: 1.5rem;">
+                <h4>💡 Pro Tips</h4>
+                <ul>
+                    <li><strong>Early insights:</strong> Processing batches early gives you a "sneak peek" at application quality before all resumes arrive</li>
+                    <li><strong>Adjust criteria:</strong> If early batches show unexpectedly low scores, you can refine your criteria before processing remaining candidates</li>
+                    <li><strong>Reduce costs:</strong> Only pay for detailed AI insights on your finalists, not all 300 candidates</li>
+                    <li><strong>Stay organized:</strong> Name your jobs clearly (e.g., "Software Engineer - Batch 1", "Software Engineer - Finalists")</li>
+                </ul>
+            </div>
+            
+            <h3>Why Not Process All at Once?</h3>
+            <p>
+                While the system can handle larger batches, breaking them up provides:
+            </p>
+            <ul>
+                <li><strong>Faster results:</strong> Smaller batches complete in minutes instead of potentially timing out</li>
+                <li><strong>Better reliability:</strong> Less chance of API rate limits or processing errors</li>
+                <li><strong>Progressive insights:</strong> Start reviewing candidates while others are being processed</li>
+                <li><strong>Easier management:</strong> Simpler to spot and fix any issues with specific candidates</li>
+                <li><strong>Lower costs:</strong> Focus expensive AI insights on only the candidates who matter</li>
+            </ul>
+        </div>
+    </div>
+    
     <!-- Scoring Explained -->
     <div class="help-section">
         <div class="section-header" onclick="toggleSection('scoring')">
@@ -475,6 +570,34 @@
     
     .example-box p {
         margin: 0.5rem 0;
+    }
+    
+    .best-practice-box {
+        background: #f0f9ff;
+        padding: 1.5rem;
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    
+    .best-practice-box h4 {
+        color: #1e40af;
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .tip-box {
+        background: #fefce8;
+        padding: 1.5rem;
+        border-left: 4px solid #eab308;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    
+    .tip-box h4 {
+        color: #78350f;
+        margin-top: 0;
+        margin-bottom: 1rem;
     }
     
     .score-result {

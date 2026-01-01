@@ -113,6 +113,7 @@
     <div id="upload-resumes"></div>
     <form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="resumeUploadForm">
         <input type="hidden" name="action" value="upload_resumes">
+        <input type="hidden" name="override_limit" id="overrideLimitField" value="false">
         
         <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">{% if uploaded_resumes %}Add More Resumes{% else %}Step 3: Upload Resumes{% endif %}</h2>
@@ -156,34 +157,35 @@
         </div>
         
         <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-            <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 12px;">💡 Recommended Approaches for Large Batches:</h4>
-            <ul style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0; padding-left: 20px;">
-                <li style="margin-bottom: 8px;"><strong>Split into smaller batches</strong> - Process 50-100 resumes at a time for faster, more reliable results</li>
-                <li style="margin-bottom: 8px;"><strong>Two-pass screening</strong> - Run initial batches, identify top candidates from each, then analyze finalists together</li>
-                <li style="margin-bottom: 8px;"><strong>Staged hiring</strong> - Process applications as they arrive rather than all at once</li>
-            </ul>
+            <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 12px;">💡 Recommended Approach:</h4>
+            <ol style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0; padding-left: 20px;">
+                <li style="margin-bottom: 8px;"><strong>Process in smaller batches</strong> (e.g., 100 resumes per batch)</li>
+                <li style="margin-bottom: 8px;"><strong>Identify top potential candidates</strong> from each batch</li>
+                <li style="margin-bottom: 8px;"><strong>Run one final job</strong> which includes only the top potential candidates</li>
+            </ol>
+            <p style="color: #64748b; font-size: 13px; margin: 12px 0 0 0; line-height: 1.5;">
+                This works equally well for processing applications as they arrive—get early insights into candidate quality, then run a final comparison with only genuine contenders.
+            </p>
         </div>
         
         <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
             <p style="color: #78350f; font-size: 14px; margin: 0; line-height: 1.6;">
-                <strong>🚀 Coming Soon:</strong> We're actively developing enterprise features to better handle large-volume recruitment. In the meantime, the approaches above will give you great results while staying within optimal processing limits.
+                <strong>🚀 Coming Soon:</strong> We're actively developing enterprise features to better handle large-volume recruitment. In the meantime, the approach above will give you great results while staying within optimal processing limits.
             </p>
         </div>
         
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button onclick="proceedWithLimit()" style="flex: 1; min-width: 200px; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
-                ✅ Continue with <span id="limitedCount"></span> Resumes
+            <button onclick="closeResumeLimitModal()" style="flex: 1; min-width: 200px; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                ← Go Back to Revise Upload
             </button>
-            <button onclick="tryAnywayWithWarning()" style="flex: 1; min-width: 200px; padding: 14px 24px; background: white; color: #d97706; border: 2px solid #f59e0b; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+            <button onclick="tryAnywayWithWarning()" style="flex: 1; min-width: 200px; padding: 14px 24px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
                 ⚡ Try All <span id="fullCount"></span> Anyway
             </button>
         </div>
         
-        <div style="text-align: center; margin-top: 16px;">
-            <button onclick="closeResumeLimitModal()" style="background: none; border: none; color: #64748b; font-size: 14px; cursor: pointer; text-decoration: underline;">
-                Cancel & Go Back
-            </button>
-        </div>
+        <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 12px 0 0 0; line-height: 1.4;">
+            Note: Processing large batches may be slower and could encounter rate limits or timeouts
+        </p>
     </div>
 </div>
 
@@ -352,10 +354,16 @@ function updateResumesList() {
     
     selectedResumesList.innerHTML = `
         <div style="background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px;">
-            <h4 style="color: #1e40af; margin-bottom: 12px; font-size: 16px; font-weight: 600;">
-                <i data-lucide="file-check" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
-                ${selectedFiles.length} file(s) ready to upload
-            </h4>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h4 style="color: #1e40af; margin: 0; font-size: 16px; font-weight: 600;">
+                    <i data-lucide="file-check" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                    ${selectedFiles.length} file(s) ready to upload
+                </h4>
+                <button type="button" onclick="removeAllFiles()" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                    Remove All
+                </button>
+            </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 ${selectedFiles.map((file, index) => `
                     <div style="display: flex; align-items: center; justify-content: space-between; background: white; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
@@ -416,12 +424,10 @@ function showResumeUploadOverlay() {
 function showResumeLimitModal(fileCount, maxLimit) {
     const modal = document.getElementById('resumeLimitModal');
     const message = document.getElementById('resumeLimitMessage');
-    const limitedCount = document.getElementById('limitedCount');
     const fullCount = document.getElementById('fullCount');
     
     if (modal && message) {
         message.textContent = `You've selected ${fileCount} resumes, but our recommended limit is ${maxLimit} per upload for optimal processing.`;
-        limitedCount.textContent = maxLimit;
         fullCount.textContent = fileCount;
         modal.style.display = 'flex';
     }
@@ -434,18 +440,16 @@ function closeResumeLimitModal() {
     }
 }
 
-function proceedWithLimit() {
-    // Trim selectedFiles to the limit
-    selectedFiles = selectedFiles.slice(0, MAX_RESUMES_PER_UPLOAD);
+function removeAllFiles() {
+    selectedFiles = [];
     updateResumesList();
-    closeResumeLimitModal();
-    // Now actually submit
-    document.getElementById('resumeUploadForm').submit();
 }
 
 function tryAnywayWithWarning() {
     // Set flag to allow all files
     proceedWithAllFiles = true;
+    // Mark that user chose to override the limit (for analytics)
+    document.getElementById('overrideLimitField').value = 'true';
     closeResumeLimitModal();
     // Now actually submit with all files
     document.getElementById('resumeUploadForm').submit();

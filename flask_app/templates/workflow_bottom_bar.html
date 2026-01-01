@@ -190,16 +190,33 @@
         const btnSpinner = document.getElementById('continueButtonSpinner');
         
         if (form && continueBtn) {
+            // If it's the resume upload form, check the limit first
+            if (formId === 'resumeUploadForm') {
+                // Check if we need to show the limit warning modal
+                if (typeof selectedFiles !== 'undefined' && 
+                    typeof MAX_RESUMES_PER_UPLOAD !== 'undefined' && 
+                    typeof proceedWithAllFiles !== 'undefined' &&
+                    !proceedWithAllFiles && 
+                    selectedFiles.length > MAX_RESUMES_PER_UPLOAD) {
+                    
+                    // Show the limit modal instead of submitting
+                    if (typeof showResumeLimitModal === 'function') {
+                        showResumeLimitModal(selectedFiles.length, MAX_RESUMES_PER_UPLOAD);
+                    }
+                    return; // Don't submit
+                }
+                
+                // Show the loading overlay
+                if (typeof showResumeUploadOverlay === 'function') {
+                    showResumeUploadOverlay();
+                }
+            }
+            
             // Show spinner, hide icon
             btnIcon.style.display = 'none';
             btnSpinner.style.display = 'inline-block';
             btnText.textContent = 'Processing...';
             continueBtn.disabled = true;
-            
-            // If it's the resume upload form, show the overlay
-            if (formId === 'resumeUploadForm' && typeof showResumeUploadOverlay === 'function') {
-                showResumeUploadOverlay();
-            }
             
             // Submit form
             form.submit();

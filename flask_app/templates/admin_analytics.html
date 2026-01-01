@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <div class="analytics-header">
+        <h1>📊 Analytics Dashboard</h1>
+        <p style="color: #666;">Key metrics and insights for system performance and user behavior</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.total_jobs }}</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">👔</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ stats.total_candidates }}</div>
+                <div class="stat-label">Candidates Analyzed</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <div class="stat-value">${{ "%.2f"|format(stats.total_revenue) }}</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3>📈 Jobs Over Time</h3>
+            <canvas id="jobsChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h3>💵 Revenue Trends</h3>
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3>👥 Candidates per Job</h3>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <span class="metric-label">Average:</span>
+                    <span class="metric-value">{{ "%.1f"|format(stats.avg_candidates_per_job) }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Median:</span>
+                    <span class="metric-value">{{ stats.median_candidates }}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Largest Batch:</span>
+                    <span class="metric-value">{{ stats.max_candidates }}</span>
+                </div>
+            </div>
+            <canvas id="candidatesDistChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h3>⏱️ Processing Times</h3>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <span class="metric-label">Average:</span>
+                    <span class="metric-value">{{ stats.avg_processing_time }} sec</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Fastest:</span>
+                    <span class="metric-value">{{ stats.min_processing_time }} sec</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Slowest:</span>
+                    <span class="metric-value">{{ stats.max_processing_time }} sec</span>
+                </div>
+            </div>
+            <canvas id="processingTimeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Document Size Analytics -->
+    <div class="chart-card">
+        <h3>📄 Document Size Distribution</h3>
+        <div class="metrics-grid">
+            <div class="metric-item">
+                <span class="metric-label">Avg JD Length:</span>
+                <span class="metric-value">{{ "{:,}".format(stats.avg_jd_chars) }} chars</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Avg Resume:</span>
+                <span class="metric-value">{{ "{:,}".format(stats.avg_resume_chars) }} chars</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Smallest Resume:</span>
+                <span class="metric-value">{{ "{:,}".format(stats.min_resume_chars) }} chars</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Largest Resume:</span>
+                <span class="metric-value">{{ "{:,}".format(stats.max_resume_chars) }} chars</span>
+            </div>
+        </div>
+        <canvas id="resumeSizeDistributionChart"></canvas>
+    </div>
+
+    <!-- Warning Patterns -->
+    <div class="chart-card full-width">
+        <h3>⚠️ Resume Limit Warnings</h3>
+        <div class="warning-stats">
+            <div class="warning-stat">
+                <div class="warning-number">{{ stats.warnings_shown }}</div>
+                <div class="warning-label">Warnings Shown</div>
+            </div>
+            <div class="warning-stat">
+                <div class="warning-number">{{ stats.overrides_chosen }}</div>
+                <div class="warning-label">Users Chose "Try All Anyway"</div>
+            </div>
+            <div class="warning-stat">
+                <div class="warning-number">{{ "%.1f"|format(stats.override_rate) }}%</div>
+                <div class="warning-label">Override Rate</div>
+            </div>
+        </div>
+        <p style="color: #666; margin-top: 1rem; font-size: 14px;">
+            💡 <strong>Insight:</strong> 
+            {% if stats.override_rate > 50 %}
+                Over half of users are overriding the 200-resume limit. Consider increasing the default limit or improving batch processing features.
+            {% elif stats.override_rate > 25 %}
+                About {{ "%.0f"|format(stats.override_rate) }}% override the limit. Monitor for performance issues with large batches.
+            {% else %}
+                Most users respect the recommended limit. Current guidance is working well.
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Top Users Table -->
+    <div class="chart-card full-width">
+        <h3>🏆 Most Active Users</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Jobs Run</th>
+                    <th>Total Candidates</th>
+                    <th>Total Spent</th>
+                    <th>Avg Batch Size</th>
+                    <th>Last Active</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in stats.top_users %}
+                <tr>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.total_analyses_count }}</td>
+                    <td>{{ user.total_candidates }}</td>
+                    <td>${{ "%.2f"|format(user.total_revenue_usd) }}</td>
+                    <td>{{ "%.1f"|format(user.avg_batch) }}</td>
+                    <td>
+                        {% if user.last_seen %}
+                            {{ user.last_seen[:10] if user.last_seen is string else user.last_seen.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recent Jobs -->
+    <div class="chart-card full-width">
+        <h3>🕐 Recent Jobs</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Job Title</th>
+                    <th>Candidates</th>
+                    <th>Cost</th>
+                    <th>Duration</th>
+                    <th>Completed</th>
+                    <th>Warning/Override</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in stats.recent_jobs %}
+                <tr>
+                    <td>#{{ job.id }}</td>
+                    <td>{{ job.user_email }}</td>
+                    <td>{{ job.job_title[:40] }}...</td>
+                    <td>{{ job.num_candidates }}</td>
+                    <td>${{ "%.2f"|format(job.cost_usd) }}</td>
+                    <td>
+                        {% if job.processing_duration_seconds %}
+                            {{ job.processing_duration_seconds }}s
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if job.completed_at %}
+                            {{ job.completed_at[:16] if job.completed_at is string else job.completed_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% elif job.created_at %}
+                            {{ job.created_at[:16] if job.created_at is string else job.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if job.exceeded_resume_limit %}
+                            {% if job.user_chose_override %}
+                                <span class="badge badge-warning">⚡ Override</span>
+                            {% else %}
+                                <span class="badge badge-info">✅ Heeded</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-success">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.analytics-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.analytics-header {
+    margin-bottom: 2rem;
+}
+
+.analytics-header h1 {
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.chart-card h3 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.metric-item {
+    text-align: center;
+}
+
+.metric-label {
+    display: block;
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.metric-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f77b4;
+}
+
+.warning-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+
+.warning-stat {
+    text-align: center;
+    padding: 1.5rem;
+    background: #fef3c7;
+    border-radius: 8px;
+}
+
+.warning-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #d97706;
+}
+
+.warning-label {
+    color: #78350f;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th {
+    background: #f3f4f6;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.data-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+.data-table tr:hover {
+    background: #f9fafb;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.badge-info {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: #059669;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Jobs Over Time Chart
+const jobsCtx = document.getElementById('jobsChart').getContext('2d');
+new Chart(jobsCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.jobs_by_day.labels|tojson }},
+        datasets: [{
+            label: 'Jobs Created',
+            data: {{ stats.jobs_by_day.data|tojson }},
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2
+    }
+});
+
+// Revenue Trends Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.revenue_by_day.labels|tojson }},
+        datasets: [{
+            label: 'Revenue ($)',
+            data: {{ stats.revenue_by_day.data|tojson }},
+            backgroundColor: '#10b981',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2
+    }
+});
+
+// Candidates Distribution Chart
+const candidatesCtx = document.getElementById('candidatesDistChart').getContext('2d');
+new Chart(candidatesCtx, {
+    type: 'bar',
+    data: {
+        labels: ['1-10', '11-50', '51-100', '101-200', '200+'],
+        datasets: [{
+            label: 'Number of Jobs',
+            data: {{ stats.candidates_distribution|tojson }},
+            backgroundColor: '#f59e0b',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2
+    }
+});
+
+// Processing Time Chart
+const timeCtx = document.getElementById('processingTimeChart').getContext('2d');
+new Chart(timeCtx, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+            label: 'Processing Time vs Candidates',
+            data: {{ stats.time_vs_candidates|tojson }},
+            backgroundColor: '#8b5cf6',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Number of Candidates'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Processing Time (seconds)'
+                }
+            }
+        }
+    }
+});
+
+// Resume Size Distribution Chart (Bell Curve)
+const resumeSizeCtx = document.getElementById('resumeSizeDistributionChart').getContext('2d');
+new Chart(resumeSizeCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.resume_size_labels|tojson }},
+        datasets: [{
+            label: 'Number of Resumes',
+            data: {{ stats.resume_size_distribution|tojson }},
+            backgroundColor: '#10b981',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Resume Size (characters)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Processing Time (seconds)'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -746,8 +746,9 @@ def create_app(config_name=None):
                 jd_length = len(jd_text)
                 truncated_docs = []
                 
-                # Check JD length
-                if jd_length > jd_limit:
+                # Check JD length (but skip if user already saw warning at upload stage)
+                jd_already_warned = session.get('show_jd_length_warning', False)
+                if jd_length > jd_limit and not jd_already_warned:
                     truncated_docs.append({
                         'name': 'Job Description',
                         'length': jd_length,
@@ -769,6 +770,20 @@ def create_app(config_name=None):
                     doc_list = ", ".join([f"{d['name']} ({d['length']:,} chars)" for d in truncated_docs])
                     flash(f"ℹ️ Document length notice: {doc_list} exceed our limits and will be automatically trimmed to maintain optimal performance. Analysis quality remains high.", 'info')
                 
+                # Track start time for duration calculation
+                analysis_start_time = datetime.utcnow()
+                
+                # Check if user exceeded resume limit (for analytics)
+                exceeded_limit = len(candidates) > 200
+                chose_override = request.form.get('override_limit') == 'true'  # Will be set by frontend
+                
+                # Calculate document size metrics for analytics
+                jd_char_count = len(jd_text)
+                resume_char_counts = [len(c.text) for c in candidates]
+                avg_resume_chars = int(sum(resume_char_counts) / len(resume_char_counts)) if resume_char_counts else 0
+                min_resume_chars = min(resume_char_counts) if resume_char_counts else 0
+                max_resume_chars = max(resume_char_counts) if resume_char_counts else 0
+                
                 # Create Analysis record for progress tracking
                 analysis = Analysis(
                     user_id=current_user.id,
@@ -782,7 +797,13 @@ def create_app(config_name=None):
                     criteria_list=json.dumps(criteria),
                     cost_usd=total_cost,
                     analysis_size='small' if len(candidates) <= 5 else ('medium' if len(candidates) <= 15 else 'large'),
-                    resumes_processed=0
+                    resumes_processed=0,
+                    exceeded_resume_limit=exceeded_limit,
+                    user_chose_override=chose_override,
+                    jd_character_count=jd_char_count,
+                    avg_resume_character_count=avg_resume_chars,
+                    min_resume_character_count=min_resume_chars,
+                    max_resume_character_count=max_resume_chars
                 )
                 db.session.add(analysis)
                 db.session.flush()  # Get analysis.id
@@ -877,6 +898,10 @@ def create_app(config_name=None):
                 analysis.evidence_data = json.dumps({f"{k[0]}|||{k[1]}": v for k, v in evidence_map.items()})
                 analysis.category_map = json.dumps(category_map)
                 analysis.gpt_candidates = json.dumps(gpt_candidates_list)
+                
+                # Capture completion time and duration for analytics
+                analysis.completed_at = datetime.utcnow()
+                analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
                 
                 db.session.add(analysis)
                 
@@ -3598,6 +3623,205 @@ def create_app(config_name=None):
     def admin_settings():
         """Display admin settings panel - redirect to Users page"""
         return redirect(url_for('admin_users'))
+    
+    
+    @app.route('/admin/analytics')
+    @admin_required
+    def admin_analytics():
+        """Display analytics dashboard with system metrics"""
+        from sqlalchemy import func, desc
+        from datetime import datetime, timedelta
+        
+        # Summary Stats
+        total_users = User.query.count()
+        total_jobs = Analysis.query.count()
+        total_candidates = db.session.query(func.sum(Analysis.num_candidates)).scalar() or 0
+        total_revenue = db.session.query(func.sum(Analysis.cost_usd)).scalar() or 0
+        
+        # Average candidates per job
+        avg_candidates = db.session.query(func.avg(Analysis.num_candidates)).scalar() or 0
+        
+        # Calculate median (SQLite-compatible)
+        all_candidate_counts = [a.num_candidates for a in Analysis.query.with_entities(Analysis.num_candidates).all()]
+        median_candidates = sorted(all_candidate_counts)[len(all_candidate_counts)//2] if all_candidate_counts else 0
+        
+        max_candidates = db.session.query(func.max(Analysis.num_candidates)).scalar() or 0
+        
+        # Processing times (only for jobs with data)
+        avg_time = db.session.query(func.avg(Analysis.processing_duration_seconds)).filter(
+            Analysis.processing_duration_seconds.isnot(None)
+        ).scalar() or 0
+        min_time = db.session.query(func.min(Analysis.processing_duration_seconds)).filter(
+            Analysis.processing_duration_seconds.isnot(None)
+        ).scalar() or 0
+        max_time = db.session.query(func.max(Analysis.processing_duration_seconds)).filter(
+            Analysis.processing_duration_seconds.isnot(None)
+        ).scalar() or 0
+        
+        # Warning patterns
+        warnings_shown = Analysis.query.filter_by(exceeded_resume_limit=True).count()
+        overrides_chosen = Analysis.query.filter_by(exceeded_resume_limit=True, user_chose_override=True).count()
+        override_rate = (overrides_chosen / warnings_shown * 100) if warnings_shown > 0 else 0
+        
+        # Jobs by day (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        jobs_by_day = db.session.query(
+            func.date(Analysis.created_at).label('date'),
+            func.count(Analysis.id).label('count')
+        ).filter(
+            Analysis.created_at >= thirty_days_ago
+        ).group_by(func.date(Analysis.created_at)).order_by('date').all()
+        
+        # Handle both string dates (SQLite) and date objects (PostgreSQL)
+        jobs_labels = []
+        for row in jobs_by_day:
+            if isinstance(row.date, str):
+                # SQLite returns string like '2026-01-01'
+                jobs_labels.append(row.date[5:].replace('-', '/'))
+            else:
+                jobs_labels.append(row.date.strftime('%m/%d'))
+        jobs_data = [row.count for row in jobs_by_day]
+        
+        # Revenue by day (last 30 days)
+        revenue_by_day = db.session.query(
+            func.date(Analysis.created_at).label('date'),
+            func.sum(Analysis.cost_usd).label('revenue')
+        ).filter(
+            Analysis.created_at >= thirty_days_ago
+        ).group_by(func.date(Analysis.created_at)).order_by('date').all()
+        
+        # Handle both string dates (SQLite) and date objects (PostgreSQL)
+        revenue_labels = []
+        for row in revenue_by_day:
+            if isinstance(row.date, str):
+                # SQLite returns string like '2026-01-01'
+                revenue_labels.append(row.date[5:].replace('-', '/'))
+            else:
+                revenue_labels.append(row.date.strftime('%m/%d'))
+        revenue_data = [float(row.revenue) for row in revenue_by_day]
+        
+        # Candidates distribution
+        candidates_dist = [
+            Analysis.query.filter(Analysis.num_candidates.between(1, 10)).count(),
+            Analysis.query.filter(Analysis.num_candidates.between(11, 50)).count(),
+            Analysis.query.filter(Analysis.num_candidates.between(51, 100)).count(),
+            Analysis.query.filter(Analysis.num_candidates.between(101, 200)).count(),
+            Analysis.query.filter(Analysis.num_candidates > 200).count(),
+        ]
+        
+        # Processing time vs candidates (scatter data)
+        time_data = db.session.query(
+            Analysis.num_candidates,
+            Analysis.processing_duration_seconds
+        ).filter(
+            Analysis.processing_duration_seconds.isnot(None)
+        ).all()
+        
+        time_vs_candidates = [{'x': row[0], 'y': row[1]} for row in time_data]
+        
+        # Document size analytics
+        avg_jd_chars = db.session.query(func.avg(Analysis.jd_character_count)).filter(
+            Analysis.jd_character_count.isnot(None)
+        ).scalar() or 0
+        
+        # Get all resume character counts for bell curve
+        all_resume_chars = []
+        for analysis in Analysis.query.filter(Analysis.avg_resume_character_count.isnot(None)).all():
+            # Approximate: use avg, min, max to estimate distribution
+            if analysis.avg_resume_character_count:
+                all_resume_chars.append(analysis.avg_resume_character_count)
+        
+        # Create histogram buckets for bell curve (0-20k in 2k increments)
+        resume_size_buckets = list(range(0, 22000, 2000))
+        resume_size_labels = [f"{i//1000}-{(i+2000)//1000}k" for i in resume_size_buckets[:-1]]
+        resume_size_distribution = [0] * (len(resume_size_buckets) - 1)
+        
+        for char_count in all_resume_chars:
+            for i in range(len(resume_size_buckets) - 1):
+                if resume_size_buckets[i] <= char_count < resume_size_buckets[i+1]:
+                    resume_size_distribution[i] += 1
+                    break
+        
+        avg_resume_chars = int(sum(all_resume_chars) / len(all_resume_chars)) if all_resume_chars else 0
+        min_resume_chars = db.session.query(func.min(Analysis.min_resume_character_count)).filter(
+            Analysis.min_resume_character_count.isnot(None)
+        ).scalar() or 0
+        max_resume_chars = db.session.query(func.max(Analysis.max_resume_character_count)).filter(
+            Analysis.max_resume_character_count.isnot(None)
+        ).scalar() or 0
+        
+        # Top users
+        top_users = db.session.query(
+            User,
+            func.sum(Analysis.num_candidates).label('total_candidates'),
+            func.avg(Analysis.num_candidates).label('avg_batch')
+        ).join(
+            Analysis, User.id == Analysis.user_id
+        ).group_by(User.id).order_by(
+            desc(User.total_analyses_count)
+        ).limit(10).all()
+        
+        top_users_data = [{
+            'email': user.email,
+            'total_analyses_count': user.total_analyses_count,
+            'total_candidates': int(total_cand or 0),
+            'total_revenue_usd': user.total_revenue_usd,
+            'avg_batch': float(avg_b or 0),
+            'last_seen': user.last_seen
+        } for user, total_cand, avg_b in top_users]
+        
+        # Recent jobs
+        recent_jobs = db.session.query(
+            Analysis,
+            User.email.label('user_email')
+        ).join(
+            User, Analysis.user_id == User.id
+        ).order_by(
+            desc(Analysis.created_at)
+        ).limit(20).all()
+        
+        recent_jobs_data = [{
+            'id': analysis.id,
+            'user_email': user_email,
+            'job_title': analysis.job_title or 'Untitled',
+            'num_candidates': analysis.num_candidates,
+            'cost_usd': analysis.cost_usd,
+            'processing_duration_seconds': analysis.processing_duration_seconds,
+            'created_at': analysis.created_at,
+            'completed_at': analysis.completed_at,
+            'exceeded_resume_limit': analysis.exceeded_resume_limit or False,
+            'user_chose_override': analysis.user_chose_override or False
+        } for analysis, user_email in recent_jobs]
+        
+        stats = {
+            'total_users': total_users,
+            'total_jobs': total_jobs,
+            'total_candidates': total_candidates,
+            'total_revenue': total_revenue,
+            'avg_candidates_per_job': avg_candidates,
+            'median_candidates': int(median_candidates),
+            'max_candidates': max_candidates,
+            'avg_processing_time': int(avg_time),
+            'min_processing_time': int(min_time),
+            'max_processing_time': int(max_time),
+            'warnings_shown': warnings_shown,
+            'overrides_chosen': overrides_chosen,
+            'override_rate': override_rate,
+            'jobs_by_day': {'labels': jobs_labels, 'data': jobs_data},
+            'revenue_by_day': {'labels': revenue_labels, 'data': revenue_data},
+            'candidates_distribution': candidates_dist,
+            'time_vs_candidates': time_vs_candidates,
+            'avg_jd_chars': int(avg_jd_chars),
+            'avg_resume_chars': avg_resume_chars,
+            'min_resume_chars': min_resume_chars,
+            'max_resume_chars': max_resume_chars,
+            'resume_size_labels': resume_size_labels,
+            'resume_size_distribution': resume_size_distribution,
+            'top_users': top_users_data,
+            'recent_jobs': recent_jobs_data
+        }
+        
+        return render_template('admin_analytics.html', stats=stats, active_tab='analytics')
     
     
     @app.route('/admin/gpt')
