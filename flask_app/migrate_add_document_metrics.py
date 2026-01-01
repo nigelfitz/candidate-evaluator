@@ -29,6 +29,11 @@ from sqlalchemy import text
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///candidate_evaluator.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Debug: Show where Flask thinks the database is
+print(f"Flask instance path: {app.instance_path}")
+print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
 db.init_app(app)
 
 def run_migration():
@@ -72,7 +77,7 @@ def run_migration():
             sys.exit(1)
 
 if __name__ == '__main__':
-    print("\n⚠️  This will add 4 fields to your analyses table.")
+    print("\n⚠️  This will add 4 fields to your analysis table.")
     print("Make sure you have a backup.")
     response = input("\nContinue? (yes/no): ")
     
