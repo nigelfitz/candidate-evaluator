@@ -317,14 +317,29 @@
         <div class="text-center">
             <h4 style="color: #1f2937; margin-bottom: 10px;">💡 Historical Candidate Insights</h4>
             <p class="text-muted mb-0">Viewing saved insights from a previous analysis</p>
-            <div class="mt-3">
+            <div class="mt-3" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                 <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis_id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-warning btn-sm" 
-                            onclick="return confirm('This will load this analysis into your draft workspace for editing and re-running. If you are in the middle of working on another job, that other job will be lost. After editing your historical job, you will need to \'Run Analysis\' on it, which will create a new job in your Job History list. Continue?');">
-                        ✏️ Edit & Re-run This Analysis
+                    <button type="submit" class="btn btn-primary" 
+                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;"
+                            onclick="return confirm('This will load this job into your workspace with the SAME criteria so you can analyze a new batch of candidates.\n\n💡 Tip: After loading, update the job title (e.g., add \"Batch 2\" or \"Final Round\") to distinguish between batches.\n\nContinue?');">
+                        <i data-lucide="copy-plus" style="width: 18px; height: 18px;"></i>
+                        Run New Batch with Same Criteria
                     </button>
                 </form>
-                <small class="text-muted ms-2">or <a href="{{ url_for('job_history') }}">Return to Job History</a> | <a href="{{ url_for('analyze', new=1) }}">Start New Analysis</a></small>
+                <div style="position: relative; display: inline-block;">
+                    <i data-lucide="info" 
+                       style="width: 20px; height: 20px; color: #3b82f6; cursor: help;" 
+                       onmouseover="document.getElementById('batchTooltipInsights').style.display='block'"
+                       onmouseout="document.getElementById('batchTooltipInsights').style.display='none'"></i>
+                    <div id="batchTooltipInsights" 
+                         style="display: none; position: absolute; left: 30px; top: -20px; background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; line-height: 1.5;">
+                        <strong style="color: #60a5fa;">💡 Batch Processing Tips:</strong><br>
+                        • Use this to analyze multiple candidate groups against identical criteria<br>
+                        • Update job title to "Batch 2", "Batch 3", etc. to track batches<br>
+                        • All criteria and settings are preserved for fair comparison<br>
+                        • Great for handling large candidate pools in manageable chunks
+                    </div>
+                </div>
             </div>
         </div>
     </div>
