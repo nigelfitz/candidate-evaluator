@@ -1226,17 +1226,24 @@ def create_app(config_name=None):
         draft.jd_hash = hashlib.md5(draft.jd_text.encode()).hexdigest()
         draft.job_title = analysis.job_title
         
-        # Rebuild criteria_data from analysis
+        # Restore criteria_data from analysis (preserves checked/unchecked state)
         criteria_list = json.loads(analysis.criteria_list)
-        category_map = json.loads(analysis.category_map) if analysis.category_map else {}
-        criteria_data = []
-        for criterion in criteria_list:
-            criteria_data.append({
-                'criterion': criterion,
-                'category': category_map.get(criterion, 'Other Requirements'),
-                'use': True
-            })
-        draft.criteria_data = json.dumps(criteria_data)
+        
+        # Check if criteria_list is already in full format (with 'use' flags) or old format (just strings)
+        if criteria_list and isinstance(criteria_list[0], dict):
+            # New format - already has full structure, use as-is
+            draft.criteria_data = analysis.criteria_list
+        else:
+            # Old format (just strings) - rebuild with category_map and default to checked
+            category_map = json.loads(analysis.category_map) if analysis.category_map else {}
+            criteria_data = []
+            for criterion in criteria_list:
+                criteria_data.append({
+                    'criterion': criterion,
+                    'category': category_map.get(criterion, 'Other Requirements'),
+                    'use': True
+                })
+            draft.criteria_data = json.dumps(criteria_data)
         
         db.session.add(draft)
         db.session.flush()
@@ -1481,7 +1488,7 @@ def create_app(config_name=None):
                 coverage_data='',  # Will be populated after Phase 1
                 insights_data='',  # Will be populated after Phase 2
                 evidence_data='',  # Will be populated after Phase 1
-                criteria_list=json.dumps(criteria),
+                criteria_list=json.dumps(criteria_list),  # Store full criteria_data with use flags, not just filtered list
                 cost_usd=estimated_cost,
                 analysis_size='phase1',  # Track progress phase
                 resumes_processed=0,
