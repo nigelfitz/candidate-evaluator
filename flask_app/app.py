@@ -1982,7 +1982,7 @@ def create_app(config_name=None):
                                  jd_filename=draft.jd_filename,
                                  job_title=draft.job_title or "Position Not Specified",
                                  jd_text=draft.jd_text[:2000],
-                                 has_pdf=draft.jd_filename.lower().endswith('.pdf') if draft.jd_filename else False,
+                                 has_pdf=bool(draft.jd_bytes),  # Check if file bytes exist, not just filename
                                  in_workflow=True, has_unsaved_work=True,
                                  analysis_completed=analysis_completed,
                                  draft_modified_after_analysis=draft_modified_after_analysis,
@@ -2090,8 +2090,17 @@ def create_app(config_name=None):
         """View JD PDF file"""
         draft = Draft.query.filter_by(user_id=current_user.id).first()
         if not draft or not draft.jd_bytes:
-            flash('No JD file available', 'error')
-            return redirect(url_for('review_criteria'))
+            # Return HTML error message instead of flash + redirect
+            # This prevents the iframe from loading a redirect and showing the whole page
+            return '''
+                <html>
+                <body style="font-family: sans-serif; padding: 40px; text-align: center; color: #6b7280;">
+                    <h3 style="color: #ef4444;">📄 No PDF File Available</h3>
+                    <p>The original JD file is not available (may have been pasted as text or loaded from history).</p>
+                    <p style="font-size: 14px; margin-top: 20px;">The full JD text is shown below the criteria list.</p>
+                </body>
+                </html>
+            ''', 404
         
         from flask import Response
         return Response(
