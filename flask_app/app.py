@@ -94,12 +94,24 @@ def create_app(config_name=None):
         """Landing page - shows marketing page for non-logged-in users, redirects to dashboard for logged-in"""
         if current_user.is_authenticated:
             return redirect(url_for('dashboard'))
-        return render_template('landing.html')
+        
+        # Load pricing for display
+        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
+        with open(pricing_path, 'r', encoding='utf-8') as f:
+            pricing_config = json.load(f)
+        
+        return render_template('landing.html', pricing=pricing_config)
     
     @app.route('/pricing')
     def pricing():
         """Pricing page"""
-        return render_template('pricing.html')
+        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
+        with open(pricing_path, 'r', encoding='utf-8') as f:
+            pricing_config = json.load(f)
+        test_drive_price = pricing_config['standard_tier_price']['value'] - pricing_config['new_user_welcome_credit']['value']
+        return render_template('pricing.html', 
+                             pricing=pricing_config,
+                             test_drive_price=test_drive_price)
     
     @app.route('/security')
     def security():
@@ -3825,6 +3837,7 @@ def create_app(config_name=None):
         pricing['volume_bonus_threshold']['value'] = float(request.form.get('volume_bonus_threshold', 50.0))
         pricing['volume_bonus_percentage']['value'] = float(request.form.get('volume_bonus_percentage', 15.0))
         pricing['minimum_topup_amount']['value'] = float(request.form.get('minimum_topup_amount', 5.0))
+        pricing['new_user_welcome_credit']['value'] = float(request.form.get('new_user_welcome_credit', 0.0))
         
         # Save back to file
         with open(pricing_path, 'w', encoding='utf-8') as f:
@@ -4402,7 +4415,7 @@ def create_app(config_name=None):
             'reason': reason
         })
         
-        flash(f'✅ User {user.email} has been suspended', 'success')
+        flash(f'✅ User {user.email} has been suspended', 'admin')
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
     
@@ -4421,7 +4434,7 @@ def create_app(config_name=None):
             'email': user.email
         })
         
-        flash(f'✅ User {user.email} has been unsuspended', 'success')
+        flash(f'✅ User {user.email} has been unsuspended', 'admin')
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
     
@@ -4557,7 +4570,7 @@ def create_app(config_name=None):
                 'new_balance': float(user.balance_usd)
             })
             
-            flash(f'✅ Balance adjusted by ${adjustment_amount:.2f} for {user.email}', 'success')
+            flash(f'✅ Balance adjusted by ${adjustment_amount:.2f} for {user.email}', 'admin')
             return redirect(url_for('admin_balance_audit'))
         
         # GET request - show adjustment form
@@ -4640,7 +4653,6 @@ def create_app(config_name=None):
         settings['registration_enabled']['value'] = request.form.get('registration_enabled') == 'on'
         settings['maintenance_mode']['value'] = request.form.get('maintenance_mode') == 'on'
         settings['max_file_size_mb']['value'] = int(request.form.get('max_file_size_mb', 10))
-        settings['new_user_welcome_credit']['value'] = float(request.form.get('new_user_welcome_credit', 0))
         settings['enable_document_length_warnings']['value'] = request.form.get('enable_document_length_warnings') == 'on'
         settings['max_resumes_per_upload']['value'] = int(request.form.get('max_resumes_per_upload', 200))
         
@@ -4652,7 +4664,7 @@ def create_app(config_name=None):
         with open(settings_path, 'w') as f:
             json.dump(settings, f, indent=2)
         
-        flash('✅ System settings saved successfully!', 'success')
+        flash('✅ System settings saved successfully!', 'admin')
         return redirect(url_for('admin_system'))
     
     
@@ -4948,7 +4960,7 @@ def create_app(config_name=None):
         user.set_password(temp_password)
         db.session.commit()
         
-        flash(f'✅ Password reset for {user.email}. Temporary password: {temp_password}', 'success')
+        flash(f'✅ Password reset for {user.email}. Temporary password: {temp_password}', 'admin')
         return redirect(url_for('admin_user_detail', user_id=user_id))
     
     @app.route('/api/analysis-progress/<int:analysis_id>')

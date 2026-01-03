@@ -27,7 +27,7 @@
     <!-- Info Box -->
     <div class="alert alert-info" style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 16px; margin-bottom: 32px;">
         <i data-lucide="lightbulb" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px; color: #1e40af;"></i>
-        <strong>Tip:</strong> Add, remove, or reword criteria or Job Title. Uncheck <em>Use</em> to exclude items. Click 'Save Changes' when done.
+        <strong>Tip:</strong> Add, remove, or reword criteria or Job Title. Uncheck <em>Use</em> to exclude items. Changes are saved automatically when you continue to the next step.
     </div>
 
     <!-- Action Buttons -->
@@ -35,11 +35,6 @@
         <button id="addCriterion" class="btn btn-success">
             <i data-lucide="plus" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;"></i>
             Add New Criterion
-        </button>
-        <button id="saveChanges" class="btn btn-primary">
-            <i data-lucide="save" id="saveIcon" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;"></i>
-            <span id="saveText">Save Changes</span>
-            <span class="spinner-border spinner-border-sm" id="saveSpinner" style="display: none; margin-left: 6px;"></span>
         </button>
         
         <!-- Manage Data Dropdown -->
@@ -344,16 +339,6 @@ function markChanged() {
 
 function saveChanges() {
     const jobTitle = document.getElementById('jobTitleInput').value.trim();
-    const saveBtn = document.getElementById('saveChanges');
-    const saveIcon = document.getElementById('saveIcon');
-    const saveText = document.getElementById('saveText');
-    const saveSpinner = document.getElementById('saveSpinner');
-    
-    // Show spinner
-    saveIcon.style.display = 'none';
-    saveSpinner.style.display = 'inline-block';
-    saveText.textContent = 'Saving...';
-    saveBtn.disabled = true;
     
     fetch('{{ url_for("review_criteria") }}', {
         method: 'POST',
@@ -365,14 +350,7 @@ function saveChanges() {
     })
     .then(r => r.json())
     .then(data => {
-        // Hide spinner
-        saveSpinner.style.display = 'none';
-        saveIcon.style.display = 'inline';
-        saveText.textContent = 'Save Changes';
-        saveBtn.disabled = false;
-        
         if (data.success) {
-            alert(data.message);
             hasChanges = false;
             originalData = JSON.parse(JSON.stringify(criteriaData));
             if (data.redirect) {
@@ -383,11 +361,6 @@ function saveChanges() {
         }
     })
     .catch(err => {
-        // Hide spinner on error
-        saveSpinner.style.display = 'none';
-        saveIcon.style.display = 'inline';
-        saveText.textContent = 'Save Changes';
-        saveBtn.disabled = false;
         alert('Save failed: ' + err);
     });
 }
@@ -403,7 +376,6 @@ function resetChanges() {
 
 // Event listeners
 document.getElementById('addCriterion').addEventListener('click', addCriterion);
-document.getElementById('saveChanges').addEventListener('click', saveChanges);
 document.getElementById('resetChangesDropdown').addEventListener('click', function(e) {
     e.preventDefault();
     resetChanges();
@@ -414,7 +386,7 @@ if (typeof lucide !== 'undefined') {
     lucide.createIcons();
 }
 
-// Warn before leaving with unsaved changes
+// Warn before leaving with unsaved changes (navigation via Continue button will save first)
 window.addEventListener('beforeunload', (e) => {
     if (hasChanges) {
         e.preventDefault();
@@ -524,8 +496,63 @@ details[open] summary {
 {% set show_back_button = True %}
 {% set back_url = url_for('analyze', step='jd') %}
 {% set continue_url = url_for('analyze', step='resumes') %}
-{% set continue_text = 'Continue to Upload Resumes' %}
+{% set continue_text = 'Save and Continue to Upload Resumes →' %}
 {% set continue_disabled = False %}
+{% set continue_onclick = 'saveAndContinue()' %}
 {% include 'workflow_bottom_bar.html' %}
+
+<script>
+// Save and continue function - saves changes then navigates
+function saveAndContinue() {
+    const continueBtn = document.getElementById('continueButton');
+    const btnText = document.getElementById('continueButtonText');
+    const btnIcon = document.getElementById('continueButtonIcon');
+    const btnSpinner = document.getElementById('continueButtonSpinner');
+    
+    // Show spinner
+    btnIcon.style.display = 'none';
+    btnSpinner.style.display = 'inline-block';
+    btnText.textContent = 'Saving...';
+    continueBtn.disabled = true;
+    
+    // Get current data
+    const jobTitle = document.getElementById('jobTitleInput').value.trim();
+    
+    // Save to backend
+    fetch('{{ url_for("review_criteria") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            criteria: criteriaData,
+            job_title: jobTitle
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Successfully saved - navigate to next step
+            hasChanges = false; // Clear changes flag to prevent beforeunload prompt
+            window.location.href = '{{ url_for("analyze", step="resumes") }}';
+        } else {
+            // Save failed - show error and re-enable button
+            alert('Error saving changes: ' + data.message);
+            btnSpinner.style.display = 'none';
+            btnIcon.style.display = 'inline';
+            btnText.textContent = 'Save and Continue to Upload Resumes →';
+            continueBtn.disabled = false;
+        }
+    })
+    .catch(err => {
+        // Network error - show error and re-enable button
+        alert('Save failed: ' + err);
+        btnSpinner.style.display = 'none';
+        btnIcon.style.display = 'inline';
+        btnText.textContent = 'Save and Continue to Upload Resumes →';
+        continueBtn.disabled = false;
+    });
+    
+    return false; // Prevent default navigation
+}
+</script>
 
 {% endblock %}

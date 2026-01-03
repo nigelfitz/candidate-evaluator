@@ -1,24 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Adjustment - Admin Panel</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .admin-container { max-width: 900px; margin: 0 auto; }
-        .settings-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 30px; margin-bottom: 20px; }
-        .logout-btn { position: fixed; top: 20px; right: 20px; }
-    </style>
-</head>
-<body>
-    <!-- Logout Button -->
-    <a href="{{ url_for('admin_logout') }}" class="btn btn-danger logout-btn">🚪 Logout</a>
+{% extends "admin_base.html" %}
 
-    <div class="admin-container">
-        <div class="settings-card">
-            <div style="margin-bottom: 30px;">
+{% block title %}Balance Adjustment - Admin Panel{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 30px;">
                 <a href="{{ url_for('admin_balance_audit') }}" style="color: #6366f1; text-decoration: none; font-weight: 600;">
                     ← Back to Balance Audit
                 </a>
@@ -42,98 +31,4 @@
                 <div>
                     <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Registration Date</div>
                     <div style="color: #1f2937; font-weight: 600;">{{ user.created_at.strftime('%b %d, %Y') }}</div>
-                </div>
-                <div>
-                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Total Analyses</div>
-                    <div style="color: #1f2937; font-weight: 600;">{{ user.analyses_completed }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Balance Comparison -->
-        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <h3 style="color: #92400e; margin: 0 0 16px 0; font-weight: 600;">Balance Discrepancy</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                <div>
-                    <div style="color: #78350f; font-size: 13px; margin-bottom: 4px;">Actual Balance (DB)</div>
-                    <div style="color: #92400e; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(actual_balance) }}</div>
-                </div>
-                <div>
-                    <div style="color: #78350f; font-size: 13px; margin-bottom: 4px;">Calculated (Transactions)</div>
-                    <div style="color: #92400e; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(calculated_balance) }}</div>
-                </div>
-                <div>
-                    <div style="color: #78350f; font-size: 13px; margin-bottom: 4px;">Discrepancy</div>
-                    <div style="{% if discrepancy > 0 %}color: #dc2626;{% else %}color: #059669;{% endif %} font-weight: 700; font-size: 20px;">
-                        {% if discrepancy > 0 %}+{% endif %}${{ "%.2f"|format(discrepancy) }}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Adjustment Form -->
-        <form method="POST" style="margin-bottom: 30px;">
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; color: #1f2937; font-weight: 600; margin-bottom: 8px;">
-                    Adjustment Amount
-                </label>
-                <div style="position: relative;">
-                    <span style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #6b7280; font-weight: 600;">$</span>
-                    <input type="number" 
-                           name="adjustment_amount" 
-                           step="0.01" 
-                           value="{{ '%.2f'|format(suggested_adjustment) }}"
-                           required
-                           style="width: 100%; padding: 12px 12px 12px 32px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px; font-weight: 600;"
-                           onfocus="this.style.borderColor='#6366f1'"
-                           onblur="this.style.borderColor='#e5e7eb'">
-                </div>
-                <div style="color: #6b7280; font-size: 13px; margin-top: 6px;">
-                    Enter a positive number to add funds, negative to deduct. Suggested: <strong>${{ "%.2f"|format(suggested_adjustment) }}</strong> to reconcile.
-                </div>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; color: #1f2937; font-weight: 600; margin-bottom: 8px;">
-                    Reason for Adjustment
-                </label>
-                <textarea name="reason" 
-                          rows="3" 
-                          required
-                          placeholder="Explain why this adjustment is being made..."
-                          style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
-                          onfocus="this.style.borderColor='#6366f1'"
-                          onblur="this.style.borderColor='#e5e7eb'">Reconciling balance discrepancy - missing transaction records</textarea>
-            </div>
-
-            <div style="display: flex; gap: 12px;">
-                <button type="submit" 
-                        style="flex: 1; background: #6366f1; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
-                        onmouseover="this.style.background='#4f46e5'"
-                        onmouseout="this.style.background='#6366f1'">
-                    ✅ Apply Adjustment
-                </button>
-                <a href="{{ url_for('admin_balance_audit') }}" 
-                   style="flex: 1; background: #f3f4f6; color: #1f2937; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; text-align: center; text-decoration: none; display: block; transition: all 0.2s;"
-                   onmouseover="this.style.background='#e5e7eb'"
-                   onmouseout="this.style.background='#f3f4f6'">
-                    Cancel
-                </a>
-            </div>
-        </form>
-
-        <!-- Warning -->
-        <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 8px;">
-            <h4 style="color: #991b1b; margin: 0 0 8px 0; font-weight: 600; font-size: 14px;">⚠️ Important</h4>
-            <p style="color: #7f1d1d; margin: 0; font-size: 13px; line-height: 1.6;">
-                This will create a permanent transaction record and modify the user's balance. 
-                Make sure you understand the root cause before applying an adjustment. 
-                This action will be logged in the admin audit trail.
-            </p>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

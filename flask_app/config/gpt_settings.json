@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "description": "Two-Agent AI Configuration for Candidate Evaluation System",
-    "last_updated": "2025-12-30 00:00:00 UTC",
+    "last_updated": "2026-01-03 02:49:42 UTC",
     "version": "2.0",
     "warning": "Changes to these settings affect both quality and cost. Test with small batches first.",
     "architecture": "RANKER_AGENT handles bulk scoring (all candidates × all criteria). INSIGHT_AGENT generates deep insights for selected candidates only."
@@ -112,7 +112,7 @@
   },
   "text_processing": {
     "candidate_text_chars": {
-      "value": 12000,
+      "value": 25000,
       "description": "Maximum resume text sent to AI (character limit)",
       "range": [
         4000,
@@ -124,7 +124,7 @@
       "quality_impact": "Too low (<6000) may miss relevant experience. 12000 captures full career history. 20000 only needed for extremely detailed CVs (rare)."
     },
     "jd_text_chars": {
-      "value": 5000,
+      "value": 15000,
       "description": "Maximum JD text sent to AI (character limit)",
       "range": [
         1000,
@@ -255,14 +255,14 @@
       "quality_impact": "Too low (<0.70) dilutes 'strong' meaning. 0.75 is balanced. Too high (>0.80) makes strong matches rare."
     },
     "good_match_threshold": {
-      "value": 0.50,
+      "value": 0.5,
       "description": "Score threshold for 'GOOD match' classification",
       "range": [
         0.4,
         0.7
       ],
       "explanation": "Scores between this and strong_threshold are 'GOOD match' (50-74% by default).",
-      "recommended": 0.50,
+      "recommended": 0.5,
       "cost_impact": "No cost impact - only affects classification logic",
       "quality_impact": "0.50 is balanced. Too low (<0.45) makes 'good' too easy. Too high (>0.60) makes moderate matches rare."
     },
@@ -347,25 +347,37 @@
     "avg_candidates_per_job": {
       "value": 50,
       "description": "Average number of candidates per job for cost estimation",
-      "range": [10, 200],
+      "range": [
+        10,
+        200
+      ],
       "explanation": "Used by Business Health Monitor to estimate typical analysis costs. Adjust to match your typical job posting volume."
     },
     "avg_criteria_per_job": {
       "value": 20,
       "description": "Average number of criteria per job description",
-      "range": [5, 40],
+      "range": [
+        5,
+        40
+      ],
       "explanation": "Typical JD has 15-25 criteria. More criteria = more RANKER calls = higher cost. Formula: candidates × criteria = ranker_calls."
     },
     "insights_generated": {
       "value": 5,
       "description": "Number of insights generated per analysis (Standard tier)",
-      "range": [3, 10],
+      "range": [
+        3,
+        10
+      ],
       "explanation": "Each insight costs ~$0.03 with gpt-4o. Standard tier includes 3-5 insights. User can unlock more."
     },
     "standard_tier_revenue": {
       "value": 10.0,
       "description": "Revenue per Standard tier analysis",
-      "range": [5.0, 20.0],
+      "range": [
+        5.0,
+        20.0
+      ],
       "explanation": "Current pricing: $10.00 for full analysis with 3-5 insights. Calculator shows profit margin at this price point."
     },
     "token_estimation_formulas": {

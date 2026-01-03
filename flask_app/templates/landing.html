@@ -496,9 +496,9 @@
     <h1><span class="hero-brand-bold">Candidate</span><span class="hero-brand-light">Evaluator</span></h1>
     <p>The fastest way to shortlist, score, and deeply analyse candidates for any job</p>
     <p>Save hours, make smarter hiring decisions, and benefit from AI-powered insights</p>
-    <p>Upload your job description and resumes — we'll hand you results. Instantly!</p>
+    <p>Upload your job description and resumes — we'll give you results in minutes!</p>
     <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="font-size: 1.2rem; padding: 1rem 2rem;">Analyze Your First Job Free</a>
-    <p class="trust-signal">Used by startups and small business owners. GDPR & Privacy Compliant.</p>
+    <p class="trust-signal">Used by startups, managers and recruiters. GDPR & Privacy Compliant.</p>
 </div>
 
 <div class="card">
@@ -538,12 +538,12 @@
 </div>
 
 <div class="pricing">
-    <h2>Hire Faster for just $10</h2>
-    <div class="price">$10</div>
+    <h2>Hire Faster for just ${{ "%.0f"|format(pricing.standard_tier_price.value) }}</h2>
+    <div class="price">${{ "%.0f"|format(pricing.standard_tier_price.value) }}</div>
     <p>per job analysis — everything included</p>
     <ul>
         <li>Rank unlimited resumes instantly</li>
-        <li>5 Comprehensive AI Insights included</li>
+        <li>Comprehensive AI Insights included for top 5 candidates</li>
         <li>Professional PDF/Word Reports</li>
         <li>No subscriptions. Pay only for the jobs you post</li>
     </ul>

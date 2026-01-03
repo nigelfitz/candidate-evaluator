@@ -14,7 +14,10 @@
             id="continueButton" 
             class="btn-workflow btn-continue"
             {% if continue_disabled %}disabled{% endif %}
-            {% if continue_is_submit %}
+            {% if continue_onclick %}
+            type="button"
+            onclick="{{ continue_onclick }}; return false;"
+            {% elif continue_is_submit %}
             type="button"
             onclick="submitFormWithSpinner('{{ submit_form_id }}')"
             {% elif continue_url %}

@@ -24,7 +24,7 @@
             <ol class="guide-steps">
                 <li>
                     <strong>Upload Job Description</strong>
-                    <p>Go to "Upload & Analyse" and upload your JD (PDF, DOCX, or TXT)</p>
+                    <p>Go to "+ New Analysis" and upload your JD (PDF, DOCX, or TXT)</p>
                 </li>
                 <li>
                     <strong>Review Criteria</strong>
@@ -32,15 +32,15 @@
                 </li>
                 <li>
                     <strong>Upload Candidate Resumes</strong>
-                    <p>Return to "Upload & Analyse" and upload candidate CVs (up to 20 at once)</p>
+                    <p>Upload candidate Resumes/CVs (processing can get congested with too many, so we suggest 100 or fewer per batch.)</p>
                 </li>
                 <li>
                     <strong>Run Analysis</strong>
-                    <p>Click "Analyse Candidates" to score all candidates against the criteria</p>
+                    <p>"Analyse Candidates" to score all candidates against the criteria</p>
                 </li>
                 <li>
                     <strong>Review Results & Export</strong>
-                    <p>View rankings, generate AI insights for top candidates, and export reports</p>
+                    <p>View rankings and AI insights, and export reports</p>
                 </li>
             </ol>
         </div>
@@ -312,7 +312,7 @@
             
             <div class="faq-item">
                 <h3 class="faq-q">What happens to my data after I log out?</h3>
-                <p class="faq-a">Your analyses and settings are permanently stored in your account. You can log back in anytime to access them. Job descriptions and resumes processed by OpenAI's API are retained for 30 days, then automatically deleted.</p>
+                <p class="faq-a">Your analyses and settings are securely stored in your account so you can access them anytime. Your job descriptions and candidate resumes remain in your account until you choose to delete them. When documents are processed, OpenAI retains API request data for 30 days for abuse monitoring purposes only, then automatically deletes it. OpenAI does not use your data to train AI models.</p>
             </div>
         </div>
     </div>
@@ -341,17 +341,11 @@
             
             <h3>Scores seem too low/high</h3>
             <ul>
-                <li>Adjust scoring thresholds in <a href="{{ url_for('settings') }}">Settings</a> to match your standards</li>
                 <li>Review criteria on Job Criteria page - overly specific criteria may score lower</li>
                 <li>Check the Evidence Explorer to see what text is being matched</li>
             </ul>
             
-            <h3>Cost concerns</h3>
-            <ul>
-                <li>Review the cost estimate before running analysis</li>
-                <li>Generate AI insights only for top candidates (not all candidates)</li>
-                <li>Check your <a href="{{ url_for('account') }}">Account</a> page to track spending</li>
-            </ul>
+
         </div>
     </div>
     

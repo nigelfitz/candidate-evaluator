@@ -38,5 +38,10 @@
     "value": 10.0,
     "label": "Minimum Top-Up Amount",
     "description": "Minimum amount customers can add via Stripe payment (helps manage transaction fees)"
+  },
+  "new_user_welcome_credit": {
+    "value": 10.0,
+    "label": "Welcome Credit for New Users (USD)",
+    "description": "Starting balance given to new accounts to help them try the platform."
   }
 }

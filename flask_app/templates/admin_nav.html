@@ -59,8 +59,8 @@
         <a href="#" class="{% if active_tab in ['pricing', 'gpt', 'prompts', 'system'] %}active{% endif %}">⚙️ System Settings ▾</a>
         <div class="admin-dropdown-content">
             <a href="{{ url_for('admin_pricing') }}">💳 Pricing & Revenue</a>
-            <a href="{{ url_for('admin_gpt_settings') }}">🤖 GPT Settings</a>
-            <a href="{{ url_for('admin_prompts') }}">💬 Prompts</a>
+            <a href="{{ url_for('admin_gpt_settings') }}">🤖 AI Settings</a>
+            <a href="{{ url_for('admin_prompts') }}">💬 AI Prompts</a>
             <a href="{{ url_for('admin_system') }}">🔧 General Settings</a>
         </div>
     </div>
@@ -68,7 +68,7 @@
     <div class="admin-dropdown">
         <a href="#" class="{% if active_tab in ['business_health', 'stats', 'analytics'] %}active{% endif %}">💰 Finance ▾</a>
         <div class="admin-dropdown-content">
-            <a href="{{ url_for('admin_business_health') }}">💚 Business Health</a>
+            <a href="{{ url_for('admin_business_health') }}">💚 Job Pricing Health</a>
             <a href="{{ url_for('admin_analytics') }}">📊 Analytics Dashboard</a>
             <a href="{{ url_for('admin_stats') }}">📈 Legacy Stats</a>
         </div>
