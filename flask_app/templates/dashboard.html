@@ -406,7 +406,7 @@
     <div style="display: flex; align-items: center; gap: 20px;">
         <i data-lucide="gift" style="width: 56px; height: 56px; flex-shrink: 0;"></i>
         <div>
-            <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Welcome! We've added $10.00 to your account 🎉</h3>
+            <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700;">Welcome! We've added ${{ "%.2f"|format(pricing.new_user_welcome_credit.value) }} to your account 🎉</h3>
             <p style="margin: 0; font-size: 15px; opacity: 0.95; line-height: 1.5;">
                 Your <strong>Test Drive</strong> is ready! This is enough for your first complete analysis. 
                 Click "Start New Analysis" above to begin screening candidates with AI.

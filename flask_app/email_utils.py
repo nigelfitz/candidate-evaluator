@@ -81,7 +81,7 @@ Happy hiring,
 The Candidate Evaluator Team
 
 ---
-© 2025 Candidate Evaluator. All rights reserved.
+© 2026 Candidate Evaluator. All rights reserved.
 You received this because you signed up at candidateevaluator.com
 """
     

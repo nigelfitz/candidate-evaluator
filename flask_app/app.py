@@ -183,7 +183,12 @@ def create_app(config_name=None):
         # Get current draft if exists
         draft = Draft.query.filter_by(user_id=current_user.id).first()
         
-        return render_template('dashboard.html', user=current_user, recent_analyses=recent_analyses, draft=draft)
+        # Load pricing settings for welcome credit display
+        pricing_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
+        with open(pricing_path, 'r') as f:
+            pricing_config = json.load(f)
+        
+        return render_template('dashboard.html', user=current_user, recent_analyses=recent_analyses, draft=draft, pricing=pricing_config)
     
     @app.route('/api/get-balance')
     @login_required

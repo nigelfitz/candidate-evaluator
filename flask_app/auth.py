@@ -23,6 +23,12 @@ def load_system_settings():
     with open(settings_path, 'r') as f:
         return json.load(f)
 
+def load_pricing_settings():
+    """Load pricing settings from JSON file"""
+    settings_path = os.path.join(os.path.dirname(__file__), 'config', 'pricing_settings.json')
+    with open(settings_path, 'r') as f:
+        return json.load(f)
+
 def validate_email(email):
     """Validate email format"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -80,8 +86,9 @@ def register():
                 flash('Email already registered', 'error')
                 return render_template('register.html')
             
-            # Get welcome credit from system settings
-            starting_balance = settings['new_user_welcome_credit']['value']
+            # Get welcome credit from pricing settings
+            pricing_settings = load_pricing_settings()
+            starting_balance = pricing_settings['new_user_welcome_credit']['value']
             
             # Create user
             user = User(email=email, name=name, balance_usd=starting_balance, welcome_bonus_claimed=True)
