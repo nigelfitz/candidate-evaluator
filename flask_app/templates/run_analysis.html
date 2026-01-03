@@ -591,9 +591,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let totalCost = 0.00;
             
             if (!isTestDrive) {
-                const standardPrice = {{ pricing['standard_tier_price']['value'] }};
-                const deepDivePrice = {{ pricing['deep_dive_price']['value'] }};
-                const individualPrice = {{ pricing['individual_insight_price']['value'] }};
+                const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }};
+                const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }};
+                const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
                 
                 totalCost = standardPrice;
                 
@@ -693,9 +693,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        const standardPrice = {{ pricing['standard_tier_price']['value'] }};
-        const deepDivePrice = {{ pricing['deep_dive_price']['value'] }};
-        const individualPrice = {{ pricing['individual_insight_price']['value'] }};
+        const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }};
+        const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }};
+        const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
         
         totalCost = standardPrice;
         
