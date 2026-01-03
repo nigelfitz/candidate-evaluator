@@ -31,4 +31,155 @@
                 <div>
                     <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Registration Date</div>
                     <div style="color: #1f2937; font-weight: 600;">{{ user.created_at.strftime('%b %d, %Y') }}</div>
+                </div>
+                <div>
+                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Current Balance</div>
+                    <div style="color: #1f2937; font-weight: 600; font-size: 18px;">${{ "%.2f"|format(actual_balance) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Integrity Check -->
+        <div style="background: {% if discrepancy == 0 %}#f0fdf4{% else %}#fef2f2{% endif %}; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid {% if discrepancy == 0 %}#22c55e{% else %}#ef4444{% endif %};">
+            <h3 style="color: #1f2937; margin: 0 0 16px 0; font-weight: 600;">Balance Integrity Check</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Database Balance</div>
+                    <div style="color: #1f2937; font-weight: 600;">${{ "%.2f"|format(actual_balance) }}</div>
+                </div>
+                <div>
+                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Calculated from Transactions</div>
+                    <div style="color: #1f2937; font-weight: 600;">${{ "%.2f"|format(calculated_balance) }}</div>
+                </div>
+                <div>
+                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 4px;">Discrepancy</div>
+                    <div style="color: {% if discrepancy == 0 %}#22c55e{% else %}#ef4444{% endif %}; font-weight: 700; font-size: 18px;">
+                        {% if discrepancy > 0 %}+{% endif %}${{ "%.2f"|format(discrepancy) }}
+                    </div>
+                </div>
+            </div>
+            {% if discrepancy != 0 %}
+            <div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 6px; margin-top: 12px;">
+                <strong style="color: #dc2626;">⚠️ Balance Mismatch Detected</strong>
+                <p style="margin: 8px 0 0 0; color: #6b7280;">
+                    Suggested adjustment: <strong style="color: #1f2937;">${{ "%.2f"|format(suggested_adjustment) }}</strong> to reconcile
+                </p>
+            </div>
+            {% else %}
+            <div style="background: rgba(255,255,255,0.7); padding: 12px; border-radius: 6px; margin-top: 12px;">
+                <strong style="color: #16a34a;">✅ Balance is Correct</strong>
+                <p style="margin: 8px 0 0 0; color: #6b7280;">Database balance matches transaction history</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- User Refund Information -->
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleRefundInfo()">
+                <h3 style="color: #78350f; margin: 0; font-weight: 700; font-size: 20px;">💰 Need to Refund this Customer?</h3>
+                <span id="refundToggleIcon" style="color: #78350f; font-size: 24px; font-weight: bold; transition: transform 0.3s;">▼</span>
+            </div>
+            
+            <div id="refundInfoContent" style="display: none; margin-top: 20px;">
+                <!-- Maximum Refundable Balance -->
+                <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #16a34a;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="color: #92400e; font-weight: 600; font-size: 16px;">Maximum Refundable Balance:</span>
+                        <span style="color: #16a34a; font-weight: 700; font-size: 24px;">${{ "%.2f"|format(max_refundable) }}</span>
+                    </div>
+                    <div style="color: #6b7280; font-size: 14px; margin-top: 8px;">
+                        <div style="margin-bottom: 4px;"><strong>Current Balance:</strong> ${{ "%.2f"|format(user.balance_usd) }}</div>
+                        <div><strong>Less Promotional/Bonus Funds:</strong> <span style="color: #dc3545;">-${{ "%.2f"|format(bonus_total) }}</span></div>
+                    </div>
+                </div>
+                
+                <!-- Refund Process Instructions -->
+                <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;">
+                    <h4 style="color: #92400e; margin: 0 0 15px 0; font-weight: 600; font-size: 16px;">📝 How to Process a Refund</h4>
+                    <ol style="margin: 0; padding-left: 20px; color: #374151; line-height: 1.8;">
+                        <li style="margin-bottom: 12px;">
+                            <strong>Step 1: Process refund in Stripe</strong><br>
+                            <span style="color: #6b7280; font-size: 14px;">Log into Stripe Dashboard → Find customer's payment → Issue refund (max: ${{ "%.2f"|format(max_refundable) }})</span>
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Step 2: Record in our system</strong><br>
+                            <span style="color: #6b7280; font-size: 14px;">Use the form below to record the refund in the user's transaction ledger</span>
+                        </li>
+                        <li style="margin-bottom: 12px;">
+                            <strong>Step 3: Enter refund amount</strong><br>
+                            <span style="color: #6b7280; font-size: 14px;">Enter as a <strong style="color: #dc3545;">NEGATIVE number</strong> (e.g., -25.00 to subtract $25 from balance)</span>
+                        </li>
+                        <li>
+                            <strong>Step 4: Add detailed reason</strong><br>
+                            <span style="color: #6b7280; font-size: 14px;">Example: "Refund processed via Stripe on {{ now().strftime('%d/%m/%Y') }} - Customer request" or "Refund for unused credits - Stripe transaction ID: ch_xxxxx"</span>
+                        </li>
+                    </ol>
+                    
+                    <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px; margin-top: 15px; border-radius: 4px;">
+                        <strong style="color: #dc2626;">⚠️ Important:</strong>
+                        <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #6b7280; font-size: 14px;">
+                            <li>Do not refund more than the Maximum Refundable Balance (promotional credits cannot be refunded)</li>
+                            <li>Always process the Stripe refund FIRST before recording here</li>
+                            <li>Use negative numbers to subtract from balance (e.g., -50.00)</li>
+                            <li>Include Stripe transaction ID in the reason for audit trail</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjustment Form -->
+        <form method="POST" style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="color: #1f2937; margin: 0 0 20px 0; font-weight: 600;">Create Balance Adjustment</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 8px;">
+                    Adjustment Amount (USD)
+                </label>
+                <input type="number" name="adjustment_amount" step="0.01" 
+                       value="{% if suggested_adjustment %}{{ "%.2f"|format(suggested_adjustment) }}{% endif %}"
+                       style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;"
+                       placeholder="Enter amount (positive to add, negative to subtract)" required>
+                <small style="color: #6b7280; display: block; margin-top: 6px;">
+                    Use positive numbers to add funds, negative numbers to subtract funds
+                </small>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 8px;">
+                    Reason for Adjustment
+                </label>
+                <textarea name="reason" rows="3"
+                          style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;"
+                          placeholder="Enter detailed reason for this adjustment" required></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="{{ url_for('admin_balance_audit') }}" 
+                   style="padding: 12px 24px; background: #e5e7eb; color: #374151; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    💾 Create Adjustment Transaction
+                </button>
+            </div>
+        </form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleRefundInfo() {
+    const content = document.getElementById('refundInfoContent');
+    const icon = document.getElementById('refundToggleIcon');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        content.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+</script>
 {% endblock %}

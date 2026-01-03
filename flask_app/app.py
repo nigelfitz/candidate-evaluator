@@ -4581,12 +4581,26 @@ def create_app(config_name=None):
         # GET request - show adjustment form
         is_valid, actual, calculated, discrepancy = check_user_balance_integrity(user_id)
         
+        # Calculate bonus/promotional funds (not refundable)
+        from decimal import Decimal
+        bonus_total = Decimal('0')
+        for txn in Transaction.query.filter_by(user_id=user_id).all():
+            # Check if transaction is a bonus/promotional type
+            if any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
+                if txn.amount_usd > 0:  # Only count positive bonuses
+                    bonus_total += Decimal(str(txn.amount_usd))
+        
+        # Calculate maximum refundable balance
+        max_refundable = max(Decimal('0'), user.balance_usd - bonus_total)
+        
         return render_template('admin_balance_adjustment.html',
                              user=user,
                              actual_balance=actual,
                              calculated_balance=calculated,
                              discrepancy=discrepancy,
                              suggested_adjustment=-discrepancy,  # Negative of discrepancy to fix it
+                             bonus_total=bonus_total,
+                             max_refundable=max_refundable,
                              active_tab='balance_audit')
     
     

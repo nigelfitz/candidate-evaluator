@@ -97,14 +97,21 @@
             
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button onclick="showAdjustBalanceModal()" class="btn btn-success">💰 Adjust Balance</button>
-                <button onclick="showResetPasswordModal()" class="btn btn-warning">🔑 Reset Password</button>
+                <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}" class="btn btn-success" style="text-decoration: none;">💰 Adjust Balance</a>
+                <button onclick="confirmResetPassword()" class="btn btn-warning">🔑 Reset Password</button>
                 {% if user.is_suspended %}
-                <button onclick="showUnsuspendModal()" class="btn btn-success" style="background: #10b981; border-color: #10b981;">✅ Unsuspend Account</button>
+                <button onclick="confirmUnsuspend()" class="btn btn-success" style="background: #10b981; border-color: #10b981;">✅ Unsuspend Account</button>
                 {% else %}
-                <button onclick="showSuspendModal()" class="btn btn-warning" style="background: #f59e0b; border-color: #f59e0b;">⚠️ Suspend Account</button>
+                <button onclick="confirmSuspend()" class="btn btn-warning" style="background: #f59e0b; border-color: #f59e0b;">⚠️ Suspend Account</button>
                 {% endif %}
             </div>
+            
+            <!-- Hidden Forms for POST actions -->
+            <form id="resetPasswordForm" method="POST" action="{{ url_for('admin_reset_password', user_id=user.id) }}" style="display: none;"></form>
+            <form id="suspendForm" method="POST" action="{{ url_for('admin_suspend_user', user_id=user.id) }}" style="display: none;">
+                <input type="hidden" name="reason" id="suspendReason">
+            </form>
+            <form id="unsuspendForm" method="POST" action="{{ url_for('admin_unsuspend_user', user_id=user.id) }}" style="display: none;"></form>
             
             {% if get_flashed_messages() %}
                 {% for message in get_flashed_messages(with_categories=true) %}
@@ -171,67 +178,27 @@
 
 {% block extra_scripts %}
 <script>
-function showAdjustBalanceModal() {
-            document.getElementById('adjustBalanceModal').classList.add('active');
-            updateFormBasedOnType();
-        }
-        
-        function showResetPasswordModal() {
-            document.getElementById('resetPasswordModal').classList.add('active');
-        }
-        
-        function showSuspendModal() {
-            document.getElementById('suspendModal').classList.add('active');
-        }
-        
-        function showUnsuspendModal() {
-            document.getElementById('unsuspendModal').classList.add('active');
-        }
-        
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-        
-        function updateFormBasedOnType() {
-            const type = document.getElementById('transactionType').value;
-            const amountInput = document.getElementById('amountInput');
-            const reasonInput = document.getElementById('reasonInput');
-            const amountHint = document.getElementById('amountHint');
-            const maxRefundWarning = document.getElementById('maxRefundWarning');
-            
-            // Update hints and defaults based on transaction type
-            switch(type) {
-                case 'manual_credit':
-                    amountHint.textContent = 'Enter the amount to add to the account.';
-                    reasonInput.value = 'Manual credit adjustment by admin';
-                    maxRefundWarning.style.display = 'none';
-                    break;
-                case 'manual_debit':
-                    amountHint.textContent = 'Enter the amount to remove from the account.';
-                    reasonInput.value = 'Manual debit adjustment by admin';
-                    maxRefundWarning.style.display = 'none';
-                    break;
-                case 'refund':
-                    amountHint.textContent = 'Enter the refund amount (cannot exceed refundable balance).';
-                    reasonInput.value = 'Refund processed by admin';
-                    maxRefundWarning.style.display = 'block';
-                    break;
-                case 'bonus_correction':
-                    amountHint.textContent = 'Enter the correction amount (can add or remove promotional credits).';
-                    reasonInput.value = 'Bonus correction by admin';
-                    maxRefundWarning.style.display = 'none';
-                    break;
-            }
-        }
-        
-        // Close modal when clicking overlay
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
-            });
-        });
+function confirmResetPassword() {
+    if (confirm('⚠️ Reset password for {{ user.email }}?\n\nA temporary password will be generated and displayed. Make sure to save it.')) {
+        document.getElementById('resetPasswordForm').submit();
+    }
+}
+
+function confirmSuspend() {
+    const reason = prompt('⚠️ Suspend account for {{ user.email }}?\n\nPlease enter a reason for suspension:', '');
+    if (reason !== null && reason.trim() !== '') {
+        document.getElementById('suspendReason').value = reason;
+        document.getElementById('suspendForm').submit();
+    } else if (reason !== null) {
+        alert('Suspension reason is required.');
+    }
+}
+
+function confirmUnsuspend() {
+    if (confirm('✅ Unsuspend account for {{ user.email }}?\n\nThe user will be able to log in and use the system again.')) {
+        document.getElementById('unsuspendForm').submit();
+    }
+}
         
         // Convert UTC timestamps to user's local timezone
         document.querySelectorAll('.local-time').forEach(function(elem) {
