@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, session, jsonify, current_app
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager, login_required, current_user, logout_user
 from config import config
 from database import db, init_db, User, Transaction, Analysis, Draft, DraftResume, CandidateFile, UserSettings, Feedback, AdminLoginAttempt, AdminAuditLog
 import os
