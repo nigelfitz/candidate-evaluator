@@ -591,12 +591,16 @@ document.addEventListener('DOMContentLoaded', function() {
             let totalCost = 0.00;
             
             if (!isTestDrive) {
-                totalCost = 10.00;
+                const standardPrice = {{ pricing.standard_tier_price.value }};
+                const deepDivePrice = {{ pricing.deep_dive_price.value }};
+                const individualPrice = {{ pricing.individual_insight_price.value }};
+                
+                totalCost = standardPrice;
                 
                 if (insightsMode === 'deep_dive') {
-                    totalCost += 10.00;
+                    totalCost += deepDivePrice;
                 } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
-                    totalCost += ({{ resume_count }} - 5) * 1.00;
+                    totalCost += ({{ resume_count }} - 5) * individualPrice;
                 }
             }
             
@@ -689,12 +693,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        totalCost = 10.00;
+        const standardPrice = {{ pricing.standard_tier_price.value }};
+        const deepDivePrice = {{ pricing.deep_dive_price.value }};
+        const individualPrice = {{ pricing.individual_insight_price.value }};
+        
+        totalCost = standardPrice;
         
         if (insightsMode === 'deep_dive') {
-            totalCost += 10.00;
+            totalCost += deepDivePrice;
         } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
-            totalCost += ({{ resume_count }} - 5) * 1.00;
+            totalCost += ({{ resume_count }} - 5) * individualPrice;
         }
         
         // Check if insufficient funds

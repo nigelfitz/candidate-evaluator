@@ -1408,36 +1408,43 @@ def create_app(config_name=None):
             # CRITICAL: Calculate cost and check balance BEFORE running analysis
             num_candidates = len(candidates)
             
+            # Load pricing from admin settings
+            from auth import load_pricing_settings
+            pricing = load_pricing_settings()
+            standard_price = Decimal(str(pricing['standard_tier_price']['value']))
+            deep_dive_price = Decimal(str(pricing['deep_dive_price']['value']))
+            individual_insight_price = Decimal(str(pricing['individual_insight_price']['value']))
+            
             # Initialize cost variable
-            estimated_cost = Decimal('10.00')  # Default to standard tier
+            estimated_cost = standard_price  # Default to standard tier
             
             # NEW PRICING MODEL: Calculate cost based on tier
             if insights_mode == 'standard':
-                # Standard: $10 base (includes Top 5 insights)
-                estimated_cost = Decimal('10.00')
+                # Standard: base price (includes Top 5 insights)
+                estimated_cost = standard_price
                 num_insights = min(5, num_candidates)
             elif insights_mode == 'deep_dive':
-                # Deep Dive: $10 base + $10 extra (includes Top 15 insights)
-                estimated_cost = Decimal('20.00')
+                # Deep Dive: standard + deep dive price (includes Top 15 insights)
+                estimated_cost = standard_price + deep_dive_price
                 num_insights = min(15, num_candidates)
             elif insights_mode == 'full_radar':
-                # Full Radar: $10 base + $1 per candidate beyond 5
+                # Full Radar: standard price + individual price per candidate beyond 5
                 extra_candidates = max(0, num_candidates - 5)
-                estimated_cost = Decimal('10.00') + (Decimal('1.00') * extra_candidates)
+                estimated_cost = standard_price + (individual_insight_price * extra_candidates)
                 num_insights = num_candidates
             # Legacy support for old values (map to new tiers)
             elif insights_mode in ['top3', 'top5']:
-                estimated_cost = Decimal('10.00')
+                estimated_cost = standard_price
                 num_insights = min(5, num_candidates)
             elif insights_mode == 'top10':
-                estimated_cost = Decimal('20.00')
+                estimated_cost = standard_price + deep_dive_price
                 num_insights = min(15, num_candidates)
             elif insights_mode == 'all':
                 extra_candidates = max(0, num_candidates - 5)
-                estimated_cost = Decimal('10.00') + (Decimal('1.00') * extra_candidates)
+                estimated_cost = standard_price + (individual_insight_price * extra_candidates)
                 num_insights = num_candidates
             else:
-                estimated_cost = Decimal('10.00')
+                estimated_cost = standard_price
                 num_insights = 0
             
             # Check funds BEFORE running analysis
