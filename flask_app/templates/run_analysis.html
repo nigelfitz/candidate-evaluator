@@ -568,9 +568,9 @@ document.addEventListener('DOMContentLoaded', function() {
     {% set continue_disabled = False %}
 {% else %}
     {% if truncation_warning %}
-        {% set continue_text = 'Continue Analysis ($' + '%.2f'|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
+        {% set continue_text = 'Continue Analysis' %}
     {% else %}
-        {% set continue_text = 'Run Analysis Now ($' + '%.2f'|format(pricing['BASE_ANALYSIS_PRICE']) + ')' %}
+        {% set continue_text = 'Run Analysis' %}
     {% endif %}
     {% set continue_disabled = False %}
 {% endif %}

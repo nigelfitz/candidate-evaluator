@@ -114,6 +114,7 @@ class Analysis(db.Model):
     job_description_text = db.Column(db.Text)  # Truncated to 5000 chars for display
     jd_full_text = db.Column(db.Text)  # Full JD text for recreating drafts
     jd_filename = db.Column(db.String(255))  # Original JD filename
+    jd_bytes = db.Column(db.LargeBinary)  # Store original JD PDF bytes for preview
     num_candidates = db.Column(db.Integer, nullable=False)
     num_criteria = db.Column(db.Integer, nullable=False)
     

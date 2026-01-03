@@ -1240,6 +1240,7 @@ def create_app(config_name=None):
         draft = Draft(user_id=current_user.id)
         draft.jd_filename = analysis.jd_filename or f"{analysis.job_title}.txt"
         draft.jd_text = analysis.jd_full_text or analysis.job_description_text
+        draft.jd_bytes = analysis.jd_bytes  # Restore PDF bytes if available
         draft.jd_hash = hashlib.md5(draft.jd_text.encode()).hexdigest()
         draft.job_title = analysis.job_title
         
@@ -1500,6 +1501,7 @@ def create_app(config_name=None):
                 job_description_text=jd_text[:5000],
                 jd_full_text=jd_text,
                 jd_filename=draft.jd_filename,
+                jd_bytes=draft.jd_bytes,  # Save PDF bytes for preview in history
                 num_candidates=len(candidates),
                 num_criteria=len(criteria),
                 coverage_data='',  # Will be populated after Phase 1
@@ -1534,11 +1536,32 @@ def create_app(config_name=None):
             print("Phase 1: AI scoring all candidates...")
             candidate_tuples = [(c.name, c.text) for c in candidates]
             
+            # Load GPT settings to respect user's configured text limits
+            from analysis import load_gpt_settings
+            gpt_settings = load_gpt_settings()
+            jd_text_limit = gpt_settings.get('jd_text_chars', 15000)
+            
+            # DIAGNOSTIC: Show what text GPT receives from each resume
+            for cand_name, cand_text in candidate_tuples:
+                text_len = len(cand_text) if cand_text else 0
+                print(f"\n📄 Resume: {cand_name}")
+                print(f"   Text length: {text_len} characters")
+                if text_len > 0:
+                    preview = cand_text[:500].replace('\n', ' ')
+                    print(f"   First 500 chars: {preview}")
+                else:
+                    print(f"   ⚠️  NO TEXT EXTRACTED")
+            print(f"\n📋 JD text length: {len(jd_text)} characters (limit: {jd_text_limit})\n")
+            
+            # CRITICAL FIX: Filter criteria_list to only include used criteria before passing to AI
+            # This prevents coverage DataFrame from having columns for unchecked criteria
+            criteria_for_ai = [c for c in criteria_list if c.get('use', True)]
+            
             evaluations = asyncio.run(
                 run_global_ranking(
                     candidates=candidate_tuples,
-                    jd_text=jd_text,
-                    criteria=criteria_list,  # Pass full criteria with metadata
+                    jd_text=jd_text[:jd_text_limit],  # Respect admin setting, not hardcoded limit
+                    criteria=criteria_for_ai,  # Pass only used criteria
                     progress_callback=update_progress
                 )
             )
@@ -1595,6 +1618,18 @@ def create_app(config_name=None):
             
             for eval_obj in evaluations:
                 row = {"Candidate": eval_obj.candidate_name}
+                
+                # DIAGNOSTIC: Check if this is an unreadable file
+                if 'UNREADABLE' in eval_obj.candidate_name:
+                    print(f"\n⚠️  Building coverage for UNREADABLE FILE: {eval_obj.candidate_name}")
+                    print(f"   Overall score: {eval_obj.overall_score}/100")
+                    print(f"   Number of criterion scores: {len(eval_obj.criterion_scores)}")
+                    print(f"   ALL CRITERION SCORES:")
+                    for idx, score in enumerate(eval_obj.criterion_scores):
+                        print(f"     [{idx}] {score.criterion}: {score.score}/100")
+                        if score.score > 0:
+                            print(f"         Evidence: {score.raw_evidence[:150]}...")
+                    print(f"   ---")
                 
                 # Add criterion scores
                 for score in eval_obj.criterion_scores:
@@ -1725,11 +1760,36 @@ def create_app(config_name=None):
         from io import StringIO
         coverage_df = pd.read_json(StringIO(analysis.coverage_data), orient='records')
         insights = json.loads(analysis.insights_data)
-        criteria = json.loads(analysis.criteria_list)
+        criteria_raw = json.loads(analysis.criteria_list)
+        
+        # CRITICAL FIX: Filter to only criteria that were actually used (use=True)
+        # The stored criteria_list includes ALL criteria with use flags, but we only want used ones
+        criteria = []
+        for c in criteria_raw:
+            if isinstance(c, dict):
+                # New format with 'use' flag - only include if use=True
+                if c.get('use', True):
+                    criteria.append(c['criterion'])
+            else:
+                # Old format (plain string) - always include
+                criteria.append(c)
+        
+        # DIAGNOSTIC: Log criteria format for debugging
+        print(f"\n{'='*60}")
+        print(f"DEBUG RESULTS PAGE - Analysis ID: {analysis_id}")
+        print(f"Number of criteria stored: {len(criteria_raw)}")
+        print(f"Number of criteria USED (filtered): {len(criteria)}")
+        print(f"Filtered criteria: {criteria}")
+        print(f"{'='*60}\n")
         
         # Parse evidence_map and normalize to pipe format for template
         evidence_map_raw = json.loads(analysis.evidence_data)
         evidence_map = {}
+        
+        # DIAGNOSTIC: Log evidence map keys
+        print(f"Evidence map has {len(evidence_map_raw)} entries")
+        print(f"Sample evidence keys: {list(evidence_map_raw.keys())[:3]}")
+        
         for key_str, value in evidence_map_raw.items():
             # Handle both formats: pipe "Name|||Criterion" or tuple "('Name', 'Criterion')"
             if '|||' in key_str:
@@ -1743,11 +1803,17 @@ def create_app(config_name=None):
                 except:
                     pass
         
+        # DIAGNOSTIC: Log normalized evidence map
+        print(f"After normalization, evidence_map has {len(evidence_map)} entries")
+        print(f"Sample normalized keys: {list(evidence_map.keys())[:3]}\n")
+        
         # Build category map from criteria (extract from criterion names or use default categories)
         category_map = {}
         for crit in criteria:
-            # Simple categorization based on keywords
+            # After filtering, criteria is now a list of strings
             crit_lower = crit.lower()
+            
+            # Use crit as the key for category_map
             if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
                 category_map[crit] = 'Technical Skills'
             elif any(word in crit_lower for word in ['experience', 'years', 'background']):
@@ -1763,6 +1829,30 @@ def create_app(config_name=None):
         
         # Convert coverage DataFrame to list of dicts for JSON serialization
         coverage_data = coverage_df.to_dict(orient='records')
+        
+        # DIAGNOSTIC: Log coverage data structure
+        print(f"Coverage DataFrame columns: {list(coverage_df.columns)}")
+        print(f"Number of candidates in coverage: {len(coverage_data)}")
+        if coverage_data:
+            print(f"Sample candidate data: {coverage_data[0]}")
+        
+        # DIAGNOSTIC: Check for unreadable files specifically
+        unreadable_candidates = [c for c in coverage_data if 'UNREADABLE' in c.get('Candidate', '')]
+        if unreadable_candidates:
+            print(f"\n⚠️  UNREADABLE FILE DETECTED IN COVERAGE:")
+            for uc in unreadable_candidates:
+                cand_name = uc['Candidate']
+                print(f"  Name: {cand_name}")
+                print(f"  Name repr: {repr(cand_name)}")
+                print(f"  Overall Score: {uc['Overall']}")
+                print(f"  Sample scores: {list(uc.items())[:5]}")
+                
+                # Check evidence map for this candidate
+                evidence_keys_for_candidate = [k for k in evidence_map.keys() if cand_name in k]
+                print(f"  Evidence entries for this candidate: {len(evidence_keys_for_candidate)}")
+                if evidence_keys_for_candidate:
+                    print(f"  Sample evidence key: {repr(evidence_keys_for_candidate[0])}")
+        print(f"{'='*60}\n")
         
         # Check if this analysis is for the current draft or a historical one
         draft = Draft.query.filter_by(user_id=current_user.id).first()
@@ -1877,17 +1967,23 @@ def create_app(config_name=None):
                 # Build category map
                 category_map = {}
                 for crit in criteria:
-                    crit_lower = crit.lower()
-                    if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                        category_map[crit] = 'Technical Skills'
-                    elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                        category_map[crit] = 'Experience'
-                    elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                        category_map[crit] = 'Qualifications'
-                    elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                        category_map[crit] = 'Soft Skills'
+                    # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+                    if isinstance(crit, dict):
+                        crit_text = crit.get('criterion') or crit.get('text') or str(crit)
                     else:
-                        category_map[crit] = 'Other Requirements'
+                        crit_text = crit
+                    
+                    crit_lower = crit_text.lower()
+                    if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                        category_map[crit_text] = 'Technical Skills'
+                    elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                        category_map[crit_text] = 'Experience'
+                    elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                        category_map[crit_text] = 'Qualifications'
+                    elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                        category_map[crit_text] = 'Soft Skills'
+                    else:
+                        category_map[crit_text] = 'Other Requirements'
                 
                 # Generate PDF
                 pdf_bytes = to_executive_summary_pdf(
@@ -1929,17 +2025,23 @@ def create_app(config_name=None):
                 # Build category map
                 category_map = {}
                 for crit in criteria:
-                    crit_lower = crit.lower()
-                    if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                        category_map[crit] = 'Technical Skills'
-                    elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                        category_map[crit] = 'Experience'
-                    elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                        category_map[crit] = 'Qualifications'
-                    elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                        category_map[crit] = 'Soft Skills'
+                    # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+                    if isinstance(crit, dict):
+                        crit_text = crit.get('criterion') or crit.get('text') or str(crit)
                     else:
-                        category_map[crit] = 'Other Requirements'
+                        crit_text = crit
+                    
+                    crit_lower = crit_text.lower()
+                    if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                        category_map[crit_text] = 'Technical Skills'
+                    elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                        category_map[crit_text] = 'Experience'
+                    elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                        category_map[crit_text] = 'Qualifications'
+                    elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                        category_map[crit_text] = 'Soft Skills'
+                    else:
+                        category_map[crit_text] = 'Other Requirements'
                 
                 # Generate Excel
                 excel_bytes = to_excel_coverage_matrix(
@@ -2001,16 +2103,21 @@ def create_app(config_name=None):
                 if draft.updated_at > latest_analysis.created_at:
                     draft_modified_after_analysis = True
             
+            # Load GPT settings to show user-configured text limit
+            from analysis import load_gpt_settings
+            gpt_settings = load_gpt_settings()
+            jd_display_limit = gpt_settings.get('jd_text_chars', 15000)
+            
             return render_template('review_criteria.html',
                                  criteria_data=criteria_data,
                                  jd_filename=draft.jd_filename,
                                  job_title=draft.job_title or "Position Not Specified",
-                                 jd_text=draft.jd_text[:2000],
+                                 jd_text=draft.jd_text[:jd_display_limit],  # Respect admin setting
                                  has_pdf=bool(draft.jd_bytes),  # Check if file bytes exist, not just filename
                                  in_workflow=True, has_unsaved_work=True,
                                  analysis_completed=analysis_completed,
                                  draft_modified_after_analysis=draft_modified_after_analysis,
-                                 latest_analysis_id=current_draft_analysis_id)  # Preview first 2000 chars
+                                 latest_analysis_id=current_draft_analysis_id)
         
         # POST - update criteria
         try:
@@ -2172,8 +2279,8 @@ def create_app(config_name=None):
         
         coverage_data = json.loads(analysis.coverage_data)
         insights_data = json.loads(analysis.insights_data)
-        print(f"DEBUG insights.html: insights_data keys = {list(insights_data.keys())}")
-        print(f"DEBUG insights.html: insights_data content = {insights_data}")
+        print(f"DEBUG insights.html: insights_data has {len(insights_data)} candidates")
+        # Content details omitted to reduce terminal verbosity
         
         # Get candidate name from query parameter or default to first candidate
         selected_candidate = request.args.get('candidate')
@@ -2215,8 +2322,8 @@ def create_app(config_name=None):
         # Get insights for current candidate
         candidate_insights = insights_data.get(selected_candidate, {})
         print(f"DEBUG insights.html: Looking up insights for candidate: '{selected_candidate}'")
-        print(f"DEBUG insights.html: All insights_data keys: {list(insights_data.keys())}")
-        print(f"DEBUG insights.html: Found insights: {candidate_insights}")
+        print(f"DEBUG insights.html: Available candidates: {len(insights_data)}")
+        print(f"DEBUG insights.html: Found insights: {'Yes' if candidate_insights else 'No'}")
         
         # Check if insights exist (be flexible with the structure)
         has_gpt_insights = False
@@ -2550,17 +2657,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Get candidate data
         coverage_row = coverage_df[coverage_df['Candidate'] == candidate_name].iloc[0]
@@ -2608,7 +2721,13 @@ def create_app(config_name=None):
         # Build category map (same logic as results page)
         criteria_with_categories = []
         for crit in criteria:
-            crit_lower = crit.lower()
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
+            else:
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
             if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
                 category = 'Technical Skills'
             elif any(word in crit_lower for word in ['experience', 'years', 'background']):
@@ -2623,7 +2742,7 @@ def create_app(config_name=None):
                 category = 'Other Requirements'
             
             criteria_with_categories.append({
-                'criterion': crit,
+                'criterion': crit_text,
                 'category': category
             })
         
@@ -2927,17 +3046,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate PDF
         pdf_bytes = to_executive_summary_pdf(
@@ -2999,17 +3124,23 @@ def create_app(config_name=None):
             # Build category map
             category_map = {}
             for crit in criteria:
-                crit_lower = crit.lower()
-                if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                    category_map[crit] = 'Technical Skills'
-                elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                    category_map[crit] = 'Experience'
-                elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                    category_map[crit] = 'Qualifications'
-                elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                    category_map[crit] = 'Soft Skills'
+                # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+                if isinstance(crit, dict):
+                    crit_text = crit.get('criterion') or crit.get('text') or str(crit)
                 else:
-                    category_map[crit] = 'Other Requirements'
+                    crit_text = crit
+                
+                crit_lower = crit_text.lower()
+                if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                    category_map[crit_text] = 'Technical Skills'
+                elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                    category_map[crit_text] = 'Experience'
+                elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                    category_map[crit_text] = 'Qualifications'
+                elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                    category_map[crit_text] = 'Soft Skills'
+                else:
+                    category_map[crit_text] = 'Other Requirements'
             
             # Generate PDF
             pdf_bytes = to_executive_summary_pdf(
@@ -3061,17 +3192,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate PDF
         pdf_bytes = to_executive_summary_pdf(
@@ -3122,17 +3259,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate Word document
         docx_bytes = to_executive_summary_word(
@@ -3182,17 +3325,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate Excel
         excel_bytes = to_excel_coverage_matrix(
@@ -3300,17 +3449,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate PDFs for each candidate
         pdf_list = []
@@ -3435,17 +3590,23 @@ def create_app(config_name=None):
         # Build category map
         category_map = {}
         for crit in criteria:
-            crit_lower = crit.lower()
-            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
-                category_map[crit] = 'Technical Skills'
-            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
-                category_map[crit] = 'Experience'
-            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
-                category_map[crit] = 'Qualifications'
-            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
-                category_map[crit] = 'Soft Skills'
+            # Handle multiple formats: string, dict with 'criterion', or dict with 'text'
+            if isinstance(crit, dict):
+                crit_text = crit.get('criterion') or crit.get('text') or str(crit)
             else:
-                category_map[crit] = 'Other Requirements'
+                crit_text = crit
+            
+            crit_lower = crit_text.lower()
+            if any(word in crit_lower for word in ['python', 'java', 'sql', 'javascript', 'programming', 'coding', 'technical', 'software']):
+                category_map[crit_text] = 'Technical Skills'
+            elif any(word in crit_lower for word in ['experience', 'years', 'background']):
+                category_map[crit_text] = 'Experience'
+            elif any(word in crit_lower for word in ['education', 'degree', 'certification', 'qualification']):
+                category_map[crit_text] = 'Qualifications'
+            elif any(word in crit_lower for word in ['communication', 'leadership', 'team', 'collaboration']):
+                category_map[crit_text] = 'Soft Skills'
+            else:
+                category_map[crit_text] = 'Other Requirements'
         
         # Generate Word docs for each candidate
         docx_list = []
@@ -4163,6 +4324,68 @@ def create_app(config_name=None):
             </html>
             """
         except Exception as e:
+            db.session.rollback()
+            return f"""
+            <html>
+            <head><title>Migration Error</title></head>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h1 style="color: #dc2626;">❌ Migration Failed</h1>
+                <p>Error: {str(e)}</p>
+                <p style="margin-top: 30px;">
+                    <a href="/admin/gpt" style="color: #2563eb;">← Back to Admin Panel</a>
+                </p>
+            </body>
+            </html>
+            """
+    
+    @app.route('/admin/migrate-jd-bytes')
+    @admin_required
+    def admin_migrate_jd_bytes():
+        """Run database migration - add jd_bytes column to analyses table for storing PDF files"""
+        try:
+            from sqlalchemy import text
+            
+            # Add jd_bytes column (BYTEA for PostgreSQL, BLOB for SQLite)
+            db.session.execute(text("ALTER TABLE analyses ADD COLUMN IF NOT EXISTS jd_bytes BYTEA;"))
+            db.session.commit()
+            
+            return """
+            <html>
+            <head><title>Migration Complete</title></head>
+            <body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h1 style="color: #10b981;">✅ Migration Successful!</h1>
+                <p>Database schema updated:</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>Added <code>jd_bytes</code> column to analyses table</li>
+                    <li>Future analyses will preserve PDF files in job history</li>
+                    <li>When loading from history, original PDFs will be available</li>
+                </ul>
+                <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">
+                    Note: Existing job history records will not have PDF bytes (they will show text only).
+                </p>
+                <p style="margin-top: 30px;">
+                    <a href="/admin/gpt" style="color: #2563eb;">← Back to Admin Panel</a>
+                </p>
+            </body>
+            </html>
+            """
+        except Exception as e:
+            # Check if error is just "column already exists"
+            if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
+                return """
+                <html>
+                <head><title>Migration Already Applied</title></head>
+                <body style="font-family: Arial; padding: 40px; text-align: center;">
+                    <h1 style="color: #f59e0b;">⚠️ Migration Already Applied</h1>
+                    <p>The <code>jd_bytes</code> column already exists in the analyses table.</p>
+                    <p style="color: #10b981; margin-top: 20px;">✅ No action needed - your database is up to date.</p>
+                    <p style="margin-top: 30px;">
+                        <a href="/admin/gpt" style="color: #2563eb;">← Back to Admin Panel</a>
+                    </p>
+                </body>
+                </html>
+                """
+            
             db.session.rollback()
             return f"""
             <html>

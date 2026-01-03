@@ -222,7 +222,27 @@
 
 {% block extra_scripts %}
 <script>
-function switchPromptTab(tabName) {
+// Auto-resize textarea to fit content
+        function autoResizeTextarea(textarea) {
+            // Reset height to auto to get the correct scrollHeight
+            textarea.style.height = 'auto';
+            // Set height to scrollHeight plus a little padding
+            textarea.style.height = (textarea.scrollHeight + 5) + 'px';
+        }
+        
+        // Auto-resize all textareas on page load
+        function autoResizeAllTextareas() {
+            document.querySelectorAll('.prompt-editor textarea').forEach(textarea => {
+                autoResizeTextarea(textarea);
+            });
+        }
+        
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            autoResizeAllTextareas();
+        });
+        
+        function switchPromptTab(tabName) {
             // Hide all content
             document.querySelectorAll('.prompt-content').forEach(content => {
                 content.classList.remove('active');
@@ -238,6 +258,9 @@ function switchPromptTab(tabName) {
             
             // Activate selected tab
             document.querySelector('.prompt-tab.' + tabName).classList.add('active');
+            
+            // Auto-resize textareas in the newly visible tab
+            setTimeout(autoResizeAllTextareas, 50);
         }
         
         // Finance dropdown hover functionality

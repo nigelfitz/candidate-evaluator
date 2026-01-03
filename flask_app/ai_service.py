@@ -22,6 +22,12 @@ def load_ai_config() -> Dict[str, Any]:
     with open(settings_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def load_prompts() -> Dict[str, Any]:
+    """Load AI prompt templates from config/prompts.json"""
+    prompts_path = os.path.join(os.path.dirname(__file__), 'config', 'prompts.json')
+    with open(prompts_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
 # Load configuration on module import
 _ai_config = load_ai_config()
 
@@ -85,28 +91,36 @@ class AIService:
             ...
         ]
         """
-        system_prompt = """You are an expert recruiter. Extract all job requirements from the Job Description.
+        # Load prompts from admin-configurable prompts.json
+        prompts = load_prompts()
+        jd_extraction = prompts['jd_extraction']
+        
+        # Use admin-configured prompts
+        # NOTE: This function expects a specific JSON schema with "criteria" array containing
+        # objects with "criterion", "category", "is_anchor", and "weight" fields.
+        # If you modify the jd_extraction prompt in admin, ensure it returns this schema.
+        system_prompt = jd_extraction['system_prompt']['value']
+        
+        # Build user prompt from template
+        # If the template doesn't include instructions for anchors/categories, add them
+        user_prompt_base = jd_extraction['user_prompt_template']['value'].format(jd_text=jd_text)
+        
+        # Add schema requirements (this ensures proper output format even if admin prompt doesn't specify it)
+        user_prompt = f"""{user_prompt_base}
 
-For each requirement, determine:
-1. Is it an "anchor" (binary requirement like degree, certification, license)? These are mandatory.
-2. What category does it belong to? (Skills, Experience, Qualifications, etc.)
-
-Return JSON:
-{
+IMPORTANT: Return JSON in this exact format:
+{{
     "criteria": [
-        {
+        {{
             "criterion": "exact requirement text",
             "category": "category name",
             "is_anchor": true/false,
             "weight": 1.0
-        }
+        }}
     ]
-}"""
+}}
 
-        user_prompt = f"""Job Description:
-{jd_text}
-
-Extract all requirements and identify which are anchors (mandatory binary requirements)."""
+Identify which requirements are "anchors" (binary requirements like degrees, certifications, licenses that are mandatory)."""
 
         response = await self.client.chat.completions.create(
             model=self.ranker_model,
@@ -137,45 +151,22 @@ Extract all requirements and identify which are anchors (mandatory binary requir
         
         This is the atomic scoring unit - called in parallel for all criteria.
         """
-        system_prompt = """You are a senior recruiter scoring candidates. Evaluate the candidate's resume against a specific job requirement.
-
-ANCHOR CRITERIA (degrees, certifications, licenses):
-- If the candidate HAS the requirement: score 100
-- If the candidate LACKS the requirement: score 0-20 (harsh penalty for missing binary requirement)
-
-NON-ANCHOR CRITERIA:
-- Score 0-100 based on evidence quality
-- Multiple roles showing the skill = higher score
-- Recent relevant experience = higher score
-- Outdated/weak evidence = lower score
-
-CRITICAL: You must extract verbatim quotes from the resume as proof.
-
-Return JSON:
-{
-    "score": integer (0-100),
-    "justification": "1-sentence reasoning explaining your score",
-    "raw_evidence": "Direct verbatim quotes from resume that prove this criterion. If evidence spans multiple jobs, include quotes from each separated by double line breaks."
-}
-
-Example raw_evidence for multi-job evidence:
-"Advanced Excel skills including VLOOKUP, pivot tables, and macros (Finance Manager, 2020-2023)
-
-Created complex financial models using Excel (Senior Analyst, 2018-2020)"
-
-If no direct quote exists, extract the most relevant sentence that implies the skill."""
-
-        anchor_note = "\n\nIMPORTANT: This is an ANCHOR criterion (binary requirement). Score 100 if present, 0-20 if missing." if is_anchor else ""
+        # Load prompts from admin-configurable prompts.json
+        prompts = load_prompts()
+        ranker_prompts = prompts['ranker_scoring']
         
-        user_prompt = f"""Criterion: {criterion}{anchor_note}
-
-Job Description Context:
-{jd_text[:1000]}
-
-Candidate Resume:
-{resume_text}
-
-Provide your evaluation."""
+        system_prompt = ranker_prompts['system_prompt']['value']
+        
+        # Build anchor note if needed
+        anchor_note = "\n\nIMPORTANT: This is an ANCHOR criterion (binary requirement). Score 100 if present, 0 if missing." if is_anchor else ""
+        
+        # Build user prompt from template
+        user_prompt = ranker_prompts['user_prompt_template']['value'].format(
+            criterion=criterion,
+            anchor_note=anchor_note,
+            jd_text=jd_text,
+            resume_text=resume_text
+        )
 
         # Retry logic for rate limits
         max_retries = 5
@@ -306,45 +297,20 @@ Provide your evaluation."""
             for score in evaluation.criterion_scores
         ])
         
-        system_prompt = """You are a senior hiring manager conducting a deep candidate assessment.
-
-Generate comprehensive insights:
-1. Top Strengths (3-6 bullet points)
-2. Key Gaps/Concerns (3-6 bullet points)
-3. Overall Assessment (2-4 sentences)
-4. Refined Justifications - CRITICAL: Rewrite ALL draft justifications with more polish and evidence. You MUST provide a refined justification for EVERY criterion listed in Phase 1 Draft Scores.
-5. Suggested Interview Questions (3-5 questions to probe key areas)
-
-Return ONLY valid JSON in this exact format:
-{
-    "top": ["strength 1", "strength 2", ...],
-    "gaps": ["gap 1", "gap 2", ...],
-    "notes": "overall assessment",
-    "justifications": {"criterion name": "polished justification", ...},
-    "interview_questions": ["question 1", "question 2", ...]
-}
-
-CRITICAL JSON RULES:
-- Escape all quotes inside strings using backslash: "He said \\"hello\\""
-- Escape all backslashes: use \\\\ for single backslash
-- Do not use smart quotes or unicode quotes - use only straight quotes
-- Ensure all strings are properly terminated with closing quotes
-- Do not include any text before or after the JSON object
-- The "justifications" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key."""
-
-        user_prompt = f"""Candidate: {candidate_name}
-Overall Score: {evaluation.overall_score:.1f}/100
-
-Job Description:
-{jd_text}
-
-Resume:
-{resume_text}
-
-Phase 1 Draft Scores:
-{scores_context}
-
-Provide deep insights with refined justifications."""
+        # Load prompts from admin-configurable prompts.json
+        prompts = load_prompts()
+        insight_prompts = prompts['insight_generation']
+        
+        system_prompt = insight_prompts['system_prompt']['value']
+        
+        # Build user prompt from template
+        user_prompt = insight_prompts['user_prompt_template']['value'].format(
+            candidate_name=candidate_name,
+            overall_score=f"{evaluation.overall_score:.1f}",
+            jd_text=jd_text,
+            resume_text=resume_text,
+            scores_context=scores_context
+        )
 
         # Retry logic with exponential backoff for rate limit handling
         max_retries = 5

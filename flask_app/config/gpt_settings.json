@@ -1,7 +1,7 @@
 {
   "_metadata": {
     "description": "Two-Agent AI Configuration for Candidate Evaluation System",
-    "last_updated": "2026-01-03 02:49:42 UTC",
+    "last_updated": "2026-01-03 12:44:56 UTC",
     "version": "2.0",
     "warning": "Changes to these settings affect both quality and cost. Test with small batches first.",
     "architecture": "RANKER_AGENT handles bulk scoring (all candidates × all criteria). INSIGHT_AGENT generates deep insights for selected candidates only."
@@ -35,7 +35,7 @@
     "usage": "Called only for candidates you select for 'Deep Insights' (typically top 3-10). Low volume, high value."
   },
   "ranker_temperature": {
-    "value": 0.1,
+    "value": 0.0,
     "description": "Temperature for RANKER_AGENT (0.0 = deterministic, 2.0 = creative)",
     "range": [
       0.0,

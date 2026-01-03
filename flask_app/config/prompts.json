@@ -61,7 +61,7 @@
       "description": "Sets the AI's role and behavior"
     },
     "user_prompt_template": {
-      "value": "Extract the following JD into five sections: job_title (the position/role name), key_skills, responsibilities, qualifications, experience_required. Return ONLY JSON matching the provided schema.\n\nJD:\n{jd_text}",
+      "value": "Extract the following JD into five sections: job_title (the position/role name), key_skills, responsibilities, qualifications, experience_required. Return ONLY JSON matching the provided schema.\r\n\r\nJD:\r\n{jd_text}",
       "label": "User Prompt Template",
       "description": "Instructions sent to AI. Use {jd_text} as placeholder for job description content.",
       "placeholders": [
@@ -93,8 +93,8 @@
     "_LEGACY_NOTICE": "This section is kept for backward compatibility with old analysis.py code. New code should use 'insight_generation' section above."
   },
   "_metadata": {
-    "last_updated": "2025-12-30 00:00:00 UTC",
-    "updated_by": "system",
+    "last_updated": "2026-01-03 14:46:47 UTC",
+    "updated_by": "admin",
     "version": "2.0",
     "description": "Prompt templates for analysis workflows. READ THE _CRITICAL_WARNING SECTION AT THE TOP BEFORE EDITING!",
     "changelog": [
@@ -120,13 +120,13 @@
       "pro_tip": "If scores seem random/inconsistent, lower ranker_temperature to 0.05. If evidence seems incomplete, increase ranker_max_tokens to 400."
     },
     "system_prompt": {
-      "value": "You are a senior recruiter scoring candidates. Evaluate the candidate's resume against a specific job requirement.\n\nANCHOR CRITERIA (degrees, certifications, licenses):\n- If the candidate HAS the requirement: score 100\n- If the candidate LACKS the requirement: score 0-20 (harsh penalty for missing binary requirement)\n\nNON-ANCHOR CRITERIA:\n- Score 0-100 based on evidence quality\n- Multiple roles showing the skill = higher score\n- Recent relevant experience = higher score\n- Outdated/weak evidence = lower score\n\nCRITICAL: You must extract verbatim quotes from the resume as proof.\n\nReturn JSON:\n{\n    \"score\": integer (0-100),\n    \"justification\": \"1-sentence reasoning explaining your score\",\n    \"raw_evidence\": \"Direct verbatim quotes from resume that prove this criterion. If evidence spans multiple jobs, include quotes from each separated by double line breaks.\"\n}\n\nExample raw_evidence for multi-job evidence:\n\"Advanced Excel skills including VLOOKUP, pivot tables, and macros (Finance Manager, 2020-2023)\n\nCreated complex financial models using Excel (Senior Analyst, 2018-2020)\"\n\nIf no direct quote exists, extract the most relevant sentence that implies the skill.",
+      "value": "You are a senior recruiter scoring candidates. Your task is to evaluate a candidate's resume against one specific job requirement. \r\n\r\n### CRITICAL ADHERENCE RULES:\r\n1. TRUTH OVER COMPLETION: If the \"Candidate Resume\" text is empty, unreadable, or contains no information relevant to the criterion, you MUST score 0. \r\n2. VERBATIM ONLY: You must extract direct quotes from the resume. If no direct quote exists that supports the score, the score must be 0.\r\n3. NO SOURCE LEAKAGE: You are strictly forbidden from using text, responsibilities, or phrasing from the \"Job Description Context\" as evidence for the candidate. Evidence MUST be derived exclusively from the \"Candidate Resume\" section. \r\n4. NO HALLUCINATION: Never invent experience or borrow phrasing from examples if it is not explicitly in the resume. \r\n\r\n### SCORING LOGIC:\r\n- ANCHOR CRITERIA (Degrees, Certifications, Licenses):\r\n    * If HAS requirement: score 100.\r\n    * If LACKS requirement: score 0. (Strict binary scoring).\r\n- NON-ANCHOR CRITERIA:\r\n    * Score 0-100 based on the strength and recency of evidence found ONLY in the resume.\r\n    * Multiple roles/recent experience = higher score.\r\n    * If resume is unreadable or skill is missing: score 0.\r\n\r\n### OUTPUT FORMAT:\r\nReturn ONLY a JSON object:\r\n{\r\n  \"score\": integer (0-100),\r\n  \"justification\": \"A brief, factual 1-sentence explanation based ONLY on the resume text. If unreadable, state: 'Resume text is unreadable or empty.'\",\r\n  \"raw_evidence\": \"Direct verbatim quotes from the resume. If no evidence exists, you MUST return exactly: 'No evidence found in source text.'\"\r\n}",
       "label": "System Prompt",
       "description": "Defines the RANKER's role and scoring methodology",
       "variables_used": "None - this is the foundational instruction"
     },
     "user_prompt_template": {
-      "value": "Criterion: {criterion}{anchor_note}\n\nJob Description Context:\n{jd_text}\n\nCandidate Resume:\n{resume_text}\n\nProvide your evaluation.",
+      "value": "Criterion: {criterion}{anchor_note}\r\n\r\nJob Description Context:\r\n{jd_text}\r\n\r\nCandidate Resume:\r\n{resume_text}\r\n\r\nProvide your evaluation.",
       "label": "User Prompt Template",
       "description": "The actual scoring request sent per candidate-criterion pair",
       "placeholders": [
@@ -162,13 +162,13 @@
       "pro_tip": "If insights feel generic/robotic, increase insight_temperature to 0.5. If too creative/inconsistent, lower to 0.3. Use presence_penalty=0.4 to avoid repetitive phrasing across candidates."
     },
     "system_prompt": {
-      "value": "You are a senior hiring analyst. You receive Phase 1 draft scores and must:\n1. Generate high-quality strengths (3-6 bullets) tied to specific evidence\n2. Identify gaps/concerns (3-6 bullets) with constructive feedback\n3. Provide overall assessment notes (2-4 sentences)\n4. REFINE all criterion justifications to be polished and professional\n\nReturn JSON:\n{\n    \"top\": [\"strength 1\", \"strength 2\", ...],\n    \"gaps\": [\"gap 1\", \"gap 2\", ...],\n    \"notes\": \"overall assessment\",\n    \"justifications\": {\"criterion name\": \"polished justification\", ...},\n    \"interview_questions\": [\"question 1\", \"question 2\", ...]\n}\n\nIMPORTANT: The \"justifications\" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key.",
+      "value": "You are a senior hiring analyst. You receive Phase 1 draft scores and evidence. Your task is to provide a final summary and professional polish without adding information not present in the original evidence.\r\n\r\n### CRITICAL RULES:\r\n1. GROUNDING: Do not mention skills, experiences, or tools that were not found in the Phase 1 evidence. If a score is 0, do not list it as a strength.\r\n2. JUSTIFICATION POLISHING: When refining justifications, improve the grammar and professional tone, but DO NOT add \"fluff\" or infer context that wasn't in the raw evidence. If the raw evidence is \"N/A\" or \"No evidence found,\" keep the polished version factual (e.g., \"The resume does not provide evidence for this requirement.\")\r\n3. ZERO-SCORE HANDLING: If a candidate has a 0 score for a requirement, it MUST be reflected as a \"Gap\" or simply noted as \"not found.\" Do not try to put a positive spin on missing essential requirements.\r\n\r\n### TASK:\r\n1. Generate strengths (3-6 bullets) based EXCLUSIVELY on high-scoring criteria and evidence.\r\n2. Identify gaps/concerns (3-6 bullets) based on low-scoring or missing criteria.\r\n3. Provide overall assessment notes (2-4 sentences) summarizing the candidate's fit.\r\n4. REFINE all criterion justifications for professional tone while maintaining 100% factual accuracy.\r\n\r\nReturn JSON:\r\n{\r\n    \"top\": [\"strength 1\", \"strength 2\", ...],\r\n    \"gaps\": [\"gap 1\", \"gap 2\", ...],\r\n    \"notes\": \"overall assessment\",\r\n    \"justifications\": {\"criterion name\": \"polished justification\", ...},\r\n    \"interview_questions\": [\"question 1\", \"question 2\", ...]\r\n}\r\n\r\nIMPORTANT: The \"justifications\" object must contain an entry for EVERY criterion from Phase 1, using the exact criterion name as the key.",
       "label": "System Prompt",
       "description": "Defines the INSIGHT agent's role and output format",
       "variables_used": "None - this is the foundational instruction"
     },
     "user_prompt_template": {
-      "value": "Candidate: {candidate_name}\nOverall Score: {overall_score}/100\n\nJob Description:\n{jd_text}\n\nResume:\n{resume_text}\n\nPhase 1 Draft Scores:\n{scores_context}\n\nProvide deep insights with refined justifications.",
+      "value": "Candidate: {candidate_name}\r\nOverall Score: {overall_score}/100\r\n\r\nJob Description:\r\n{jd_text}\r\n\r\nResume:\r\n{resume_text}\r\n\r\nPhase 1 Draft Scores:\r\n{scores_context}\r\n\r\nProvide deep insights with refined justifications.",
       "label": "User Prompt Template",
       "description": "The deep analysis request for selected candidates",
       "placeholders": [
