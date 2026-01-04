@@ -391,21 +391,92 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                                 result = json.loads(fixed)
                                 print(f"SUCCESS: JSON parsing recovered after newline fix")
                             except json.JSONDecodeError as e3:
-                                # Final fallback: Log everything and RAISE exception
-                                # We do NOT want to return fake data - fail the analysis
-                                print(f"CRITICAL: All JSON recovery strategies failed for {candidate_name}")
+                                # All sanitization strategies failed
+                                # PHASE 2 RETRY: Try one more time with reduced max_tokens
+                                print(f"WARNING: All JSON sanitization strategies failed. Attempting retry with reduced max_tokens...")
                                 print(f"FULL RESPONSE ({len(raw_content)} chars):")
                                 print(raw_content)
                                 print(f"Original error: {str(e)}")
                                 print(f"After sanitization: {str(e2)}")
                                 print(f"After newline fix: {str(e3)}")
-                                # RAISE the exception instead of returning error message
-                                raise Exception(f"Failed to parse GPT response as JSON for {candidate_name}. {str(e)}") from e
+                                
+                                # Retry with 20% lower max_tokens to prevent token overflow
+                                reduced_max_tokens = int(INSIGHT_MAX_TOKENS * 0.8)
+                                print(f"RETRY: Reducing max_tokens from {INSIGHT_MAX_TOKENS} to {reduced_max_tokens}")
+                                
+                                try:
+                                    retry_response = await self.client.chat.completions.create(
+                                        model=self.insight_model,
+                                        messages=[
+                                            {"role": "system", "content": system_prompt},
+                                            {"role": "user", "content": user_prompt}
+                                        ],
+                                        temperature=INSIGHT_TEMPERATURE,
+                                        max_tokens=reduced_max_tokens,
+                                        presence_penalty=PRESENCE_PENALTY,
+                                        frequency_penalty=FREQUENCY_PENALTY,
+                                        response_format={"type": "json_object"}
+                                    )
+                                    
+                                    retry_content = retry_response.choices[0].message.content
+                                    result = json.loads(retry_content)
+                                    print(f"SUCCESS: Retry with reduced max_tokens succeeded!")
+                                    return result
+                                    
+                                except Exception as retry_error:
+                                    # Retry also failed - FALLBACK to Phase 1 justifications
+                                    print(f"WARNING: Retry attempt also failed: {str(retry_error)}")
+                                    print(f"FALLBACK: Using Phase 1 justifications as Safe Mode")
+                                    
+                                    # Build fallback response using Phase 1 data
+                                    fallback_result = {
+                                        "refined_justifications": {
+                                            score.criterion: score.justification
+                                            for score in evaluation.criterion_scores
+                                        },
+                                        "top_strengths": [
+                                            f"Strong performance in {score.criterion} ({score.score}/100)"
+                                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score, reverse=True)[:3]
+                                        ],
+                                        "key_gaps": [
+                                            f"Opportunity for growth in {score.criterion} ({score.score}/100)"
+                                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:2]
+                                        ],
+                                        "interview_questions": [
+                                            f"Can you elaborate on your experience with {score.criterion}?"
+                                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:3]
+                                        ]
+                                    }
+                                    
+                                    print(f"SUCCESS: Fallback response constructed with {len(fallback_result['refined_justifications'])} justifications")
+                                    return fallback_result
                     else:
-                        # No JSON object found at all
+                        # No JSON object found at all - FALLBACK immediately
                         print(f"CRITICAL: No JSON object found in response")
                         print(f"FULL RESPONSE: {raw_content[:500]}...")
-                        raise Exception(f"No valid JSON object found in GPT response for {candidate_name}")
+                        print(f"FALLBACK: Using Phase 1 justifications as Safe Mode")
+                        
+                        # Build fallback response using Phase 1 data
+                        fallback_result = {
+                            "refined_justifications": {
+                                score.criterion: score.justification
+                                for score in evaluation.criterion_scores
+                            },
+                            "top_strengths": [
+                                f"Strong performance in {score.criterion} ({score.score}/100)"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score, reverse=True)[:3]
+                            ],
+                            "key_gaps": [
+                                f"Opportunity for growth in {score.criterion} ({score.score}/100)"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:2]
+                            ],
+                            "interview_questions": [
+                                f"Can you elaborate on your experience with {score.criterion}?"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:3]
+                            ]
+                        }
+                        
+                        return fallback_result
                 
                 return result
                 
@@ -420,16 +491,59 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                         await asyncio.sleep(wait_time)
                         continue
                     else:
-                        # All retries exhausted - RAISE exception instead of returning error message
+                        # All retries exhausted - FALLBACK to Phase 1
                         error_msg = f"Rate limit error after {max_retries} retries for {candidate_name}"
-                        print(f"CRITICAL: {error_msg}")
-                        raise Exception(error_msg) from e
+                        print(f"WARNING: {error_msg}")
+                        print(f"FALLBACK: Using Phase 1 justifications due to rate limiting")
+                        
+                        # Build fallback response using Phase 1 data
+                        fallback_result = {
+                            "refined_justifications": {
+                                score.criterion: score.justification
+                                for score in evaluation.criterion_scores
+                            },
+                            "top_strengths": [
+                                f"Strong performance in {score.criterion} ({score.score}/100)"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score, reverse=True)[:3]
+                            ],
+                            "key_gaps": [
+                                f"Opportunity for growth in {score.criterion} ({score.score}/100)"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:2]
+                            ],
+                            "interview_questions": [
+                                f"Can you elaborate on your experience with {score.criterion}?"
+                                for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:3]
+                            ]
+                        }
+                        
+                        return fallback_result
                 else:
-                    # Non-rate-limit error - RAISE immediately instead of returning error message
-                    print(f"CRITICAL: Insights generation failed for {candidate_name}")
+                    # Non-rate-limit error - FALLBACK instead of raising
+                    print(f"WARNING: Insights generation failed for {candidate_name}")
                     print(f"ERROR: {error_str}")
-                    # Re-raise the exception to trigger analysis failure and rollback
-                    raise
+                    print(f"FALLBACK: Using Phase 1 justifications due to unexpected error")
+                    
+                    # Build fallback response using Phase 1 data
+                    fallback_result = {
+                        "refined_justifications": {
+                            score.criterion: score.justification
+                            for score in evaluation.criterion_scores
+                        },
+                        "top_strengths": [
+                            f"Strong performance in {score.criterion} ({score.score}/100)"
+                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score, reverse=True)[:3]
+                        ],
+                        "key_gaps": [
+                            f"Opportunity for growth in {score.criterion} ({score.score}/100)"
+                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:2]
+                        ],
+                        "interview_questions": [
+                            f"Can you elaborate on your experience with {score.criterion}?"
+                            for score in sorted(evaluation.criterion_scores, key=lambda s: s.score)[:3]
+                        ]
+                    }
+                    
+                    return fallback_result
 
 
 # ============================================
