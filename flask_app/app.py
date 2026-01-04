@@ -598,41 +598,51 @@ def create_app(config_name=None):
                 # Process and store resumes temporarily
                 resumes_added = 0
                 processed_resumes = []  # Store for length checking
+                locked_files = []  # Track files that couldn't be read
                 
                 for resume_file in resume_files:
                     if not resume_file.filename:
                         continue
                     
-                    resume_bytes = resume_file.read()
-                    resume_hash = hash_bytes(resume_bytes)
-                    
-                    # Check if already uploaded (by hash)
-                    existing = DraftResume.query.filter_by(draft_id=draft.id, file_hash=resume_hash).first()
-                    if existing:
-                        continue  # Skip duplicates
-                    
-                    resume_text = read_file_bytes(resume_bytes, resume_file.filename)
-                    
-                    # Check if file is unreadable (very short text suggests corrupted/scanned image)
-                    # Use obvious placeholder name instead of trying to extract
-                    import os
-                    if not resume_text or len(resume_text.strip()) < 100:
-                        candidate_name = f"[UNREADABLE FILE - {os.path.basename(resume_file.filename)}]"
-                    else:
-                        # Extract candidate name using AI (with regex fallback)
-                        from analysis import extract_candidate_name_with_gpt
-                        candidate_name = extract_candidate_name_with_gpt(resume_text, resume_file.filename)
-                    
-                    # Store for potential length warning
-                    processed_resumes.append({
-                        'filename': resume_file.filename,
-                        'bytes': resume_bytes,
-                        'text': resume_text,
-                        'name': candidate_name,
-                        'hash': resume_hash
-                    })
-                    
-                    resumes_added += 1
+                    # Wrap entire file processing in error handling
+                    try:
+                        resume_bytes = resume_file.read()
+                        resume_hash = hash_bytes(resume_bytes)
+                        
+                        # Check if already uploaded (by hash)
+                        existing = DraftResume.query.filter_by(draft_id=draft.id, file_hash=resume_hash).first()
+                        if existing:
+                            continue  # Skip duplicates
+                        
+                        resume_text = read_file_bytes(resume_bytes, resume_file.filename)
+                        
+                        # Check if file is unreadable (very short text suggests corrupted/scanned image)
+                        # Use obvious placeholder name instead of trying to extract
+                        import os
+                        if not resume_text or len(resume_text.strip()) < 100:
+                            candidate_name = f"[UNREADABLE FILE - {os.path.basename(resume_file.filename)}]"
+                        else:
+                            # Extract candidate name using AI (with regex fallback)
+                            from analysis import extract_candidate_name_with_gpt
+                            candidate_name = extract_candidate_name_with_gpt(resume_text, resume_file.filename)
+                        
+                        # Store for potential length warning
+                        processed_resumes.append({
+                            'filename': resume_file.filename,
+                            'bytes': resume_bytes,
+                            'text': resume_text,
+                            'name': candidate_name,
+                            'hash': resume_hash
+                        })
+                        
+                        resumes_added += 1
+                        
+                    except Exception as e:
+                        # File is locked, corrupted, or otherwise unreadable
+                        # Log the error but continue processing other files
+                        print(f"ERROR: Could not process {resume_file.filename}: {str(e)}")
+                        locked_files.append(resume_file.filename)
+                        continue  # Skip this file
                 
                 # Check resume lengths and show warning if needed
                 system_settings = load_system_settings()
@@ -735,13 +745,26 @@ def create_app(config_name=None):
                 
                 db.session.commit()
                 
+                # Inform user about results
+                if locked_files:
+                    locked_names = ', '.join(locked_files)
+                    flash(f'⚠️ Could not upload {len(locked_files)} file(s) because they are open in another program: {locked_names}. Please close these files and try again.', 'warning')
+                
                 if resumes_added == 0:
-                    flash('No new resumes added (duplicates skipped)', 'info')
+                    if locked_files:
+                        flash('No resumes were uploaded. Please close the locked files and retry.', 'error')
+                    else:
+                        flash('No new resumes added (duplicates skipped)', 'info')
                 else:
                     flash(f'✅ {resumes_added} resume(s) uploaded successfully!', 'success')
                 
-                # Redirect to Run Analysis page
-                return redirect(url_for('run_analysis_route'))
+                # Only proceed if at least one resume was uploaded
+                if resumes_added > 0:
+                    # Redirect to Run Analysis page
+                    return redirect(url_for('run_analysis_route'))
+                else:
+                    # No resumes uploaded - stay on upload page
+                    return redirect(url_for('analyze', step='resumes'))
                 
             except Exception as e:
                 db.session.rollback()
@@ -1873,9 +1896,12 @@ def create_app(config_name=None):
         
         # Get candidate file information for tooltips (file sizes, truncation warnings)
         from database import CandidateFile
+        from analysis import load_gpt_settings
+        gpt_settings = load_gpt_settings()
+        resume_limit = gpt_settings.get('candidate_text_chars', 12000)
+        
         candidate_files_info = {}
         candidate_files = CandidateFile.query.filter_by(analysis_id=analysis.id).all()
-        resume_limit = 12000  # From gpt_settings
         for cf in candidate_files:
             text_length = len(cf.extracted_text or '')
             candidate_files_info[cf.candidate_name] = {
@@ -1897,7 +1923,8 @@ def create_app(config_name=None):
                              analysis_completed=True,
                              is_current_draft_analysis=is_current_draft_analysis,
                              pricing=pricing,
-                             candidate_files_info=candidate_files_info)
+                             candidate_files_info=candidate_files_info,
+                             resume_limit=resume_limit)
     
     @app.route('/submit_feedback', methods=['POST'])
     @login_required
@@ -4708,7 +4735,7 @@ def create_app(config_name=None):
         try:
             from email_utils import send_email
             
-            admin_email = os.environ.get('ADMIN_EMAIL', 'admin@candidateevaluator.com')
+            admin_email = os.environ.get('ADMIN_EMAIL', 'contact@candidateevaluator.com')
             
             html_body = f"""
             <h2>🚨 Balance Mismatch Detected</h2>

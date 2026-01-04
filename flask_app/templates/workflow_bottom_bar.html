@@ -185,7 +185,7 @@
     }
     
     // Submit form with loading spinner in continue button
-    function submitFormWithSpinner(formId) {
+    async function submitFormWithSpinner(formId) {
         const form = document.getElementById(formId);
         const continueBtn = document.getElementById('continueButton');
         const btnText = document.getElementById('continueButtonText');
@@ -193,7 +193,26 @@
         const btnSpinner = document.getElementById('continueButtonSpinner');
         
         if (form && continueBtn) {
-            // If it's the resume upload form, check the limit first
+            // VALIDATION 1: Check for locked files (only for resume upload)
+            if (formId === 'resumeUploadForm') {
+                // Check selectedFiles array (used by drag-and-drop system)
+                if (typeof selectedFiles !== 'undefined' && selectedFiles.length > 0) {
+                    for (let i = 0; i < selectedFiles.length; i++) {
+                        const file = selectedFiles[i];
+                        try {
+                            // Attempt to read the first 1KB of the file
+                            // If the OS has a lock on it, this will throw an error
+                            await file.slice(0, 1024).arrayBuffer();
+                        } catch (err) {
+                            console.error('File lock detected:', file.name, err);
+                            alert(`Wait! The file "${file.name}" is currently open in another program.\n\nPlease close the file on your desktop and try again to begin your Full Ranking.`);
+                            return; // Stop submission
+                        }
+                    }
+                }
+            }
+            
+            // VALIDATION 2: Check resume upload limit
             if (formId === 'resumeUploadForm') {
                 // Check if we need to show the limit warning modal
                 if (typeof selectedFiles !== 'undefined' && 

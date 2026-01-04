@@ -101,7 +101,7 @@ The old system calculated backward from the current balance, which hid missing t
 
 ### Email Configuration
 - Uses existing SendGrid configuration
-- Recipient: `ADMIN_EMAIL` environment variable (defaults to admin@candidateevaluator.com)
+- Recipient: `ADMIN_EMAIL` environment variable (defaults to contact@candidateevaluator.com)
 - Works in both development and production
 - Degrades gracefully if email is not configured
 

@@ -119,6 +119,23 @@
             <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">{% if uploaded_resumes %}Add More Resumes{% else %}Step 3: Upload Resumes{% endif %}</h2>
             
             <!-- Large Dashed Dropzone for Resumes -->
+            <!-- Pro Tip Box -->
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%); border-left: 4px solid #3b82f6; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i data-lucide="lightbulb" style="width: 24px; height: 24px; color: #3b82f6; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div>
+                        <div style="font-weight: 600; color: #1e40af; font-size: 16px; margin-bottom: 4px;">💡 Pro Tip</div>
+                        <div style="color: #1e40af; font-size: 14px; line-height: 1.5;">
+                            For the fastest analysis, please ensure all resume files are <strong>closed on your desktop</strong> before uploading. This allows our AI to perform a "Deep Dive" into 100% of your candidate data immediately!
+                        </div>
+                        <div style="color: #1e40af; font-size: 13px; line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(59, 130, 246, 0.2);">
+                            <strong>Troubleshooting:</strong> If you encounter an error after clicking Continue, close any open resume files on your desktop and try uploading again.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Large Dashed Dropzone for Resumes -->
             <div id="resumeDropzone" style="margin-bottom: 20px; padding: 60px 30px; border: 3px dashed #3b82f6; border-radius: 12px; background: #f0f9ff; text-align: center; cursor: pointer; transition: all 0.3s ease;">
                 <input type="file" name="resumes" id="resumeFiles" accept=".pdf,.docx,.doc,.txt" multiple style="display: none;">
                 <div id="resumeDropzoneContent">
@@ -289,9 +306,24 @@ if (resumeDropzone && resumeFiles) {
     resumeDropzone.addEventListener('click', () => resumeFiles.click());
     
     // File input change
-    resumeFiles.addEventListener('change', (e) => {
+    resumeFiles.addEventListener('change', async (e) => {
         const newFiles = Array.from(e.target.files);
-        // Additive upload - keep existing files
+        
+        // Validate files for locks BEFORE adding them
+        for (let file of newFiles) {
+            try {
+                // Try to read first 1KB to check if file is accessible
+                await file.slice(0, 1024).arrayBuffer();
+            } catch (err) {
+                // File is locked!
+                alert(`⚠️ Cannot add "${file.name}"\n\nThis file is currently open in another program. Please close it first, then try adding it again.`);
+                // Clear the file input so user can retry
+                resumeFiles.value = '';
+                return; // Don't add any files from this selection
+            }
+        }
+        
+        // All files are accessible - add them
         newFiles.forEach(file => {
             if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
                 selectedFiles.push(file);
@@ -320,13 +352,26 @@ if (resumeDropzone && resumeFiles) {
         resumeDropzone.style.background = '#f0f9ff';
     });
     
-    resumeDropzone.addEventListener('drop', (e) => {
+    resumeDropzone.addEventListener('drop', async (e) => {
         e.preventDefault();
         resumeDropzone.style.borderColor = '#3b82f6';
         resumeDropzone.style.background = '#f0f9ff';
         
         const newFiles = Array.from(e.dataTransfer.files);
-        // Additive upload - keep existing files
+        
+        // Validate files for locks BEFORE adding them
+        for (let file of newFiles) {
+            try {
+                // Try to read first 1KB to check if file is accessible
+                await file.slice(0, 1024).arrayBuffer();
+            } catch (err) {
+                // File is locked!
+                alert(`⚠️ Cannot add "${file.name}"\n\nThis file is currently open in another program. Please close it first, then try adding it again.`);
+                return; // Don't add any files from this drop
+            }
+        }
+        
+        // All files are accessible - add them
         newFiles.forEach(file => {
             if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
                 selectedFiles.push(file);
@@ -457,7 +502,25 @@ function tryAnywayWithWarning() {
 
 // Intercept form submission to check limit
 if (document.getElementById('resumeUploadForm')) {
-    document.getElementById('resumeUploadForm').addEventListener('submit', function(e) {
+    document.getElementById('resumeUploadForm').addEventListener('submit', async function(e) {
+        // STEP 1: Check if any files are locked (open in another program)
+        const fileInput = document.getElementById('resumeFiles');
+        if (fileInput && fileInput.files) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                try {
+                    // Attempt to read the first 1KB of the file
+                    // If the OS has a lock on it, this will throw an error immediately
+                    await file.slice(0, 1024).arrayBuffer();
+                } catch (err) {
+                    e.preventDefault(); // Stop the form from submitting
+                    alert(`Wait! The file "${file.name}" is currently open in another program.\n\nPlease close the file on your desktop and try again to begin your Full Ranking.`);
+                    return false;
+                }
+            }
+        }
+        
+        // STEP 2: Check resume upload limit (existing validation)
         // Only check if we haven't already approved all files
         if (!proceedWithAllFiles && selectedFiles.length > MAX_RESUMES_PER_UPLOAD) {
             e.preventDefault();

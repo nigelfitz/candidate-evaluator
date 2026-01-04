@@ -728,13 +728,17 @@ function renderMatrix() {
         
         // Check if candidate failed (0% overall score)
         const candData = data.find(r => r.Candidate === cand);
-        if (candData && candData.Overall === 0) {
+        // Show warning icon ONLY if extraction likely failed (very short text)
+        if (candData && candData.Overall === 0 && fileInfo.text_length < 500) {
             icons += ' <span style="color: #f59e0b; cursor: help;" title="Analysis failed - file may be corrupted, blank, or a scanned image with no extractable text">⚠️</span>';
             title = 'Analysis failed - unreadable file';
         }
+        // Note: If text_length >= 500 and score = 0%, no icon is shown
+        // The red 0% score indicates "analyzed but no relevant experience found"
+        
         // Check if resume was truncated
         else if (fileInfo.was_truncated) {
-            icons += ' <span style="color: #3b82f6; cursor: help;" title="Resume exceeded 12,000 character limit and was automatically trimmed. All key qualifications were still captured and evaluated.">📄✂️</span>';
+            icons += ' <span style="color: #3b82f6; cursor: help;" title="Resume exceeded {{ "{:,}".format(resume_limit) }} character limit and was automatically trimmed. All key qualifications were still captured and evaluated.">📄✂️</span>';
             if (!title) title = 'Resume was trimmed to fit character limits';
         }
         
