@@ -1,82 +1,253 @@
 {% extends "base.html" %}
 
-{% block title %}Security & Data Privacy - Candidate Evaluator{% endblock %}
+{% block title %}Security & Trust Center - Candidate Evaluator{% endblock %}
 
 {% block extra_css %}
 <style>
     .security-content { 
-        max-width: 800px; 
-        margin: 60px auto; 
+        max-width: 1200px; 
+        margin: 20px auto 60px auto; 
         padding: 0 20px; 
         line-height: 1.8; 
     }
     
-    .security-content h1 {
-        font-size: 2.5rem;
-        color: #1e293b;
+    /* Breadcrumb */
+    .breadcrumb {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    .breadcrumb-separator {
+        margin: 0 8px;
+        color: #cbd5e1;
+    }
+    
+    /* Hero Section */
+    .security-hero {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    
+    .security-hero h1 {
+        font-size: 2.75rem;
+        color: #0f172a;
         margin-bottom: 1rem;
+        font-weight: 700;
+        line-height: 1.2;
     }
     
-    .security-content > p {
-        font-size: 1.1rem;
-        color: #64748b;
-        margin-bottom: 3rem;
-    }
-    
-    .security-card { 
-        background: #f8fafc; 
-        padding: 30px; 
-        border-radius: 12px; 
-        margin-bottom: 30px; 
-        border-left: 5px solid #2563eb; 
-    }
-    
-    .security-card h2 { 
-        color: #1e293b; 
-        margin-top: 0; 
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .security-card p {
+    .security-hero .subtitle {
+        font-size: 1.25rem;
         color: #475569;
-        margin: 0;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
     }
     
-    .security-card strong {
-        color: #1e293b;
+    .security-hero .emphasis {
+        color: #2563eb;
+        font-weight: 600;
     }
     
-    .trust-row {
+    /* Security Pillars Grid */
+    .security-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 2rem;
-        margin-top: 4rem;
+        margin-bottom: 4rem;
+    }
+    
+    .security-pillar {
+        background: white;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .security-pillar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .security-pillar:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pillar-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .security-pillar h2 {
+        color: #0f172a;
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .security-pillar p {
+        color: #475569;
+        margin: 0;
+        line-height: 1.7;
+    }
+    
+    .security-pillar strong {
+        color: #1e293b;
+        font-weight: 600;
+    }
+    
+    /* Technical Trust Section */
+    .tech-trust {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 48px;
+        border-radius: 16px;
+        margin-bottom: 4rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .tech-trust h3 {
+        color: #0f172a;
+        font-size: 1.75rem;
+        margin: 0 0 2rem 0;
+        font-weight: 700;
         text-align: center;
     }
     
-    .trust-item {
+    .tech-specs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .tech-spec-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .tech-spec-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .tech-spec-content {
+        flex: 1;
+    }
+    
+    .tech-spec-label {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+    
+    .tech-spec-value {
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* Trust Badges */
+    .trust-badges {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2.5rem;
+        padding: 3rem 0;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .trust-badge {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 0.5rem;
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+        filter: grayscale(40%);
     }
     
-    .trust-icon {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
+    .trust-badge:hover {
+        opacity: 0.8;
+        filter: grayscale(20%);
     }
     
-    .trust-text {
-        font-weight: 600;
-        color: #1e293b;
-        font-size: 0.95rem;
+    .badge-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 2px solid #e5e7eb;
     }
     
-    @media (max-width: 768px) {
-        .trust-row {
+    .badge-text {
+        font-weight: 500;
+        color: #6b7280;
+        font-size: 0.75rem;
+        text-align: center;
+        line-height: 1.3;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 968px) {
+        .security-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
+        }
+        
+        .tech-specs {
+            grid-template-columns: 1fr;
+        }
+        
+        .security-hero h1 {
+            font-size: 2rem;
+        }
+        
+        .security-hero .subtitle {
+            font-size: 1.1rem;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .trust-badges {
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .tech-trust {
+            padding: 32px 24px;
+        }
+        
+        .security-content {
+            margin: 40px auto;
         }
     }
 </style>
@@ -84,36 +255,131 @@
 
 {% block content %}
 <div class="security-content">
-    <h1>Security & Data Privacy</h1>
-    <p>We understand that candidate data is sensitive. We treat security as our highest priority.</p>
-
-    <div class="security-card">
-        <h2>We Do Not Train on Your Data</h2>
-        <p>Your resumes and job descriptions are used <strong>exclusively</strong> for your analyses. Your data is private and it is not used to train public AI models or shared with third parties.</p>
-    </div>
-
-    <div class="security-card">
-        <h2>Industry-Standard Encryption</h2>
-        <p>All data is encrypted in transit using TLS 1.2+ and at rest using AES-256 encryption. Your information is stored securely on our PostgreSQL infrastructure.</p>
-    </div>
-
-    <div class="security-card">
-        <h2>GDPR Mindset</h2>
-        <p>We follow strict data minimization principles. You have full control to permanently delete your analysis history and candidate data at any time from your Job History page. When you delete an analysis, all associated candidate files and results are permanently removed from our servers. Your transaction history is preserved for accounting purposes, but all candidate-specific data is erased.</p>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        Trust Center <span class="breadcrumb-separator">›</span> Security Overview <span class="breadcrumb-separator">|</span> Updated Jan 2026
     </div>
     
-    <div class="trust-row">
-        <div class="trust-item">
-            <div class="trust-icon">🔒</div>
-            <div class="trust-text">SSL Encrypted</div>
+    <!-- Hero Section -->
+    <div class="security-hero">
+        <h1>Enterprise-Grade Security for Every Candidate Analysis</h1>
+        <p class="subtitle">
+            We analyze <span class="emphasis">100% of your candidates</span> against <span class="emphasis">100% of your criteria</span>. 
+            Your data is handled with the same uncompromising rigor.
+        </p>
+    </div>
+
+    <!-- Security Pillars Grid -->
+    <div class="security-grid">
+        <!-- Pillar 1: Privacy -->
+        <div class="security-pillar">
+            <span class="pillar-icon">🔐</span>
+            <h2>Private AI Environment</h2>
+            <p>
+                Your resumes and job descriptions are processed in a <strong>completely isolated AI environment</strong>. 
+                Your data is never used to train public language models. Every analysis is siloed—your candidate pool 
+                remains yours alone, with <strong>zero cross-contamination</strong>.
+            </p>
         </div>
-        <div class="trust-item">
-            <div class="trust-icon">🛡️</div>
-            <div class="trust-text">Data Privacy Guaranteed</div>
+
+        <!-- Pillar 2: Encryption -->
+        <div class="security-pillar">
+            <span class="pillar-icon">🛡️</span>
+            <h2>Bank-Level Encryption</h2>
+            <p>
+                All data is protected with <strong>AES-256 encryption at rest</strong> and <strong>TLS 1.2+ in transit</strong>. 
+                Your information lives on our <strong>Secure PostgreSQL Infrastructure</strong>, meeting the same standards 
+                used by financial institutions. Every byte is encrypted, every connection is verified.
+            </p>
         </div>
-        <div class="trust-item">
-            <div class="trust-icon">☁️</div>
-            <div class="trust-text">Secure PostgreSQL Hosting</div>
+
+        <!-- Pillar 3: Control -->
+        <div class="security-pillar">
+            <span class="pillar-icon">⚖️</span>
+            <h2>Data Sovereignty</h2>
+            <p>
+                <strong>You retain full control</strong> over your data. Permanently delete any analysis and all associated 
+                candidate files from your Job History at any time. When you delete, we delete—no archives, no backups. 
+                Transaction records are preserved for accounting, but <strong>all candidate-specific data is erased</strong>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Technical Trust Section -->
+    <div class="tech-trust">
+        <h3>Technical Specifications</h3>
+        <div class="tech-specs">
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">🔒</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">Encryption Standards</div>
+                    <div class="tech-spec-value">AES-256 at rest, TLS 1.2+ in transit</div>
+                </div>
+            </div>
+            
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">🌐</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">Hosting Region</div>
+                    <div class="tech-spec-value">Secure cloud infrastructure with redundancy</div>
+                </div>
+            </div>
+            
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">🗄️</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">Database Security</div>
+                    <div class="tech-spec-value">PostgreSQL with automated backups and failover</div>
+                </div>
+            </div>
+            
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">🗑️</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">Data Retention Policy</div>
+                    <div class="tech-spec-value">User-controlled deletion, immediate and permanent</div>
+                </div>
+            </div>
+            
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">🤖</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">AI Model Training</div>
+                    <div class="tech-spec-value">Zero customer data used for model training</div>
+                </div>
+            </div>
+            
+            <div class="tech-spec-item">
+                <div class="tech-spec-icon">📋</div>
+                <div class="tech-spec-content">
+                    <div class="tech-spec-label">Compliance Approach</div>
+                    <div class="tech-spec-value">GDPR-aligned data minimization principles</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analysis Integrity Note -->
+        <div style="margin-top: 2.5rem; text-align: center; padding: 24px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px; border: 1px solid #bfdbfe;">
+            <p style="margin: 0; color: #1e40af; font-size: 0.95rem; line-height: 1.6;">
+                <strong style="color: #1e3a8a;">✓ Analysis Integrity:</strong> Security and privacy protocols are applied to 
+                <span style="color: #2563eb; font-weight: 700;">100% of candidate resumes</span>, regardless of the analysis tier chosen.
+            </p>
+        </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="trust-badges">
+        <div class="trust-badge">
+            <div class="badge-icon">🔒</div>
+            <div class="badge-text">SSL Encrypted<br>End-to-End</div>
+        </div>
+        <div class="trust-badge">
+            <div class="badge-icon">🛡️</div>
+            <div class="badge-text">Data Privacy<br>Guaranteed</div>
+        </div>
+        <div class="trust-badge">
+            <div class="badge-icon">☁️</div>
+            <div class="badge-text">Secure PostgreSQL<br>Infrastructure</div>
         </div>
     </div>
 </div>
