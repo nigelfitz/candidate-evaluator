@@ -133,16 +133,16 @@
     
     .analysis-card {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
     }
     
     .analysis-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
     }
     
     .analysis-card-header {
@@ -262,6 +262,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         border: 1px solid #e2e8f0;
         transition: all 0.2s;
+        text-align: center;
     }
     
     .info-card:hover {
@@ -308,6 +309,37 @@
         color: #64748b;
         line-height: 1.6;
         margin: 0;
+    }
+    
+    /* Pro Tip */
+    .pro-tip {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .pro-tip-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #1e40af;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .pro-tip-content {
+        color: #1e293b;
+        line-height: 1.6;
+        font-size: 1rem;
+        text-align: center;
     }
     
     /* Pricing Highlight Block */
@@ -480,12 +512,12 @@
     <div class="info-card">
         <div class="info-card-icon"><i data-lucide="zap"></i></div>
         <h3>Instant Scoring</h3>
-        <p>Automatically score and rank all candidates against your job criteria in seconds</p>
+        <p>Automatically score and rank all candidates against your job criteria in a couple of minutes</p>
     </div>
     <div class="info-card">
         <div class="info-card-icon"><i data-lucide="brain"></i></div>
         <h3>AI Insights</h3>
-        <p>Get GPT-powered strengths, gaps, and recommendations for top candidates</p>
+        <p>Get deep-dive insights for your top matches. We rank 100% of your candidates instantly so you can focus on the best talent immediately.</p>
     </div>
     <div class="info-card">
         <div class="info-card-icon"><i data-lucide="file-text"></i></div>
@@ -500,26 +532,27 @@
     <div class="info-card">
         <div class="info-card-icon"><i data-lucide="credit-card"></i></div>
         <h3>Pay As You Go</h3>
-        <p>No subscriptions - pay only for what you use</p>
+        <p>No subscriptions. Pay only for deep-dive reports when you need them.</p>
     </div>
     <div class="info-card">
         <div class="info-card-icon"><i data-lucide="shield-check"></i></div>
-        <h3>100% Private</h3>
-        <p>Your files are processed securely and are definitely NOT used to train AI models</p>
+        <h3>100% Private Environment</h3>
+        <p>Your data is processed in an isolated environment. Files are never used for public model training, ensuring total sovereignty.</p>
+        <p style="margin-top: 0.75rem; font-size: 0.9rem;">
+            <a href="{{ url_for('security') }}" style="color: #2563eb; text-decoration: underline;">View Security Standards</a>
+        </p>
     </div>
 </div>
 
-<!-- How It Works -->
-<div style="background: #f8fafc; border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
-    <h2 style="color: #1e293b; font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center;">How It Works</h2>
-    <ol style="line-height: 2; font-size: 1.05rem; padding-left: 2rem; color: #475569; max-width: 800px; margin: 0 auto;">
-        <li><strong>Upload Job Description:</strong> Start by uploading the job description you're hiring for</li>
-        <li><strong>Review Criteria:</strong> Our AI extracts key criteria - you can edit them as needed</li>
-        <li><strong>Upload Resumes:</strong> Upload candidate CVs/resumes (PDF, DOCX, or TXT)</li>
-        <li><strong>Run Analysis:</strong> Configure analysis options and let AI score all candidates</li>
-        <li><strong>Get Results:</strong> Receive instant scoring, ranking, and AI-powered insights</li>
-        <li><strong>Export Reports:</strong> Download professional reports to share with your team</li>
-    </ol>
+<!-- Pro Tip -->
+<div class="pro-tip">
+    <div class="pro-tip-header">
+        <span>💡</span>
+        <span>Pro Tip</span>
+    </div>
+    <div class="pro-tip-content">
+        Don't worry—we analyze 100% of resumes regardless of the tier you choose. We recommend starting with the Top 5 Insights to see your strongest matches immediately. You can always unlock more later!
+    </div>
 </div>
 
 <script>

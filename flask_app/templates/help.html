@@ -62,7 +62,7 @@
             
             <div class="best-practice-box">
                 <h4>🎯 Recommended Strategy: Two-Pass Screening</h4>
-                <p>This approach works whether you have all resumes at once, or applications arriving over time:</p>
+                <p>Our elite recruiters use a Two-Pass Executive Strategy to maintain surgical precision at scale. By processing candidates in batches, you create high-velocity feedback loops that allow you to calibrate your criteria in real-time before finalizing your shortlist.</p>
                 
                 <ol class="guide-steps">
                     <li>
@@ -72,13 +72,12 @@
                     </li>
                     <li>
                         <strong>Identify top potential candidates from each batch</strong>
-                        <p>Review the results from each batch and identify the strongest 5-10 candidates. Look for:
+                        <p>Review the results from each batch and identify the strongest 5-10 candidates. Look for:</p>
                         <ul>
-                            <li>High overall scores (typically 0.65+)</li>
+                            <li>High overall scores (typically 65%+)</li>
                             <li>Strong matches on your critical requirements</li>
                             <li>Candidates who stand out from the rest of their batch</li>
                         </ul>
-                        </p>
                     </li>
                     <li>
                         <strong>Run one final comparison with only top candidates</strong>
@@ -140,8 +139,8 @@
                 While the system can handle larger batches, breaking them up provides:
             </p>
             <ul>
-                <li><strong>Faster results:</strong> Smaller batches complete in minutes instead of potentially timing out</li>
-                <li><strong>Better reliability:</strong> Less chance of API rate limits or processing errors</li>
+                <li><strong>High-Velocity Shortlisting:</strong> Smaller batches complete in minutes instead of potentially timing out</li>
+                <li><strong>Surgical Precision:</strong> Less chance of API rate limits or processing errors</li>
                 <li><strong>Progressive insights:</strong> Start reviewing candidates while others are being processed</li>
                 <li><strong>Easier management:</strong> Simpler to spot and fix any issues with specific candidates</li>
                 <li><strong>Lower costs:</strong> Focus expensive AI insights on only the candidates who matter</li>
@@ -160,32 +159,37 @@
             <h3>What do the scores mean?</h3>
             <p>
                 Each score is a <strong>semantic similarity</strong> between a JD <strong>criterion</strong> and the 
-                <strong>most relevant snippet</strong> in a candidate's resume. It ranges from <strong>0.00</strong> 
-                (not similar) to <strong>1.00</strong> (nearly identical in meaning).
+                <strong>most relevant snippet</strong> in a candidate's resume. It ranges from <strong>0%</strong> 
+                (not similar) to <strong>100%</strong> (nearly identical in meaning).
             </p>
             
             <div class="score-ranges">
                 <div class="score-range high">
-                    <div class="score-label">✅ Strong (≥0.70)</div>
+                    <div class="score-label">✅ Strong (≥70%)</div>
                     <div class="score-desc">Excellent to good alignment</div>
                 </div>
                 <div class="score-range medium">
-                    <div class="score-label">⚠️ Moderate (0.45–0.70)</div>
+                    <div class="score-label">⚠️ Moderate (45%–70%)</div>
                     <div class="score-desc">Partial or indirect match</div>
                 </div>
                 <div class="score-range low">
-                    <div class="score-label">⛔ Weak (<0.45)</div>
-                    <div class="score-desc">Likely not covered</div>
+                    <div class="score-label">⛔ Weak (<45%)</div>
+                    <div class="score-desc">Minimal Evidence Found</div>
                 </div>
+            </div>
+            
+            <div class="example-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="margin-top: 0; color: #1e40af;">💡 The AI Co-Pilot</h4>
+                <p style="margin-bottom: 0;">While our AI identifies evidence with 99% accuracy, these scores are designed to be your 'Co-Pilot.' They highlight the strongest matches so you can apply your human expertise where it matters most: the interview.</p>
             </div>
             
             <h3>Quick Reference Ranges</h3>
             <ul>
-                <li><strong>0.75–1.00:</strong> Excellent alignment</li>
-                <li><strong>0.60–0.74:</strong> Good</li>
-                <li><strong>0.45–0.59:</strong> Moderate (partial/indirect)</li>
-                <li><strong>0.30–0.44:</strong> Weak</li>
-                <li><strong>&lt;0.30:</strong> Likely not covered</li>
+                <li><strong>75%–100%:</strong> Excellent alignment</li>
+                <li><strong>60%–74%:</strong> Good</li>
+                <li><strong>45%–59%:</strong> Moderate (partial/indirect)</li>
+                <li><strong>30%–44%:</strong> Developing/Limited Match</li>
+                <li><strong>&lt;30%:</strong> Minimal Evidence Found</li>
             </ul>
             
             <p><strong>Overall</strong> is a weighted average of all criteria scores.</p>
@@ -201,13 +205,13 @@
             <div class="example-box">
                 <p><strong>Criterion:</strong> "Project management with Agile/Scrum"</p>
                 <p><strong>Resume:</strong> "Led a 10-person team delivering sprints using Scrum ceremonies"</p>
-                <p class="score-result">→ Score <span class="score-tag score-tag-high">0.75–0.85</span> (strong, direct alignment)</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-high">75%–85%</span> (strong, direct alignment)</p>
             </div>
             
             <div class="example-box">
                 <p><strong>Criterion:</strong> "Python data analysis"</p>
                 <p><strong>Resume:</strong> "Automated Excel reports; some VBA macros"</p>
-                <p class="score-result">→ Score <span class="score-tag score-tag-medium">0.35–0.50</span> (partial/weak — tooling mismatch)</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-medium">35%–50%</span> (partial/weak — tooling mismatch)</p>
             </div>
             
             <h3>How to use the scores</h3>
@@ -228,6 +232,14 @@
             <span class="toggle-icon">▼</span>
         </div>
         <div class="section-content" id="privacy">
+            <div class="info-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; margin-bottom: 1.5rem;">
+                <h4 style="color: #1e40af; margin-bottom: 0.5rem;">🔒 Enterprise-Grade Security</h4>
+                <p style="color: #1e293b; margin-bottom: 0.75rem;">Your data is processed in an <strong>isolated AI environment</strong>. Files are never used for public model training, ensuring total data sovereignty and zero cross-contamination.</p>
+                <p style="margin: 0;">
+                    <a href="{{ url_for('security') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">View our Security & Data Privacy Standards →</a>
+                </p>
+            </div>
+            
             <h3>How your data is handled</h3>
             <p>This application uses OpenAI's <strong>GPT-4o</strong> model for intelligent analysis of job descriptions and candidate resumes.</p>
             
@@ -277,12 +289,12 @@
             
             <div class="faq-item">
                 <h3 class="faq-q">How much does it cost?</h3>
-                <p class="faq-a">Candidate Evaluator works on a simple pay-as-you-go model. Your first job is on us! After that, it is <strong>$10 per job</strong>, which includes a full ranked leaderboard of all your candidates and <strong>5 deep-dive AI insights</strong>. If you need more insights, you can unlock them for <strong>$1.00 each</strong> from your account wallet. No monthly fees, no hidden costs.</p>
+                <p class="faq-a">Candidate Evaluator uses a flexible credit-based model. Your first job is included as part of our Test Drive offer. For detailed pricing on Standard Jobs and bulk Credit Bonuses, please visit our <a href="{{ url_for('pricing') }}" style="color: #2563eb; text-decoration: underline;">Pricing Page</a>.</p>
             </div>
             
             <div class="faq-item">
                 <h3 class="faq-q">How accurate is the scoring?</h3>
-                <p class="faq-a">Scores measure <strong>semantic similarity</strong> based on text analysis. They are good at identifying relevant experience, skills, and qualifications, but not perfect at understanding context or verifying claims. <strong>Best practice:</strong> Use scores as a screening tool to identify strong candidates, then conduct interviews to verify fit.</p>
+                <p class="faq-a">Our scoring engine uses human-level reasoning to understand context beyond simple keywords. While it is an incredibly powerful screening tool for identifying top-tier talent, we always recommend using the AI-powered Evidence Explorer to verify specific claims during your final review.</p>
             </div>
             
             <div class="faq-item">
@@ -311,7 +323,7 @@
             
             <div class="faq-item">
                 <h3 class="faq-q">What happens to my data after I log out?</h3>
-                <p class="faq-a">Your analyses and settings are securely stored in your account so you can access them anytime. Your job descriptions and candidate resumes remain in your account until you choose to delete them. When documents are processed, OpenAI retains API request data for 30 days for abuse monitoring purposes only, then automatically deletes it. OpenAI does not use your data to train AI models.</p>
+                <p class="faq-a">Your data is processed in a Siloed AI Environment. While OpenAI retains API request data for 30 days for integrity monitoring, it is never used for training. Your data belongs to you, and stays in your account until you choose to delete it.</p>
             </div>
         </div>
     </div>
@@ -342,6 +354,7 @@
             <ul>
                 <li>Review criteria on Job Criteria page - overly specific criteria may score lower</li>
                 <li>Check the Evidence Explorer to see what text is being matched</li>
+                <li><strong>Criteria Calibration:</strong> If scores seem lower than expected, your criteria might be overly specific. Try a 'Broad Pass' to see a wider range of talent, then use Deep Dive Insights to refine your top finalists.</li>
             </ul>
             
 
@@ -522,6 +535,35 @@
         color: #666;
     }
     
+    .guide-steps ul {
+        counter-reset: none;
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .guide-steps ul li {
+        counter-increment: none;
+        padding-left: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .guide-steps ul li::before {
+        content: none;
+        display: none;
+    }
+    
+    .section-content > ul,
+    .section-content > ol {
+        padding-left: 2rem;
+        margin-left: 0;
+    }
+    
+    .section-content ul ul,
+    .section-content ol ul {
+        padding-left: 1.5rem;
+    }
+    
     .score-ranges {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -572,6 +614,11 @@
         margin: 0.5rem 0;
     }
     
+    .example-box ul {
+        padding-left: 2rem;
+        margin: 0.5rem 0;
+    }
+    
     .best-practice-box {
         background: #f0f9ff;
         padding: 1.5rem;
@@ -598,6 +645,11 @@
         color: #78350f;
         margin-top: 0;
         margin-bottom: 1rem;
+    }
+    
+    .tip-box ul {
+        padding-left: 2rem;
+        margin: 0.5rem 0;
     }
     
     .score-result {

@@ -38,6 +38,11 @@
         padding: 10px 16px;
     }
     
+    /* Keep category headers styled but let them inherit sticky positioning */
+    #coverageMatrix tbody tr.table-secondary td:first-child {
+        background: #e9ecef;
+    }
+    
     #coverageMatrix thead th {
         position: sticky;
         top: 0;
@@ -441,8 +446,13 @@
                         </div>
                     </div>
 
+                    <!-- Top Scrollbar for Coverage Matrix -->
+                    <div id="topScrollbar" style="overflow-x: auto; overflow-y: hidden; height: 20px; margin-bottom: 10px;">
+                        <div id="topScrollbarContent" style="height: 1px;"></div>
+                    </div>
+
                     <!-- Coverage Matrix Table -->
-                    <div class="table-responsive" style="max-width: 100%; overflow-x: auto; overflow-y: visible;">
+                    <div id="bottomScrollbar" class="table-responsive" style="max-width: 100%; overflow-x: auto; overflow-y: visible;">
                         <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
                             <thead class="table-light sticky-top">
                                 <tr id="matrixHeader">
@@ -665,10 +675,59 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+    
+    // Synchronize top and bottom scrollbars for coverage matrix
+    const topScrollbar = document.getElementById('topScrollbar');
+    const bottomScrollbar = document.getElementById('bottomScrollbar');
+    const topScrollbarContent = document.getElementById('topScrollbarContent');
+    
+    if (topScrollbar && bottomScrollbar && topScrollbarContent) {
+        // Function to sync scrollbar widths
+        function syncScrollbarWidths() {
+            const table = document.getElementById('coverageMatrix');
+            if (table) {
+                topScrollbarContent.style.width = table.scrollWidth + 'px';
+            }
+        }
+        
+        // Sync scroll positions
+        topScrollbar.addEventListener('scroll', function() {
+            bottomScrollbar.scrollLeft = topScrollbar.scrollLeft;
+        });
+        
+        bottomScrollbar.addEventListener('scroll', function() {
+            topScrollbar.scrollLeft = bottomScrollbar.scrollLeft;
+        });
+        
+        // Initial sync and re-sync when table is rendered
+        syncScrollbarWidths();
+        
+        // Re-sync after table updates (using MutationObserver)
+        const observer = new MutationObserver(syncScrollbarWidths);
+        const matrixBody = document.getElementById('matrixBody');
+        if (matrixBody) {
+            observer.observe(matrixBody, { childList: true, subtree: true });
+        }
+        
+        // Also sync on window resize
+        window.addEventListener('resize', syncScrollbarWidths);
+    }
 });
 
 function initializeTopCandidates() {
-    const sorted = [...coverageData].sort((a, b) => b.Overall - a.Overall);
+    const sorted = [...coverageData].sort((a, b) => {
+        // Primary sort: by score descending
+        if (b.Overall !== a.Overall) {
+            return b.Overall - a.Overall;
+        }
+        // Secondary sort: unreadable files go to bottom when scores are equal
+        const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+        const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+        if (aIsUnreadable && !bIsUnreadable) return 1;
+        if (!aIsUnreadable && bIsUnreadable) return -1;
+        // Tertiary sort: alphabetically by name
+        return a.Candidate.localeCompare(b.Candidate);
+    });
     const top5 = sorted.slice(0, 5);
     
     const html = top5.map((row, idx) => {
@@ -719,9 +778,33 @@ function renderMatrix() {
     if (currentSort === 'name') {
         data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
     } else if (currentSort === 'score-desc') {
-        data.sort((a, b) => b.Overall - a.Overall);
+        data.sort((a, b) => {
+            // Primary sort: by score descending
+            if (b.Overall !== a.Overall) {
+                return b.Overall - a.Overall;
+            }
+            // Secondary sort: unreadable files go to bottom when scores are equal
+            const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+            const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+            if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
+            if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
+            // Tertiary sort: alphabetically by name when scores are equal
+            return a.Candidate.localeCompare(b.Candidate);
+        });
     } else if (currentSort === 'score-asc') {
-        data.sort((a, b) => a.Overall - b.Overall);
+        data.sort((a, b) => {
+            // Primary sort: by score ascending
+            if (a.Overall !== b.Overall) {
+                return a.Overall - b.Overall;
+            }
+            // Secondary sort: unreadable files go to bottom when scores are equal
+            const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+            const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+            if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
+            if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
+            // Tertiary sort: alphabetically by name when scores are equal
+            return a.Candidate.localeCompare(b.Candidate);
+        });
     }
     
     // Apply filtering
@@ -799,24 +882,32 @@ function renderMatrix() {
         const crits = categorized[category];
         
         if (expandCategories) {
-            // Category header
-            bodyHTML += `<tr class="table-secondary"><td colspan="${2 + candidates.length}"><strong>📁 ${category}</strong></td></tr>`;
+            // Category header - first column sticky, rest are empty cells
+            bodyHTML += `<tr class="table-secondary"><td><strong>📁 ${category}</strong></td>`;
+            // Add empty cells for Average column and all candidates
+            for (let i = 0; i < 1 + candidates.length; i++) {
+                bodyHTML += '<td></td>';
+            }
+            bodyHTML += '</tr>';
             
             // Criteria rows
             crits.forEach(crit => {
                 bodyHTML += renderCriterionRow(crit, data, candidates);
             });
         } else {
-            // Collapsible category
+            // Collapsible category - first column sticky, rest are empty cells
             const catId = category.replace(/\s+/g, '_');
             bodyHTML += `
                 <tr class="table-secondary cursor-pointer" onclick="toggleCategory('${catId}')">
-                    <td colspan="${2 + candidates.length}">
+                    <td>
                         <strong>📁 ${category}</strong>
                         <span id="toggle_${catId}" class="float-end">▼</span>
-                    </td>
-                </tr>
-            `;
+                    </td>`;
+            // Add empty cells for Average column and all candidates
+            for (let i = 0; i < 1 + candidates.length; i++) {
+                bodyHTML += '<td></td>';
+            }
+            bodyHTML += '</tr>';
             bodyHTML += `<tbody id="${catId}" class="collapse show">`;
             crits.forEach(crit => {
                 bodyHTML += renderCriterionRow(crit, data, candidates);

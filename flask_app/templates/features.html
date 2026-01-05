@@ -76,19 +76,37 @@
     }
     
     .comparison-box {
-        background: #f8fafc;
-        border-left: 4px solid #cbd5e1;
-        padding: 1rem 1.5rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 1.5rem;
         margin-bottom: 1rem;
-        border-radius: 6px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
     
-    .comparison-box.old-way {
-        border-left-color: #ef4444;
+    .comparison-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
     }
     
-    .comparison-box.ai-way {
-        border-left-color: #10b981;
+    .comparison-box.old-way::before {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .comparison-box.ai-way::before {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    
+    .comparison-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
     }
     
     .comparison-label {
@@ -115,7 +133,8 @@
     
     .feature-visual { 
         flex: 1; 
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        background: white;
+        border: 1px solid #e2e8f0;
         border-radius: 16px; 
         height: 300px; 
         display: flex; 
@@ -124,6 +143,8 @@
         font-size: 5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         animation: float 3s ease-in-out infinite;
+        filter: grayscale(30%);
+        opacity: 0.8;
     }
     
     /* Floating animation for icons */
@@ -208,8 +229,8 @@
 
 {% block content %}
 <div class="features-hero">
-    <h1>Deep Dive: How AI Transforms Hiring</h1>
-    <p>Move beyond keyword matching and manual spreadsheets. Powered by GPT-4o, our AI recruiter reads resumes like a human expert, extracting evidence, understanding context, and delivering instant ranked leaderboards—so you never miss your best candidates.</p>
+    <h1>Human-Level Reasoning at Machine Scale</h1>
+    <p>We analyze 100% of your candidates to ensure no one is missed. Powered by GPT-4o, our AI reads resumes like a human expert, extracting evidence, understanding context, and delivering instant ranked leaderboards with transparent reasoning for every decision.</p>
 </div>
 
 <div class="features-container">
@@ -255,7 +276,7 @@
     <div class="feature-row">
         <div class="feature-text">
             <h3>Instant AI-Ranked Leaderboards</h3>
-            <p>Upload 100+ resumes at once. Within minutes, receive an AI-generated ranked leaderboard showing your <strong>top talent with detailed justifications</strong>, ready for interviews. No manual spreadsheets, no guesswork.</p>
+            <p>We analyze your entire candidate pool in parallel against your criteria. Every candidate receives a full evaluation, ensuring a transparent, data-driven leaderboard where every rank is backed by reasoning. Upload 100+ resumes and get results in minutes—no manual spreadsheets, no guesswork.</p>
             
             <div class="comparison-box old-way">
                 <div class="comparison-label">❌ The Old Way: Manual Sorting Chaos</div>
@@ -263,7 +284,7 @@
             </div>
             
             <div class="comparison-box ai-way">
-                <div class="comparison-label">✅ The AI Way: Automated AI Rankings</div>
+                <div class="comparison-label">✅ The AI Way: Intelligent Filtering</div>
                 <div class="comparison-text">Upload your entire candidate pool. GPT-4o analyzes all resumes in parallel against your criteria, extracts evidence, scores each candidate objectively, and delivers a clear data-driven leaderboard. Every candidate evaluated by the same standards, with transparent reasoning. See exactly who to interview first and why.</div>
             </div>
         </div>
@@ -275,6 +296,9 @@
         <p>Join recruiters and HR professionals who have transformed their hiring process</p>
         <a href="{{ url_for('auth.register') }}" class="btn btn-success" style="margin-right: 1rem;">Analyze Your First Job Free</a>
         <a href="{{ url_for('pricing') }}" class="btn-ghost">View Pricing</a>
+        <p style="margin-top: 1.5rem; font-size: 0.9rem; opacity: 0.9;">
+            <a href="{{ url_for('security') }}" style="color: white; text-decoration: underline;">View our Security Standards</a>
+        </p>
     </div>
 </div>
 {% endblock %}
