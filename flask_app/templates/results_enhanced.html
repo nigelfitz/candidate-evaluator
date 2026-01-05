@@ -225,6 +225,33 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+    <!-- Admin Warning Banner (when viewing other user's analysis) -->
+    {% if viewing_other_user %}
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; border-radius: 12px; padding: 20px 30px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="font-size: 48px;">👁️</div>
+            <div style="flex: 1;">
+                <h3 style="color: #78350f; margin: 0 0 10px 0; font-weight: 700; font-size: 22px;">⚠️ ADMIN VIEW MODE - Viewing Another User's Job</h3>
+                <p style="color: #92400e; margin: 0 0 12px 0; font-size: 16px; line-height: 1.5;">
+                    You are viewing job results for: <strong style="color: #78350f; font-size: 18px;">{{ analysis_owner_email }}</strong>
+                </p>
+                <div style="background: rgba(255,255,255,0.9); padding: 12px 16px; border-radius: 6px; border-left: 4px solid #dc2626;">
+                    <strong style="color: #991b1b;">🚨 IMPORTANT:</strong>
+                    <span style="color: #374151;"> Any actions you take (Add Funds, New Analysis, navigation buttons) will affect <strong>YOUR admin account</strong>, not this user's account.</span>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}" 
+                   style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.2s;"
+                   onmouseover="this.style.background='#4f46e5'"
+                   onmouseout="this.style.background='#6366f1'">
+                    ← Back to User Detail
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Success Toast (shows only on first view after analysis) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

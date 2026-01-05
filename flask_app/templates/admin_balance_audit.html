@@ -32,8 +32,8 @@
         <thead>
             <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
                 <th style="padding: 16px; text-align: left; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">User</th>
-                <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Actual Balance</th>
-                <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Calculated Balance</th>
+                <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Available Balance</th>
+                <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Transaction History Balance</th>
                 <th style="padding: 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Discrepancy</th>
                 <th style="padding: 16px; text-align: center; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Transactions</th>
                 <th style="padding: 16px; text-align: center; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Actions</th>
@@ -88,8 +88,8 @@
 <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 30px;">
     <h4 style="color: #1f2937; margin: 0 0 12px 0; font-weight: 600;">ℹ️ About Balance Auditing</h4>
     <ul style="color: #6b7280; margin: 0; padding-left: 20px; line-height: 1.8;">
-        <li><strong>Actual Balance:</strong> Current balance stored in the user's database record</li>
-        <li><strong>Calculated Balance:</strong> Sum of all transactions in the transaction history</li>
+        <li><strong>Available Balance:</strong> Current balance shown to user in their account (database field)</li>
+        <li><strong>Transaction History Balance:</strong> Sum of all transactions visible in transaction history</li>
         <li><strong>Discrepancy:</strong> Difference between actual and calculated (positive means actual > calculated)</li>
         <li><strong>Threshold:</strong> Discrepancies under $0.01 are ignored (rounding tolerance)</li>
     </ul>

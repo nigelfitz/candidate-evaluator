@@ -1777,10 +1777,24 @@ def create_app(config_name=None):
     @login_required
     def results(analysis_id):
         """Display analysis results with enhanced coverage matrix"""
-        analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        # Allow admin to view any user's analysis, otherwise restrict to own analysis
+        is_admin = session.get('admin_logged_in', False)
+        if is_admin:
+            analysis = Analysis.query.filter_by(id=analysis_id).first()
+        else:
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        
         if not analysis:
             flash('Analysis not found', 'error')
             return redirect(url_for('dashboard'))
+        
+        # Check if admin is viewing another user's analysis
+        viewing_other_user = is_admin and analysis.user_id != current_user.id
+        analysis_owner_email = None
+        if viewing_other_user:
+            from database import User
+            owner = User.query.get(analysis.user_id)
+            analysis_owner_email = owner.email if owner else "Unknown User"
         
         # Get user settings for threshold preferences
         user_settings = UserSettings.get_or_create(current_user.id)
@@ -1924,7 +1938,9 @@ def create_app(config_name=None):
                              is_current_draft_analysis=is_current_draft_analysis,
                              pricing=pricing,
                              candidate_files_info=candidate_files_info,
-                             resume_limit=resume_limit)
+                             resume_limit=resume_limit,
+                             viewing_other_user=viewing_other_user,
+                             analysis_owner_email=analysis_owner_email)
     
     @app.route('/submit_feedback', methods=['POST'])
     @login_required
@@ -2818,10 +2834,10 @@ def create_app(config_name=None):
     @login_required
     def account():
         """Account balance and transaction history"""
-        # Get transactions ordered newest first for display
+        # Get all transactions ordered newest first for display
         transactions = current_user.transactions.order_by(
             db.desc('created_at')
-        ).limit(50).all()
+        ).all()
         
         # Check which analysis IDs still exist (hard delete means missing = deleted)
         analysis_ids = [t.analysis_id for t in transactions if t.analysis_id]
@@ -2832,22 +2848,20 @@ def create_app(config_name=None):
             existing_analyses = {a.id for a in all_analyses}
             transactions_analyses = {a.id: a for a in all_analyses}
         
-        # Calculate running balance for display (forward in time: oldest to newest)
-        # Reverse the list to process oldest first, then reverse back
-        transactions_reversed = list(reversed(transactions))
+        # Calculate running balance for display
+        # Get all transactions to calculate correct balance
+        all_transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(db.asc('created_at')).all()
         
-        # Start with zero and calculate forward
+        # Calculate running balance forward from oldest to newest
         running_balance = Decimal('0')
-        balances_forward = []
+        balance_lookup = {}  # Map transaction ID to balance after that transaction
         
-        for txn in transactions_reversed:
-            # Add this transaction amount
+        for txn in all_transactions:
             running_balance += Decimal(str(txn.amount_usd))
-            # Store the balance AFTER this transaction
-            balances_forward.append(float(running_balance))
+            balance_lookup[txn.id] = float(running_balance)
         
-        # Reverse balances back to match the newest-first display order
-        balances = list(reversed(balances_forward))
+        # Create balances list for display transactions
+        balances = [balance_lookup.get(txn.id, 0) for txn in transactions]
         
         # Verify final balance matches user's actual balance
         if balances and abs(float(current_user.balance_usd) - balances[0]) > 0.01:
@@ -4637,12 +4651,24 @@ def create_app(config_name=None):
         # Get user's analyses
         analyses = Analysis.query.filter_by(user_id=user_id).order_by(Analysis.created_at.desc()).all()
         
-        # Get user's transactions
-        transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.desc()).limit(50).all()
+        # Get ALL user's transactions (no limit) ordered oldest first for balance calculation
+        all_transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at.asc()).all()
+        
+        # Calculate running balance for each transaction
+        from decimal import Decimal
+        running_balance = Decimal('0')
+        balances = []
+        for txn in all_transactions:
+            running_balance += Decimal(str(txn.amount_usd))
+            balances.append(float(running_balance))
+        
+        # Reverse to show newest first in the UI
+        transactions = list(reversed(all_transactions))
+        balances = list(reversed(balances))
         
         # Calculate bonus/promotional funds (not refundable)
         bonus_total = Decimal('0')
-        for txn in Transaction.query.filter_by(user_id=user_id).all():
+        for txn in all_transactions:
             # Check if transaction is a bonus/promotional type
             if any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
                 if txn.amount_usd > 0:  # Only count positive bonuses
@@ -4655,6 +4681,7 @@ def create_app(config_name=None):
                              user=user,
                              analyses=analyses,
                              transactions=transactions,
+                             balances=balances,
                              bonus_total=bonus_total,
                              max_refundable=max_refundable,
                              active_tab='users')
@@ -4716,6 +4743,7 @@ def create_app(config_name=None):
             return (False, 0, 0, 0)
         
         # Calculate balance from transaction history
+        # All visible transactions should be included
         transactions = Transaction.query.filter_by(user_id=user_id).order_by(Transaction.created_at).all()
         calculated_balance = Decimal('0')
         for txn in transactions:
@@ -4803,6 +4831,11 @@ def create_app(config_name=None):
         if request.method == 'POST':
             from decimal import Decimal
             
+            # Get the current discrepancy
+            is_valid, actual_balance, calculated_balance, discrepancy = check_user_balance_integrity(user_id)
+            
+            # Determine adjustment type
+            adjustment_type = request.form.get('adjustment_type', 'silent')
             adjustment_amount = Decimal(str(request.form.get('adjustment_amount', 0)))
             reason = request.form.get('reason', 'Manual balance adjustment by admin')
             
@@ -4810,29 +4843,64 @@ def create_app(config_name=None):
                 flash('Adjustment amount must be at least $0.01', 'danger')
                 return redirect(url_for('admin_balance_adjustment', user_id=user_id))
             
-            # Create adjustment transaction
-            if adjustment_amount > 0:
-                user.add_funds(
+            old_balance = user.balance_usd
+            
+            if adjustment_type == 'silent':
+                # Type 1: Silent Adjustment - Only adjust Available Balance (no transaction created)
+                # Transaction History is the source of truth, Available Balance is adjusted to match
+                user.balance_usd += adjustment_amount
+                db.session.commit()
+                
+                # Verify the adjustment fixed the issue
+                is_valid_after, actual_after, calculated_after, discrepancy_after = check_user_balance_integrity(user_id)
+                
+                if is_valid_after:
+                    flash(f'✅ Silent adjustment applied. Available Balance changed from ${float(old_balance):.2f} to ${float(user.balance_usd):.2f}', 'admin')
+                else:
+                    flash(f'⚠️ Silent adjustment applied from ${float(old_balance):.2f} to ${float(user.balance_usd):.2f}, but discrepancy remains: ${abs(float(discrepancy_after)):.2f}', 'warning')
+                
+                log_admin_action('balance_adjustment_silent', {
+                    'user_id': user_id,
+                    'user_email': user.email,
+                    'adjustment_amount': float(adjustment_amount),
+                    'reason': reason,
+                    'old_balance': float(old_balance),
+                    'new_balance': float(user.balance_usd)
+                })
+                
+            else:  # adjustment_type == 'transaction'
+                # Type 2: Transaction Adjustment - Create visible transaction (affects both balances)
+                # This is like a normal credit/debit transaction
+                adjustment_txn = Transaction(
+                    user_id=user_id,
                     amount_usd=adjustment_amount,
-                    description=f'Admin Balance Adjustment: {reason}'
+                    transaction_type='credit' if adjustment_amount > 0 else 'debit',
+                    description=reason
                 )
-            else:
-                user.deduct_funds(
-                    amount_usd=abs(adjustment_amount),
-                    description=f'Admin Balance Adjustment: {reason}'
-                )
+                db.session.add(adjustment_txn)
+                
+                # Also update the user's balance
+                user.balance_usd += adjustment_amount
+                db.session.commit()
+                
+                # Verify balances are in sync
+                is_valid_after, actual_after, calculated_after, discrepancy_after = check_user_balance_integrity(user_id)
+                
+                if is_valid_after:
+                    flash(f'✅ Transaction adjustment created. ${float(adjustment_amount):.2f} {"added to" if adjustment_amount > 0 else "removed from"} account. New balance: ${float(user.balance_usd):.2f}', 'admin')
+                else:
+                    flash(f'⚠️ Transaction adjustment created but discrepancy detected: ${abs(float(discrepancy_after)):.2f}', 'warning')
+                
+                log_admin_action('balance_adjustment_transaction', {
+                    'user_id': user_id,
+                    'user_email': user.email,
+                    'adjustment_amount': float(adjustment_amount),
+                    'reason': reason,
+                    'old_balance': float(old_balance),
+                    'new_balance': float(user.balance_usd),
+                    'transaction_id': adjustment_txn.id
+                })
             
-            db.session.commit()
-            
-            log_admin_action('balance_adjustment', {
-                'user_id': user_id,
-                'user_email': user.email,
-                'adjustment_amount': float(adjustment_amount),
-                'reason': reason,
-                'new_balance': float(user.balance_usd)
-            })
-            
-            flash(f'✅ Balance adjusted by ${adjustment_amount:.2f} for {user.email}', 'admin')
             return redirect(url_for('admin_balance_audit'))
         
         # GET request - show adjustment form
@@ -4856,6 +4924,94 @@ def create_app(config_name=None):
                              calculated_balance=calculated,
                              discrepancy=discrepancy,
                              suggested_adjustment=-discrepancy,  # Negative of discrepancy to fix it
+                             bonus_total=bonus_total,
+                             max_refundable=max_refundable,
+                             active_tab='balance_audit')
+    
+    
+    @app.route('/admin/refund/<int:user_id>', methods=['GET', 'POST'])
+    @admin_required
+    def admin_refund(user_id):
+        """Process user refund (dedicated refund page)"""
+        user = User.query.get_or_404(user_id)
+        
+        if request.method == 'POST':
+            from decimal import Decimal
+            
+            refund_amount = Decimal(str(request.form.get('refund_amount', 0)))
+            refund_description = request.form.get('refund_description', 'Refund processed by admin')
+            
+            # Validate refund amount is negative
+            if refund_amount >= 0:
+                flash('❌ Refund amount must be negative (e.g., -25.00)', 'danger')
+                return redirect(url_for('admin_refund', user_id=user_id))
+            
+            # Calculate max refundable (excluding bonuses)
+            bonus_total = Decimal('0')
+            for txn in Transaction.query.filter_by(user_id=user_id).all():
+                if txn.description and any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
+                    if txn.amount_usd > 0:
+                        bonus_total += Decimal(str(txn.amount_usd))
+            
+            max_refundable = max(Decimal('0'), user.balance_usd - bonus_total)
+            
+            # Validate refund doesn't exceed max refundable
+            if abs(refund_amount) > max_refundable:
+                flash(f'❌ Refund amount (${abs(float(refund_amount)):.2f}) exceeds maximum refundable balance (${float(max_refundable):.2f}). Promotional funds cannot be refunded.', 'danger')
+                return redirect(url_for('admin_refund', user_id=user_id))
+            
+            # Create refund transaction (visible to user)
+            old_balance = user.balance_usd
+            refund_txn = Transaction(
+                user_id=user_id,
+                amount_usd=refund_amount,
+                transaction_type='debit',
+                description=refund_description
+            )
+            db.session.add(refund_txn)
+            
+            # Update user balance
+            user.balance_usd += refund_amount
+            db.session.commit()
+            
+            # Verify balance integrity
+            is_valid, actual_after, calculated_after, discrepancy_after = check_user_balance_integrity(user_id)
+            
+            flash(f'✅ Refund processed: ${abs(float(refund_amount)):.2f} refunded to {user.email}. New balance: ${float(user.balance_usd):.2f}', 'admin')
+            
+            if not is_valid:
+                flash(f'⚠️ Note: Balance discrepancy detected after refund (${abs(float(discrepancy_after)):.2f}). Consider using Silent Adjustment to fix.', 'warning')
+            
+            log_admin_action('user_refund', {
+                'user_id': user_id,
+                'user_email': user.email,
+                'refund_amount': float(refund_amount),
+                'description': refund_description,
+                'old_balance': float(old_balance),
+                'new_balance': float(user.balance_usd),
+                'transaction_id': refund_txn.id
+            })
+            
+            return redirect(url_for('admin_balance_audit'))
+        
+        # GET request - show refund form
+        is_valid, actual, calculated, discrepancy = check_user_balance_integrity(user_id)
+        
+        # Calculate bonus/promotional funds (not refundable)
+        from decimal import Decimal
+        bonus_total = Decimal('0')
+        for txn in Transaction.query.filter_by(user_id=user_id).all():
+            if txn.description and any(keyword in txn.description.lower() for keyword in ['sign-up bonus', 'volume bonus', 'promotional']):
+                if txn.amount_usd > 0:
+                    bonus_total += Decimal(str(txn.amount_usd))
+        
+        max_refundable = max(Decimal('0'), user.balance_usd - bonus_total)
+        
+        return render_template('admin_refund.html',
+                             user=user,
+                             actual_balance=actual,
+                             calculated_balance=calculated,
+                             discrepancy=discrepancy,
                              bonus_total=bonus_total,
                              max_refundable=max_refundable,
                              active_tab='balance_audit')

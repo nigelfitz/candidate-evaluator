@@ -49,51 +49,6 @@
         </div>
     </div>
     
-    <!-- Summary Stats -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 8px; font-weight: 500;">TOTAL ADDED</div>
-                    <div style="color: #1f2937; font-size: 32px; font-weight: 700;">
-                        ${{ "%.2f"|format(transactions|selectattr('transaction_type', 'equalto', 'credit')|map(attribute='amount_usd')|sum) }}
-                    </div>
-                </div>
-                <div style="background: #d1fae5; padding: 12px; border-radius: 10px; color: #059669; font-size: 24px;">
-                    ➕
-                </div>
-            </div>
-        </div>
-        
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #dc2626;">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 8px; font-weight: 500;">TOTAL SPENT</div>
-                    <div style="color: #1f2937; font-size: 32px; font-weight: 700;">
-                        ${{ "%.2f"|format((transactions|selectattr('transaction_type', 'equalto', 'debit')|map(attribute='amount_usd')|sum)|abs) }}
-                    </div>
-                </div>
-                <div style="background: #fee2e2; padding: 12px; border-radius: 10px; color: #dc2626; font-size: 24px;">
-                    💸
-                </div>
-            </div>
-        </div>
-        
-        <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #1f77b4;">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <div style="color: #6b7280; font-size: 13px; margin-bottom: 8px; font-weight: 500;">TRANSACTIONS</div>
-                    <div style="color: #1f2937; font-size: 32px; font-weight: 700;">
-                        {{ transactions|length }}
-                    </div>
-                </div>
-                <div style="background: #dbeafe; padding: 12px; border-radius: 10px; color: #1f77b4; font-size: 24px;">
-                    📊
-                </div>
-            </div>
-        </div>
-    </div>
-    
     <!-- Transaction History -->
     <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px;">Transaction History</h2>
     

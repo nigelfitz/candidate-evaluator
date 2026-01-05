@@ -98,6 +98,7 @@
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}" class="btn btn-success" style="text-decoration: none;">💰 Adjust Balance</a>
+                <a href="{{ url_for('admin_refund', user_id=user.id) }}" class="btn btn-danger" style="text-decoration: none; background: #dc2626; border-color: #dc2626;">💸 Process Refund</a>
                 <button onclick="confirmResetPassword()" class="btn btn-warning">🔑 Reset Password</button>
                 {% if user.is_suspended %}
                 <button onclick="confirmUnsuspend()" class="btn btn-success" style="background: #10b981; border-color: #10b981;">✅ Unsuspend Account</button>
@@ -121,59 +122,133 @@
                 {% endfor %}
             {% endif %}
             
-            <!-- Recent Analyses -->
-            <div class="section-title">📋 Recent Analyses ({{ analyses|length }})</div>
-            {% if analyses %}
-                <ul class="analysis-list">
-                    {% for analysis in analyses[:10] %}
-                    <li class="analysis-item">
-                        <h4><span style="color: #6b7280; font-weight: 500; margin-right: 6px;">Job #{{ "%04d"|format(analysis.id) }}</span>{{ analysis.job_title }}</h4>
-                        <p>{{ analysis.num_candidates }} candidates • <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</span></p>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">No analyses yet.</p>
-            {% endif %}
+            <!-- Job History Accordion -->
+            <div style="margin-bottom: 30px;">
+                <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <button onclick="toggleAccordion('jobHistory')" style="width: 100%; padding: 16px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: white; font-size: 16px; font-weight: 600;">📋 Job History ({{ analyses|length }} total jobs)</span>
+                        <span id="jobHistoryIcon" style="color: white; font-size: 20px; transition: transform 0.3s;">▼</span>
+                    </button>
+                    <div id="jobHistory" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                        {% if analyses %}
+                            <div style="padding: 0;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: #f9fafb; border-bottom: 2px solid #e5e7eb;">
+                                            <th style="padding: 12px 16px; text-align: left; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Job</th>
+                                            <th style="padding: 12px 16px; text-align: left; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Date</th>
+                                            <th style="padding: 12px 16px; text-align: center; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Candidates</th>
+                                            <th style="padding: 12px 16px; text-align: center; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Criteria</th>
+                                            <th style="padding: 12px 16px; text-align: right; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Cost</th>
+                                            <th style="padding: 12px 16px; text-align: center; color: #6b7280; font-weight: 600; font-size: 13px; text-transform: uppercase;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for analysis in analyses %}
+                                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                                            <td style="padding: 16px;">
+                                                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                                                    <span style="color: #6b7280; font-weight: 500; margin-right: 6px;">Job #{{ "%04d"|format(analysis.id) }}</span>
+                                                    {{ analysis.job_title }}
+                                                </div>
+                                                {% if analysis.company_name %}
+                                                <div style="color: #6b7280; font-size: 13px;">{{ analysis.company_name }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 16px; color: #6b7280; font-size: 14px;" class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">
+                                                {{ analysis.created_at.strftime('%b %d, %Y %I:%M %p') }}
+                                            </td>
+                                            <td style="padding: 16px; text-align: center; color: #1f2937; font-weight: 600;">
+                                                {{ analysis.num_candidates }}
+                                            </td>
+                                            <td style="padding: 16px; text-align: center; color: #1f2937; font-weight: 600;">
+                                                {{ analysis.num_criteria }}
+                                            </td>
+                                            <td style="padding: 16px; text-align: right; color: #dc2626; font-weight: 600; font-size: 15px;">
+                                                {% if analysis.cost_usd %}
+                                                -${{ "%.2f"|format(analysis.cost_usd) }}
+                                                {% else %}
+                                                -
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 16px; text-align: center;">
+                                                <a href="{{ url_for('results', analysis_id=analysis.id) }}" 
+                                                   target="_blank"
+                                                   style="background: #3b82f6; color: white; padding: 6px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
+                                                   onmouseover="this.style.background='#2563eb'"
+                                                   onmouseout="this.style.background='#3b82f6'">
+                                                    👁️ View Results
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div style="text-align: center; padding: 40px;">
+                                <p style="color: #9ca3af; margin: 0;">No jobs processed yet.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
             
-            <!-- Transaction History -->
-            <div class="section-title">💳 Recent Transactions ({{ transactions|length }})</div>
-            {% if transactions %}
-                <table class="transaction-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for txn in transactions %}
-                        <tr>
-                            <td class="local-time" data-utc="{{ txn.created_at|to_local_time }}">{{ txn.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td>
-                                <span style="{% if txn.transaction_type == 'credit' %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 600;">
-                                    {{ txn.transaction_type|upper }}
-                                </span>
-                            </td>
-                            <td>
-                                <span style="{% if 'Bonus' in txn.description or 'Sign-up' in txn.description %}color: #16a34a; font-weight: 600;{% elif 'Refund' in txn.description or 'Debit' in txn.description %}color: #dc3545; font-weight: 600;{% endif %}">
-                                    {{ txn.description }}
-                                </span>
-                            </td>
-                            <td>
-                                <span style="{% if txn.amount_usd > 0 %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 700; font-size: 1.05rem;">
-                                    {% if txn.amount_usd > 0 %}+{% endif %}${{ "%.2f"|format(txn.amount_usd) }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="text-muted">No transactions yet.</p>
-            {% endif %}
+            <!-- Transaction History Accordion -->
+            <div style="margin-bottom: 30px;">
+                <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <button onclick="toggleAccordion('transactionHistory')" style="width: 100%; padding: 16px 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border: none; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: white; font-size: 16px; font-weight: 600;">💳 Transaction History ({{ transactions|length }} total)</span>
+                        <span id="transactionHistoryIcon" style="color: white; font-size: 20px; transition: transform 0.3s;">▼</span>
+                    </button>
+                    <div id="transactionHistory" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                        {% if transactions %}
+                            <table class="transaction-table" style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th style="text-align: right;">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for txn in transactions %}
+                                    <tr>
+                                        <td class="local-time" data-utc="{{ txn.created_at|to_local_time }}">{{ txn.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <span style="{% if txn.transaction_type == 'credit' %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 600;">
+                                                {{ txn.transaction_type|upper }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span style="{% if 'Bonus' in txn.description or 'Sign-up' in txn.description %}color: #16a34a; font-weight: 600;{% elif 'Refund' in txn.description or 'Debit' in txn.description %}color: #dc3545; font-weight: 600;{% endif %}">
+                                                {{ txn.description }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span style="{% if txn.amount_usd > 0 %}color: #16a34a;{% else %}color: #dc3545;{% endif %} font-weight: 700; font-size: 1.05rem;">
+                                                {% if txn.amount_usd > 0 %}+{% endif %}${{ "%.2f"|format(txn.amount_usd) }}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <span style="font-weight: 600; color: #1f2937; font-size: 1.05rem;">
+                                                ${{ "%.2f"|format(balances[loop.index0]) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div style="text-align: center; padding: 40px;">
+                                <p style="color: #9ca3af; margin: 0;">No transactions yet.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -197,6 +272,21 @@ function confirmSuspend() {
 function confirmUnsuspend() {
     if (confirm('✅ Unsuspend account for {{ user.email }}?\n\nThe user will be able to log in and use the system again.')) {
         document.getElementById('unsuspendForm').submit();
+    }
+}
+
+function toggleAccordion(id) {
+    const content = document.getElementById(id);
+    const icon = document.getElementById(id + 'Icon');
+    
+    if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+        // Open accordion
+        content.style.maxHeight = content.scrollHeight + 'px';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        // Close accordion
+        content.style.maxHeight = '0px';
+        icon.style.transform = 'rotate(0deg)';
     }
 }
         
