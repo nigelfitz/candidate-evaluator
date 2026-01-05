@@ -1818,21 +1818,9 @@ def create_app(config_name=None):
                 # Old format (plain string) - always include
                 criteria.append(c)
         
-        # DIAGNOSTIC: Log criteria format for debugging
-        print(f"\n{'='*60}")
-        print(f"DEBUG RESULTS PAGE - Analysis ID: {analysis_id}")
-        print(f"Number of criteria stored: {len(criteria_raw)}")
-        print(f"Number of criteria USED (filtered): {len(criteria)}")
-        print(f"Filtered criteria: {criteria}")
-        print(f"{'='*60}\n")
-        
         # Parse evidence_map and normalize to pipe format for template
         evidence_map_raw = json.loads(analysis.evidence_data)
         evidence_map = {}
-        
-        # DIAGNOSTIC: Log evidence map keys
-        print(f"Evidence map has {len(evidence_map_raw)} entries")
-        print(f"Sample evidence keys: {list(evidence_map_raw.keys())[:3]}")
         
         for key_str, value in evidence_map_raw.items():
             # Handle both formats: pipe "Name|||Criterion" or tuple "('Name', 'Criterion')"
@@ -1846,10 +1834,6 @@ def create_app(config_name=None):
                         evidence_map[f"{key_tuple[0]}|||{key_tuple[1]}"] = value
                 except:
                     pass
-        
-        # DIAGNOSTIC: Log normalized evidence map
-        print(f"After normalization, evidence_map has {len(evidence_map)} entries")
-        print(f"Sample normalized keys: {list(evidence_map.keys())[:3]}\n")
         
         # Build category map from criteria (extract from criterion names or use default categories)
         category_map = {}
@@ -1873,30 +1857,6 @@ def create_app(config_name=None):
         
         # Convert coverage DataFrame to list of dicts for JSON serialization
         coverage_data = coverage_df.to_dict(orient='records')
-        
-        # DIAGNOSTIC: Log coverage data structure
-        print(f"Coverage DataFrame columns: {list(coverage_df.columns)}")
-        print(f"Number of candidates in coverage: {len(coverage_data)}")
-        if coverage_data:
-            print(f"Sample candidate data: {coverage_data[0]}")
-        
-        # DIAGNOSTIC: Check for unreadable files specifically
-        unreadable_candidates = [c for c in coverage_data if 'UNREADABLE' in c.get('Candidate', '')]
-        if unreadable_candidates:
-            print(f"\n⚠️  UNREADABLE FILE DETECTED IN COVERAGE:")
-            for uc in unreadable_candidates:
-                cand_name = uc['Candidate']
-                print(f"  Name: {cand_name}")
-                print(f"  Name repr: {repr(cand_name)}")
-                print(f"  Overall Score: {uc['Overall']}")
-                print(f"  Sample scores: {list(uc.items())[:5]}")
-                
-                # Check evidence map for this candidate
-                evidence_keys_for_candidate = [k for k in evidence_map.keys() if cand_name in k]
-                print(f"  Evidence entries for this candidate: {len(evidence_keys_for_candidate)}")
-                if evidence_keys_for_candidate:
-                    print(f"  Sample evidence key: {repr(evidence_keys_for_candidate[0])}")
-        print(f"{'='*60}\n")
         
         # Check if this analysis is for the current draft or a historical one
         draft = Draft.query.filter_by(user_id=current_user.id).first()
@@ -2317,7 +2277,16 @@ def create_app(config_name=None):
         """View detailed insights for candidates from an analysis"""
         import json
         
-        analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        # Check if admin is viewing another user's analysis
+        is_admin = session.get('admin_logged_in', False)
+        
+        if is_admin:
+            # Admin can view any analysis
+            analysis = Analysis.query.filter_by(id=analysis_id).first()
+        else:
+            # Regular user can only view their own
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        
         if not analysis:
             flash('Analysis not found', 'error')
             return redirect(url_for('dashboard'))
@@ -2329,8 +2298,6 @@ def create_app(config_name=None):
         
         coverage_data = json.loads(analysis.coverage_data)
         insights_data = json.loads(analysis.insights_data)
-        print(f"DEBUG insights.html: insights_data has {len(insights_data)} candidates")
-        # Content details omitted to reduce terminal verbosity
         
         # Get candidate name from query parameter or default to first candidate
         selected_candidate = request.args.get('candidate')
@@ -2371,9 +2338,6 @@ def create_app(config_name=None):
         
         # Get insights for current candidate
         candidate_insights = insights_data.get(selected_candidate, {})
-        print(f"DEBUG insights.html: Looking up insights for candidate: '{selected_candidate}'")
-        print(f"DEBUG insights.html: Available candidates: {len(insights_data)}")
-        print(f"DEBUG insights.html: Found insights: {'Yes' if candidate_insights else 'No'}")
         
         # Check if insights exist (be flexible with the structure)
         has_gpt_insights = False
@@ -2388,8 +2352,6 @@ def create_app(config_name=None):
                 candidate_insights.get('recommendation') or  # Alternative field name
                 len(candidate_insights) > 0  # Any insights data at all
             )
-        
-        print(f"DEBUG insights.html: has_gpt_insights = {has_gpt_insights}")
         
         # Get evidence snippets first (handle both tuple and pipe formats)
         evidence_data_raw = json.loads(analysis.evidence_data) if analysis.evidence_data else {}
@@ -2523,6 +2485,11 @@ def create_app(config_name=None):
         # Full Radar if all candidates have insights or no restriction was set
         has_full_radar = (len(gpt_candidates_list) == 0 or len(gpt_candidates_list) >= analysis.num_candidates)
         
+        # Check if admin is viewing another user's analysis
+        viewing_other_user = is_admin and analysis.user_id != current_user.id
+        analysis_owner = User.query.get(analysis.user_id) if viewing_other_user else None
+        analysis_owner_email = analysis_owner.email if analysis_owner else None
+        
         from config import Config
         pricing = Config.get_pricing()
         return render_template('insights.html',
@@ -2537,7 +2504,9 @@ def create_app(config_name=None):
                              analysis_completed=True,
                              is_current_draft_analysis=is_current_draft_analysis,
                              has_full_radar=has_full_radar,
-                             pricing=pricing)
+                             pricing=pricing,
+                             viewing_other_user=viewing_other_user,
+                             analysis_owner_email=analysis_owner_email)
     
     @app.route('/unlock-candidate/<int:analysis_id>/<candidate_name>', methods=['POST'])
     @login_required
@@ -3039,7 +3008,16 @@ def create_app(config_name=None):
     @login_required
     def exports(analysis_id):
         """Main export page with all export options"""
-        analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        # Check if admin is viewing another user's analysis
+        is_admin = session.get('admin_logged_in', False)
+        
+        if is_admin:
+            # Admin can view any analysis
+            analysis = Analysis.query.filter_by(id=analysis_id).first()
+        else:
+            # Regular user can only view their own
+            analysis = Analysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+        
         if not analysis:
             flash('Analysis not found', 'error')
             return redirect(url_for('dashboard'))
@@ -3066,12 +3044,19 @@ def create_app(config_name=None):
             except:
                 gpt_candidates_list = []
         
+        # Check if admin is viewing another user's analysis
+        viewing_other_user = is_admin and analysis.user_id != current_user.id
+        analysis_owner = User.query.get(analysis.user_id) if viewing_other_user else None
+        analysis_owner_email = analysis_owner.email if analysis_owner else None
+        
         return render_template('export.html', 
                              analysis=analysis, 
                              coverage=coverage_df,
                              user_settings=user_settings,
                              is_current_draft_analysis=is_current_draft_analysis,
-                             gpt_candidates=gpt_candidates_list)
+                             gpt_candidates=gpt_candidates_list,
+                             viewing_other_user=viewing_other_user,
+                             analysis_owner_email=analysis_owner_email)
     
     @app.route('/export/<int:analysis_id>/preview-pdf')
     @login_required

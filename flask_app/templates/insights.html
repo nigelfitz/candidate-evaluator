@@ -224,6 +224,32 @@
 {% endblock %}
 
 {% block content %}
+<!-- Admin Viewing Banner -->
+{% if viewing_other_user %}
+<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="font-size: 36px; flex-shrink: 0;">⚠️</div>
+        <div style="flex: 1;">
+            <div style="font-weight: 700; font-size: 18px; color: #92400e; margin-bottom: 8px;">
+                Admin View: Viewing Another User's Insights
+            </div>
+            <div style="color: #78350f; font-size: 14px; line-height: 1.6;">
+                You are viewing insights for a job belonging to <strong>{{ analysis_owner_email }}</strong>. 
+                This is an admin-only view for support and monitoring purposes.
+            </div>
+            <div style="margin-top: 12px;">
+                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}" 
+                   style="background: #f59e0b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
+                   onmouseover="this.style.background='#d97706'"
+                   onmouseout="this.style.background='#f59e0b'">
+                    ← Back to User Detail
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Custom Confirmation Modal -->
 <div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 480px; width: 90%; overflow: hidden;">
