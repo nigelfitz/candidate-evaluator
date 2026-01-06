@@ -11,18 +11,18 @@
         line-height: 1.6;
         color: #334155;
     }
-    
+
     .legal-container h1 {
         font-size: 2.5rem;
         color: #1e293b;
         margin-bottom: 10px;
     }
-    
+
     .legal-container p {
         margin-bottom: 25px;
         color: #64748b;
     }
-    
+
     .support-form {
         background: #fff;
         border: 1px solid #e2e8f0;
@@ -30,14 +30,14 @@
         padding: 30px;
         margin-top: 30px;
     }
-    
+
     .support-form label {
         display: block;
         margin-bottom: 8px;
         font-weight: 600;
         color: #334155;
     }
-    
+
     .support-form input,
     .support-form textarea {
         width: 100%;
@@ -48,19 +48,19 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 1rem;
     }
-    
+
     .support-form input:focus,
     .support-form textarea:focus {
         outline: none;
         border-color: #1f77b4;
         box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
     }
-    
+
     .support-form textarea {
         resize: vertical;
         min-height: 150px;
     }
-    
+
     .cta-button {
         background: linear-gradient(135deg, #1f77b4 0%, #4a9fd8 100%);
         color: white;
@@ -72,12 +72,12 @@
         cursor: pointer;
         transition: transform 0.2s;
     }
-    
+
     .cta-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(31, 119, 180, 0.3);
     }
-    
+
     .success-message {
         background: #d1fae5;
         border: 1px solid #6ee7b7;
@@ -86,7 +86,7 @@
         border-radius: 6px;
         margin-bottom: 25px;
     }
-    
+
     .error-message {
         background: #fee2e2;
         border: 1px solid #fca5a5;
@@ -95,51 +95,51 @@
         border-radius: 6px;
         margin-bottom: 25px;
     }
-    
+
     /* Mobile Responsive */
     @media (max-width: 768px) {
         .legal-container {
             margin: 40px auto;
         }
-        
+
         .support-form {
             padding: 20px;
         }
     }
-    
+
     /* Mobile-Only Enhancements - Small Phones */
     @media (max-width: 480px) {
         .legal-container {
             margin: 30px auto;
             padding: 0 12px;
         }
-        
+
         .legal-container h1 {
             font-size: 1.75rem;
         }
-        
+
         .support-form {
             padding: 16px;
             margin-top: 20px;
         }
-        
+
         .support-form label {
             font-size: 0.95rem;
         }
-        
+
         .support-form input,
         .support-form textarea {
             font-size: 16px !important;
             padding: 10px;
             margin-bottom: 16px;
         }
-        
+
         .cta-button {
             width: 100%;
             padding: 12px 24px;
             font-size: 0.95rem;
         }
-        
+
         .success-message,
         .error-message {
             padding: 12px 16px;
@@ -150,38 +150,42 @@
 
 <div class="legal-container">
     <h1>Contact Support</h1>
-    <p>Have a question, found a bug, or need help with your account? We're here to help and typically respond within 24 hours.</p>
-    
+    <p>Have a question, found a bug, or need help with your account? We're here to help and typically respond within 24
+        hours.</p>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="{{ 'success-message' if category == 'success' else 'error-message' }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="{{ 'success-message' if category == 'success' else 'error-message' }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
-    
+
     <form class="support-form" action="{{ url_for('support') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <label for="name">Your Name</label>
         <input type="text" id="name" name="name" placeholder="John Smith" required>
-        
+
         <label for="email">Your Email Address</label>
-        <input type="email" id="email" name="email" placeholder="john@example.com" 
-               value="{{ session.get('user_email', '') }}" required>
-        
+        <input type="email" id="email" name="email" placeholder="john@example.com"
+            value="{{ session.get('user_email', '') }}" required>
+
         <label for="subject">Subject</label>
         <input type="text" id="subject" name="subject" placeholder="Brief description of your issue" required>
-        
+
         <label for="message">Message</label>
-        <textarea id="message" name="message" placeholder="Please provide as much detail as possible..." required></textarea>
-        
+        <textarea id="message" name="message" placeholder="Please provide as much detail as possible..."
+            required></textarea>
+
         <button type="submit" class="cta-button">Send Message</button>
     </form>
-    
+
     <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
         <h2 style="color: #1e293b; margin-bottom: 15px;">Other Ways to Reach Us</h2>
-        <p><strong>Email:</strong> <a href="mailto:contact@candidateevaluator.com">contact@candidateevaluator.com</a></p>
+        <p><strong>Email:</strong> <a href="mailto:contact@candidateevaluator.com">contact@candidateevaluator.com</a>
+        </p>
     </div>
 </div>
 {% endblock %}

@@ -8,6 +8,7 @@
     <p style="color: #666; margin-bottom: 2rem;">Login to your Candidate Evaluator account</p>
     
     <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div style="margin-bottom: 1.5rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
             <input type="email" name="email" required 

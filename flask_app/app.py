@@ -15,6 +15,10 @@ import pyotp
 import qrcode
 from io import BytesIO
 import base64
+from flask_wtf.csrf import CSRFProtect
+
+# Initialize extensions
+csrf = CSRFProtect()
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,6 +41,9 @@ def create_app(config_name=None):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page'
     login_manager.login_message_category = 'info'
+    
+    # Initialize CSRF Protection
+    csrf.init_app(app)
     
     @login_manager.user_loader
     def load_user(user_id):
