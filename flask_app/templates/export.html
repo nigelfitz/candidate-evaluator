@@ -9,44 +9,44 @@
         max-width: 1200px;
         margin: 0 auto;
     }
-    
+
     .export-card {
         background: white;
         border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border: 1px solid #e5e7eb;
         transition: all 0.3s ease;
         overflow: hidden;
     }
-    
+
     .export-card:hover {
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-2px);
     }
-    
+
     .export-card-header {
         padding: 24px 28px;
         border-bottom: 1px solid #e5e7eb;
         background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     }
-    
+
     .export-card-header h5 {
         margin: 0;
         font-size: 1.25rem;
         font-weight: 700;
         color: #1f2937;
     }
-    
+
     .export-card-body {
         padding: 28px;
     }
-    
+
     .export-card-body p.text-muted {
         color: #6b7280;
         margin-bottom: 20px;
         line-height: 1.6;
     }
-    
+
     /* Button Hierarchy */
     .btn-export-primary {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -58,14 +58,14 @@
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         transition: all 0.3s ease;
     }
-    
+
     .btn-export-primary:hover {
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
         transform: translateY(-1px);
         color: white;
     }
-    
+
     .btn-export-secondary {
         background: white;
         border: 2px solid #3b82f6;
@@ -75,14 +75,14 @@
         border-radius: 10px;
         transition: all 0.3s ease;
     }
-    
+
     .btn-export-secondary:hover {
         background: #eff6ff;
         border-color: #2563eb;
         color: #2563eb;
         transform: translateY(-1px);
     }
-    
+
     .btn-export-preview {
         background: white;
         border: 1px solid #d1d5db;
@@ -92,13 +92,13 @@
         border-radius: 10px;
         transition: all 0.3s ease;
     }
-    
+
     .btn-export-preview:hover {
         background: #f9fafb;
         border-color: #9ca3af;
         color: #374151;
     }
-    
+
     /* Preview Container */
     .preview-container {
         background: #f9fafb;
@@ -107,45 +107,47 @@
         padding: 20px;
         animation: slideDown 0.3s ease;
     }
-    
+
     @keyframes slideDown {
         from {
             opacity: 0;
             max-height: 0;
             padding: 0;
         }
+
         to {
             opacity: 1;
             max-height: 700px;
             padding: 20px;
         }
     }
-    
+
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
         .export-card-header h5 {
             font-size: 1.1rem;
         }
-        
+
         .btn-group {
             flex-direction: column;
             width: 100%;
         }
-        
+
         .btn-group .btn {
             width: 100%;
             margin-bottom: 8px;
         }
     }
-    
+
     /* Mobile-Only Enhancements - Small Phones */
     @media (max-width: 480px) {
+
         /* Tab navigation - vertical stack on mobile */
         .btn-group {
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .btn-group a {
             width: 100%;
             min-width: 100%;
@@ -158,7 +160,8 @@
 {% block content %}
 <!-- Admin Viewing Banner -->
 {% if viewing_other_user %}
-<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+<div
+    style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
     <div style="display: flex; align-items: center; gap: 16px;">
         <div style="font-size: 36px; flex-shrink: 0;">⚠️</div>
         <div style="flex: 1;">
@@ -166,14 +169,13 @@
                 Admin View: Viewing Another User's Exports
             </div>
             <div style="color: #78350f; font-size: 14px; line-height: 1.6;">
-                You are viewing exports for a job belonging to <strong>{{ analysis_owner_email }}</strong>. 
+                You are viewing exports for a job belonging to <strong>{{ analysis_owner_email }}</strong>.
                 This is an admin-only view for support and monitoring purposes.
             </div>
             <div style="margin-top: 12px;">
-                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}" 
-                   style="background: #f59e0b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
-                   onmouseover="this.style.background='#d97706'"
-                   onmouseout="this.style.background='#f59e0b'">
+                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}"
+                    style="background: #f59e0b; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
+                    onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
                     ← Back to User Detail
                 </a>
             </div>
@@ -189,26 +191,31 @@
     {% include 'workflow_stepper.html' %}
     {% else %}
     <!-- Historical Analysis Header -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div
+        style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div class="text-center">
             <h4 style="color: #1f2937; margin-bottom: 10px;">📊 Historical Analysis - Export Reports</h4>
-            <p class="text-muted mb-0">Viewing saved analysis from <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+            <p class="text-muted mb-0">Viewing saved analysis from <span class="local-time"
+                    data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at
+                    %I:%M %p') }}</span></p>
             <div class="mt-3" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-primary" 
-                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;"
-                            onclick="return confirm('This will load this job into your workspace with the SAME criteria so you can analyze a new batch of candidates.\n\n💡 Tip: After loading, update the job title (e.g., add \"Batch 2\" or \"Final Round\") to distinguish between batches.\n\nContinue?');">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}"
+                    style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-primary"
+                        style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;"
+                        onclick="return confirm('This will load this job into your workspace with the SAME criteria so you can analyze a new batch of candidates.\n\n💡 Tip: After loading, update the job title (e.g., add \"
+                        Batch 2\" or \"Final Round\") to distinguish between batches.\n\nContinue?');">
                         <i data-lucide="copy-plus" style="width: 18px; height: 18px;"></i>
                         Run New Batch with Same Criteria
                     </button>
                 </form>
                 <div style="position: relative; display: inline-block;">
-                    <i data-lucide="info" 
-                       style="width: 20px; height: 20px; color: #3b82f6; cursor: help;" 
-                       onmouseover="document.getElementById('batchTooltipExport').style.display='block'"
-                       onmouseout="document.getElementById('batchTooltipExport').style.display='none'"></i>
-                    <div id="batchTooltipExport" 
-                         style="display: none; position: absolute; left: 30px; top: -20px; background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; line-height: 1.5;">
+                    <i data-lucide="info" style="width: 20px; height: 20px; color: #3b82f6; cursor: help;"
+                        onmouseover="document.getElementById('batchTooltipExport').style.display='block'"
+                        onmouseout="document.getElementById('batchTooltipExport').style.display='none'"></i>
+                    <div id="batchTooltipExport"
+                        style="display: none; position: absolute; left: 30px; top: -20px; background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; line-height: 1.5;">
                         <strong style="color: #60a5fa;">💡 Batch Processing Tips:</strong><br>
                         • Use this to analyze multiple candidate groups against identical criteria<br>
                         • Update job title to "Batch 2", "Batch 3", etc. to track batches<br>
@@ -220,317 +227,334 @@
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Unified Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
-        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
+    <div class="btn-group mb-3" role="group"
+        style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
             <span>Results</span>
         </a>
-        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px; {{ 'opacity: 0.5; pointer-events: none;' if not analysis.insights_data else '' }}">
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px; {{ 'opacity: 0.5; pointer-events: none;' if not analysis.insights_data else '' }}">
             <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
             <span>Insights</span>
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
             <span>Export</span>
         </a>
     </div>
-    
+
     <!-- Unified Metadata Bar -->
     <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
         <div class="card-body py-2">
             <p class="mb-0" style="font-size: 15px; color: #6b7280;">
-                <strong style="color: #1f2937;">Job #{{ "%04d"|format(analysis.id) }}:</strong> {{ analysis.job_title }} | 
-                <strong style="color: #1f2937;">Analyzed:</strong> {{ analysis.created_at.strftime('%B %d, %Y') }} | 
-                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates | 
+                <strong style="color: #1f2937;">Job #{{ "%04d"|format(analysis.id) }}:</strong> {{ analysis.job_title }}
+                |
+                <strong style="color: #1f2937;">Analyzed:</strong> {{ analysis.created_at.strftime('%B %d, %Y') }} |
+                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates |
                 <strong style="color: #1f2937;">{{ analysis.num_criteria }}</strong> Criteria
             </p>
         </div>
     </div>
-    
+
     <!-- Export Container -->
     <div class="export-container">
-    <div class="row">
-        <div class="col-12">
+        <div class="row">
+            <div class="col-12">
 
-            <!-- Pro-tip -->
-            <div class="alert alert-info mb-4">
-                <i class="bi bi-lightbulb"></i> <strong>Pro-tip:</strong> Export in Word if you need to make alterations to reports. e.g. if the extracted candidate name or job description is wrong (in some resumes it can be difficult to identify everything precisely).
-            </div>
+                <!-- Pro-tip -->
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-lightbulb"></i> <strong>Pro-tip:</strong> Export in Word if you need to make
+                    alterations to reports. e.g. if the extracted candidate name or job description is wrong (in some
+                    resumes it can be difficult to identify everything precisely).
+                </div>
 
-            <!-- Export Sections -->
-            <div class="row">
-                <!-- Section 1: Executive Summary -->
-                <div class="col-12 mb-4">
-                    <div class="export-card">
-                        <div class="export-card-header">
-                            <h5>📄 Executive Summary</h5>
-                        </div>
-                        <div class="export-card-body">
-                            <p class="text-muted">
-                                Comprehensive overview with top candidates, key insights, and recommendations.
-                            </p>
-                            <div class="btn-group mb-2" role="group">
-                                <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-primary">
-                                    <i class="bi bi-file-pdf"></i> Download PDF
-                                </a>
-                                <a href="{{ url_for('export_executive_docx', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-secondary">
-                                    <i class="bi bi-file-word"></i> Download Word
-                                </a>
-                                <button class="btn btn-export-preview" onclick="togglePreview('executivePreview', '{{ url_for('preview_executive_pdf_inline', analysis_id=analysis.id) }}')">
-                                    <i class="bi bi-eye"></i> Preview PDF
-                                </button>
+                <!-- Export Sections -->
+                <div class="row">
+                    <!-- Section 1: Executive Summary -->
+                    <div class="col-12 mb-4">
+                        <div class="export-card">
+                            <div class="export-card-header">
+                                <h5>📄 Executive Summary</h5>
                             </div>
-                            <p class="text-muted mt-2 mb-0">
-                                <small>💡 Click Preview to see the report before downloading</small>
-                            </p>
-                            
-                            <!-- Collapsible Preview Area -->
-                            <div id="executivePreview" class="preview-container mt-3" style="display: none;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0" style="color: #6b7280;">Executive Summary Preview</h6>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="togglePreview('executivePreview')">
-                                        ✕ Close Preview
+                            <div class="export-card-body">
+                                <p class="text-muted">
+                                    Comprehensive overview with top candidates, key insights, and recommendations.
+                                </p>
+                                <div class="btn-group mb-2" role="group">
+                                    <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-primary">
+                                        <i class="bi bi-file-pdf"></i> Download PDF
+                                    </a>
+                                    <a href="{{ url_for('export_executive_docx', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-secondary">
+                                        <i class="bi bi-file-word"></i> Download Word
+                                    </a>
+                                    <button class="btn btn-export-preview"
+                                        onclick="togglePreview('executivePreview', '{{ url_for('preview_executive_pdf_inline', analysis_id=analysis.id) }}')">
+                                        <i class="bi bi-eye"></i> Preview PDF
                                     </button>
                                 </div>
-                                <div id="executivePreviewLoading" style="display: none; padding: 40px; text-align: center; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                                <p class="text-muted mt-2 mb-0">
+                                    <small>💡 Click Preview to see the report before downloading</small>
+                                </p>
+
+                                <!-- Collapsible Preview Area -->
+                                <div id="executivePreview" class="preview-container mt-3" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0" style="color: #6b7280;">Executive Summary Preview</h6>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="togglePreview('executivePreview')">
+                                            ✕ Close Preview
+                                        </button>
                                     </div>
-                                    <p class="mt-3 text-muted">Loading PDF preview...</p>
-                                </div>
-                                <iframe id="executivePreviewFrame" 
-                                        src="" 
-                                        width="100%" 
-                                        height="800px" 
+                                    <div id="executivePreviewLoading"
+                                        style="display: none; padding: 40px; text-align: center; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-3 text-muted">Loading PDF preview...</p>
+                                    </div>
+                                    <iframe id="executivePreviewFrame" src="" width="100%" height="800px"
                                         style="border: 1px solid #e5e7eb; border-radius: 8px; background: #ffffff; display: none;"
                                         onload="document.getElementById('executivePreviewLoading').style.display='none'; this.style.display='block';">
-                                </iframe>
-                                <div id="executivePreviewError" style="display: none; padding: 24px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
-                                    <p class="text-danger mb-2">❌ Unable to display PDF preview in browser</p>
-                                    <p class="mb-0"><a id="executivePreviewLink" href="" target="_blank" class="btn btn-sm btn-primary">Open PDF in New Window</a></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Detailed Analysis -->
-                <div class="col-12 mb-4">
-                    <div class="export-card">
-                        <div class="export-card-header">
-                            <h5>📊 Detailed Analysis - Coverage Matrix</h5>
-                        </div>
-                        <div class="export-card-body">
-                            <p class="text-muted">
-                                Full scoring matrix with color-coded ratings for all candidates and criteria.
-                            </p>
-                            <div class="btn-group" role="group">
-                                <a href="{{ url_for('export_coverage_excel', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-primary">
-                                    <i class="bi bi-file-excel"></i> Download Excel
-                                </a>
-                                <a href="{{ url_for('export_coverage_csv', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-secondary">
-                                    <i class="bi bi-file-text"></i> Download CSV
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Individual Candidate Reports -->
-                <div class="col-12 mb-4">
-                    <div class="export-card">
-                        <div class="export-card-header">
-                            <h5>👤 Individual Candidate Reports</h5>
-                        </div>
-                        <div class="export-card-body">
-                            <p class="text-muted">
-                                Detailed reports for individual candidates.
-                            </p>
-
-                            <!-- Selection Controls -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Select Candidates:</label>
-                                <div class="btn-group d-block mb-3" role="group">
-                                    <input type="radio" class="btn-check" name="candidateSelection" id="aiInsights" value="aiInsights" checked>
-                                    <label class="btn btn-outline-info" for="aiInsights">Candidates with AI Insights</label>
-                                    
-                                    <input type="radio" class="btn-check" name="candidateSelection" id="top5" value="top5">
-                                    <label class="btn btn-outline-info" for="top5">Top 5</label>
-                                    
-                                    <input type="radio" class="btn-check" name="candidateSelection" id="all" value="all">
-                                    <label class="btn btn-outline-info" for="all">All Candidates</label>
-                                    
-                                    <input type="radio" class="btn-check" name="candidateSelection" id="custom" value="custom">
-                                    <label class="btn btn-outline-info" for="custom">Custom Selection</label>
-                                </div>
-
-                                <!-- Custom Selection Dropdown (Hidden by default) -->
-                                <div id="customSelectionDiv" style="display: none;">
-                                    <label class="form-label">Choose specific candidates:</label>
-                                    <select id="customCandidates" class="form-select" multiple size="8">
-                                        {% for candidate in coverage['Candidate'] %}
-                                        <option value="{{ candidate }}">{{ candidate }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
-                                </div>
-                            </div>
-
-                            <!-- Include Justifications Option -->
-                            <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" id="includeJustifications">
-                                <label class="form-check-label" for="includeJustifications">
-                                    Include criteria justifications in reports
-                                </label>
-                            </div>
-
-                            <!-- Export Buttons -->
-                            <div class="btn-group" role="group">
-                                <button id="exportIndividualPDF" class="btn btn-export-primary">
-                                    <i class="bi bi-file-pdf"></i> Generate PDF Reports
-                                </button>
-                                <button id="exportIndividualDOCX" class="btn btn-export-secondary">
-                                    <i class="bi bi-file-word"></i> Generate Word Reports
-                                </button>
-                            </div>
-                            
-                            <div id="exportProgress" class="mt-3" style="display: none;">
-                                <div class="progress">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         role="progressbar" style="width: 0%">
+                                    </iframe>
+                                    <div id="executivePreviewError"
+                                        style="display: none; padding: 24px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+                                        <p class="text-danger mb-2">❌ Unable to display PDF preview in browser</p>
+                                        <p class="mb-0"><a id="executivePreviewLink" href="" target="_blank"
+                                                class="btn btn-sm btn-primary">Open PDF in New Window</a></p>
                                     </div>
                                 </div>
-                                <small id="progressText" class="text-muted"></small>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Section 4: Quick Data Exports -->
-                <div class="col-12 mb-4">
-                    <div class="export-card">
-                        <div class="export-card-header">
-                            <h5>⚡ Quick Data Exports</h5>
+                    <!-- Section 2: Detailed Analysis -->
+                    <div class="col-12 mb-4">
+                        <div class="export-card">
+                            <div class="export-card-header">
+                                <h5>📊 Detailed Analysis - Coverage Matrix</h5>
+                            </div>
+                            <div class="export-card-body">
+                                <p class="text-muted">
+                                    Full scoring matrix with color-coded ratings for all candidates and criteria.
+                                </p>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('export_coverage_excel', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-primary">
+                                        <i class="bi bi-file-excel"></i> Download Excel
+                                    </a>
+                                    <a href="{{ url_for('export_coverage_csv', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-secondary">
+                                        <i class="bi bi-file-text"></i> Download CSV
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="export-card-body">
-                            <p class="text-muted">
-                                Simple CSV exports for further analysis in Excel or other tools.
-                            </p>
-                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                <a href="{{ url_for('export_candidates_csv', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
-                                    <i class="bi bi-people"></i> Candidate List (CSV)
-                                </a>
-                                <a href="{{ url_for('export_criteria_csv', analysis_id=analysis.id) }}" 
-                                   class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
-                                    <i class="bi bi-list-check"></i> Criteria List (CSV)
-                                </a>
+                    </div>
+
+                    <!-- Section 3: Individual Candidate Reports -->
+                    <div class="col-12 mb-4">
+                        <div class="export-card">
+                            <div class="export-card-header">
+                                <h5>👤 Individual Candidate Reports</h5>
+                            </div>
+                            <div class="export-card-body">
+                                <p class="text-muted">
+                                    Detailed reports for individual candidates.
+                                </p>
+
+                                <!-- Selection Controls -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Candidates:</label>
+                                    <div class="btn-group d-block mb-3" role="group">
+                                        <input type="radio" class="btn-check" name="candidateSelection" id="aiInsights"
+                                            value="aiInsights" checked>
+                                        <label class="btn btn-outline-info" for="aiInsights">Candidates with AI
+                                            Insights</label>
+
+                                        <input type="radio" class="btn-check" name="candidateSelection" id="top5"
+                                            value="top5">
+                                        <label class="btn btn-outline-info" for="top5">Top 5</label>
+
+                                        <input type="radio" class="btn-check" name="candidateSelection" id="all"
+                                            value="all">
+                                        <label class="btn btn-outline-info" for="all">All Candidates</label>
+
+                                        <input type="radio" class="btn-check" name="candidateSelection" id="custom"
+                                            value="custom">
+                                        <label class="btn btn-outline-info" for="custom">Custom Selection</label>
+                                    </div>
+
+                                    <!-- Custom Selection Dropdown (Hidden by default) -->
+                                    <div id="customSelectionDiv" style="display: none;">
+                                        <label class="form-label">Choose specific candidates:</label>
+                                        <select id="customCandidates" class="form-select" multiple size="8">
+                                            {% for candidate in coverage['Candidate'] %}
+                                            <option value="{{ candidate }}">{{ candidate }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select
+                                            multiple</small>
+                                    </div>
+                                </div>
+
+                                <!-- Include Justifications Option -->
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="includeJustifications">
+                                    <label class="form-check-label" for="includeJustifications">
+                                        Include criteria justifications in reports
+                                    </label>
+                                </div>
+
+                                <!-- Export Buttons -->
+                                <div class="btn-group" role="group">
+                                    <button id="exportIndividualPDF" class="btn btn-export-primary">
+                                        <i class="bi bi-file-pdf"></i> Generate PDF Reports
+                                    </button>
+                                    <button id="exportIndividualDOCX" class="btn btn-export-secondary">
+                                        <i class="bi bi-file-word"></i> Generate Word Reports
+                                    </button>
+                                </div>
+
+                                <div id="exportProgress" class="mt-3" style="display: none;">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                            role="progressbar" style="width: 0%">
+                                        </div>
+                                    </div>
+                                    <small id="progressText" class="text-muted"></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Quick Data Exports -->
+                    <div class="col-12 mb-4">
+                        <div class="export-card">
+                            <div class="export-card-header">
+                                <h5>⚡ Quick Data Exports</h5>
+                            </div>
+                            <div class="export-card-body">
+                                <p class="text-muted">
+                                    Simple CSV exports for further analysis in Excel or other tools.
+                                </p>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <a href="{{ url_for('export_candidates_csv', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
+                                        <i class="bi bi-people"></i> Candidate List (CSV)
+                                    </a>
+                                    <a href="{{ url_for('export_criteria_csv', analysis_id=analysis.id) }}"
+                                        class="btn btn-export-secondary" style="flex: 1; min-width: 200px;">
+                                        <i class="bi bi-list-check"></i> Criteria List (CSV)
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </div><!-- Close export-container -->
 </div>
 
 <!-- JavaScript for Interactive Controls -->
 <script>
-// Toggle PDF preview (v3 - using iframe with loading states)
-function togglePreview(previewId, pdfUrl) {
-    const previewDiv = document.getElementById(previewId);
-    const iframeElement = document.getElementById(previewId + 'Frame');
-    const loadingDiv = document.getElementById(previewId + 'Loading');
-    const errorDiv = document.getElementById(previewId + 'Error');
-    const fallbackLink = document.getElementById(previewId + 'Link');
-    
-    if (previewDiv.style.display === 'none' || previewDiv.style.display === '') {
-        // Show preview
-        previewDiv.style.display = 'block';
-        if (pdfUrl) {
-            // Show loading state
-            loadingDiv.style.display = 'block';
+    // Toggle PDF preview (v3 - using iframe with loading states)
+    function togglePreview(previewId, pdfUrl) {
+        const previewDiv = document.getElementById(previewId);
+        const iframeElement = document.getElementById(previewId + 'Frame');
+        const loadingDiv = document.getElementById(previewId + 'Loading');
+        const errorDiv = document.getElementById(previewId + 'Error');
+        const fallbackLink = document.getElementById(previewId + 'Link');
+
+        if (previewDiv.style.display === 'none' || previewDiv.style.display === '') {
+            // Show preview
+            previewDiv.style.display = 'block';
+            if (pdfUrl) {
+                // Show loading state
+                loadingDiv.style.display = 'block';
+                iframeElement.style.display = 'none';
+                errorDiv.style.display = 'none';
+
+                // Set iframe src
+                iframeElement.src = pdfUrl;
+
+                // Set fallback link
+                if (fallbackLink) {
+                    fallbackLink.href = pdfUrl;
+                }
+
+                // Timeout to show error if iframe doesn't load
+                setTimeout(() => {
+                    if (loadingDiv.style.display !== 'none') {
+                        loadingDiv.style.display = 'none';
+                        iframeElement.style.display = 'none';
+                        errorDiv.style.display = 'block';
+                    }
+                }, 10000); // 10 second timeout
+            }
+            // Smooth scroll to preview
+            setTimeout(() => {
+                previewDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        } else {
+            // Hide preview
+            previewDiv.style.display = 'none';
+            // Reset states
+            iframeElement.src = '';
+            loadingDiv.style.display = 'none';
             iframeElement.style.display = 'none';
             errorDiv.style.display = 'none';
-            
-            // Set iframe src
-            iframeElement.src = pdfUrl;
-            
-            // Set fallback link
-            if (fallbackLink) {
-                fallbackLink.href = pdfUrl;
-            }
-            
-            // Timeout to show error if iframe doesn't load
-            setTimeout(() => {
-                if (loadingDiv.style.display !== 'none') {
-                    loadingDiv.style.display = 'none';
-                    iframeElement.style.display = 'none';
-                    errorDiv.style.display = 'block';
-                }
-            }, 10000); // 10 second timeout
         }
-        // Smooth scroll to preview
-        setTimeout(() => {
-            previewDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    } else {
-        // Hide preview
-        previewDiv.style.display = 'none';
-        // Reset states
-        iframeElement.src = '';
-        loadingDiv.style.display = 'none';
-        iframeElement.style.display = 'none';
-        errorDiv.style.display = 'none';
     }
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Show/hide custom selection dropdown
-    const selectionRadios = document.querySelectorAll('input[name="candidateSelection"]');
-    const customDiv = document.getElementById('customSelectionDiv');
-    
-    selectionRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                customDiv.style.display = 'block';
-            } else {
-                customDiv.style.display = 'none';
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        // Show/hide custom selection dropdown
+        const selectionRadios = document.querySelectorAll('input[name="candidateSelection"]');
+        const customDiv = document.getElementById('customSelectionDiv');
+
+        selectionRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'custom') {
+                    customDiv.style.display = 'block';
+                } else {
+                    customDiv.style.display = 'none';
+                }
+            });
         });
-    });
 
-    // Get selected candidates
-    function getSelectedCandidates() {
-        const selection = document.querySelector('input[name="candidateSelection"]:checked').value;
-        const allCandidates = {{ coverage['Candidate'].tolist() | tojson }};
-        const gptCandidates = {{ gpt_candidates | tojson }};
-        
-        if (selection === 'aiInsights') {
-            // Filter to only candidates with AI insights
-            return allCandidates.filter(candidate => gptCandidates.includes(candidate));
-        } else if (selection === 'top5') {
-            return allCandidates.slice(0, 5);
-        } else if (selection === 'all') {
-            return allCandidates;
-        } else { // custom
-            const select = document.getElementById('customCandidates');
-            return Array.from(select.selectedOptions).map(opt => opt.value);
+        // Get selected candidates
+        function getSelectedCandidates() {
+            const selection = document.querySelector('input[name="candidateSelection"]:checked').value;
+            const allCandidates = {{ coverage['Candidate'].tolist() | tojson
         }
+    };
+    const gptCandidates = {{ gpt_candidates | tojson }};
+
+    if (selection === 'aiInsights') {
+        // Filter to only candidates with AI insights
+        return allCandidates.filter(candidate => gptCandidates.includes(candidate));
+    } else if (selection === 'top5') {
+        return allCandidates.slice(0, 5);
+    } else if (selection === 'all') {
+        return allCandidates;
+    } else { // custom
+        const select = document.getElementById('customCandidates');
+        return Array.from(select.selectedOptions).map(opt => opt.value);
+    }
     }
 
     // Export Individual PDFs
-    document.getElementById('exportIndividualPDF').addEventListener('click', function() {
+    document.getElementById('exportIndividualPDF').addEventListener('click', function () {
         const candidates = getSelectedCandidates();
         const includeJustifications = document.getElementById('includeJustifications').checked;
-        
+
         if (candidates.length === 0) {
             alert('Please select at least one candidate');
             return;
@@ -540,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const progressDiv = document.getElementById('exportProgress');
         const progressBar = progressDiv.querySelector('.progress-bar');
         const progressText = document.getElementById('progressText');
-        
+
         progressDiv.style.display = 'block';
         progressText.textContent = 'Generating PDF reports...';
 
@@ -555,38 +579,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 include_justifications: includeJustifications
             })
         })
-        .then(response => response.blob())
-        .then(blob => {
-            // Download file
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'candidate_reports.pdf';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-            
-            progressBar.style.width = '100%';
-            progressText.textContent = 'Complete! Download started.';
-            
-            setTimeout(() => {
-                progressDiv.style.display = 'none';
-                progressBar.style.width = '0%';
-            }, 2000);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            progressText.textContent = 'Error generating PDFs. Please try again.';
-            progressText.classList.add('text-danger');
-        });
+            .then(response => response.blob())
+            .then(blob => {
+                // Download file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'candidate_reports.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Complete! Download started.';
+
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressText.textContent = 'Error generating PDFs. Please try again.';
+                progressText.classList.add('text-danger');
+            });
     });
 
     // Export Individual Word Docs
-    document.getElementById('exportIndividualDOCX').addEventListener('click', function() {
+    document.getElementById('exportIndividualDOCX').addEventListener('click', function () {
         const candidates = getSelectedCandidates();
         const includeJustifications = document.getElementById('includeJustifications').checked;
-        
+
         if (candidates.length === 0) {
             alert('Please select at least one candidate');
             return;
@@ -596,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const progressDiv = document.getElementById('exportProgress');
         const progressBar = progressDiv.querySelector('.progress-bar');
         const progressText = document.getElementById('progressText');
-        
+
         progressDiv.style.display = 'block';
         progressText.textContent = 'Generating Word documents...';
 
@@ -611,42 +635,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 include_justifications: includeJustifications
             })
         })
-        .then(response => response.blob())
-        .then(blob => {
-            // Download file
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = candidates.length === 1 ? 
-                `${candidates[0]}_report.docx` : 
-                'candidate_reports.zip';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-            
-            progressBar.style.width = '100%';
-            progressText.textContent = 'Complete! Download started.';
-            
-            setTimeout(() => {
-                progressDiv.style.display = 'none';
-                progressBar.style.width = '0%';
-            }, 2000);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            progressText.textContent = 'Error generating Word docs. Please try again.';
-            progressText.classList.add('text-danger');
-        });
+            .then(response => response.blob())
+            .then(blob => {
+                // Download file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = candidates.length === 1 ?
+                    `${candidates[0]}_report.docx` :
+                    'candidate_reports.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Complete! Download started.';
+
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressText.textContent = 'Error generating Word docs. Please try again.';
+                progressText.classList.add('text-danger');
+            });
     });
-    
+
     // Initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
-    
+
     // Convert UTC timestamps to user's local timezone
-    document.querySelectorAll('.local-time').forEach(function(elem) {
+    document.querySelectorAll('.local-time').forEach(function (elem) {
         const utcTime = elem.getAttribute('data-utc');
         if (utcTime) {
             const date = new Date(utcTime);

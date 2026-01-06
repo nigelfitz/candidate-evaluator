@@ -4,185 +4,210 @@
 
 {% block extra_styles %}
 /* Tab Navigation */
-        .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
-        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; position: relative; }
-        .admin-tabs a:hover { color: #667eea; }
-        .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
-        /* Finance Menu Container */
-        .finance-menu-container { display: inline-block; position: relative; }
-        /* System Settings Menu Container */
-        .system-settings-menu-container { display: inline-block; position: relative; }
-        /* System Settings Dropdown */
-        .system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0; padding-top: 8px; }
-        .system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0 !important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none !important; }
-        .system-settings-dropdown a:last-child { border-bottom: none !important; }
-        .system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
-        /* Finance Dropdown */
-        .finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 1000; top: 100%; left: 0; padding-top: 8px; border: 1px solid #e0e0e0; }
-        .finance-dropdown a { display: block; padding: 12px 20px; border-bottom: none !important; font-size: 0.95rem; }
-        .finance-dropdown a:hover { background: #f8f9fa; color: #667eea; }
-        .setting-item { border-bottom: 1px solid #e0e0e0; padding: 25px 0; }
-        .setting-item:last-child { border-bottom: none; }
-        .setting-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .setting-name { font-weight: 600; color: #333; font-size: 1.1rem; }
-        .setting-desc { color: #666; margin-top: 8px; font-size: 0.95rem; }
-        .toggle-switch { position: relative; width: 60px; height: 30px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 30px; }
-        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #667eea; }
-        input:checked + .slider:before { transform: translateX(30px); }
-        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .success-msg { background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 20px; }
-        .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .session-info .timeout { font-weight: 600; color: #667eea; }
+.admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px;
+margin-bottom: 20px; }
+.admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid
+transparent; font-weight: 500; transition: all 0.3s; position: relative; }
+.admin-tabs a:hover { color: #667eea; }
+.admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
+/* Finance Menu Container */
+.finance-menu-container { display: inline-block; position: relative; }
+/* System Settings Menu Container */
+.system-settings-menu-container { display: inline-block; position: relative; }
+/* System Settings Dropdown */
+.system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px
+12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0;
+padding-top: 8px; }
+.system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0
+!important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none
+!important; }
+.system-settings-dropdown a:last-child { border-bottom: none !important; }
+.system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+/* Finance Dropdown */
+.finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px
+rgba(0,0,0,0.15); min-width: 180px; z-index: 1000; top: 100%; left: 0; padding-top: 8px; border: 1px solid #e0e0e0; }
+.finance-dropdown a { display: block; padding: 12px 20px; border-bottom: none !important; font-size: 0.95rem; }
+.finance-dropdown a:hover { background: #f8f9fa; color: #667eea; }
+.setting-item { border-bottom: 1px solid #e0e0e0; padding: 25px 0; }
+.setting-item:last-child { border-bottom: none; }
+.setting-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.setting-name { font-weight: 600; color: #333; font-size: 1.1rem; }
+.setting-desc { color: #666; margin-top: 8px; font-size: 0.95rem; }
+.toggle-switch { position: relative; width: 60px; height: 30px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition:
+.4s; border-radius: 30px; }
+.slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color:
+white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: #667eea; }
+input:checked + .slider:before { transform: translateX(30px); }
+.warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom:
+20px; }
+.success-msg { background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom:
+20px; }
+.session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px;
+border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.session-info .timeout { font-weight: 600; color: #667eea; }
 {% endblock %}
 
 {% block content %}
 <h1 class="text-center mb-4">🔧 General Settings</h1>
-            
-            {% if message %}
-            <div class="success-msg">
-                ✅ {{ message }}
+
+{% if message %}
+<div class="success-msg">
+    ✅ {{ message }}
+</div>
+{% endif %}
+
+<div class="warning-box">
+    <strong>⚠️ Important:</strong> These settings control critical system behavior. Changes take effect immediately.
+</div>
+
+<form method="POST" action="{{ url_for('admin_system_save') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <!-- Registration Toggle -->
+    <div class="setting-item">
+        <div class="setting-header">
+            <div>
+                <div class="setting-name">{{ settings.registration_enabled.label }}</div>
+                <div class="setting-desc">{{ settings.registration_enabled.description }}</div>
             </div>
+            <label class="toggle-switch">
+                <input type="checkbox" name="registration_enabled" {% if settings.registration_enabled.value %}checked{%
+                    endif %}>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
+            <strong>Current Status:</strong>
+            {% if settings.registration_enabled.value %}
+            <span style="color: #28a745;">✓ Registration is ENABLED</span> - New users can create accounts
+            {% else %}
+            <span style="color: #dc3545;">✕ Registration is DISABLED</span> - New signups will see "Please check back
+            soon" message
             {% endif %}
-            
-            <div class="warning-box">
-                <strong>⚠️ Important:</strong> These settings control critical system behavior. Changes take effect immediately.
+        </div>
+    </div>
+
+    <!-- Maintenance Mode -->
+    <div class="setting-item">
+        <div class="setting-header">
+            <div>
+                <div class="setting-name">{{ settings.maintenance_mode.label }}</div>
+                <div class="setting-desc">{{ settings.maintenance_mode.description }}</div>
             </div>
-            
-            <form method="POST" action="{{ url_for('admin_system_save') }}">
-                <!-- Registration Toggle -->
-                <div class="setting-item">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-name">{{ settings.registration_enabled.label }}</div>
-                            <div class="setting-desc">{{ settings.registration_enabled.description }}</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="registration_enabled" {% if settings.registration_enabled.value %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
-                        <strong>Current Status:</strong> 
-                        {% if settings.registration_enabled.value %}
-                            <span style="color: #28a745;">✓ Registration is ENABLED</span> - New users can create accounts
-                        {% else %}
-                            <span style="color: #dc3545;">✕ Registration is DISABLED</span> - New signups will see "Please check back soon" message
-                        {% endif %}
-                    </div>
+            <label class="toggle-switch">
+                <input type="checkbox" name="maintenance_mode" {% if settings.maintenance_mode.value %}checked{% endif
+                    %}>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Max File Size -->
+    <div class="setting-item">
+        <div class="setting-name">{{ settings.max_file_size_mb.label }}</div>
+        <div class="setting-desc">{{ settings.max_file_size_mb.description }}</div>
+        <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
+            <input type="range" name="max_file_size_mb" class="form-range flex-grow-1" min="5" max="50" step="5"
+                value="{{ settings.max_file_size_mb.value }}"
+                oninput="this.nextElementSibling.value = this.value + ' MB'">
+            <output class="badge bg-primary" style="min-width: 80px; text-align: center; font-size: 1rem;">{{
+                settings.max_file_size_mb.value }} MB</output>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+            <span>5 MB</span>
+            <span>25 MB (Recommended)</span>
+            <span>50 MB</span>
+        </div>
+    </div>
+
+    <!-- Document Length Warnings Toggle -->
+    <div class="setting-item">
+        <div class="setting-header">
+            <div>
+                <div class="setting-name">{{ settings.enable_document_length_warnings.label }}</div>
+                <div class="setting-desc">{{ settings.enable_document_length_warnings.description }}</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" name="enable_document_length_warnings" {% if
+                    settings.enable_document_length_warnings.value %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
+            <strong>Current Status:</strong>
+            {% if settings.enable_document_length_warnings.value %}
+            <span style="color: #28a745;">✓ Warnings ENABLED</span> - Users will see warnings when JD or resumes exceed
+            character limits (at Step 1, Step 3, and Step 4)
+            {% else %}
+            <span style="color: #dc3545;">✕ Warnings DISABLED</span> - Documents will be automatically trimmed without
+            user confirmation
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Maximum Resumes Per Upload -->
+    <div class="setting-item">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div class="setting-name">{{ settings.max_resumes_per_upload.label }}</div>
+                <div class="setting-desc">{{ settings.max_resumes_per_upload.description }}</div>
+                <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
+                    <input type="range" name="max_resumes_per_upload" id="maxResumesSlider" class="form-range" min="50"
+                        max="500" step="50" value="{{ settings.max_resumes_per_upload.value }}"
+                        style="flex: 1; max-width: 300px;"
+                        oninput="document.getElementById('maxResumesValue').textContent = this.value">
+                    <span id="maxResumesValue"
+                        style="font-weight: 600; color: #2563eb; min-width: 80px; text-align: center; font-size: 1.1rem;">{{
+                        settings.max_resumes_per_upload.value }}</span>
                 </div>
-                
-                <!-- Maintenance Mode -->
-                <div class="setting-item">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-name">{{ settings.maintenance_mode.label }}</div>
-                            <div class="setting-desc">{{ settings.maintenance_mode.description }}</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="maintenance_mode" {% if settings.maintenance_mode.value %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                <div style="margin-top: 8px; font-size: 0.85rem; color: #64748b;">
+                    <span style="float: left;">50 (Quick)</span>
+                    <span style="float: right;">500 (Enterprise)</span>
+                    <div style="clear: both;"></div>
                 </div>
-                
-                <!-- Max File Size -->
-                <div class="setting-item">
-                    <div class="setting-name">{{ settings.max_file_size_mb.label }}</div>
-                    <div class="setting-desc">{{ settings.max_file_size_mb.description }}</div>
-                    <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
-                        <input type="range" name="max_file_size_mb" class="form-range flex-grow-1" 
-                               min="5" max="50" step="5" value="{{ settings.max_file_size_mb.value }}"
-                               oninput="this.nextElementSibling.value = this.value + ' MB'">
-                        <output class="badge bg-primary" style="min-width: 80px; text-align: center; font-size: 1rem;">{{ settings.max_file_size_mb.value }} MB</output>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
-                        <span>5 MB</span>
-                        <span>25 MB (Recommended)</span>
-                        <span>50 MB</span>
-                    </div>
-                </div>
-                
-                <!-- Document Length Warnings Toggle -->
-                <div class="setting-item">
-                    <div class="setting-header">
-                        <div>
-                            <div class="setting-name">{{ settings.enable_document_length_warnings.label }}</div>
-                            <div class="setting-desc">{{ settings.enable_document_length_warnings.description }}</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="enable_document_length_warnings" {% if settings.enable_document_length_warnings.value %}checked{% endif %}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; font-size: 0.9rem;">
-                        <strong>Current Status:</strong> 
-                        {% if settings.enable_document_length_warnings.value %}
-                            <span style="color: #28a745;">✓ Warnings ENABLED</span> - Users will see warnings when JD or resumes exceed character limits (at Step 1, Step 3, and Step 4)
-                        {% else %}
-                            <span style="color: #dc3545;">✕ Warnings DISABLED</span> - Documents will be automatically trimmed without user confirmation
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Maximum Resumes Per Upload -->
-                <div class="setting-item">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="flex: 1;">
-                            <div class="setting-name">{{ settings.max_resumes_per_upload.label }}</div>
-                            <div class="setting-desc">{{ settings.max_resumes_per_upload.description }}</div>
-                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
-                                <input type="range" name="max_resumes_per_upload" id="maxResumesSlider" class="form-range" 
-                                       min="50" max="500" step="50" value="{{ settings.max_resumes_per_upload.value }}"
-                                       style="flex: 1; max-width: 300px;"
-                                       oninput="document.getElementById('maxResumesValue').textContent = this.value">
-                                <span id="maxResumesValue" style="font-weight: 600; color: #2563eb; min-width: 80px; text-align: center; font-size: 1.1rem;">{{ settings.max_resumes_per_upload.value }}</span>
-                            </div>
-                            <div style="margin-top: 8px; font-size: 0.85rem; color: #64748b;">
-                                <span style="float: left;">50 (Quick)</span>
-                                <span style="float: right;">500 (Enterprise)</span>
-                                <div style="clear: both;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: #fff9e6; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #ffc107;">
-                        <strong>⚠️ Processing Impact:</strong> Higher limits allow users to upload more resumes per batch, but may increase processing time and API usage. The system will show helpful guidance to users approaching or exceeding this limit.
-                    </div>
-                </div>
-                
-                <!-- Metadata -->
-                <div class="setting-item">
-                    <div class="setting-name">Last Updated</div>
-                    <div class="setting-desc">
-                        {{ settings._metadata.last_updated }} by {{ settings._metadata.updated_by }}
-                    </div>
-                </div>
-                
-                <!-- Save Button -->
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-save">💾 Save General Settings</button>
-                </div>
-            </form>
+            </div>
+        </div>
+        <div
+            style="margin-top: 15px; padding: 12px; background: #fff9e6; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #ffc107;">
+            <strong>⚠️ Processing Impact:</strong> Higher limits allow users to upload more resumes per batch, but may
+            increase processing time and API usage. The system will show helpful guidance to users approaching or
+            exceeding this limit.
+        </div>
+    </div>
+
+    <!-- Metadata -->
+    <div class="setting-item">
+        <div class="setting-name">Last Updated</div>
+        <div class="setting-desc">
+            {{ settings._metadata.last_updated }} by {{ settings._metadata.updated_by }}
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-save">💾 Save General Settings</button>
+    </div>
+</form>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-// Finance dropdown hover functionality
-const financeContainer = document.querySelector('.finance-menu-container');
-const dropdown = document.querySelector('.finance-dropdown');
-if (financeContainer && dropdown) {
-    financeContainer.addEventListener('mouseenter', () => { dropdown.style.display = 'block'; });
-    financeContainer.addEventListener('mouseleave', () => { dropdown.style.display = 'none'; });
-}
+    // Finance dropdown hover functionality
+    const financeContainer = document.querySelector('.finance-menu-container');
+    const dropdown = document.querySelector('.finance-dropdown');
+    if (financeContainer && dropdown) {
+        financeContainer.addEventListener('mouseenter', () => { dropdown.style.display = 'block'; });
+        financeContainer.addEventListener('mouseleave', () => { dropdown.style.display = 'none'; });
+    }
 
-// System Settings dropdown hover functionality
-const systemContainer = document.querySelector('.system-settings-menu-container');
-const systemDropdown = document.querySelector('.system-settings-dropdown');
-if (systemContainer && systemDropdown) {
-    systemContainer.addEventListener('mouseenter', () => { systemDropdown.style.display = 'block'; });
-    systemContainer.addEventListener('mouseleave', () => { systemDropdown.style.display = 'none'; });
-}
+    // System Settings dropdown hover functionality
+    const systemContainer = document.querySelector('.system-settings-menu-container');
+    const systemDropdown = document.querySelector('.system-settings-dropdown');
+    if (systemContainer && systemDropdown) {
+        systemContainer.addEventListener('mouseenter', () => { systemDropdown.style.display = 'block'; });
+        systemContainer.addEventListener('mouseleave', () => { systemDropdown.style.display = 'none'; });
+    }
 </script>
 {% endblock %}

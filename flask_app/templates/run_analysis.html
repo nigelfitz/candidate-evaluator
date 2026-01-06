@@ -9,169 +9,204 @@
 {% include 'workflow_stepper.html' %}
 
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px 120px 20px;">
-    {% if current_user.balance_usd < 5 %}
-    <div class="alert alert-warning mb-3" style="padding: 1rem;">
+    {% if current_user.balance_usd < 5 %} <div class="alert alert-warning mb-3" style="padding: 1rem;">
         <i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px;"></i>
         Low Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
-    </div>
+</div>
+{% endif %}
+
+<!-- Configure Analysis Form -->
+<form method="POST" action="{{ url_for('run_analysis_route') }}" id="runAnalysisForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <!-- Hidden form token to prevent duplicate submissions -->
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+
+    {% if truncation_warning %}
+    <!-- Hidden field to confirm user has seen truncation warning -->
+    <input type="hidden" name="confirm_truncation" value="yes">
+    <script>console.log('TRUNCATION WARNING ACTIVE: Banner should be visible');</script>
+    {% else %}
+    <script>console.log('NO TRUNCATION WARNING');</script>
     {% endif %}
 
-    <!-- Configure Analysis Form -->
-    <form method="POST" action="{{ url_for('run_analysis_route') }}" id="runAnalysisForm">
-        <!-- Hidden form token to prevent duplicate submissions -->
-        <input type="hidden" name="form_token" value="{{ form_token }}">
-        
+    <div
+        style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">Step 4: Run Analysis</h2>
+
         {% if truncation_warning %}
-        <!-- Hidden field to confirm user has seen truncation warning -->
-        <input type="hidden" name="confirm_truncation" value="yes">
-        <script>console.log('TRUNCATION WARNING ACTIVE: Banner should be visible');</script>
-        {% else %}
-        <script>console.log('NO TRUNCATION WARNING');</script>
-        {% endif %}
-        
-        <div style="background: white; border-radius: 12px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h2 style="color: #1f2937; margin-bottom: 20px; font-size: 24px; font-weight: 600;">Step 4: Run Analysis</h2>
-            
-            {% if truncation_warning %}
-            <!-- Document Length Warning Banner -->
-            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; margin-bottom: 30px; border: 2px solid #3b82f6;">
-                <div style="display: flex; gap: 16px;">
-                    <i data-lucide="info" style="width: 48px; height: 48px; color: #1e40af; flex-shrink: 0;"></i>
-                    <div style="flex: 1;">
-                        <h3 style="color: #1e40af; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">
-                            📄 Document Length Notice
-                        </h3>
-                        <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
-                            The following documents exceed our character limits and will be automatically trimmed:
-                        </p>
-                        <ul style="color: #1e40af; margin: 0 0 16px 0; padding-left: 20px; font-size: 14px;">
-                            {% for doc in truncated_docs %}
-                            <li style="margin-bottom: 8px;">
-                                <strong>{{ doc.name }}</strong>: {{ "{:,}".format(doc.length) }} characters 
-                                <span style="color: #3b82f6;">→ will use first {{ "{:,}".format(doc.limit) }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a;">
-                            <p style="color: #065f46; margin: 0 0 12px 0; font-size: 15px; font-weight: 600;">
-                                ✅ Don't worry - you're in good hands!
-                            </p>
-                            <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
-                                Our generous limits ({{ "{:,}".format(jd_limit) }} chars for JDs, {{ "{:,}".format(resume_limit) }} chars for resumes) are designed to capture all essential information while maintaining optimal performance. Your analysis will still be comprehensive and accurate.
-                            </p>
-                        </div>
-                        <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                            <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
-                                <strong>💡 Important:</strong> If you'd prefer to review and manually shorten these documents first, you can do so now and then re-run the job later. You have <strong>NOT been charged yet</strong> (charges only apply when analysis completes successfully).
-                            </p>
-                            <div style="margin-top: 12px; text-align: right;">
-                                <a href="{{ url_for('analyze', new='1') }}" 
-                                   style="display: inline-block; padding: 8px 16px; background: white; border: 2px solid #f59e0b; border-radius: 6px; color: #78350f; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;"
-                                   onmouseover="this.style.background='#fef3c7'"
-                                   onmouseout="this.style.background='white'">
-                                    🚫 Abandon Job
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <div style="background: #eff6ff; padding: 24px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #3b82f6;">
-                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                    <i data-lucide="check-circle" style="width: 48px; height: 48px; color: #16a34a;"></i>
-                    <div>
-                        <h3 style="color: #1e40af; margin: 0; font-size: 20px; font-weight: 600;">Ready to Analyze {{ resume_count }} Candidate{{ 's' if resume_count != 1 else '' }}</h3>
-                        <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Job scoring and insights powered by AI</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- New Pricing Card -->
-            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid #f59e0b;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <h4 style="color: #78350f; margin: 0; font-size: 16px; font-weight: 600;">Job Cost</h4>
-                        <p style="color: #92400e; margin: 4px 0 0 0; font-size: 13px;">Full ranking of all candidates + Deep Insights based on selected tier</p>
-                    </div>
-                    <div style="text-align: right;">
-                        {% if current_user.is_test_drive %}
-                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$0.00</div>
-                        <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Free Trial</div>
-                        {% else %}
-                        <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</div>
-                        <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Base Price</div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            {% if current_user.is_test_drive %}
-            <!-- Pro-Tip for First-Time Users -->
-            <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 2px solid #10b981;">
-                <div style="display: flex; gap: 16px;">
-                    <i data-lucide="lightbulb" style="width: 40px; height: 40px; color: #065f46; flex-shrink: 0;"></i>
-                    <div>
-                        <h4 style="color: #065f46; margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">🎓 Pro-Tip for Your First Analysis</h4>
-                        <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
-                            Don't worry—we analyze <strong>every single resume</strong> against <strong>every criterion</strong> regardless of the tier you choose. We recommend starting with the <strong>Top 5 Insights</strong> to see your strongest matches immediately. You can always unlock more later!
-                        </p>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- AI Insights Selector -->
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 12px; font-size: 16px;">
-                    <i data-lucide="sparkles" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
-                    AI-Powered Deep Insights
-                </label>
-                <select name="insights_mode" id="insightsMode" onchange="updateInsightsPrice()"
-                        style="display: block; width: 100%; padding: 14px; border: 2px solid #d1d5db; border-radius: 8px; background: white; font-size: 15px; cursor: pointer; line-height: 1.4;">
-                    <option value="standard" selected>Standard (Included): Full Ranking of all candidates + Deep Insights for Top 5. (Perfect for initial shortlisting)</option>
-                    <option value="deep_dive">Deep Dive (+${{ "%.2f"|format(pricing['DEEP_DIVE_PRICE']) }}): Full Ranking of all candidates + Deep Insights for Top 15. (Best for high-volume roles)</option>
-                    <option value="full_radar">Full Radar (+${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}/candidate over 5): Full Ranking + Deep Insights for every single candidate</option>
-                </select>
-                <div style="margin-top: 12px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #3b82f6;">
-                    <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.5;">
-                        <i data-lucide="info" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
-                        <strong>Deep Insights include:</strong> Detailed strengths, skill gaps, cultural fit assessment, and hiring recommendations for each candidate.
+        <!-- Document Length Warning Banner -->
+        <div
+            style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; margin-bottom: 30px; border: 2px solid #3b82f6;">
+            <div style="display: flex; gap: 16px;">
+                <i data-lucide="info" style="width: 48px; height: 48px; color: #1e40af; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h3 style="color: #1e40af; margin: 0 0 12px 0; font-size: 18px; font-weight: 700;">
+                        📄 Document Length Notice
+                    </h3>
+                    <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
+                        The following documents exceed our character limits and will be automatically trimmed:
                     </p>
-                </div>
-            </div>
-
-            <!-- Total Cost Display -->
-            <div id="totalCostDisplay" style="background: #16a34a; color: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Cost</div>
-                        <div id="totalCostValue" style="font-size: 36px; font-weight: 700; line-height: 1;">{% if current_user.is_test_drive %}$0.00{% else %}${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}{% endif %}</div>
+                    <ul style="color: #1e40af; margin: 0 0 16px 0; padding-left: 20px; font-size: 14px;">
+                        {% for doc in truncated_docs %}
+                        <li style="margin-bottom: 8px;">
+                            <strong>{{ doc.name }}</strong>: {{ "{:,}".format(doc.length) }} characters
+                            <span style="color: #3b82f6;">→ will use first {{ "{:,}".format(doc.limit) }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a;">
+                        <p style="color: #065f46; margin: 0 0 12px 0; font-size: 15px; font-weight: 600;">
+                            ✅ Don't worry - you're in good hands!
+                        </p>
+                        <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
+                            Our generous limits ({{ "{:,}".format(jd_limit) }} chars for JDs, {{
+                            "{:,}".format(resume_limit) }} chars for resumes) are designed to capture all essential
+                            information while maintaining optimal performance. Your analysis will still be comprehensive
+                            and accurate.
+                        </p>
                     </div>
-                    <div style="text-align: right; opacity: 0.9; font-size: 14px;">
-                        <div>Your Balance: <strong>${{ "%.2f"|format(current_user.balance_usd) }}</strong></div>
-                        <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{ "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else current_user.balance_usd|float - pricing['BASE_ANALYSIS_PRICE']) }}</strong></div>
+                    <div
+                        style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
+                            <strong>💡 Important:</strong> If you'd prefer to review and manually shorten these
+                            documents first, you can do so now and then re-run the job later. You have <strong>NOT been
+                                charged yet</strong> (charges only apply when analysis completes successfully).
+                        </p>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <a href="{{ url_for('analyze', new='1') }}"
+                                style="display: inline-block; padding: 8px 16px; background: white; border: 2px solid #f59e0b; border-radius: 6px; color: #78350f; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s;"
+                                onmouseover="this.style.background='#fef3c7'"
+                                onmouseout="this.style.background='white'">
+                                🚫 Abandon Job
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </form>
+        {% endif %}
+
+        <div
+            style="background: #eff6ff; padding: 24px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #3b82f6;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                <i data-lucide="check-circle" style="width: 48px; height: 48px; color: #16a34a;"></i>
+                <div>
+                    <h3 style="color: #1e40af; margin: 0; font-size: 20px; font-weight: 600;">Ready to Analyze {{
+                        resume_count }} Candidate{{ 's' if resume_count != 1 else '' }}</h3>
+                    <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Job scoring and insights powered by
+                        AI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Pricing Card -->
+        <div
+            style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 2px solid #f59e0b;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h4 style="color: #78350f; margin: 0; font-size: 16px; font-weight: 600;">Job Cost</h4>
+                    <p style="color: #92400e; margin: 4px 0 0 0; font-size: 13px;">Full ranking of all candidates + Deep
+                        Insights based on selected tier</p>
+                </div>
+                <div style="text-align: right;">
+                    {% if current_user.is_test_drive %}
+                    <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">$0.00</div>
+                    <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Free Trial</div>
+                    {% else %}
+                    <div style="font-size: 32px; font-weight: 700; color: #78350f; line-height: 1;">${{
+                        "%.2f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</div>
+                    <div style="font-size: 12px; color: #92400e; margin-top: 2px;">Base Price</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if current_user.is_test_drive %}
+        <!-- Pro-Tip for First-Time Users -->
+        <div
+            style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 2px solid #10b981;">
+            <div style="display: flex; gap: 16px;">
+                <i data-lucide="lightbulb" style="width: 40px; height: 40px; color: #065f46; flex-shrink: 0;"></i>
+                <div>
+                    <h4 style="color: #065f46; margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">🎓 Pro-Tip for
+                        Your First Analysis</h4>
+                    <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
+                        Don't worry—we analyze <strong>every single resume</strong> against <strong>every
+                            criterion</strong> regardless of the tier you choose. We recommend starting with the
+                        <strong>Top 5 Insights</strong> to see your strongest matches immediately. You can always unlock
+                        more later!
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Insights Selector -->
+        <div style="margin-bottom: 24px;">
+            <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 12px; font-size: 16px;">
+                <i data-lucide="sparkles"
+                    style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
+                AI-Powered Deep Insights
+            </label>
+            <select name="insights_mode" id="insightsMode" onchange="updateInsightsPrice()"
+                style="display: block; width: 100%; padding: 14px; border: 2px solid #d1d5db; border-radius: 8px; background: white; font-size: 15px; cursor: pointer; line-height: 1.4;">
+                <option value="standard" selected>Standard (Included): Full Ranking of all candidates + Deep Insights
+                    for Top 5. (Perfect for initial shortlisting)</option>
+                <option value="deep_dive">Deep Dive (+${{ "%.2f"|format(pricing['DEEP_DIVE_PRICE']) }}): Full Ranking of
+                    all candidates + Deep Insights for Top 15. (Best for high-volume roles)</option>
+                <option value="full_radar">Full Radar (+${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}/candidate
+                    over 5): Full Ranking + Deep Insights for every single candidate</option>
+            </select>
+            <div
+                style="margin-top: 12px; padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.5;">
+                    <i data-lucide="info"
+                        style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
+                    <strong>Deep Insights include:</strong> Detailed strengths, skill gaps, cultural fit assessment, and
+                    hiring recommendations for each candidate.
+                </p>
+            </div>
+        </div>
+
+        <!-- Total Cost Display -->
+        <div id="totalCostDisplay"
+            style="background: #16a34a; color: white; border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Total Cost</div>
+                    <div id="totalCostValue" style="font-size: 36px; font-weight: 700; line-height: 1;">{% if
+                        current_user.is_test_drive %}$0.00{% else %}${{ "%.2f"|format(pricing['BASE_ANALYSIS_PRICE'])
+                        }}{% endif %}</div>
+                </div>
+                <div style="text-align: right; opacity: 0.9; font-size: 14px;">
+                    <div>Your Balance: <strong>${{ "%.2f"|format(current_user.balance_usd) }}</strong></div>
+                    <div id="remainingBalance" style="margin-top: 4px;">After: <strong>${{
+                            "%.2f"|format(current_user.balance_usd if current_user.is_test_drive else
+                            current_user.balance_usd|float - pricing['BASE_ANALYSIS_PRICE']) }}</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 </div>
 
 <!-- Processing Overlay -->
-<div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 20px; padding: 48px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+<div id="processingOverlay"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; align-items: center; justify-content: center;">
+    <div
+        style="background: white; border-radius: 20px; padding: 48px; max-width: 600px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
         <div style="text-align: center; margin-bottom: 32px;">
             <div class="spinner-border text-primary" style="width: 80px; height: 80px; margin-bottom: 24px;"></div>
             <h2 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Processing Analysis</h2>
             <p style="color: #64748b; font-size: 16px;">Analyzing candidates with AI reasoning...</p>
         </div>
-        
+
         <!-- Live Status Log -->
-        <div id="statusLog" style="background: #f8fafc; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; border: 2px solid #e2e8f0;">
+        <div id="statusLog"
+            style="background: #f8fafc; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; border: 2px solid #e2e8f0;">
             <div class="status-item" style="color: #16a34a; margin-bottom: 8px;">
-                <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
+                <i data-lucide="check"
+                    style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
                 <span>Initializing analysis engine...</span>
             </div>
         </div>
@@ -179,143 +214,145 @@
 </div>
 
 <script>
-// Dynamic Progress Tracking System
-let progressInterval = null;
-let lastProgressValue = 0;
-let lastProgressTime = Date.now();
-let isPhase2 = false;
-let shownMilestones = new Set(); // Track which milestones we've already shown
-let milestonesArray = []; // Store milestones for this analysis
+    // Dynamic Progress Tracking System
+    let progressInterval = null;
+    let lastProgressValue = 0;
+    let lastProgressTime = Date.now();
+    let isPhase2 = false;
+    let shownMilestones = new Set(); // Track which milestones we've already shown
+    let milestonesArray = []; // Store milestones for this analysis
 
-function startProgressTracking(totalCandidates) {
-    // Build milestone array once at start
-    milestonesArray = [
-        { progress: 1, key: 'first', messages: ['Reading first candidate...', 'Extracting candidate information...'] },
-        { progress: Math.floor(totalCandidates * 0.10), key: '10pct', messages: ['10% complete - Analyzing resumes...'] },
-        { progress: Math.floor(totalCandidates * 0.25), key: '25pct', messages: ['25% complete - Processing continues...'] },
-        { progress: Math.floor(totalCandidates * 0.40), key: '40pct', messages: ['40% complete - Evaluating candidates against criteria...'] },
-        { progress: Math.floor(totalCandidates * 0.5), key: '50pct', messages: ['Halfway through candidate scoring...'] },
-        { progress: Math.floor(totalCandidates * 0.60), key: '60pct', messages: ['60% complete - Ranking candidates...'] },
-        { progress: Math.floor(totalCandidates * 0.75), key: '75pct', messages: ['75% complete - Almost there...'] },
-        { progress: Math.floor(totalCandidates * 0.90), key: '90pct', messages: ['90% complete - Finalizing scores...'] },
-        { progress: totalCandidates, key: 'complete', messages: [`All ${totalCandidates} candidates scored! ✨`, 'Preparing detailed analysis results...'] }
-    ];
-    
-    // Remove duplicates (happens with small candidate counts)
-    const uniqueMilestones = [];
-    const seenProgress = new Set();
-    milestonesArray.forEach(m => {
-        if (!seenProgress.has(m.progress) && m.progress > 0) {
-            seenProgress.add(m.progress);
-            uniqueMilestones.push(m);
-        }
-    });
-    milestonesArray = uniqueMilestones;
-    
-    const statusLog = document.getElementById('statusLog');
-    const progressText = document.getElementById('progressText');
-    
-    // Add initial status
-    addStatusItem('Validating job criteria...');
-    
-    // Start polling immediately with faster interval (every 500ms)
-    progressInterval = setInterval(() => checkProgress(totalCandidates), 500);
-}
+    function startProgressTracking(totalCandidates) {
+        // Build milestone array once at start
+        milestonesArray = [
+            { progress: 1, key: 'first', messages: ['Reading first candidate...', 'Extracting candidate information...'] },
+            { progress: Math.floor(totalCandidates * 0.10), key: '10pct', messages: ['10% complete - Analyzing resumes...'] },
+            { progress: Math.floor(totalCandidates * 0.25), key: '25pct', messages: ['25% complete - Processing continues...'] },
+            { progress: Math.floor(totalCandidates * 0.40), key: '40pct', messages: ['40% complete - Evaluating candidates against criteria...'] },
+            { progress: Math.floor(totalCandidates * 0.5), key: '50pct', messages: ['Halfway through candidate scoring...'] },
+            { progress: Math.floor(totalCandidates * 0.60), key: '60pct', messages: ['60% complete - Ranking candidates...'] },
+            { progress: Math.floor(totalCandidates * 0.75), key: '75pct', messages: ['75% complete - Almost there...'] },
+            { progress: Math.floor(totalCandidates * 0.90), key: '90pct', messages: ['90% complete - Finalizing scores...'] },
+            { progress: totalCandidates, key: 'complete', messages: [`All ${totalCandidates} candidates scored! ✨`, 'Preparing detailed analysis results...'] }
+        ];
 
-function checkProgress(totalCandidates) {
-    // Try to extract analysis_id from current URL or session
-    // For now, we'll use a workaround: check if there's a draft analysis in progress
-    fetch('/api/analysis-progress/latest', {
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) return;
-        
-        const currentProgress = data.resumes_processed;
-        const total = data.total_candidates || totalCandidates;
-        const isComplete = data.is_complete;
-        const phase = data.phase || 'phase1';
-        
-        // Calculate progress based on phase:
-        // Phase 1: 0-70% (based on candidates scored)
-        // Phase 2: 70-100% (fixed at 85% while running, 100% when complete)
-        let percentage = 0;
-        if (phase === 'phase1') {
-            // Phase 1: Scale to 70%
-            percentage = total > 0 ? Math.round((currentProgress / total) * 70) : 0;
-        } else if (phase === 'phase2') {
-            // Phase 2: Show 85% while running
-            percentage = 85;
-            isPhase2 = true;
-        } else if (phase === 'complete' || isComplete) {
-            percentage = 100;
-        }
-        
-        // Update progress text
-        if (isComplete) {
-            clearInterval(progressInterval);
-            return;
-        }
-        
-        // Check for stall (no progress for 10+ seconds)
-        if (currentProgress === lastProgressValue) {
-            const stallTime = Date.now() - lastProgressTime;
-            // Stall detected but no longer showing progress text
-        } else {
-            // Progress moved - update tracking
-            lastProgressValue = currentProgress;
-            lastProgressTime = Date.now();
-        }
-        
-        // Check milestones on EVERY poll (not just when progress changes)
-        // This ensures we catch all milestones even if progress jumps
-        if (phase === 'phase2' && !isPhase2) {
-            isPhase2 = true;
-            addStatusItem('✨ Phase 1 complete! Starting deep insights...');
-            addStatusItem('Analyzing candidate strengths and weaknesses...');
-            addStatusItem('Generating detailed feedback and recommendations...');
-        } else if (phase === 'phase1') {
-            // Check each milestone and show if we've reached it but haven't shown it yet
-            milestonesArray.forEach(milestone => {
-                if (currentProgress >= milestone.progress && !shownMilestones.has(milestone.key)) {
-                    milestone.messages.forEach(msg => addStatusItem(msg));
-                    shownMilestones.add(milestone.key);
+        // Remove duplicates (happens with small candidate counts)
+        const uniqueMilestones = [];
+        const seenProgress = new Set();
+        milestonesArray.forEach(m => {
+            if (!seenProgress.has(m.progress) && m.progress > 0) {
+                seenProgress.add(m.progress);
+                uniqueMilestones.push(m);
+            }
+        });
+        milestonesArray = uniqueMilestones;
+
+        const statusLog = document.getElementById('statusLog');
+        const progressText = document.getElementById('progressText');
+
+        // Add initial status
+        addStatusItem('Validating job criteria...');
+
+        // Start polling immediately with faster interval (every 500ms)
+        progressInterval = setInterval(() => checkProgress(totalCandidates), 500);
+    }
+
+    function checkProgress(totalCandidates) {
+        // Try to extract analysis_id from current URL or session
+        // For now, we'll use a workaround: check if there's a draft analysis in progress
+        fetch('/api/analysis-progress/latest', {
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) return;
+
+                const currentProgress = data.resumes_processed;
+                const total = data.total_candidates || totalCandidates;
+                const isComplete = data.is_complete;
+                const phase = data.phase || 'phase1';
+
+                // Calculate progress based on phase:
+                // Phase 1: 0-70% (based on candidates scored)
+                // Phase 2: 70-100% (fixed at 85% while running, 100% when complete)
+                let percentage = 0;
+                if (phase === 'phase1') {
+                    // Phase 1: Scale to 70%
+                    percentage = total > 0 ? Math.round((currentProgress / total) * 70) : 0;
+                } else if (phase === 'phase2') {
+                    // Phase 2: Show 85% while running
+                    percentage = 85;
+                    isPhase2 = true;
+                } else if (phase === 'complete' || isComplete) {
+                    percentage = 100;
                 }
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Progress check error:', error);
-    });
-}
 
-function addStatusItem(text) {
-    const statusLog = document.getElementById('statusLog');
-    const statusItem = document.createElement('div');
-    statusItem.className = 'status-item';
-    statusItem.style.color = '#16a34a';
-    statusItem.style.marginBottom = '8px';
-    statusItem.innerHTML = `
+                // Update progress text
+                if (isComplete) {
+                    clearInterval(progressInterval);
+                    return;
+                }
+
+                // Check for stall (no progress for 10+ seconds)
+                if (currentProgress === lastProgressValue) {
+                    const stallTime = Date.now() - lastProgressTime;
+                    // Stall detected but no longer showing progress text
+                } else {
+                    // Progress moved - update tracking
+                    lastProgressValue = currentProgress;
+                    lastProgressTime = Date.now();
+                }
+
+                // Check milestones on EVERY poll (not just when progress changes)
+                // This ensures we catch all milestones even if progress jumps
+                if (phase === 'phase2' && !isPhase2) {
+                    isPhase2 = true;
+                    addStatusItem('✨ Phase 1 complete! Starting deep insights...');
+                    addStatusItem('Analyzing candidate strengths and weaknesses...');
+                    addStatusItem('Generating detailed feedback and recommendations...');
+                } else if (phase === 'phase1') {
+                    // Check each milestone and show if we've reached it but haven't shown it yet
+                    milestonesArray.forEach(milestone => {
+                        if (currentProgress >= milestone.progress && !shownMilestones.has(milestone.key)) {
+                            milestone.messages.forEach(msg => addStatusItem(msg));
+                            shownMilestones.add(milestone.key);
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Progress check error:', error);
+            });
+    }
+
+    function addStatusItem(text) {
+        const statusLog = document.getElementById('statusLog');
+        const statusItem = document.createElement('div');
+        statusItem.className = 'status-item';
+        statusItem.style.color = '#16a34a';
+        statusItem.style.marginBottom = '8px';
+        statusItem.innerHTML = `
         <i data-lucide="check" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
         <span>${text}</span>
     `;
-    statusLog.appendChild(statusItem);
-    statusLog.scrollTop = statusLog.scrollHeight;
-    
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
+        statusLog.appendChild(statusItem);
+        statusLog.scrollTop = statusLog.scrollHeight;
 
-function updateProgressText(text) {
-    const progressText = document.getElementById('progressText');
-    progressText.textContent = text;
-}
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function updateProgressText(text) {
+        const progressText = document.getElementById('progressText');
+        progressText.textContent = text;
+    }
 </script>
 
 <!-- Insufficient Funds Modal -->
 {% if insufficient_funds %}
-<div id="insufficientFundsModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 16px; padding: 40px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+<div id="insufficientFundsModal"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div
+        style="background: white; border-radius: 16px; padding: 40px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
         <div style="text-align: center; margin-bottom: 25px;">
             <div style="font-size: 60px; margin-bottom: 15px;">💳</div>
             <h2 style="color: #1f2937; margin-bottom: 10px;">Almost There!</h2>
@@ -344,14 +381,20 @@ function updateProgressText(text) {
         <div style="margin-bottom: 25px;">
             <p style="color: #374151; font-weight: 600; margin-bottom: 12px; text-align: center;">Quick Add:</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="quickAddFunds({{ '%.0f'|format(pricing['BASE_ANALYSIS_PRICE']) }})" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ ${{ "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</button>
-                <button onclick="quickAddFunds(25)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $25</button>
-                <button onclick="quickAddFunds(50)" class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $50</button>
-                <button onclick="quickAddFunds(100)" class="btn btn-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ $100</button>
+                <button onclick="quickAddFunds({{ '%.0f'|format(pricing['BASE_ANALYSIS_PRICE']) }})"
+                    class="btn btn-outline-primary" style="padding: 12px; font-size: 16px; font-weight: 600;">+ ${{
+                    "%.0f"|format(pricing['BASE_ANALYSIS_PRICE']) }}</button>
+                <button onclick="quickAddFunds(25)" class="btn btn-outline-primary"
+                    style="padding: 12px; font-size: 16px; font-weight: 600;">+ $25</button>
+                <button onclick="quickAddFunds(50)" class="btn btn-outline-primary"
+                    style="padding: 12px; font-size: 16px; font-weight: 600;">+ $50</button>
+                <button onclick="quickAddFunds(100)" class="btn btn-primary"
+                    style="padding: 12px; font-size: 16px; font-weight: 600;">+ $100</button>
             </div>
         </div>
 
-        <button onclick="closeInsufficientFundsModal()" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; background: white; color: #6b7280; font-size: 16px; cursor: pointer;">
+        <button onclick="closeInsufficientFundsModal()"
+            style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; background: white; color: #6b7280; font-size: 16px; cursor: pointer;">
             Cancel
         </button>
     </div>
@@ -359,118 +402,118 @@ function updateProgressText(text) {
 {% endif %}
 
 <script>
-const resumeCount = {{ resume_count }};
-const userBalance = {{ current_user.balance_usd }};
-const isTestDrive = {{ 'true' if current_user.is_test_drive else 'false' }};
-const baseCost = {{ pricing['BASE_ANALYSIS_PRICE'] }};
-const deepDiveCost = {{ pricing['DEEP_DIVE_PRICE'] }};
-const extraInsightCost = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
+    const resumeCount = {{ resume_count }};
+    const userBalance = {{ current_user.balance_usd }};
+    const isTestDrive = {{ 'true' if current_user.is_test_drive else 'false' }};
+    const baseCost = {{ pricing['BASE_ANALYSIS_PRICE'] }};
+    const deepDiveCost = {{ pricing['DEEP_DIVE_PRICE'] }};
+    const extraInsightCost = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
 
-// Update insights pricing
-function updateInsightsPrice() {
-    const insightsMode = document.getElementById('insightsMode').value;
-    const totalCostDisplay = document.getElementById('totalCostValue');
-    const remainingBalance = document.getElementById('remainingBalance');
-    
-    let totalCost = 0.00;
-    
-    if (!isTestDrive) {
-        totalCost = baseCost; // Base job cost
-        
-        if (insightsMode === 'deep_dive') {
-            totalCost += deepDiveCost; // Deep dive upgrade
-        } else if (insightsMode === 'full_radar' && resumeCount > 5) {
-            const extraCandidates = resumeCount - 5;
-            totalCost += extraCandidates * extraInsightCost; // Extra insights per candidate over 5
+    // Update insights pricing
+    function updateInsightsPrice() {
+        const insightsMode = document.getElementById('insightsMode').value;
+        const totalCostDisplay = document.getElementById('totalCostValue');
+        const remainingBalance = document.getElementById('remainingBalance');
+
+        let totalCost = 0.00;
+
+        if (!isTestDrive) {
+            totalCost = baseCost; // Base job cost
+
+            if (insightsMode === 'deep_dive') {
+                totalCost += deepDiveCost; // Deep dive upgrade
+            } else if (insightsMode === 'full_radar' && resumeCount > 5) {
+                const extraCandidates = resumeCount - 5;
+                totalCost += extraCandidates * extraInsightCost; // Extra insights per candidate over 5
+            }
         }
+
+        totalCostDisplay.textContent = '$' + totalCost.toFixed(2);
+        const remaining = userBalance - totalCost;
+        remainingBalance.innerHTML = 'After: <strong>$' + remaining.toFixed(2) + '</strong>';
     }
-    
-    totalCostDisplay.textContent = '$' + totalCost.toFixed(2);
-    const remaining = userBalance - totalCost;
-    remainingBalance.innerHTML = 'After: <strong>$' + remaining.toFixed(2) + '</strong>';
-}
 
-// Initialize on page load
-updateInsightsPrice();
+    // Initialize on page load
+    updateInsightsPrice();
 
-// Initialize Lucide icons
-if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-}
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 
-// Insufficient Funds Modal Functions
-function closeInsufficientFundsModal() {
-    const modal = document.getElementById('insufficientFundsModal');
-    if (modal) modal.style.display = 'none';
-}
+    // Insufficient Funds Modal Functions
+    function closeInsufficientFundsModal() {
+        const modal = document.getElementById('insufficientFundsModal');
+        if (modal) modal.style.display = 'none';
+    }
 
-function quickAddFunds(amount) {
-    // Disable all buttons to prevent double-click
-    const buttons = document.querySelectorAll('#insufficientFundsModal button');
-    buttons.forEach(btn => {
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
-    });
-    
-    // Show loading state
-    const clickedBtn = event.target;
-    const originalText = clickedBtn.innerHTML;
-    clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
-    
-    // Create Stripe checkout session
-    fetch('/create-checkout-session', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            amount: amount,
-            return_url: '{{ url_for("run_analysis_route", _external=True, auto_submit=1) }}'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.url) {
-            // Redirect to Stripe checkout - will return to run_analysis with auto_submit flag
-            window.location.href = data.url;
-        } else {
-            alert('Error creating checkout session. Please try again.');
-            clickedBtn.innerHTML = originalText;
-            buttons.forEach(btn => {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error processing payment. Please try again.');
-        clickedBtn.innerHTML = originalText;
+    function quickAddFunds(amount) {
+        // Disable all buttons to prevent double-click
+        const buttons = document.querySelectorAll('#insufficientFundsModal button');
         buttons.forEach(btn => {
-            btn.disabled = false;
-            btn.style.opacity = '1';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
         });
-    });
-}
 
-// Auto-submit form if returning from payment with sufficient funds
-{% if request.args.get('auto_submit') == '1' and not insufficient_funds %}
-window.addEventListener('DOMContentLoaded', function() {
-    // Restore selected insights mode if it was saved
-    const savedInsightsMode = sessionStorage.getItem('insights_mode');
-    if (savedInsightsMode) {
-        document.getElementById('insightsMode').value = savedInsightsMode;
-        sessionStorage.removeItem('insights_mode');
+        // Show loading state
+        const clickedBtn = event.target;
+        const originalText = clickedBtn.innerHTML;
+        clickedBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
+
+        // Create Stripe checkout session
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                amount: amount,
+                return_url: '{{ url_for("run_analysis_route", _external=True, auto_submit=1) }}'
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.url) {
+                    // Redirect to Stripe checkout - will return to run_analysis with auto_submit flag
+                    window.location.href = data.url;
+                } else {
+                    alert('Error creating checkout session. Please try again.');
+                    clickedBtn.innerHTML = originalText;
+                    buttons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing payment. Please try again.');
+                clickedBtn.innerHTML = originalText;
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+            });
     }
-    
-    // Create full-page loading overlay to prevent any interaction
-    const overlay = document.createElement('div');
-    overlay.id = 'processingOverlay';
-    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;';
-    
-    const messageBox = document.createElement('div');
-    messageBox.style.cssText = 'background: white; padding: 40px 50px; border-radius: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); max-width: 500px;';
-    messageBox.innerHTML = `
+
+    // Auto-submit form if returning from payment with sufficient funds
+    {% if request.args.get('auto_submit') == '1' and not insufficient_funds %}
+    window.addEventListener('DOMContentLoaded', function () {
+        // Restore selected insights mode if it was saved
+        const savedInsightsMode = sessionStorage.getItem('insights_mode');
+        if (savedInsightsMode) {
+            document.getElementById('insightsMode').value = savedInsightsMode;
+            sessionStorage.removeItem('insights_mode');
+        }
+
+        // Create full-page loading overlay to prevent any interaction
+        const overlay = document.createElement('div');
+        overlay.id = 'processingOverlay';
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;';
+
+        const messageBox = document.createElement('div');
+        messageBox.style.cssText = 'background: white; padding: 40px 50px; border-radius: 16px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); max-width: 500px;';
+        messageBox.innerHTML = `
         <div style="font-size: 3rem; margin-bottom: 20px; animation: spin 1s linear infinite;">⚙️</div>
         <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 1.8rem;">Payment Successful!</h2>
         <p style="color: #6b7280; font-size: 1.1rem; margin: 0 0 20px 0;">Starting your analysis now...</p>
@@ -479,13 +522,13 @@ window.addEventListener('DOMContentLoaded', function() {
         </div>
         <p style="color: #9ca3af; font-size: 0.9rem; margin: 15px 0 0 0;">Please wait, do not refresh the page...</p>
     `;
-    
-    overlay.appendChild(messageBox);
-    document.body.appendChild(overlay);
-    
-    // Add CSS animations
-    const style = document.createElement('style');
-    style.textContent = `
+
+        overlay.appendChild(messageBox);
+        document.body.appendChild(overlay);
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -499,292 +542,303 @@ window.addEventListener('DOMContentLoaded', function() {
             to { opacity: 1; }
         }
     `;
-    document.head.appendChild(style);
-    
-    // Disable the Run Analysis button as backup
-    const submitBtn = document.getElementById('runAnalysisBtn');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.style.display = 'none';
-    }
-    
-    // Auto-submit immediately
-    document.getElementById('runAnalysisForm').submit();
-});
-{% endif %}
+        document.head.appendChild(style);
 
-// Save insights mode before payment redirect
-{% if insufficient_funds %}
-function saveInsightsModeBeforePayment() {
-    const insightsMode = document.getElementById('insightsMode').value;
-    sessionStorage.setItem('insights_mode', insightsMode);
-}
+        // Disable the Run Analysis button as backup
+        const submitBtn = document.getElementById('runAnalysisBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.display = 'none';
+        }
 
-// Attach to quick-add buttons
-document.addEventListener('DOMContentLoaded', function() {
-    const quickAddButtons = document.querySelectorAll('#insufficientFundsModal button[onclick^="quickAddFunds"]');
-    quickAddButtons.forEach(btn => {
-        btn.addEventListener('click', saveInsightsModeBeforePayment);
+        // Auto-submit immediately
+        document.getElementById('runAnalysisForm').submit();
     });
-});
-{% endif %}
+    {% endif %}
+
+    // Save insights mode before payment redirect
+    {% if insufficient_funds %}
+    function saveInsightsModeBeforePayment() {
+        const insightsMode = document.getElementById('insightsMode').value;
+        sessionStorage.setItem('insights_mode', insightsMode);
+    }
+
+    // Attach to quick-add buttons
+    document.addEventListener('DOMContentLoaded', function () {
+        const quickAddButtons = document.querySelectorAll('#insufficientFundsModal button[onclick^="quickAddFunds"]');
+        quickAddButtons.forEach(btn => {
+            btn.addEventListener('click', saveInsightsModeBeforePayment);
+        });
+    });
+    {% endif %}
 </script>
 
 <style>
-@keyframes slideIn {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
-    50% {
-        opacity: 0.5;
-    }
-}
 
-.progress-text-animated {
-    animation: pulse 2s ease-in-out infinite;
-}
+    @keyframes pulse {
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .container {
-        padding: 20px 15px 100px 15px !important;
-    }
-    
-    /* Form card */
-    div[style*="background: white"][style*="border-radius: 12px"] {
-        padding: 20px !important;
-    }
-    
-    /* Truncation warning */
-    div[style*="background: linear-gradient(135deg, #dbeafe"] {
-        padding: 16px !important;
-    }
-}
+        0%,
+        100% {
+            opacity: 1;
+        }
 
-/* Mobile-Only Enhancements - Small Phones */
-@media (max-width: 480px) {
-    .container {
-        padding: 15px 12px 90px 12px !important;
+        50% {
+            opacity: 0.5;
+        }
     }
-    
-    /* Form card compact */
-    div[style*="background: white"][style*="border-radius: 12px"] {
-        padding: 16px !important;
-        border-radius: 8px !important;
+
+    .progress-text-animated {
+        animation: pulse 2s ease-in-out infinite;
     }
-    
-    h2 {
-        font-size: 1.25rem !important;
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px 15px 100px 15px !important;
+        }
+
+        /* Form card */
+        div[style*="background: white"][style*="border-radius: 12px"] {
+            padding: 20px !important;
+        }
+
+        /* Truncation warning */
+        div[style*="background: linear-gradient(135deg, #dbeafe"] {
+            padding: 16px !important;
+        }
     }
-    
-    /* Warning banners */
-    div[style*="background: linear-gradient"] {
-        padding: 12px !important;
-        border-radius: 8px !important;
+
+    /* Mobile-Only Enhancements - Small Phones */
+    @media (max-width: 480px) {
+        .container {
+            padding: 15px 12px 90px 12px !important;
+        }
+
+        /* Form card compact */
+        div[style*="background: white"][style*="border-radius: 12px"] {
+            padding: 16px !important;
+            border-radius: 8px !important;
+        }
+
+        h2 {
+            font-size: 1.25rem !important;
+        }
+
+        /* Warning banners */
+        div[style*="background: linear-gradient"] {
+            padding: 12px !important;
+            border-radius: 8px !important;
+        }
+
+        div[style*="background: linear-gradient"] h3 {
+            font-size: 1rem !important;
+        }
+
+        div[style*="background: linear-gradient"] p {
+            font-size: 0.875rem !important;
+        }
+
+        div[style*="background: linear-gradient"] i {
+            width: 36px !important;
+            height: 36px !important;
+        }
+
+        /* Insights mode selector */
+        select {
+            font-size: 0.9rem !important;
+            padding: 10px !important;
+        }
+
+        /* Modal adjustments */
+        div[style*="max-width: 600px"] {
+            width: 95% !important;
+            padding: 24px !important;
+        }
+
+        div[style*="max-width: 500px"] {
+            width: 95% !important;
+            padding: 24px !important;
+        }
     }
-    
-    div[style*="background: linear-gradient"] h3 {
-        font-size: 1rem !important;
-    }
-    
-    div[style*="background: linear-gradient"] p {
-        font-size: 0.875rem !important;
-    }
-    
-    div[style*="background: linear-gradient"] i {
-        width: 36px !important;
-        height: 36px !important;
-    }
-    
-    /* Insights mode selector */
-    select {
-        font-size: 0.9rem !important;
-        padding: 10px !important;
-    }
-    
-    /* Modal adjustments */
-    div[style*="max-width: 600px"] {
-        width: 95% !important;
-        padding: 24px !important;
-    }
-    
-    div[style*="max-width: 500px"] {
-        width: 95% !important;
-        padding: 24px !important;
-    }
-}
 </style>
 
 <!-- Include Bottom Bar -->
 {% set show_back_button = True %}
 {% set back_url = url_for('analyze', step='resumes') %}
 {% if current_user.is_test_drive %}
-    {% if truncation_warning %}
-        {% set continue_text = 'Continue with Free Analysis →' %}
-    {% else %}
-        {% set continue_text = 'Run Your Free Analysis →' %}
-    {% endif %}
-    {% set continue_disabled = False %}
+{% if truncation_warning %}
+{% set continue_text = 'Continue with Free Analysis →' %}
 {% else %}
-    {% if truncation_warning %}
-        {% set continue_text = 'Continue Analysis' %}
-    {% else %}
-        {% set continue_text = 'Run Analysis' %}
-    {% endif %}
-    {% set continue_disabled = False %}
+{% set continue_text = 'Run Your Free Analysis →' %}
+{% endif %}
+{% set continue_disabled = False %}
+{% else %}
+{% if truncation_warning %}
+{% set continue_text = 'Continue Analysis' %}
+{% else %}
+{% set continue_text = 'Run Analysis' %}
+{% endif %}
+{% set continue_disabled = False %}
 {% endif %}
 {% include 'workflow_bottom_bar.html' %}
 
 <script>
-// Wire sticky button to submit form and show modal
-document.addEventListener('DOMContentLoaded', function() {
-    const continueBtn = document.getElementById('continueButton');
-    const continueBtnText = document.getElementById('continueButtonText');
-    
-    if (continueBtn) {
-        continueBtn.onclick = function(e) {
-            e.preventDefault();
-            
-            // Calculate current total cost
-            const insightsMode = document.getElementById('insightsMode').value;
-            let totalCost = 0.00;
-            
-            if (!isTestDrive) {
-                const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }};
-                const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }};
-                const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
-                
-                totalCost = standardPrice;
-                
-                if (insightsMode === 'deep_dive') {
-                    totalCost += deepDivePrice;
-                } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
-                    totalCost += ({{ resume_count }} - 5) * individualPrice;
+    // Wire sticky button to submit form and show modal
+    document.addEventListener('DOMContentLoaded', function () {
+        const continueBtn = document.getElementById('continueButton');
+        const continueBtnText = document.getElementById('continueButtonText');
+
+        if (continueBtn) {
+            continueBtn.onclick = function (e) {
+                e.preventDefault();
+
+                // Calculate current total cost
+                const insightsMode = document.getElementById('insightsMode').value;
+                let totalCost = 0.00;
+
+                if (!isTestDrive) {
+                    const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }
+                };
+                const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }
+            };
+            const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }
+        };
+
+        totalCost = standardPrice;
+
+        if (insightsMode === 'deep_dive') {
+            totalCost += deepDivePrice;
+        } else if (insightsMode === 'full_radar' && {{ resume_count }
+    } > 5) {
+        totalCost += ({{ resume_count }
+    } - 5) * individualPrice;
                 }
             }
-            
-            // Check if user has sufficient funds (skip check for test drive)
-            if (!isTestDrive && {{ current_user.balance_usd }} < totalCost) {
+
+    // Check if user has sufficient funds (skip check for test drive)
+    if (!isTestDrive && {{ current_user.balance_usd }} < totalCost) {
                 // Redirect to top-up page with return_to parameter
                 window.location.href = '{{ url_for("payments.wallet") }}?return_to=run_analysis';
-                return;
+        return;
             }
-            
-            // Show processing overlay
-            const overlay = document.getElementById('processingOverlay');
-            overlay.style.display = 'flex';
-            
-            // Start dynamic progress tracking immediately (don't wait for form submit)
-            startProgressTracking({{ resume_count }});
-            
-            // Submit form via AJAX after a 100ms delay (let first poll fire first)
-            setTimeout(() => {
-                const form = document.getElementById('runAnalysisForm');
-                const formData = new FormData(form);
-                
-                // Debug: Log what's in the FormData
-                console.log('[DEBUG] FormData contents:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(`  ${key}: ${value}`);
-                }
-                
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
-                })
-                .then(response => {
-                    console.log('[DEBUG] Fetch response:', { redirected: response.redirected, ok: response.ok, status: response.status, url: response.url });
-                    if (response.redirected) {
-                        // Fetch automatically followed redirect - use the final URL
-                        console.log('[DEBUG] Following redirect to:', response.url);
-                        window.location.href = response.url;
-                    } else if (response.ok) {
-                        // Check if we got JSON or HTML response
-                        return response.text().then(text => {
-                            console.log('[DEBUG] Response text (first 200 chars):', text.substring(0, 200));
-                            try {
-                                const data = JSON.parse(text);
-                                if (data.redirect) {
-                                    console.log('[DEBUG] JSON redirect to:', data.redirect);
-                                    // Stop progress tracking since we're showing warning page
-                                    clearInterval(progressInterval);
-                                    // Navigate to warning page
-                                    window.location.href = data.redirect;
-                                }
-                            } catch (e) {
-                                // HTML response - shouldn't happen normally
-                                // This might be an error page, so reload to show it
-                                console.error('[DEBUG] Unexpected HTML response, calling reload()');
-                                window.location.reload();
+
+        // Show processing overlay
+        const overlay= document.getElementById('processingOverlay');
+    overlay.style.display = 'flex';
+
+    // Start dynamic progress tracking immediately (don't wait for form submit)
+    startProgressTracking({{ resume_count }});
+
+    // Submit form via AJAX after a 100ms delay (let first poll fire first)
+    setTimeout(() => {
+        const form = document.getElementById('runAnalysisForm');
+        const formData = new FormData(form);
+
+        // Debug: Log what's in the FormData
+        console.log('[DEBUG] FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+        }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                console.log('[DEBUG] Fetch response:', { redirected: response.redirected, ok: response.ok, status: response.status, url: response.url });
+                if (response.redirected) {
+                    // Fetch automatically followed redirect - use the final URL
+                    console.log('[DEBUG] Following redirect to:', response.url);
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    // Check if we got JSON or HTML response
+                    return response.text().then(text => {
+                        console.log('[DEBUG] Response text (first 200 chars):', text.substring(0, 200));
+                        try {
+                            const data = JSON.parse(text);
+                            if (data.redirect) {
+                                console.log('[DEBUG] JSON redirect to:', data.redirect);
+                                // Stop progress tracking since we're showing warning page
+                                clearInterval(progressInterval);
+                                // Navigate to warning page
+                                window.location.href = data.redirect;
                             }
-                        });
-                    } else {
-                        throw new Error('Analysis failed');
-                    }
-                })
-                .catch(error => {
-                    console.error('Analysis error:', error);
-                    clearInterval(progressInterval);
-                    alert('An error occurred during analysis. Please try again.');
-                    overlay.style.display = 'none';
-                });
-            }, 100);
+                        } catch (e) {
+                            // HTML response - shouldn't happen normally
+                            // This might be an error page, so reload to show it
+                            console.error('[DEBUG] Unexpected HTML response, calling reload()');
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    throw new Error('Analysis failed');
+                }
+            })
+            .catch(error => {
+                console.error('Analysis error:', error);
+                clearInterval(progressInterval);
+                alert('An error occurred during analysis. Please try again.');
+                overlay.style.display = 'none';
+            });
+    }, 100);
         };
     }
-    
+
     // Update sticky button text when insights selection changes
     const insightsSelect = document.getElementById('insightsMode');
     if (insightsSelect) {
-        insightsSelect.addEventListener('change', function() {
+        insightsSelect.addEventListener('change', function () {
             updateStickyButtonPrice();
         });
     }
-    
+
     function updateStickyButtonPrice() {
         const insightsMode = document.getElementById('insightsMode').value;
         let totalCost = 0.00;
-        
+
         if (isTestDrive) {
             if (continueBtnText) {
                 continueBtnText.textContent = 'Run Your Free Analysis →';
             }
             return;
         }
-        
-        const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }};
-        const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }};
-        const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
-        
-        totalCost = standardPrice;
-        
-        if (insightsMode === 'deep_dive') {
-            totalCost += deepDivePrice;
-        } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
-            totalCost += ({{ resume_count }} - 5) * individualPrice;
+
+        const standardPrice = {{ pricing['BASE_ANALYSIS_PRICE'] }
+    };
+    const deepDivePrice = {{ pricing['DEEP_DIVE_PRICE'] }};
+    const individualPrice = {{ pricing['EXTRA_INSIGHT_PRICE'] }};
+
+    totalCost = standardPrice;
+
+    if (insightsMode === 'deep_dive') {
+        totalCost += deepDivePrice;
+    } else if (insightsMode === 'full_radar' && {{ resume_count }} > 5) {
+        totalCost += ({{ resume_count }
+    } - 5) * individualPrice;
         }
-        
-        // Check if insufficient funds
-        if (userBalance < totalCost) {
-            if (continueBtnText) {
-                continueBtnText.textContent = `Top Up Balance to Run ($${totalCost.toFixed(2)})`;
-            }
-        } else {
-            if (continueBtnText) {
-                continueBtnText.textContent = `Run Analysis ($${totalCost.toFixed(2)})`;
-            }
+
+    // Check if insufficient funds
+    if (userBalance < totalCost) {
+        if (continueBtnText) {
+            continueBtnText.textContent = `Top Up Balance to Run ($${totalCost.toFixed(2)})`;
         }
+    } else {
+        if (continueBtnText) {
+            continueBtnText.textContent = `Run Analysis ($${totalCost.toFixed(2)})`;
+        }
+    }
     }
 });
 </script>

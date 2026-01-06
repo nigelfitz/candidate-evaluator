@@ -4,279 +4,307 @@
 
 {% block extra_styles %}
 .logout-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; }
-        .admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px; margin-bottom: 20px; }
-        .admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid transparent; font-weight: 500; transition: all 0.3s; position: relative; }
-        .admin-tabs a:hover { color: #667eea; }
-        .admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
-        /* Finance Menu Container */
-        .finance-menu-container { display: inline-block; position: relative; }
-        /* System Settings Menu Container */
-        .system-settings-menu-container { display: inline-block; position: relative; }
-        /* System Settings Dropdown */
-        .system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0; padding-top: 8px; }
-        .system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0 !important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none !important; }
-        .system-settings-dropdown a:last-child { border-bottom: none !important; }
-        .system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
-        /* Finance Dropdown */
-        .finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 1000; top: 100%; left: 0; padding-top: 8px; border: 1px solid #e0e0e0; }
-        .finance-dropdown a { display: block; padding: 12px 20px; border-bottom: none !important; font-size: 0.95rem; }
-        .finance-dropdown a:hover { background: #f8f9fa; color: #667eea; }
-        .session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
-        .session-info .timeout { font-weight: 600; color: #667eea; }
-        .prompt-tabs { border-bottom: 2px solid #e0e0e0; margin-bottom: 30px; }
-        .prompt-tab { display: inline-block; padding: 12px 24px; margin-right: 10px; border: 2px solid transparent; border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s; }
-        .prompt-tab:hover { background: #f5f5f5; }
-        .prompt-tab.active { background: white; border-color: #667eea; color: #667eea; position: relative; top: 2px; }
-        .prompt-tab.ranker { border-color: #3498db; color: #3498db; }
-        .prompt-tab.insight { border-color: #e74c3c; color: #e74c3c; }
-        .prompt-tab.jd { border-color: #2ecc71; color: #2ecc71; }
-        .prompt-content { display: none; }
-        .prompt-content.active { display: block; }
-        .dev-notes-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
-        .dev-notes-box h4 { margin: 0 0 20px 0; font-weight: 600; }
-        .dev-note-item { margin-bottom: 12px; padding-left: 20px; position: relative; }
-        .dev-note-item::before { content: "→"; position: absolute; left: 0; font-weight: bold; }
-        .pro-tip-box { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3); }
-        .pro-tip-box h5 { margin: 0 0 12px 0; font-weight: 600; }
-        .variable-docs { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px; border-left: 4px solid #667eea; }
-        .variable-docs h5 { color: #667eea; margin: 0 0 15px 0; }
-        .variable-item { background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-family: 'Courier New', monospace; }
-        .variable-name { color: #e74c3c; font-weight: bold; }
-        .variable-desc { color: #555; font-size: 0.9rem; margin-top: 5px; }
-        .prompt-editor { border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 20px; }
-        .prompt-editor h5 { background: #f8f9fa; padding: 12px 16px; margin: 0; border-bottom: 2px solid #e0e0e0; border-radius: 6px 6px 0 0; }
-        .prompt-editor textarea { width: 100%; min-height: 200px; padding: 15px; border: none; font-family: 'Courier New', monospace; font-size: 0.95rem; resize: vertical; }
-        .cost-badge { background: #f39c12; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; margin-left: 10px; }
-        .success-msg { background: #d4edda; padding: 12px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom: 20px; }
-        .CodeMirror { height: auto; min-height: 200px; border-radius: 0 0 8px 8px; }
+.admin-tabs { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px 30px;
+margin-bottom: 20px; }
+.admin-tabs a { color: #666; text-decoration: none; padding: 12px 24px; display: inline-block; border-bottom: 3px solid
+transparent; font-weight: 500; transition: all 0.3s; position: relative; }
+.admin-tabs a:hover { color: #667eea; }
+.admin-tabs a.active { color: #667eea; border-bottom-color: #667eea; }
+/* Finance Menu Container */
+.finance-menu-container { display: inline-block; position: relative; }
+/* System Settings Menu Container */
+.system-settings-menu-container { display: inline-block; position: relative; }
+/* System Settings Dropdown */
+.system-settings-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px
+12px rgba(0,0,0,0.15); min-width: 200px; z-index: 10000; top: 100%; left: 0; border: 1px solid #e0e0e0; margin-top: 0;
+padding-top: 8px; }
+.system-settings-dropdown a { display: block !important; padding: 12px 20px !important; border-bottom: 1px solid #f0f0f0
+!important; font-size: 0.95rem !important; position: relative !important; color: #666 !important; text-decoration: none
+!important; }
+.system-settings-dropdown a:last-child { border-bottom: none !important; }
+.system-settings-dropdown a:hover { background: #f8f9fa !important; color: #667eea !important; }
+/* Finance Dropdown */
+.finance-dropdown { display: none; position: absolute; background: white; border-radius: 8px; box-shadow: 0 4px 12px
+rgba(0,0,0,0.15); min-width: 180px; z-index: 1000; top: 100%; left: 0; padding-top: 8px; border: 1px solid #e0e0e0; }
+.finance-dropdown a { display: block; padding: 12px 20px; border-bottom: none !important; font-size: 0.95rem; }
+.finance-dropdown a:hover { background: #f8f9fa; color: #667eea; }
+.session-info { position: fixed; top: 20px; right: 180px; background: rgba(255,255,255,0.95); padding: 8px 16px;
+border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; }
+.session-info .timeout { font-weight: 600; color: #667eea; }
+.prompt-tabs { border-bottom: 2px solid #e0e0e0; margin-bottom: 30px; }
+.prompt-tab { display: inline-block; padding: 12px 24px; margin-right: 10px; border: 2px solid transparent;
+border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+.prompt-tab:hover { background: #f5f5f5; }
+.prompt-tab.active { background: white; border-color: #667eea; color: #667eea; position: relative; top: 2px; }
+.prompt-tab.ranker { border-color: #3498db; color: #3498db; }
+.prompt-tab.insight { border-color: #e74c3c; color: #e74c3c; }
+.prompt-tab.jd { border-color: #2ecc71; color: #2ecc71; }
+.prompt-content { display: none; }
+.prompt-content.active { display: block; }
+.dev-notes-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px;
+border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+.dev-notes-box h4 { margin: 0 0 20px 0; font-weight: 600; }
+.dev-note-item { margin-bottom: 12px; padding-left: 20px; position: relative; }
+.dev-note-item::before { content: "→"; position: absolute; left: 0; font-weight: bold; }
+.pro-tip-box { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 20px;
+border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3); }
+.pro-tip-box h5 { margin: 0 0 12px 0; font-weight: 600; }
+.variable-docs { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px; border-left: 4px solid
+#667eea; }
+.variable-docs h5 { color: #667eea; margin: 0 0 15px 0; }
+.variable-item { background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-family: 'Courier New',
+monospace; }
+.variable-name { color: #e74c3c; font-weight: bold; }
+.variable-desc { color: #555; font-size: 0.9rem; margin-top: 5px; }
+.prompt-editor { border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 20px; }
+.prompt-editor h5 { background: #f8f9fa; padding: 12px 16px; margin: 0; border-bottom: 2px solid #e0e0e0; border-radius:
+6px 6px 0 0; }
+.prompt-editor textarea { width: 100%; min-height: 200px; padding: 15px; border: none; font-family: 'Courier New',
+monospace; font-size: 0.95rem; resize: vertical; }
+.cost-badge { background: #f39c12; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem;
+font-weight: 600; margin-left: 10px; }
+.success-msg { background: #d4edda; padding: 12px; border-radius: 8px; border-left: 4px solid #28a745; margin-bottom:
+20px; }
+.CodeMirror { height: auto; min-height: 200px; border-radius: 0 0 8px 8px; }
 {% endblock %}
 
 {% block content %}
 <h1 class="text-center mb-4">🎯 Prompts Manager - Control Tower</h1>
-            <p class="text-center text-muted mb-4">Monitor and modify what your AI agents are being told to do</p>
-            
-            {% if message %}
-            <div class="success-msg">
-                ✅ {{ message }}
+<p class="text-center text-muted mb-4">Monitor and modify what your AI agents are being told to do</p>
+
+{% if message %}
+<div class="success-msg">
+    ✅ {{ message }}
+</div>
+{% endif %}
+
+<!-- Prompt Agent Tabs -->
+<div class="prompt-tabs">
+    <div class="prompt-tab jd active" onclick="switchPromptTab('jd')">
+        📄 JD EXTRACTION
+    </div>
+    <div class="prompt-tab ranker" onclick="switchPromptTab('ranker')">
+        🎯 RANKER AGENT
+    </div>
+    <div class="prompt-tab insight" onclick="switchPromptTab('insight')">
+        💡 INSIGHT AGENT
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin_save_prompts') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <!-- JD EXTRACTION TAB -->
+    <div id="jd-content" class="prompt-content active">
+        <div class="dev-notes-box">
+            <h4>🧠 Developer Notes - JD EXTRACTION</h4>
+            <div class="dev-note-item">
+                <strong>Purpose:</strong> Extracts structured criteria and requirements from job description text
+            </div>
+            <div class="dev-note-item">
+                <strong>Model Used:</strong> Same as RANKER (gpt-4o-mini for cost efficiency)
+            </div>
+            <div class="dev-note-item">
+                <strong>Temperature:</strong> 0.1 (consistency is critical)
+            </div>
+            <div class="dev-note-item">
+                <strong>Cost Per Call:</strong> <span class="cost-badge">$0.0003</span> (1 call per analysis)
+            </div>
+        </div>
+
+        <div class="pro-tip-box">
+            <h5>💡 Pro Tip</h5>
+            <p style="margin: 0;">If JD extraction returns inconsistent criteria formats, lower temperature to 0.0 for
+                maximum determinism.</p>
+        </div>
+
+        <div class="variable-docs">
+            <h5>📋 Variable Dependencies</h5>
+            {% if prompts.jd_extraction.user_prompt_template.placeholders %}
+            {% for placeholder in prompts.jd_extraction.user_prompt_template.placeholders %}
+            <div class="variable-item">
+                <div class="variable-name">{{ placeholder }}</div>
+                <div class="variable-desc">{% if placeholder == '{jd_text}' %}Full text of the job description provided
+                    by the user{% endif %}</div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="variable-item">
+                <div class="variable-name">{jd_text}</div>
+                <div class="variable-desc">Full text of the job description provided by the user</div>
             </div>
             {% endif %}
-            
-            <!-- Prompt Agent Tabs -->
-            <div class="prompt-tabs">
-                <div class="prompt-tab jd active" onclick="switchPromptTab('jd')">
-                    📄 JD EXTRACTION
-                </div>
-                <div class="prompt-tab ranker" onclick="switchPromptTab('ranker')">
-                    🎯 RANKER AGENT
-                </div>
-                <div class="prompt-tab insight" onclick="switchPromptTab('insight')">
-                    💡 INSIGHT AGENT
-                </div>
+        </div>
+
+        <div class="prompt-editor">
+            <h5>System Prompt (JD Extraction)</h5>
+            <textarea name="jd_system_prompt"
+                id="jd_system_prompt">{{ prompts.jd_extraction.system_prompt.value }}</textarea>
+        </div>
+
+        <div class="prompt-editor">
+            <h5>User Prompt Template (JD Extraction)</h5>
+            <textarea name="jd_user_prompt"
+                id="jd_user_prompt">{{ prompts.jd_extraction.user_prompt_template.value }}</textarea>
+        </div>
+    </div>
+
+    <!-- RANKER AGENT TAB -->
+    <div id="ranker-content" class="prompt-content">
+        <div class="dev-notes-box">
+            <h4>🧠 Developer Notes - RANKER AGENT</h4>
+            <div class="dev-note-item">
+                <strong>Purpose:</strong> {{ prompts.ranker_scoring.developer_notes.purpose }}
             </div>
-            
-            <form method="POST" action="{{ url_for('admin_save_prompts') }}">
-                <!-- JD EXTRACTION TAB -->
-                <div id="jd-content" class="prompt-content active">
-                    <div class="dev-notes-box">
-                        <h4>🧠 Developer Notes - JD EXTRACTION</h4>
-                        <div class="dev-note-item">
-                            <strong>Purpose:</strong> Extracts structured criteria and requirements from job description text
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Model Used:</strong> Same as RANKER (gpt-4o-mini for cost efficiency)
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Temperature:</strong> 0.1 (consistency is critical)
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Cost Per Call:</strong> <span class="cost-badge">$0.0003</span> (1 call per analysis)
-                        </div>
-                    </div>
-                    
-                    <div class="pro-tip-box">
-                        <h5>💡 Pro Tip</h5>
-                        <p style="margin: 0;">If JD extraction returns inconsistent criteria formats, lower temperature to 0.0 for maximum determinism.</p>
-                    </div>
-                    
-                    <div class="variable-docs">
-                        <h5>📋 Variable Dependencies</h5>
-                        {% if prompts.jd_extraction.user_prompt_template.placeholders %}
-                            {% for placeholder in prompts.jd_extraction.user_prompt_template.placeholders %}
-                            <div class="variable-item">
-                                <div class="variable-name">{{ placeholder }}</div>
-                                <div class="variable-desc">{% if placeholder == '{jd_text}' %}Full text of the job description provided by the user{% endif %}</div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="variable-item">
-                                <div class="variable-name">{jd_text}</div>
-                                <div class="variable-desc">Full text of the job description provided by the user</div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>System Prompt (JD Extraction)</h5>
-                        <textarea name="jd_system_prompt" id="jd_system_prompt">{{ prompts.jd_extraction.system_prompt.value }}</textarea>
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>User Prompt Template (JD Extraction)</h5>
-                        <textarea name="jd_user_prompt" id="jd_user_prompt">{{ prompts.jd_extraction.user_prompt_template.value }}</textarea>
-                    </div>
-                </div>
-                
-                <!-- RANKER AGENT TAB -->
-                <div id="ranker-content" class="prompt-content">
-                    <div class="dev-notes-box">
-                        <h4>🧠 Developer Notes - RANKER AGENT</h4>
-                        <div class="dev-note-item">
-                            <strong>Purpose:</strong> {{ prompts.ranker_scoring.developer_notes.purpose }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Model Used:</strong> {{ prompts.ranker_scoring.developer_notes.model_used }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Temperature:</strong> {{ prompts.ranker_scoring.developer_notes.temperature }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Cost Per Call:</strong> <span class="cost-badge">${{ prompts.ranker_scoring.developer_notes.cost_per_call }}</span> (1000 calls per analysis)
-                        </div>
-                    </div>
-                    
-                    <div class="pro-tip-box">
-                        <h5>💡 Pro Tip</h5>
-                        <p style="margin: 0;">{{ prompts.ranker_scoring.developer_notes.pro_tip }}</p>
-                    </div>
-                    
-                    <div class="variable-docs">
-                        <h5>📋 Variable Dependencies</h5>
-                        {% for var, desc in prompts.ranker_scoring.user_prompt_template.variable_details.items() %}
-                        <div class="variable-item">
-                            <div class="variable-name">{{ var }}</div>
-                            <div class="variable-desc">{{ desc }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>System Prompt (RANKER)</h5>
-                        <textarea name="ranker_system_prompt" id="ranker_system_prompt">{{ prompts.ranker_scoring.system_prompt.value }}</textarea>
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>User Prompt Template (RANKER)</h5>
-                        <textarea name="ranker_user_prompt" id="ranker_user_prompt">{{ prompts.ranker_scoring.user_prompt_template.value }}</textarea>
-                    </div>
-                </div>
-                
-                <!-- INSIGHT AGENT TAB -->
-                <div id="insight-content" class="prompt-content">
-                    <div class="dev-notes-box">
-                        <h4>🧠 Developer Notes - INSIGHT AGENT</h4>
-                        <div class="dev-note-item">
-                            <strong>Purpose:</strong> {{ prompts.insight_generation.developer_notes.purpose }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Model Used:</strong> {{ prompts.insight_generation.developer_notes.model_used }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Temperature:</strong> {{ prompts.insight_generation.developer_notes.temperature }}
-                        </div>
-                        <div class="dev-note-item">
-                            <strong>Cost Per Call:</strong> <span class="cost-badge">${{ prompts.insight_generation.developer_notes.cost_per_call }}</span> (5 calls per analysis)
-                        </div>
-                    </div>
-                    
-                    <div class="pro-tip-box">
-                        <h5>💡 Pro Tip</h5>
-                        <p style="margin: 0;">{{ prompts.insight_generation.developer_notes.pro_tip }}</p>
-                    </div>
-                    
-                    <div class="variable-docs">
-                        <h5>📋 Variable Dependencies</h5>
-                        {% for var, desc in prompts.insight_generation.user_prompt_template.variable_details.items() %}
-                        <div class="variable-item">
-                            <div class="variable-name">{{ var }}</div>
-                            <div class="variable-desc">{{ desc }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>System Prompt (INSIGHT)</h5>
-                        <textarea name="insight_system_prompt" id="insight_system_prompt">{{ prompts.insight_generation.system_prompt.value }}</textarea>
-                    </div>
-                    
-                    <div class="prompt-editor">
-                        <h5>User Prompt Template (INSIGHT)</h5>
-                        <textarea name="insight_user_prompt" id="insight_user_prompt">{{ prompts.insight_generation.user_prompt_template.value }}</textarea>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-save">💾 Save All Prompts</button>
-                </div>
-            </form>
+            <div class="dev-note-item">
+                <strong>Model Used:</strong> {{ prompts.ranker_scoring.developer_notes.model_used }}
+            </div>
+            <div class="dev-note-item">
+                <strong>Temperature:</strong> {{ prompts.ranker_scoring.developer_notes.temperature }}
+            </div>
+            <div class="dev-note-item">
+                <strong>Cost Per Call:</strong> <span class="cost-badge">${{
+                    prompts.ranker_scoring.developer_notes.cost_per_call }}</span> (1000 calls per analysis)
+            </div>
+        </div>
+
+        <div class="pro-tip-box">
+            <h5>💡 Pro Tip</h5>
+            <p style="margin: 0;">{{ prompts.ranker_scoring.developer_notes.pro_tip }}</p>
+        </div>
+
+        <div class="variable-docs">
+            <h5>📋 Variable Dependencies</h5>
+            {% for var, desc in prompts.ranker_scoring.user_prompt_template.variable_details.items() %}
+            <div class="variable-item">
+                <div class="variable-name">{{ var }}</div>
+                <div class="variable-desc">{{ desc }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="prompt-editor">
+            <h5>System Prompt (RANKER)</h5>
+            <textarea name="ranker_system_prompt"
+                id="ranker_system_prompt">{{ prompts.ranker_scoring.system_prompt.value }}</textarea>
+        </div>
+
+        <div class="prompt-editor">
+            <h5>User Prompt Template (RANKER)</h5>
+            <textarea name="ranker_user_prompt"
+                id="ranker_user_prompt">{{ prompts.ranker_scoring.user_prompt_template.value }}</textarea>
+        </div>
+    </div>
+
+    <!-- INSIGHT AGENT TAB -->
+    <div id="insight-content" class="prompt-content">
+        <div class="dev-notes-box">
+            <h4>🧠 Developer Notes - INSIGHT AGENT</h4>
+            <div class="dev-note-item">
+                <strong>Purpose:</strong> {{ prompts.insight_generation.developer_notes.purpose }}
+            </div>
+            <div class="dev-note-item">
+                <strong>Model Used:</strong> {{ prompts.insight_generation.developer_notes.model_used }}
+            </div>
+            <div class="dev-note-item">
+                <strong>Temperature:</strong> {{ prompts.insight_generation.developer_notes.temperature }}
+            </div>
+            <div class="dev-note-item">
+                <strong>Cost Per Call:</strong> <span class="cost-badge">${{
+                    prompts.insight_generation.developer_notes.cost_per_call }}</span> (5 calls per analysis)
+            </div>
+        </div>
+
+        <div class="pro-tip-box">
+            <h5>💡 Pro Tip</h5>
+            <p style="margin: 0;">{{ prompts.insight_generation.developer_notes.pro_tip }}</p>
+        </div>
+
+        <div class="variable-docs">
+            <h5>📋 Variable Dependencies</h5>
+            {% for var, desc in prompts.insight_generation.user_prompt_template.variable_details.items() %}
+            <div class="variable-item">
+                <div class="variable-name">{{ var }}</div>
+                <div class="variable-desc">{{ desc }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="prompt-editor">
+            <h5>System Prompt (INSIGHT)</h5>
+            <textarea name="insight_system_prompt"
+                id="insight_system_prompt">{{ prompts.insight_generation.system_prompt.value }}</textarea>
+        </div>
+
+        <div class="prompt-editor">
+            <h5>User Prompt Template (INSIGHT)</h5>
+            <textarea name="insight_user_prompt"
+                id="insight_user_prompt">{{ prompts.insight_generation.user_prompt_template.value }}</textarea>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-save">💾 Save All Prompts</button>
+    </div>
+</form>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-// Auto-resize textarea to fit content
-        function autoResizeTextarea(textarea) {
-            // Reset height to auto to get the correct scrollHeight
-            textarea.style.height = 'auto';
-            // Set height to scrollHeight plus a little padding
-            textarea.style.height = (textarea.scrollHeight + 5) + 'px';
-        }
-        
-        // Auto-resize all textareas on page load
-        function autoResizeAllTextareas() {
-            document.querySelectorAll('.prompt-editor textarea').forEach(textarea => {
-                autoResizeTextarea(textarea);
-            });
-        }
-        
-        // Run on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            autoResizeAllTextareas();
+    // Auto-resize textarea to fit content
+    function autoResizeTextarea(textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        // Set height to scrollHeight plus a little padding
+        textarea.style.height = (textarea.scrollHeight + 5) + 'px';
+    }
+
+    // Auto-resize all textareas on page load
+    function autoResizeAllTextareas() {
+        document.querySelectorAll('.prompt-editor textarea').forEach(textarea => {
+            autoResizeTextarea(textarea);
         });
-        
-        function switchPromptTab(tabName) {
-            // Hide all content
-            document.querySelectorAll('.prompt-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Deactivate all tabs
-            document.querySelectorAll('.prompt-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected content
-            document.getElementById(tabName + '-content').classList.add('active');
-            
-            // Activate selected tab
-            document.querySelector('.prompt-tab.' + tabName).classList.add('active');
-            
-            // Auto-resize textareas in the newly visible tab
-            setTimeout(autoResizeAllTextareas, 50);
-        }
-        
-        // Finance dropdown hover functionality
-        const financeContainer = document.querySelector('.finance-menu-container');
-        const dropdown = document.querySelector('.finance-dropdown');
-        if (financeContainer && dropdown) {
-            financeContainer.addEventListener('mouseenter', () => { dropdown.style.display = 'block'; });
-            financeContainer.addEventListener('mouseleave', () => { dropdown.style.display = 'none'; });
-        }
-        
-        // System Settings dropdown hover functionality
-        const systemContainer = document.querySelector('.system-settings-menu-container');
-        const systemDropdown = document.querySelector('.system-settings-dropdown');
-        if (systemContainer && systemDropdown) {
-            systemContainer.addEventListener('mouseenter', () => { systemDropdown.style.display = 'block'; });
-            systemContainer.addEventListener('mouseleave', () => { systemDropdown.style.display = 'none'; });
-        }
+    }
+
+    // Run on page load
+    window.addEventListener('DOMContentLoaded', function () {
+        autoResizeAllTextareas();
+    });
+
+    function switchPromptTab(tabName) {
+        // Hide all content
+        document.querySelectorAll('.prompt-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // Deactivate all tabs
+        document.querySelectorAll('.prompt-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Show selected content
+        document.getElementById(tabName + '-content').classList.add('active');
+
+        // Activate selected tab
+        document.querySelector('.prompt-tab.' + tabName).classList.add('active');
+
+        // Auto-resize textareas in the newly visible tab
+        setTimeout(autoResizeAllTextareas, 50);
+    }
+
+    // Finance dropdown hover functionality
+    const financeContainer = document.querySelector('.finance-menu-container');
+    const dropdown = document.querySelector('.finance-dropdown');
+    if (financeContainer && dropdown) {
+        financeContainer.addEventListener('mouseenter', () => { dropdown.style.display = 'block'; });
+        financeContainer.addEventListener('mouseleave', () => { dropdown.style.display = 'none'; });
+    }
+
+    // System Settings dropdown hover functionality
+    const systemContainer = document.querySelector('.system-settings-menu-container');
+    const systemDropdown = document.querySelector('.system-settings-dropdown');
+    if (systemContainer && systemDropdown) {
+        systemContainer.addEventListener('mouseenter', () => { systemDropdown.style.display = 'block'; });
+        systemContainer.addEventListener('mouseleave', () => { systemDropdown.style.display = 'none'; });
+    }
 </script>
 {% endblock %}

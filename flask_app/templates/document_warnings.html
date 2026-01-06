@@ -3,36 +3,41 @@
 {% block content %}
 <div class="container mt-5">
     <div style="max-width: 800px; margin: 0 auto;">
-        
+
         <!-- Too Short Warning Section (if applicable) -->
         {% if has_short_documents %}
-        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 32px; margin-bottom: 30px; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+        <div
+            style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 32px; margin-bottom: 30px; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
             <div style="display: flex; gap: 20px;">
                 <i data-lucide="alert-triangle" style="width: 56px; height: 56px; color: #b45309; flex-shrink: 0;"></i>
                 <div style="flex: 1;">
                     <h2 style="color: #b45309; margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">
                         ⚠️ Suspicious Document Detected
                     </h2>
-                    
+
                     {% if short_jd %}
-                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #f59e0b; margin-bottom: 12px;">
+                    <div
+                        style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #f59e0b; margin-bottom: 12px;">
                         <p style="color: #92400e; margin: 0 0 8px 0; font-size: 15px; font-weight: 600;">
                             📄 Job Description Issue
                         </p>
                         <p style="color: #b45309; margin: 0; font-size: 14px; line-height: 1.6;">
-                            Your JD contains only <strong>{{ jd_length }} characters</strong>, which seems unusually short. 
+                            Your JD contains only <strong>{{ jd_length }} characters</strong>, which seems unusually
+                            short.
                             This may indicate:
                         </p>
-                        <ul style="color: #b45309; margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                        <ul
+                            style="color: #b45309; margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
                             <li>A scanned image PDF with no extractable text</li>
                             <li>A corrupted or improperly formatted file</li>
                             <li>An incomplete upload</li>
                         </ul>
                     </div>
                     {% endif %}
-                    
+
                     {% if short_resumes %}
-                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #f59e0b; margin-bottom: 12px;">
+                    <div
+                        style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #f59e0b; margin-bottom: 12px;">
                         <p style="color: #92400e; margin: 0 0 8px 0; font-size: 15px; font-weight: 600;">
                             📄 Resume Issues
                         </p>
@@ -48,9 +53,10 @@
                         </ul>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Warning Message -->
-                    <div style="background: #fef3c7; border-radius: 8px; padding: 16px; border-left: 4px solid #b45309; margin-bottom: 16px;">
+                    <div
+                        style="background: #fef3c7; border-radius: 8px; padding: 16px; border-left: 4px solid #b45309; margin-bottom: 16px;">
                         <p style="color: #92400e; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
                             ⚠️ Proceeding will likely result in poor analysis for the resume/s listed above:
                         </p>
@@ -60,71 +66,85 @@
                             <li>You will be charged for the analysis</li>
                         </ul>
                     </div>
-                    
+
                     <!-- Recommendation -->
-                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a; margin-bottom: 0;">
+                    <div
+                        style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a; margin-bottom: 0;">
                         <p style="color: #065f46; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
                             ✅ Recommended action:
                         </p>
                         <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
-                            Abandon this job and re-upload text-based PDFs (not scanned images). If you have scanned PDFs, use OCR software to convert them to text-based documents first.
+                            Abandon this job and re-upload text-based PDFs (not scanned images). If you have scanned
+                            PDFs, use OCR software to convert them to text-based documents first.
                         </p>
                     </div>
                 </div>
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Too Long Warning Section (if applicable) -->
         {% if has_long_documents %}
-        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 32px; margin-bottom: 30px; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+        <div
+            style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 32px; margin-bottom: 30px; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
             <div style="display: flex; gap: 20px;">
                 <i data-lucide="info" style="width: 56px; height: 56px; color: #1e40af; flex-shrink: 0;"></i>
                 <div style="flex: 1;">
                     <h2 style="color: #1e40af; margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">
                         📄 Document Length Notice
                     </h2>
-                    
+
                     {% if long_jd %}
                     <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">
-                        Your job description contains <strong>{{ "{:,}".format(jd_length) }} characters</strong>, 
-                        which exceeds our recommended limit of <strong>{{ "{:,}".format(jd_limit) }} characters</strong>.
+                        Your job description contains <strong>{{ "{:,}".format(jd_length) }} characters</strong>,
+                        which exceeds our recommended limit of <strong>{{ "{:,}".format(jd_limit) }}
+                            characters</strong>.
                     </p>
                     {% endif %}
-                    
+
                     {% if long_resumes %}
                     <p style="color: #1e40af; margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">
-                        The following resume(s) exceed our recommended limit of <strong>{{ "{:,}".format(resume_limit) }} characters</strong>:
+                        The following resume(s) exceed our recommended limit of <strong>{{ "{:,}".format(resume_limit)
+                            }} characters</strong>:
                     </p>
-                    
+
                     <ul style="color: #1e40af; margin: 0 0 16px 0; padding-left: 20px; font-size: 14px;">
                         {% for resume in long_resumes %}
                         <li style="margin-bottom: 8px;">
-                            <strong>{{ resume.name }}</strong>: {{ "{:,}".format(resume.length) }} characters 
+                            <strong>{{ resume.name }}</strong>: {{ "{:,}".format(resume.length) }} characters
                             <span style="color: #3b82f6;">→ will use first {{ "{:,}".format(resume_limit) }}</span>
                         </li>
                         {% endfor %}
                     </ul>
                     {% endif %}
-                    
+
                     <!-- Don't Worry Section -->
-                    <div style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a; margin-bottom: 16px;">
+                    <div
+                        style="background: white; border-radius: 8px; padding: 16px; border-left: 4px solid #16a34a; margin-bottom: 16px;">
                         <p style="color: #065f46; margin: 0 0 12px 0; font-size: 15px; font-weight: 600;">
                             ✅ Don't worry - you're in good hands!
                         </p>
                         <p style="color: #047857; margin: 0; font-size: 14px; line-height: 1.6;">
                             {% if long_jd and long_resumes %}
-                            Our generous character limits ({{ "{:,}".format(jd_limit) }} for JD, {{ "{:,}".format(resume_limit) }} for resumes) are designed to capture all essential information while maintaining optimal AI performance. The analysis will still be comprehensive and accurate.
+                            Our generous character limits ({{ "{:,}".format(jd_limit) }} for JD, {{
+                            "{:,}".format(resume_limit) }} for resumes) are designed to capture all essential
+                            information while maintaining optimal AI performance. The analysis will still be
+                            comprehensive and accurate.
                             {% elif long_jd %}
-                            Our generous {{ "{:,}".format(jd_limit) }}-character limit is designed to capture all essential information while maintaining optimal AI performance. The analysis will still be comprehensive and accurate.
+                            Our generous {{ "{:,}".format(jd_limit) }}-character limit is designed to capture all
+                            essential information while maintaining optimal AI performance. The analysis will still be
+                            comprehensive and accurate.
                             {% elif long_resumes %}
-                            Our generous {{ "{:,}".format(resume_limit) }}-character limit is designed to capture all essential information while maintaining optimal AI performance. The analysis will still be comprehensive and accurate.
+                            Our generous {{ "{:,}".format(resume_limit) }}-character limit is designed to capture all
+                            essential information while maintaining optimal AI performance. The analysis will still be
+                            comprehensive and accurate.
                             {% endif %}
                         </p>
                     </div>
 
                     <!-- What Happens Section -->
-                    <div style="background: #eff6ff; border-radius: 8px; padding: 16px; border-left: 4px solid #3b82f6; margin-bottom: 0;">
+                    <div
+                        style="background: #eff6ff; border-radius: 8px; padding: 16px; border-left: 4px solid #3b82f6; margin-bottom: 0;">
                         <p style="color: #1e40af; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
                             📋 What will happen:
                         </p>
@@ -137,7 +157,8 @@
                             {% endif %}
                             {% endif %}
                             {% if long_resumes %}
-                            <li>We'll use the first {{ "{:,}".format(resume_limit) }} characters of each long resume</li>
+                            <li>We'll use the first {{ "{:,}".format(resume_limit) }} characters of each long resume
+                            </li>
                             <li>All key experience, skills, and qualifications will still be evaluated</li>
                             {% endif %}
                         </ul>
@@ -146,26 +167,28 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Action Buttons -->
         <div style="margin-bottom: 30px;">
             <form method="POST" action="{{ url_for('analyze') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="hidden" name="action" value="confirm_document_warnings">
-                <button type="submit" 
-                        style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: transform 0.2s;"
-                        onmouseover="this.style.transform='translateY(-2px)'"
-                        onmouseout="this.style.transform='translateY(0)'">
+                <button type="submit"
+                    style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); transition: transform 0.2s;"
+                    onmouseover="this.style.transform='translateY(-2px)'"
+                    onmouseout="this.style.transform='translateY(0)'">
                     ✅ Continue Anyway
                 </button>
             </form>
         </div>
 
         <!-- Abandon Job Button -->
-        <div style="text-align: center; padding: 20px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px;">
-            <a href="{{ url_for('analyze', new='1') }}" 
-               style="display: inline-block; padding: 12px 24px; background: transparent; border: 2px solid #cbd5e1; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;"
-               onmouseover="this.style.borderColor='#94a3b8'; this.style.color='#475569'; this.style.backgroundColor='#f1f5f9'"
-               onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b'; this.style.backgroundColor='transparent'">
+        <div
+            style="text-align: center; padding: 20px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px;">
+            <a href="{{ url_for('analyze', new='1') }}"
+                style="display: inline-block; padding: 12px 24px; background: transparent; border: 2px solid #cbd5e1; border-radius: 8px; color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;"
+                onmouseover="this.style.borderColor='#94a3b8'; this.style.color='#475569'; this.style.backgroundColor='#f1f5f9'"
+                onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b'; this.style.backgroundColor='transparent'">
                 🚫 Abandon Job & Start Fresh
             </a>
         </div>
@@ -173,7 +196,8 @@
         <!-- Info Box -->
         <div style="background: #f8fafc; border-radius: 8px; padding: 20px; border-left: 4px solid #64748b;">
             <p style="color: #475569; margin: 0; font-size: 14px; line-height: 1.6;">
-                <strong>💡 Tip:</strong> No charges have been applied yet. Charges only occur when your analysis completes successfully. You're free to abandon or restart at any time before clicking "Run Analysis".
+                <strong>💡 Tip:</strong> No charges have been applied yet. Charges only occur when your analysis
+                completes successfully. You're free to abandon or restart at any time before clicking "Run Analysis".
             </p>
         </div>
     </div>

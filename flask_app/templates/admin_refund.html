@@ -17,28 +17,32 @@
 <p style="color: #6b7280; margin: 0 0 30px 0;">Issue a refund to customer and record the transaction</p>
 
 <!-- PROMINENT USER INFORMATION -->
-<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
+<div
+    style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; padding: 30px; border-radius: 12px; margin-bottom: 30px;">
     <div style="display: flex; align-items: center; margin-bottom: 20px;">
-        <div style="background: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-right: 20px;">
+        <div
+            style="background: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-right: 20px;">
             👤
         </div>
         <div>
             <h3 style="color: #78350f; margin: 0 0 8px 0; font-weight: 700; font-size: 24px;">{{ user.email }}</h3>
             <div style="color: #92400e; font-size: 14px;">
-                <strong>User ID:</strong> {{ user.id }} | 
+                <strong>User ID:</strong> {{ user.id }} |
                 <strong>Registered:</strong> {{ user.created_at.strftime('%b %d, %Y') }}
             </div>
         </div>
     </div>
-    
+
     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px;">
         <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;">
             <div style="color: #78350f; font-size: 13px; margin-bottom: 8px; font-weight: 600;">AVAILABLE BALANCE</div>
             <div style="color: #1f2937; font-weight: 700; font-size: 28px;">${{ "%.2f"|format(user.balance_usd) }}</div>
         </div>
         <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;">
-            <div style="color: #78350f; font-size: 13px; margin-bottom: 8px; font-weight: 600;">TRANSACTION HISTORY BALANCE</div>
-            <div style="color: #1f2937; font-weight: 700; font-size: 28px;">${{ "%.2f"|format(calculated_balance) }}</div>
+            <div style="color: #78350f; font-size: 13px; margin-bottom: 8px; font-weight: 600;">TRANSACTION HISTORY
+                BALANCE</div>
+            <div style="color: #1f2937; font-weight: 700; font-size: 28px;">${{ "%.2f"|format(calculated_balance) }}
+            </div>
         </div>
         <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px;">
             <div style="color: #78350f; font-size: 13px; margin-bottom: 8px; font-weight: 600;">MAX REFUNDABLE</div>
@@ -49,31 +53,36 @@
 </div>
 
 <!-- REFUND PROCESS INSTRUCTIONS -->
-<div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 3px solid #dc2626; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
+<div
+    style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 3px solid #dc2626; padding: 25px; border-radius: 8px; margin-bottom: 30px;">
     <h3 style="color: #7f1d1d; margin: 0 0 20px 0; font-weight: 700; font-size: 20px;">⚠️ IMPORTANT: Refund Process</h3>
-    
+
     <div style="background: rgba(255,255,255,0.95); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
         <h4 style="color: #991b1b; margin: 0 0 15px 0; font-weight: 600;">Required Steps (In Order)</h4>
         <ol style="margin: 0; padding-left: 20px; color: #374151; line-height: 2;">
             <li style="margin-bottom: 12px;">
                 <strong style="color: #dc2626;">Step 1: Process refund in Stripe FIRST</strong><br>
-                <span style="color: #6b7280; font-size: 14px;">Log into Stripe Dashboard → Find customer's payment → Issue refund (max: ${{ "%.2f"|format(max_refundable) }})</span>
+                <span style="color: #6b7280; font-size: 14px;">Log into Stripe Dashboard → Find customer's payment →
+                    Issue refund (max: ${{ "%.2f"|format(max_refundable) }})</span>
             </li>
             <li style="margin-bottom: 12px;">
                 <strong style="color: #dc2626;">Step 2: Copy the Stripe transaction ID</strong><br>
-                <span style="color: #6b7280; font-size: 14px;">You'll need this for the description field below (e.g., "ch_3Abc123xyz")</span>
+                <span style="color: #6b7280; font-size: 14px;">You'll need this for the description field below (e.g.,
+                    "ch_3Abc123xyz")</span>
             </li>
             <li style="margin-bottom: 12px;">
                 <strong style="color: #dc2626;">Step 3: Complete the form below</strong><br>
-                <span style="color: #6b7280; font-size: 14px;">Enter refund amount as a <strong>NEGATIVE</strong> number and include Stripe transaction ID in description</span>
+                <span style="color: #6b7280; font-size: 14px;">Enter refund amount as a <strong>NEGATIVE</strong> number
+                    and include Stripe transaction ID in description</span>
             </li>
             <li>
                 <strong style="color: #dc2626;">Step 4: Verify transaction appears in user's history</strong><br>
-                <span style="color: #6b7280; font-size: 14px;">Check user's account page to confirm the refund transaction is visible</span>
+                <span style="color: #6b7280; font-size: 14px;">Check user's account page to confirm the refund
+                    transaction is visible</span>
             </li>
         </ol>
     </div>
-    
+
     <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 8px; border-left: 4px solid #dc2626;">
         <strong style="color: #991b1b;">🚫 DO NOT:</strong>
         <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #6b7280; font-size: 14px; line-height: 1.8;">
@@ -86,31 +95,27 @@
 </div>
 
 <!-- REFUND FORM -->
-<form method="POST" action="{{ url_for('admin_refund', user_id=user.id) }}" 
-      onsubmit="return confirmRefund()" 
-      style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #dc2626;">
-    
+<form method="POST" action="{{ url_for('admin_refund', user_id=user.id) }}" onsubmit="return confirmRefund()"
+    style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #dc2626;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
     <h3 style="color: #dc2626; margin: 0 0 20px 0; font-weight: 600; font-size: 20px;">💸 Record Refund Transaction</h3>
-    
+
     <div style="margin-bottom: 25px;">
         <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 8px; font-size: 16px;">
             Refund Amount (USD) *
         </label>
-        <input type="number" 
-               name="refund_amount" 
-               id="refundAmount"
-               step="0.01" 
-               max="0"
-               style="width: 100%; padding: 12px; border: 2px solid #dc2626; border-radius: 6px; font-size: 18px; font-weight: 600;"
-               placeholder="Enter as negative number (e.g., -25.00)" 
-               required
-               onchange="validateRefundAmount()">
-        <div id="amountWarning" style="display: none; background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 4px; margin-top: 8px; font-size: 14px; font-weight: 600;">
+        <input type="number" name="refund_amount" id="refundAmount" step="0.01" max="0"
+            style="width: 100%; padding: 12px; border: 2px solid #dc2626; border-radius: 6px; font-size: 18px; font-weight: 600;"
+            placeholder="Enter as negative number (e.g., -25.00)" required onchange="validateRefundAmount()">
+        <div id="amountWarning"
+            style="display: none; background: #fef2f2; color: #dc2626; padding: 10px; border-radius: 4px; margin-top: 8px; font-size: 14px; font-weight: 600;">
             ⚠️ Amount must be negative to process a refund!
         </div>
         <small style="color: #6b7280; display: block; margin-top: 8px; font-size: 14px;">
             <strong>Maximum refundable:</strong> -${{ "%.2f"|format(max_refundable) }} (excludes promotional funds)<br>
-            <strong>Example:</strong> To refund $25, enter: <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px;">-25.00</code>
+            <strong>Example:</strong> To refund $25, enter: <code
+                style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px;">-25.00</code>
         </small>
     </div>
 
@@ -118,18 +123,17 @@
         <label style="display: block; color: #374151; font-weight: 600; margin-bottom: 8px; font-size: 16px;">
             Refund Description (Visible to User) *
         </label>
-        <textarea name="refund_description" 
-                  rows="3"
-                  style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 15px;"
-                  placeholder="Example: Refund - Unused Credits (Stripe ID: ch_3Abc123xyz)" 
-                  required></textarea>
+        <textarea name="refund_description" rows="3"
+            style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 15px;"
+            placeholder="Example: Refund - Unused Credits (Stripe ID: ch_3Abc123xyz)" required></textarea>
         <small style="color: #6b7280; display: block; margin-top: 8px; font-size: 14px;">
             <strong>Required:</strong> Include the Stripe transaction ID for audit trail<br>
             This description will be visible to the user in their transaction history
         </small>
     </div>
 
-    <div style="background: #fffbeb; border: 2px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+    <div
+        style="background: #fffbeb; border: 2px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
         <div style="display: flex; align-items: start;">
             <div style="font-size: 32px; margin-right: 15px;">⚡</div>
             <div>
@@ -146,13 +150,12 @@
     </div>
 
     <div style="display: flex; gap: 15px; justify-content: flex-end; border-top: 2px solid #f3f4f6; padding-top: 25px;">
-        <a href="{{ url_for('admin_balance_audit') }}" 
-           style="padding: 14px 28px; background: #e5e7eb; color: #374151; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
+        <a href="{{ url_for('admin_balance_audit') }}"
+            style="padding: 14px 28px; background: #e5e7eb; color: #374151; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
             Cancel
         </a>
-        <button type="submit" 
-                id="submitBtn"
-                style="padding: 14px 28px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 16px;">
+        <button type="submit" id="submitBtn"
+            style="padding: 14px 28px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 16px;">
             💸 Process Refund Transaction
         </button>
     </div>
@@ -162,11 +165,11 @@
 <div style="background: #f0f9ff; border: 2px solid #3b82f6; padding: 20px; border-radius: 8px; margin-top: 30px;">
     <h4 style="color: #1e40af; margin: 0 0 10px 0; font-weight: 600;">💡 Need to Adjust Balance After Refund?</h4>
     <p style="color: #1e3a8a; margin: 0 0 15px 0; line-height: 1.6;">
-        If this refund creates a discrepancy between Available Balance and Transaction History Balance, 
+        If this refund creates a discrepancy between Available Balance and Transaction History Balance,
         you can use the <strong>Silent Adjustment</strong> feature to fix it.
     </p>
-    <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}" 
-       style="display: inline-block; padding: 10px 20px; background: #3b82f6; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">
+    <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}"
+        style="display: inline-block; padding: 10px 20px; background: #3b82f6; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">
         Go to Balance Adjustment →
     </a>
 </div>
@@ -175,49 +178,50 @@
 
 {% block extra_scripts %}
 <script>
-function validateRefundAmount() {
-    const input = document.getElementById('refundAmount');
-    const warning = document.getElementById('amountWarning');
-    const submitBtn = document.getElementById('submitBtn');
-    const value = parseFloat(input.value);
-    
-    if (value > 0) {
-        warning.style.display = 'block';
-        input.style.borderColor = '#dc2626';
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
-        submitBtn.style.cursor = 'not-allowed';
-    } else {
-        warning.style.display = 'none';
-        input.style.borderColor = '#10b981';
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-    }
-}
+    function validateRefundAmount() {
+        const input = document.getElementById('refundAmount');
+        const warning = document.getElementById('amountWarning');
+        const submitBtn = document.getElementById('submitBtn');
+        const value = parseFloat(input.value);
 
-function confirmRefund() {
-    const amount = parseFloat(document.getElementById('refundAmount').value);
-    const maxRefundable = {{ max_refundable }};
-    
+        if (value > 0) {
+            warning.style.display = 'block';
+            input.style.borderColor = '#dc2626';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+        } else {
+            warning.style.display = 'none';
+            input.style.borderColor = '#10b981';
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+    }
+
+    function confirmRefund() {
+        const amount = parseFloat(document.getElementById('refundAmount').value);
+        const maxRefundable = {{ max_refundable }
+    };
+
     // Check if amount is positive
     if (amount > 0) {
         alert('❌ Error: Refund amount must be negative!\n\nExample: To refund $25, enter -25.00');
         return false;
     }
-    
+
     // Check if exceeds max refundable
     if (Math.abs(amount) > maxRefundable) {
         alert(`❌ Error: Refund amount ($${Math.abs(amount).toFixed(2)}) exceeds maximum refundable balance ($${maxRefundable.toFixed(2)}).\n\nYou cannot refund promotional funds.`);
         return false;
     }
-    
+
     // Final confirmation
     const confirmMsg = `⚠️ FINAL CONFIRMATION\n\n` +
-                      `User: {{ user.email }}\n` +
-                      `Refund Amount: $${Math.abs(amount).toFixed(2)}\n` +
-                      `New Balance: $${({{ user.balance_usd }} + amount).toFixed(2)}\n\n` +
-                      `Have you processed this refund in Stripe already?\n\n` +
+        `User: {{ user.email }}\n` +
+        `Refund Amount: $${Math.abs(amount).toFixed(2)}\n` +
+        `New Balance: $${({{ user.balance_usd }} + amount).toFixed(2)}\n\n` +
+                      `Have you processed this refund in Stripe already ?\n\n` +
                       `Click OK to record this refund transaction.`;
     
     return confirm(confirmMsg);

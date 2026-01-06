@@ -9,40 +9,40 @@
         max-width: 1400px;
         margin: 0 auto;
     }
-    
+
     /* Sticky column styles - Enhanced */
     #coverageMatrix {
         font-size: 0.9rem;
     }
-    
+
     #coverageMatrix thead th:first-child {
         position: sticky;
         left: 0;
         z-index: 30;
         background: #f8f9fa;
-        box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
         min-width: 280px;
         max-width: 320px;
         padding: 12px 16px;
     }
-    
+
     #coverageMatrix tbody td:first-child {
         position: sticky;
         left: 0;
         z-index: 10;
         background: white;
         font-weight: 600;
-        box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
         min-width: 280px;
         max-width: 320px;
         padding: 10px 16px;
     }
-    
+
     /* Keep category headers styled but let them inherit sticky positioning */
     #coverageMatrix tbody tr.table-secondary td:first-child {
         background: #e9ecef;
     }
-    
+
     #coverageMatrix thead th {
         position: sticky;
         top: 0;
@@ -50,30 +50,30 @@
         background: #f8f9fa;
         padding: 10px 8px;
     }
-    
+
     #coverageMatrix tbody td {
         padding: 8px;
     }
-    
+
     /* Enhanced Heatmap Colors - Soft and Professional */
     .score-high {
         background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
         color: #065f46 !important;
         font-weight: 700 !important;
     }
-    
+
     .score-medium {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
         color: #92400e !important;
         font-weight: 600 !important;
     }
-    
+
     .score-low {
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
         color: #991b1b !important;
         font-weight: 600 !important;
     }
-    
+
     .success-toast {
         background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
         border: 2px solid #10b981;
@@ -88,7 +88,7 @@
         position: relative;
         overflow: hidden;
     }
-    
+
     .success-toast::before {
         content: '';
         position: absolute;
@@ -96,35 +96,35 @@
         left: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
         animation: shimmer 2s ease-in-out infinite;
     }
-    
+
     .success-icon {
         font-size: 3rem;
         animation: bounce 1s ease-in-out 0.3s;
         z-index: 1;
     }
-    
+
     .success-msg {
         flex: 1;
         z-index: 1;
     }
-    
+
     .success-msg h3 {
         margin: 0 0 8px 0;
         color: #064e3b;
         font-size: 1.5rem;
         font-weight: 700;
     }
-    
+
     .success-msg p {
         margin: 0;
         color: #065f46;
         font-size: 1.05rem;
         line-height: 1.5;
     }
-    
+
     .success-msg .time-saved {
         display: inline-block;
         background: white;
@@ -133,9 +133,9 @@
         font-weight: 600;
         color: #059669;
         margin-top: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .btn-dismiss {
         position: absolute;
         top: 12px;
@@ -151,171 +151,181 @@
         line-height: 1;
         z-index: 2;
     }
-    
+
     .btn-dismiss:hover {
         opacity: 1;
         transform: scale(1.1);
     }
-    
+
     @keyframes slideInDown {
         from {
             transform: translateY(-30px);
             opacity: 0;
         }
+
         to {
             transform: translateY(0);
             opacity: 1;
         }
     }
-    
+
     @keyframes pulse {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
+
         50% {
             transform: scale(1.02);
         }
     }
-    
+
     @keyframes bounce {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
+
         25% {
             transform: scale(1.2) rotate(-5deg);
         }
+
         75% {
             transform: scale(1.2) rotate(5deg);
         }
     }
-    
+
     @keyframes shimmer {
         0% {
             transform: translate(-50%, -50%) rotate(0deg);
         }
+
         100% {
             transform: translate(-50%, -50%) rotate(360deg);
         }
     }
-    
+
     @keyframes slideOutUp {
         from {
             transform: translateY(0);
             opacity: 1;
         }
+
         to {
             transform: translateY(-30px);
             opacity: 0;
         }
     }
-    
+
     @media (max-width: 768px) {
         .success-toast {
             flex-direction: column;
             text-align: center;
             padding: 20px;
         }
-        
+
         .success-actions {
             flex-direction: column;
             width: 100%;
         }
-        
+
         .btn-view-top {
             width: 100%;
         }
-        
+
         /* Results table adjustments */
         .table-responsive {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         /* Card spacing */
         .card {
             margin-bottom: 1rem;
         }
-        
+
         /* Admin warning banner */
         .alert {
             padding: 12px;
             font-size: 0.9rem;
         }
     }
-    
+
     /* Mobile-Only Enhancements - Small Phones */
     @media (max-width: 480px) {
         .success-toast {
             padding: 16px;
             border-radius: 8px;
         }
-        
+
         .success-msg h3 {
             font-size: 1.25rem;
         }
-        
+
         .success-msg p {
             font-size: 0.95rem;
         }
-        
+
         .time-saved {
             font-size: 0.85rem;
         }
-        
+
         /* Tab navigation - vertical stack on mobile */
         .btn-group {
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .btn-group a {
             width: 100%;
             min-width: 100%;
             flex: 1 1 100%;
         }
-        
+
         /* Results table compact */
         .table {
             font-size: 0.85rem;
         }
-        
+
         .table th,
         .table td {
             padding: 8px 6px;
         }
-        
+
         /* Candidate name column */
         .table td:first-child {
             min-width: 120px;
         }
-        
+
         /* Score badges */
         .badge {
             font-size: 11px;
             padding: 3px 6px;
         }
-        
+
         /* Action buttons in table */
         .btn-sm {
             font-size: 0.8rem;
             padding: 4px 8px;
         }
-        
+
         /* Analysis header */
         h2 {
             font-size: 1.5rem;
         }
-        
+
         h4 {
             font-size: 1.1rem;
         }
-        
+
         /* Admin warning */
         .alert {
             padding: 10px;
             font-size: 0.85rem;
         }
-        
+
         .alert i {
             width: 16px;
             height: 16px;
@@ -328,86 +338,97 @@
 <div class="container-fluid mt-4">
     <!-- Admin Warning Banner (when viewing other user's analysis) -->
     {% if viewing_other_user %}
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; border-radius: 12px; padding: 20px 30px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+    <div
+        style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 4px solid #f59e0b; border-radius: 12px; padding: 20px 30px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
         <div style="display: flex; align-items: center; gap: 20px;">
             <div style="font-size: 48px;">👁️</div>
             <div style="flex: 1;">
-                <h3 style="color: #78350f; margin: 0 0 10px 0; font-weight: 700; font-size: 22px;">⚠️ ADMIN VIEW MODE - Viewing Another User's Job</h3>
+                <h3 style="color: #78350f; margin: 0 0 10px 0; font-weight: 700; font-size: 22px;">⚠️ ADMIN VIEW MODE -
+                    Viewing Another User's Job</h3>
                 <p style="color: #92400e; margin: 0 0 12px 0; font-size: 16px; line-height: 1.5;">
-                    You are viewing job results for: <strong style="color: #78350f; font-size: 18px;">{{ analysis_owner_email }}</strong>
+                    You are viewing job results for: <strong style="color: #78350f; font-size: 18px;">{{
+                        analysis_owner_email }}</strong>
                 </p>
-                <div style="background: rgba(255,255,255,0.9); padding: 12px 16px; border-radius: 6px; border-left: 4px solid #dc2626;">
+                <div
+                    style="background: rgba(255,255,255,0.9); padding: 12px 16px; border-radius: 6px; border-left: 4px solid #dc2626;">
                     <strong style="color: #991b1b;">🚨 IMPORTANT:</strong>
-                    <span style="color: #374151;"> Any actions you take (Add Funds, New Analysis, navigation buttons) will affect <strong>YOUR admin account</strong>, not this user's account.</span>
+                    <span style="color: #374151;"> Any actions you take (Add Funds, New Analysis, navigation buttons)
+                        will affect <strong>YOUR admin account</strong>, not this user's account.</span>
                 </div>
             </div>
             <div>
-                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}" 
-                   style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.2s;"
-                   onmouseover="this.style.background='#4f46e5'"
-                   onmouseout="this.style.background='#6366f1'">
+                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}"
+                    style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.2s;"
+                    onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
                     ← Back to User Detail
                 </a>
             </div>
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Success Toast (shows only on first view after analysis) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                {% if category == 'success' and 'Analysis complete' in message %}
-                <div class="success-toast" id="successToast">
-                    <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
-                    <div class="success-icon">🎉</div>
-                    <div class="success-msg">
-                        <h3>Analysis Complete! 🚀</h3>
-                        <p>We've ranked your {{ analysis.num_candidates }} candidates. 
-                            {% if coverage_data|length > 0 %}
-                            Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
-                            {% endif %}
-                        </p>
-                        {% set total_minutes = analysis.num_candidates * 25 %}
-                        {% set hours = (total_minutes // 60)|int %}
-                        {% set minutes = (total_minutes % 60)|int %}
-                        <div class="time-saved">⚡ You just saved approximately 
-                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}{% if hours > 0 and minutes > 0 %} and {% endif %}{% if minutes > 0 %}{{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
-                            of manual screening
-                        </div>
-                    </div>
-                </div>
+    {% if messages %}
+    {% for category, message in messages %}
+    {% if category == 'success' and 'Analysis complete' in message %}
+    <div class="success-toast" id="successToast">
+        <button class="btn-dismiss" onclick="dismissToast()" title="Dismiss">&times;</button>
+        <div class="success-icon">🎉</div>
+        <div class="success-msg">
+            <h3>Analysis Complete! 🚀</h3>
+            <p>We've ranked your {{ analysis.num_candidates }} candidates.
+                {% if coverage_data|length > 0 %}
+                Your top match scored <strong>{{ "%.0f"|format(coverage_data[0]['Overall'] * 100) }}%</strong>.
                 {% endif %}
-            {% endfor %}
-        {% endif %}
+            </p>
+            {% set total_minutes = analysis.num_candidates * 25 %}
+            {% set hours = (total_minutes // 60)|int %}
+            {% set minutes = (total_minutes % 60)|int %}
+            <div class="time-saved">⚡ You just saved approximately
+                {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}{% if hours > 0 and minutes
+                > 0 %} and {% endif %}{% if minutes > 0 %}{{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif
+                %}
+                of manual screening
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
     {% endwith %}
-    
+
     <!-- Workflow Stepper -->
     {% if is_current_draft_analysis %}
     {% set current_step = 5 %}
     {% include 'workflow_stepper.html' %}
     {% else %}
     <!-- Historical Analysis Header -->
-    <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div
+        style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div class="text-center">
             <h4 style="color: #1f2937; margin-bottom: 10px;">📊 Historical Analysis Results</h4>
-            <p class="text-muted mb-0">Viewing saved analysis from <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
+            <p class="text-muted mb-0">Viewing saved analysis from <span class="local-time"
+                    data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at
+                    %I:%M %p') }}</span></p>
             <div class="mt-3" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}" style="display: inline;">
-                    <button type="submit" class="btn btn-primary" 
-                            style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;"
-                            onclick="return confirm('This will load this job into your workspace with the SAME criteria so you can analyze a new batch of candidates.\n\n💡 Tip: After loading, update the job title (e.g., add \"Batch 2\" or \"Final Round\") to distinguish between batches.\n\nContinue?');">
+                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}"
+                    style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-primary"
+                        style="display: flex; align-items: center; gap: 8px; padding: 10px 20px;"
+                        onclick="return confirm('This will load this job into your workspace with the SAME criteria so you can analyze a new batch of candidates.\n\n💡 Tip: After loading, update the job title (e.g., add \"
+                        Batch 2\" or \"Final Round\") to distinguish between batches.\n\nContinue?');">
                         <i data-lucide="copy-plus" style="width: 18px; height: 18px;"></i>
                         Run New Batch with Same Criteria
                     </button>
                 </form>
                 <div style="position: relative; display: inline-block;">
-                    <i data-lucide="info" 
-                       style="width: 20px; height: 20px; color: #3b82f6; cursor: help;" 
-                       onmouseover="document.getElementById('batchTooltip').style.display='block'"
-                       onmouseout="document.getElementById('batchTooltip').style.display='none'"></i>
-                    <div id="batchTooltip" 
-                         style="display: none; position: absolute; left: 30px; top: -20px; background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; line-height: 1.5;">
+                    <i data-lucide="info" style="width: 20px; height: 20px; color: #3b82f6; cursor: help;"
+                        onmouseover="document.getElementById('batchTooltip').style.display='block'"
+                        onmouseout="document.getElementById('batchTooltip').style.display='none'"></i>
+                    <div id="batchTooltip"
+                        style="display: none; position: absolute; left: 30px; top: -20px; background: #1e293b; color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; width: 320px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; line-height: 1.5;">
                         <strong style="color: #60a5fa;">💡 Batch Processing Tips:</strong><br>
                         • Use this to analyze multiple candidate groups against identical criteria<br>
                         • Update job title to "Batch 2", "Batch 3", etc. to track batches<br>
@@ -419,199 +440,233 @@
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Unified Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
-        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
+    <div class="btn-group mb-3" role="group"
+        style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
+        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
             <span>Results</span>
         </a>
-        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px; {{ 'opacity: 0.5; pointer-events: none;' if not analysis.insights_data else '' }}">
+        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px; {{ 'opacity: 0.5; pointer-events: none;' if not analysis.insights_data else '' }}">
             <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
             <span>Insights</span>
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
+        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+            style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
             <span>Export</span>
         </a>
     </div>
-    
+
     <!-- Unified Metadata Bar -->
     <div class="card mb-4" style="background: white; border-left: 4px solid #3b82f6;">
         <div class="card-body py-2">
             <p class="mb-0" style="font-size: 15px; color: #6b7280;">
-                <strong style="color: #1f2937;">Job #{{ "%04d"|format(analysis.id) }}:</strong> {{ analysis.job_title }} | 
-                <strong style="color: #1f2937;">Analyzed:</strong> <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y') }}</span> | 
-                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates | 
+                <strong style="color: #1f2937;">Job #{{ "%04d"|format(analysis.id) }}:</strong> {{ analysis.job_title }}
+                |
+                <strong style="color: #1f2937;">Analyzed:</strong> <span class="local-time"
+                    data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y')
+                    }}</span> |
+                <strong style="color: #1f2937;">{{ analysis.num_candidates }}</strong> Candidates |
                 <strong style="color: #1f2937;">{{ analysis.num_criteria }}</strong> Criteria
             </p>
         </div>
     </div>
-    
+
     <!-- Results Content Container -->
     <div class="results-container">
-    <div class="row">
-        <div class="col-12">
+        <div class="row">
+            <div class="col-12">
 
-            <!-- AI Match Confidence Meter -->
-            <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <i data-lucide="brain" style="width: 24px; height: 24px; color: #3b82f6;"></i>
-                        <h4 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">AI Analysis Confidence</h4>
-                    </div>
-                    <span style="background: #16a34a; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">High</span>
-                </div>
-                <div style="background: #e2e8f0; border-radius: 12px; height: 24px; overflow: hidden; position: relative;">
-                    <div style="background: linear-gradient(90deg, #10b981 0%, #16a34a 100%); height: 100%; width: 92%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                        <span style="color: white; font-weight: 700; font-size: 12px;">92%</span>
-                    </div>
-                </div>
-                <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">The AI successfully parsed all job criteria and candidate resumes with high accuracy.</p>
-            </div>
-
-            <!-- Top Candidates Summary -->
-            <div class="card mb-4 border-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">🏆 Top 5 Candidates</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row" id="topCandidates">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scoring Info Box -->
-            <div class="alert alert-light mb-4" style="border: 1px solid #e2e8f0; padding: 16px; display: flex; align-items: center; gap: 24px;">
-                <strong style="color: #64748b;">Heatmap Legend:</strong>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-                        <span style="color: #065f46; font-weight: 600;">Strong</span>
-                    </span>
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
-                        <span style="color: #92400e; font-weight: 600;">Potential</span>
-                    </span>
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
-                        <span style="color: #991b1b; font-weight: 600;">Low</span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Coverage Matrix Controls -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h5 class="mb-0">📈 Coverage Matrix</h5>
-                    <button id="downloadCSV" class="btn btn-sm btn-light" style="white-space: nowrap;">
-                        📥 Download CSV
-                    </button>
-                </div>
-                <div class="card-body">
-                    <!-- Control Row -->
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="sortBy" class="form-label small fw-semibold" style="color: #374151;">Sort candidates by</label>
-                            <select id="sortBy" class="form-select form-select-sm" style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
-                                <option value="name">Name (A-Z)</option>
-                                <option value="score-desc" selected>Overall Score (High-Low)</option>
-                                <option value="score-asc">Overall Score (Low-High)</option>
-                            </select>
+                <!-- AI Match Confidence Meter -->
+                <div
+                    style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="brain" style="width: 24px; height: 24px; color: #3b82f6;"></i>
+                            <h4 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">AI Analysis
+                                Confidence</h4>
                         </div>
-                        <div class="col-md-3">
-                            <label for="filterBy" class="form-label small fw-semibold" style="color: #374151;">Show</label>
-                            <select id="filterBy" class="form-select form-select-sm" style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
-                                <option value="all" selected>All Candidates</option>
-                                <option value="top3">Top 3</option>
-                                <option value="top5">Top 5</option>
-                                <option value="top10">Top 10</option>
-                                <option value="custom">Custom Selection</option>
-                            </select>
+                        <span
+                            style="background: #16a34a; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 14px;">High</span>
+                    </div>
+                    <div
+                        style="background: #e2e8f0; border-radius: 12px; height: 24px; overflow: hidden; position: relative;">
+                        <div
+                            style="background: linear-gradient(90deg, #10b981 0%, #16a34a 100%); height: 100%; width: 92%; border-radius: 12px; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                            <span style="color: white; font-weight: 700; font-size: 12px;">92%</span>
                         </div>
                     </div>
+                    <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">The AI successfully parsed all job
+                        criteria and candidate resumes with high accuracy.</p>
+                </div>
 
-                    <!-- Custom Selection (hidden by default) -->
-                    <div id="customSelectionBox" class="alert alert-info mb-3" style="display: none;">
-                        <strong>👥 Select candidates to compare:</strong>
-                        <div id="customCandidateCheckboxes" class="mt-2">
+                <!-- Top Candidates Summary -->
+                <div class="card mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">🏆 Top 5 Candidates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="topCandidates">
                             <!-- Populated by JavaScript -->
                         </div>
                     </div>
+                </div>
 
-                    <!-- Top Scrollbar for Coverage Matrix -->
-                    <div id="topScrollbar" style="overflow-x: auto; overflow-y: hidden; height: 20px; margin-bottom: 10px;">
-                        <div id="topScrollbarContent" style="height: 1px;"></div>
+                <!-- Scoring Info Box -->
+                <div class="alert alert-light mb-4"
+                    style="border: 1px solid #e2e8f0; padding: 16px; display: flex; align-items: center; gap: 24px;">
+                    <strong style="color: #64748b;">Heatmap Legend:</strong>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <span
+                                style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                            <span style="color: #065f46; font-weight: 600;">Strong</span>
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <span
+                                style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                            <span style="color: #92400e; font-weight: 600;">Potential</span>
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 8px;">
+                            <span
+                                style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                            <span style="color: #991b1b; font-weight: 600;">Low</span>
+                        </span>
                     </div>
+                </div>
 
-                    <!-- Coverage Matrix Table -->
-                    <div id="bottomScrollbar" class="table-responsive" style="max-width: 100%; overflow-x: auto; overflow-y: visible;">
-                        <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
-                            <thead class="table-light sticky-top">
-                                <tr id="matrixHeader">
-                                    <!-- Populated by JavaScript -->
-                                </tr>
-                            </thead>
-                            <tbody id="matrixBody">
+                <!-- Coverage Matrix Controls -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white"
+                        style="display: flex; justify-content: space-between; align-items: center;">
+                        <h5 class="mb-0">📈 Coverage Matrix</h5>
+                        <button id="downloadCSV" class="btn btn-sm btn-light" style="white-space: nowrap;">
+                            📥 Download CSV
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Control Row -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="sortBy" class="form-label small fw-semibold" style="color: #374151;">Sort
+                                    candidates by</label>
+                                <select id="sortBy" class="form-select form-select-sm"
+                                    style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
+                                    <option value="name">Name (A-Z)</option>
+                                    <option value="score-desc" selected>Overall Score (High-Low)</option>
+                                    <option value="score-asc">Overall Score (Low-High)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="filterBy" class="form-label small fw-semibold"
+                                    style="color: #374151;">Show</label>
+                                <select id="filterBy" class="form-select form-select-sm"
+                                    style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; font-weight: 500; transition: all 0.2s;">
+                                    <option value="all" selected>All Candidates</option>
+                                    <option value="top3">Top 3</option>
+                                    <option value="top5">Top 5</option>
+                                    <option value="top10">Top 10</option>
+                                    <option value="custom">Custom Selection</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Custom Selection (hidden by default) -->
+                        <div id="customSelectionBox" class="alert alert-info mb-3" style="display: none;">
+                            <strong>👥 Select candidates to compare:</strong>
+                            <div id="customCandidateCheckboxes" class="mt-2">
                                 <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
+
+                        <!-- Top Scrollbar for Coverage Matrix -->
+                        <div id="topScrollbar"
+                            style="overflow-x: auto; overflow-y: hidden; height: 20px; margin-bottom: 10px;">
+                            <div id="topScrollbarContent" style="height: 1px;"></div>
+                        </div>
+
+                        <!-- Coverage Matrix Table -->
+                        <div id="bottomScrollbar" class="table-responsive"
+                            style="max-width: 100%; overflow-x: auto; overflow-y: visible;">
+                            <table id="coverageMatrix" class="table table-bordered table-hover table-sm">
+                                <thead class="table-light sticky-top">
+                                    <tr id="matrixHeader">
+                                        <!-- Populated by JavaScript -->
+                                    </tr>
+                                </thead>
+                                <tbody id="matrixBody">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Passive Feedback Section -->
-            <div class="feedback-box" id="feedbackBox">
-                <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
-                <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Your feedback helps us improve the analysis accuracy</p>
-                <div class="feedback-options">
-                    <button class="feedback-btn" onclick="submitVote('up')">
-                        <span style="font-size: 1.5rem;">👍</span><br>
-                        <span>Yes, accurate</span>
-                    </button>
-                    <button class="feedback-btn" onclick="showNote()">
-                        <span style="font-size: 1.5rem;">👎</span><br>
-                        <span>Needs work</span>
-                    </button>
-                </div>
-                
-                <div id="improvement-note">
-                    <textarea id="feedback-text" placeholder="Tell us what could be improved (optional)..." 
-                        style="width:100%; max-width:600px; height:100px; padding:12px; border-radius:8px; 
+                <!-- Passive Feedback Section -->
+                <div class="feedback-box" id="feedbackBox">
+                    <h4 style="color: #1e293b; margin-bottom: 10px;">Was this AI ranking helpful?</h4>
+                    <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 20px;">Your feedback helps us improve
+                        the analysis accuracy</p>
+                    <div class="feedback-options">
+                        <button class="feedback-btn" onclick="submitVote('up')">
+                            <span style="font-size: 1.5rem;">👍</span><br>
+                            <span>Yes, accurate</span>
+                        </button>
+                        <button class="feedback-btn" onclick="showNote()">
+                            <span style="font-size: 1.5rem;">👎</span><br>
+                            <span>Needs work</span>
+                        </button>
+                    </div>
+
+                    <div id="improvement-note">
+                        <textarea id="feedback-text" placeholder="Tell us what could be improved (optional)..."
+                            style="width:100%; max-width:600px; height:100px; padding:12px; border-radius:8px; 
                         border:1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; margin-top: 20px;"></textarea>
-                    <br>
-                    <button onclick="submitVote('down')" class="btn btn-primary" style="margin-top:12px; padding:10px 24px;">
-                        Send Feedback
-                    </button>
-                </div>
-                
-                <div id="feedback-thanks" style="display: none;">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
-                    <h4 style="color: #059669; margin: 0;">Thanks for your feedback!</h4>
-                    <p style="color: #64748b; margin-top: 8px;">Your input helps us improve the AI for everyone.</p>
+                        <br>
+                        <button onclick="submitVote('down')" class="btn btn-primary"
+                            style="margin-top:12px; padding:10px 24px;">
+                            Send Feedback
+                        </button>
+                    </div>
+
+                    <div id="feedback-thanks" style="display: none;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">✅</div>
+                        <h4 style="color: #059669; margin: 0;">Thanks for your feedback!</h4>
+                        <p style="color: #64748b; margin-top: 8px;">Your input helps us improve the AI for everyone.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </div><!-- Close results-container -->
 
 <!-- Side Drawer for Evidence -->
-<div id="evidenceDrawer" style="position: fixed; top: 0; right: -600px; width: 600px; height: 100vh; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); z-index: 10000; transition: right 0.3s ease; overflow-y: auto;">
+<div id="evidenceDrawer"
+    style="position: fixed; top: 0; right: -600px; width: 600px; height: 100vh; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.15); z-index: 10000; transition: right 0.3s ease; overflow-y: auto;">
     <!-- Drawer Header -->
-    <div style="position: sticky; top: 0; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 24px; border-bottom: 2px solid #e5e7eb; z-index: 10;">
+    <div
+        style="position: sticky; top: 0; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 24px; border-bottom: 2px solid #e5e7eb; z-index: 10;">
         <div style="display: flex; justify-content: space-between; align-items: start;">
             <div>
                 <h4 style="color: white; margin: 0; font-weight: 700; font-size: 20px;">Source Evidence</h4>
-                <p id="drawerTitle" style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 13px; font-weight: 600;">Criterion Name</p>
+                <p id="drawerTitle"
+                    style="color: rgba(255,255,255,0.9); margin: 4px 0 0 0; font-size: 13px; font-weight: 600;">
+                    Criterion Name</p>
             </div>
-            <button onclick="closeEvidenceDrawer()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            <button onclick="closeEvidenceDrawer()"
+                style="background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                 <i data-lucide="x" style="width: 20px; height: 20px;"></i>
             </button>
         </div>
     </div>
-    
+
     <!-- Drawer Content -->
     <div id="drawerContentWrapper" style="padding: 24px;">
         <!-- Content will be dynamically inserted here -->
@@ -619,37 +674,46 @@
 </div>
 
 <!-- Drawer Overlay -->
-<div id="drawerOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s ease;" onclick="closeEvidenceDrawer()"></div>
+<div id="drawerOverlay"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s ease;"
+    onclick="closeEvidenceDrawer()"></div>
 
 <!-- Unlock Insights Modal -->
-<div id="unlockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 480px; width: 90%; overflow: hidden;">
+<div id="unlockModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; backdrop-filter: blur(4px);">
+    <div
+        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 480px; width: 90%; overflow: hidden;">
         <!-- Header with gradient -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px 32px 24px; text-align: center;">
+        <div
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px 32px 24px; text-align: center;">
             <div style="font-size: 64px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">🔓</div>
             <h3 style="color: white; margin: 0; font-weight: 700; font-size: 24px;">Unlock Insights?</h3>
         </div>
-        
+
         <!-- Content -->
         <div style="padding: 32px;">
             <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span style="color: #64748b; font-size: 14px;">Current Balance</span>
-                    <span id="modalCurrentBalance" style="color: #059669; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(current_user.balance_usd) }}</span>
+                    <span id="modalCurrentBalance" style="color: #059669; font-weight: 700; font-size: 20px;">${{
+                        "%.2f"|format(current_user.balance_usd) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span style="color: #64748b; font-size: 14px;">Unlock Cost</span>
-                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- ${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</span>
+                    <span style="color: #dc2626; font-weight: 700; font-size: 20px;">- ${{
+                        "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</span>
                 </div>
                 <div style="border-top: 2px solid #e2e8f0; margin: 12px 0; padding-top: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="color: #1f2937; font-weight: 600;">New Balance</span>
-                        <span id="modalNewBalance" style="color: #1f2937; font-weight: 700; font-size: 20px;">${{ "%.2f"|format(current_user.balance_usd|float - pricing['EXTRA_INSIGHT_PRICE']) }}</span>
+                        <span id="modalNewBalance" style="color: #1f2937; font-weight: 700; font-size: 20px;">${{
+                            "%.2f"|format(current_user.balance_usd|float - pricing['EXTRA_INSIGHT_PRICE']) }}</span>
                     </div>
                 </div>
             </div>
-            
-            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+
+            <div
+                style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
                 <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
                     <strong>AI will generate for <span id="modalCandidateName">candidate</span>:</strong><br>
                     ✓ Top Strengths matching the role<br>
@@ -657,13 +721,15 @@
                     ✓ Overall Assessment & Recommendation
                 </p>
             </div>
-            
+
             <!-- Buttons -->
             <div style="display: flex; gap: 12px;">
-                <button onclick="closeUnlockModal()" style="flex: 1; padding: 14px 24px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
+                <button onclick="closeUnlockModal()"
+                    style="flex: 1; padding: 14px 24px; background: white; border: 2px solid #e2e8f0; border-radius: 10px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
                     Cancel
                 </button>
-                <button id="confirmUnlockBtn" onclick="confirmUnlock()" style="flex: 1; padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.2s;">
+                <button id="confirmUnlockBtn" onclick="confirmUnlock()"
+                    style="flex: 1; padding: 14px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; font-weight: 600; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.2s;">
                     🔓 Unlock Now
                 </button>
             </div>
@@ -681,14 +747,14 @@
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
-    
+
     .feedback-options {
         display: flex;
         justify-content: center;
         gap: 20px;
         flex-wrap: wrap;
     }
-    
+
     .feedback-btn {
         padding: 20px 30px;
         border: 2px solid #cbd5e1;
@@ -701,38 +767,48 @@
         color: #475569;
         min-width: 140px;
     }
-    
+
     .feedback-btn:hover {
         background: #eff6ff;
         border-color: #2563eb;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
-    
+
     #improvement-note {
         margin-top: 15px;
         display: none;
         animation: fadeIn 0.3s ease;
     }
-    
+
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
+
     @media (max-width: 768px) {
         .feedback-box {
             padding: 30px 20px;
         }
-        
+
         .feedback-btn {
             min-width: 120px;
             padding: 16px 20px;
         }
     }
-    
+
     /* Modern Dropdown Hover Effects */
-    #sortBy:hover, #filterBy:hover, #sortBy:focus, #filterBy:focus {
+    #sortBy:hover,
+    #filterBy:hover,
+    #sortBy:focus,
+    #filterBy:focus {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         outline: none;
@@ -740,109 +816,109 @@
 </style>
 
 <script>
-// Parse data from Flask
-const coverageData = {{ coverage_data | tojson | safe }};
-const categoryMap = {{ category_map | tojson | safe }};
-const evidenceMap = {{ evidence_map | tojson | safe }};
-const insightsData = {{ insights | tojson | safe }};
-const thresholds = { high: {{ user_settings.default_hi_threshold / 100 }}, low: {{ user_settings.default_lo_threshold / 100 }} };
+    // Parse data from Flask
+    const coverageData = {{ coverage_data | tojson | safe }};
+    const categoryMap = {{ category_map | tojson | safe }};
+    const evidenceMap = {{ evidence_map | tojson | safe }};
+    const insightsData = {{ insights | tojson | safe }};
+    const thresholds = { high: {{ user_settings.default_hi_threshold / 100 }}, low: {{ user_settings.default_lo_threshold / 100 }} };
 
-let currentSort = 'score-desc';
-let currentFilter = 'all';
-let showScores = false;
-let expandCategories = true;
-let selectedCandidates = [];
+    let currentSort = 'score-desc';
+    let currentFilter = 'all';
+    let showScores = false;
+    let expandCategories = true;
+    let selectedCandidates = [];
 
-// Navigate to Insights page with candidate pre-selected
-function switchToInsightsTab(candidateName) {
-    const insightsUrl = "{{ url_for('insights', analysis_id=analysis.id) }}";
-    window.location.href = `${insightsUrl}?candidate=${encodeURIComponent(candidateName)}`;
-}
-
-// Initialize page
-document.addEventListener('DOMContentLoaded', function() {
-    initializeTopCandidates();
-    initializeCoverageMatrix();
-    attachEventListeners();
-    
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+    // Navigate to Insights page with candidate pre-selected
+    function switchToInsightsTab(candidateName) {
+        const insightsUrl = "{{ url_for('insights', analysis_id=analysis.id) }}";
+        window.location.href = `${insightsUrl}?candidate=${encodeURIComponent(candidateName)}`;
     }
-    
-    // Synchronize top and bottom scrollbars for coverage matrix
-    const topScrollbar = document.getElementById('topScrollbar');
-    const bottomScrollbar = document.getElementById('bottomScrollbar');
-    const topScrollbarContent = document.getElementById('topScrollbarContent');
-    
-    if (topScrollbar && bottomScrollbar && topScrollbarContent) {
-        // Function to sync scrollbar widths
-        function syncScrollbarWidths() {
-            const table = document.getElementById('coverageMatrix');
-            if (table) {
-                topScrollbarContent.style.width = table.scrollWidth + 'px';
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeTopCandidates();
+        initializeCoverageMatrix();
+        attachEventListeners();
+
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Synchronize top and bottom scrollbars for coverage matrix
+        const topScrollbar = document.getElementById('topScrollbar');
+        const bottomScrollbar = document.getElementById('bottomScrollbar');
+        const topScrollbarContent = document.getElementById('topScrollbarContent');
+
+        if (topScrollbar && bottomScrollbar && topScrollbarContent) {
+            // Function to sync scrollbar widths
+            function syncScrollbarWidths() {
+                const table = document.getElementById('coverageMatrix');
+                if (table) {
+                    topScrollbarContent.style.width = table.scrollWidth + 'px';
+                }
             }
-        }
-        
-        // Sync scroll positions
-        topScrollbar.addEventListener('scroll', function() {
-            bottomScrollbar.scrollLeft = topScrollbar.scrollLeft;
-        });
-        
-        bottomScrollbar.addEventListener('scroll', function() {
-            topScrollbar.scrollLeft = bottomScrollbar.scrollLeft;
-        });
-        
-        // Initial sync and re-sync when table is rendered
-        syncScrollbarWidths();
-        
-        // Re-sync after table updates (using MutationObserver)
-        const observer = new MutationObserver(syncScrollbarWidths);
-        const matrixBody = document.getElementById('matrixBody');
-        if (matrixBody) {
-            observer.observe(matrixBody, { childList: true, subtree: true });
-        }
-        
-        // Also sync on window resize
-        window.addEventListener('resize', syncScrollbarWidths);
-    }
-});
 
-function initializeTopCandidates() {
-    const sorted = [...coverageData].sort((a, b) => {
-        // Primary sort: by score descending
-        if (b.Overall !== a.Overall) {
-            return b.Overall - a.Overall;
+            // Sync scroll positions
+            topScrollbar.addEventListener('scroll', function () {
+                bottomScrollbar.scrollLeft = topScrollbar.scrollLeft;
+            });
+
+            bottomScrollbar.addEventListener('scroll', function () {
+                topScrollbar.scrollLeft = bottomScrollbar.scrollLeft;
+            });
+
+            // Initial sync and re-sync when table is rendered
+            syncScrollbarWidths();
+
+            // Re-sync after table updates (using MutationObserver)
+            const observer = new MutationObserver(syncScrollbarWidths);
+            const matrixBody = document.getElementById('matrixBody');
+            if (matrixBody) {
+                observer.observe(matrixBody, { childList: true, subtree: true });
+            }
+
+            // Also sync on window resize
+            window.addEventListener('resize', syncScrollbarWidths);
         }
-        // Secondary sort: unreadable files go to bottom when scores are equal
-        const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
-        const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
-        if (aIsUnreadable && !bIsUnreadable) return 1;
-        if (!aIsUnreadable && bIsUnreadable) return -1;
-        // Tertiary sort: alphabetically by name
-        return a.Candidate.localeCompare(b.Candidate);
     });
-    const top5 = sorted.slice(0, 5);
-    
-    const html = top5.map((row, idx) => {
-        const score = row.Overall;
-        const percentage = Math.round(score * 100);
-        const rank = idx + 1;
-        
-        // Get background color based on score
-        let bgColor, textColor;
-        if (score >= 0.80) {
-            bgColor = '#e6ffed';
-            textColor = '#065f46';
-        } else if (score >= 0.60) {
-            bgColor = '#fffbe6';
-            textColor = '#92400e';
-        } else {
-            bgColor = '#fff1f0';
-            textColor = '#991b1b';
-        }
-        
-        return `
+
+    function initializeTopCandidates() {
+        const sorted = [...coverageData].sort((a, b) => {
+            // Primary sort: by score descending
+            if (b.Overall !== a.Overall) {
+                return b.Overall - a.Overall;
+            }
+            // Secondary sort: unreadable files go to bottom when scores are equal
+            const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+            const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+            if (aIsUnreadable && !bIsUnreadable) return 1;
+            if (!aIsUnreadable && bIsUnreadable) return -1;
+            // Tertiary sort: alphabetically by name
+            return a.Candidate.localeCompare(b.Candidate);
+        });
+        const top5 = sorted.slice(0, 5);
+
+        const html = top5.map((row, idx) => {
+            const score = row.Overall;
+            const percentage = Math.round(score * 100);
+            const rank = idx + 1;
+
+            // Get background color based on score
+            let bgColor, textColor;
+            if (score >= 0.80) {
+                bgColor = '#e6ffed';
+                textColor = '#065f46';
+            } else if (score >= 0.60) {
+                bgColor = '#fffbe6';
+                textColor = '#92400e';
+            } else {
+                bgColor = '#fff1f0';
+                textColor = '#991b1b';
+            }
+
+            return `
             <div style="flex: 1; min-width: 180px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid ${bgColor}; text-align: center;">
                 <div style="font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 8px;">#${rank}</div>
                 <div style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${row.Candidate}">${row.Candidate}</div>
@@ -855,81 +931,82 @@ function initializeTopCandidates() {
                 </a>
             </div>
         `;
-    }).join('');
-    
-    document.getElementById('topCandidates').innerHTML = `<div style="display: flex; gap: 16px; flex-wrap: wrap;">${html}</div>`;
-}
+        }).join('');
 
-function initializeCoverageMatrix() {
-    renderMatrix();
-}
+        document.getElementById('topCandidates').innerHTML = `<div style="display: flex; gap: 16px; flex-wrap: wrap;">${html}</div>`;
+    }
 
-function renderMatrix() {
-    // Get sorted and filtered data
-    let data = [...coverageData];
-    
-    // Apply sorting
-    if (currentSort === 'name') {
-        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
-    } else if (currentSort === 'score-desc') {
-        data.sort((a, b) => {
-            // Primary sort: by score descending
-            if (b.Overall !== a.Overall) {
-                return b.Overall - a.Overall;
-            }
-            // Secondary sort: unreadable files go to bottom when scores are equal
-            const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
-            const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
-            if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
-            if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
-            // Tertiary sort: alphabetically by name when scores are equal
-            return a.Candidate.localeCompare(b.Candidate);
-        });
-    } else if (currentSort === 'score-asc') {
-        data.sort((a, b) => {
-            // Primary sort: by score ascending
-            if (a.Overall !== b.Overall) {
-                return a.Overall - b.Overall;
-            }
-            // Secondary sort: unreadable files go to bottom when scores are equal
-            const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
-            const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
-            if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
-            if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
-            // Tertiary sort: alphabetically by name when scores are equal
-            return a.Candidate.localeCompare(b.Candidate);
-        });
+    function initializeCoverageMatrix() {
+        renderMatrix();
     }
-    
-    // Apply filtering
-    if (currentFilter === 'top3') {
-        data = data.slice(0, 3);
-    } else if (currentFilter === 'top5') {
-        data = data.slice(0, 5);
-    } else if (currentFilter === 'top10') {
-        data = data.slice(0, 10);
-    } else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
-        data = data.filter(row => selectedCandidates.includes(row.Candidate));
-    }
-    
-    if (data.length === 0) {
-        document.getElementById('matrixBody').innerHTML = '<tr><td colspan="100" class="text-center text-muted">No candidates to display. Select at least one candidate above.</td></tr>';
-        return;
-    }
-    
-    // Build header
-    const candidates = data.map(row => row.Candidate);
-    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
-    
-    // Candidate file info passed from Flask
-    const candidateFilesInfo = {{ candidate_files_info|tojson|safe }};
-    
+
+    function renderMatrix() {
+        // Get sorted and filtered data
+        let data = [...coverageData];
+
+        // Apply sorting
+        if (currentSort === 'name') {
+            data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+        } else if (currentSort === 'score-desc') {
+            data.sort((a, b) => {
+                // Primary sort: by score descending
+                if (b.Overall !== a.Overall) {
+                    return b.Overall - a.Overall;
+                }
+                // Secondary sort: unreadable files go to bottom when scores are equal
+                const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+                const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+                if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
+                if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
+                // Tertiary sort: alphabetically by name when scores are equal
+                return a.Candidate.localeCompare(b.Candidate);
+            });
+        } else if (currentSort === 'score-asc') {
+            data.sort((a, b) => {
+                // Primary sort: by score ascending
+                if (a.Overall !== b.Overall) {
+                    return a.Overall - b.Overall;
+                }
+                // Secondary sort: unreadable files go to bottom when scores are equal
+                const aIsUnreadable = a.Candidate.startsWith('[UNREADABLE FILE');
+                const bIsUnreadable = b.Candidate.startsWith('[UNREADABLE FILE');
+                if (aIsUnreadable && !bIsUnreadable) return 1;  // a goes after b
+                if (!aIsUnreadable && bIsUnreadable) return -1; // a goes before b
+                // Tertiary sort: alphabetically by name when scores are equal
+                return a.Candidate.localeCompare(b.Candidate);
+            });
+        }
+
+        // Apply filtering
+        if (currentFilter === 'top3') {
+            data = data.slice(0, 3);
+        } else if (currentFilter === 'top5') {
+            data = data.slice(0, 5);
+        } else if (currentFilter === 'top10') {
+            data = data.slice(0, 10);
+        } else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+            data = data.filter(row => selectedCandidates.includes(row.Candidate));
+        }
+
+        if (data.length === 0) {
+            document.getElementById('matrixBody').innerHTML = '<tr><td colspan="100" class="text-center text-muted">No candidates to display. Select at least one candidate above.</td></tr>';
+            return;
+        }
+
+        // Build header
+        const candidates = data.map(row => row.Candidate);
+        const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+
+        // Candidate file info passed from Flask
+        const candidateFilesInfo = {{ candidate_files_info| tojson | safe
+    }};
+
     let headerHTML = '<th class="text-center">Category / Criterion</th><th class="text-center">Average</th>';
     candidates.forEach(cand => {
         const fileInfo = candidateFilesInfo[cand] || {};
         let icons = '';
         let title = '';
-        
+
         // Check if candidate failed (0% overall score)
         const candData = data.find(r => r.Candidate === cand);
         // Show warning icon ONLY if extraction likely failed (very short text)
@@ -939,20 +1016,20 @@ function renderMatrix() {
         }
         // Note: If text_length >= 500 and score = 0%, no icon is shown
         // The red 0% score indicates "analyzed but no relevant experience found"
-        
+
         // Check if resume was truncated
         else if (fileInfo.was_truncated) {
             icons += ' <span style="color: #3b82f6; cursor: help;" title="Resume exceeded {{ "{:,}".format(resume_limit) }} character limit and was automatically trimmed. All key qualifications were still captured and evaluated.">📄✂️</span>';
             if (!title) title = 'Resume was trimmed to fit character limits';
         }
-        
+
         headerHTML += `<th class="text-center" title="${title}">${cand}${icons}</th>`;
     });
     document.getElementById('matrixHeader').innerHTML = headerHTML;
-    
+
     // Build body
     let bodyHTML = '';
-    
+
     // Overall row first
     bodyHTML += '<tr class="table-warning"><td><strong>📊 Overall</strong></td><td></td>';
     data.forEach(row => {
@@ -961,7 +1038,7 @@ function renderMatrix() {
         bodyHTML += `<td class="text-center">${display}</td>`;
     });
     bodyHTML += '</tr>';
-    
+
     // Group criteria by category
     const categorized = {};
     criteria.forEach(crit => {
@@ -969,12 +1046,12 @@ function renderMatrix() {
         if (!categorized[cat]) categorized[cat] = [];
         categorized[cat].push(crit);
     });
-    
+
     // Render by category
     const categories = Object.keys(categorized).sort();
     categories.forEach(category => {
         const crits = categorized[category];
-        
+
         if (expandCategories) {
             // Category header - first column sticky, rest are empty cells
             bodyHTML += `<tr class="table-secondary"><td><strong>📁 ${category}</strong></td>`;
@@ -983,7 +1060,7 @@ function renderMatrix() {
                 bodyHTML += '<td></td>';
             }
             bodyHTML += '</tr>';
-            
+
             // Criteria rows
             crits.forEach(crit => {
                 bodyHTML += renderCriterionRow(crit, data, candidates);
@@ -1009,159 +1086,159 @@ function renderMatrix() {
             bodyHTML += `</tbody>`;
         }
     });
-    
+
     document.getElementById('matrixBody').innerHTML = bodyHTML;
 }
 
-function renderCriterionRow(criterion, data, candidates) {
-    // Calculate average
-    const scores = data.map(row => parseFloat(row[criterion]));
-    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-    const avgIcon = getScoreIcon(avg);
-    
-    let html = `<tr><td class="ps-4" style="font-weight: 500;">${criterion}</td><td class="text-center">${avgIcon}</td>`;
-    
-    data.forEach(row => {
-        const score = parseFloat(row[criterion]);
-        const display = getScoreIcon(score);
-        html += `<td class="text-center matrix-cell" style="cursor: pointer; transition: transform 0.15s ease;" 
+    function renderCriterionRow(criterion, data, candidates) {
+        // Calculate average
+        const scores = data.map(row => parseFloat(row[criterion]));
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const avgIcon = getScoreIcon(avg);
+
+        let html = `<tr><td class="ps-4" style="font-weight: 500;">${criterion}</td><td class="text-center">${avgIcon}</td>`;
+
+        data.forEach(row => {
+            const score = parseFloat(row[criterion]);
+            const display = getScoreIcon(score);
+            html += `<td class="text-center matrix-cell" style="cursor: pointer; transition: transform 0.15s ease;" 
                      data-candidate="${row.Candidate}" data-criterion="${criterion}" 
                      onmouseover="this.style.transform='scale(1.05)'" 
                      onmouseout="this.style.transform='scale(1)'">${display}</td>`;
-    });
-    
-    html += '</tr>';
-    return html;
-}
+        });
 
-function getScoreIcon(score) {
-    const percentage = Math.round(score * 100);
-    let bgColor, textColor;
-    
-    if (percentage >= 80) {
-        bgColor = '#e6ffed';  // Soft Green
-        textColor = '#065f46'; // Dark Green
-    } else if (percentage >= 60) {
-        bgColor = '#fffbe6';  // Soft Yellow
-        textColor = '#92400e'; // Dark Gold
-    } else {
-        bgColor = '#fff1f0';  // Very Light Red
-        textColor = '#991b1b'; // Dark Red
+        html += '</tr>';
+        return html;
     }
-    
-    return `<span style="display: inline-block; background: ${bgColor}; color: ${textColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; min-width: 50px;">${percentage}%</span>`;
-}
 
-function getScoreColor(score) {
-    if (score >= thresholds.high) return 'success';
-    if (score >= thresholds.low) return 'warning';
-    return 'danger';
-}
+    function getScoreIcon(score) {
+        const percentage = Math.round(score * 100);
+        let bgColor, textColor;
 
-function initializeEvidenceExplorer() {
-    const candidates = coverageData.map(row => row.Candidate);
-    const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
-    
-    // Populate candidate dropdown
-    let candHTML = candidates.map(c => `<option value="${c}">${c}</option>`).join('');
-    document.getElementById('evidenceCandidate').innerHTML = candHTML;
-    
-    // Populate criterion dropdown
-    let critHTML = criteria.map(c => `<option value="${c}">${c}</option>`).join('');
-    document.getElementById('evidenceCriterion').innerHTML = critHTML;
-    
-    // Show initial evidence
-    updateEvidenceDisplay();
-}
-
-function updateEvidenceDisplay() {
-    const candidate = document.getElementById('evidenceCandidate').value;
-    const criterion = document.getElementById('evidenceCriterion').value;
-    
-    if (!candidate || !criterion) {
-        document.getElementById('evidenceDisplay').innerHTML = '<p class="text-muted">Select a candidate and criterion above.</p>';
-        return;
-    }
-    
-    const key = `${candidate}|||${criterion}`;
-    const evidence = evidenceMap[key];
-    
-    if (!evidence || evidence.length === 0) {
-        document.getElementById('evidenceDisplay').innerHTML = '<div class="alert alert-info">No cached evidence for this combination. Re-run analysis to refresh evidence.</div>';
-        return;
-    }
-    
-    // Evidence tuple structure: [raw_evidence, justification, score, density_count]
-    const rawEvidence = evidence[0];      // Verbatim quotes from resume
-    const densityCount = evidence[3] || 0;     // Deprecated density metric
-    
-    // Get actual score from coverage data
-    const row = coverageData.find(r => r.Candidate === candidate);
-    const score = row ? parseFloat(row[criterion]) : 0;
-    const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
-    
-    // Generate evidence depth indicator
-    let evidenceTag = '';
-    if (score >= 0.90) {
-        evidenceTag = '<span class="badge bg-success ms-2" style="font-size: 0.8rem;">🏆 Strong Peak Performance</span>';
-    } else if (densityCount >= 4) {
-        evidenceTag = `<span class="badge bg-info ms-2" style="font-size: 0.8rem;">📊 Extensive Track Record (${densityCount} mentions)</span>`;
-    } else if (densityCount >= 2) {
-        evidenceTag = `<span class="badge bg-secondary ms-2" style="font-size: 0.8rem;">✓ Multiple mentions (${densityCount})</span>`;
-    }
-    
-    // Check if this candidate has insights (Top 5 with justifications)
-    const candidateInsights = insightsData ? insightsData[candidate] : null;
-    const justifications = candidateInsights && candidateInsights.justifications ? candidateInsights.justifications : {};
-    
-    // FIXED: Try to find justification with flexible matching
-    // Sometimes GPT returns criterion names with slight differences or with score suffixes
-    let justification = justifications[criterion];  // Try exact match first
-    
-    if (!justification && Object.keys(justifications).length > 0) {
-        // Try case-insensitive match
-        const criterionLower = criterion.toLowerCase().trim();
-        const matchingKey = Object.keys(justifications).find(key => 
-            key.toLowerCase().trim() === criterionLower
-        );
-        if (matchingKey) {
-            justification = justifications[matchingKey];
+        if (percentage >= 80) {
+            bgColor = '#e6ffed';  // Soft Green
+            textColor = '#065f46'; // Dark Green
+        } else if (percentage >= 60) {
+            bgColor = '#fffbe6';  // Soft Yellow
+            textColor = '#92400e'; // Dark Gold
+        } else {
+            bgColor = '#fff1f0';  // Very Light Red
+            textColor = '#991b1b'; // Dark Red
         }
+
+        return `<span style="display: inline-block; background: ${bgColor}; color: ${textColor}; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; min-width: 50px;">${percentage}%</span>`;
     }
-    
-    if (!justification && Object.keys(justifications).length > 0) {
-        // Try removing any score suffix like " (SCORE: 20% - WEAK match)"
-        const criterionClean = criterion.replace(/\s*\(SCORE:.*?\)/, '').trim();
-        const matchingKey = Object.keys(justifications).find(key => 
-            key.replace(/\s*\(SCORE:.*?\)/, '').trim().toLowerCase() === criterionClean.toLowerCase()
-        );
-        if (matchingKey) {
-            justification = justifications[matchingKey];
+
+    function getScoreColor(score) {
+        if (score >= thresholds.high) return 'success';
+        if (score >= thresholds.low) return 'warning';
+        return 'danger';
+    }
+
+    function initializeEvidenceExplorer() {
+        const candidates = coverageData.map(row => row.Candidate);
+        const criteria = Object.keys(coverageData[0]).filter(k => k !== 'Candidate' && k !== 'Overall');
+
+        // Populate candidate dropdown
+        let candHTML = candidates.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('evidenceCandidate').innerHTML = candHTML;
+
+        // Populate criterion dropdown
+        let critHTML = criteria.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('evidenceCriterion').innerHTML = critHTML;
+
+        // Show initial evidence
+        updateEvidenceDisplay();
+    }
+
+    function updateEvidenceDisplay() {
+        const candidate = document.getElementById('evidenceCandidate').value;
+        const criterion = document.getElementById('evidenceCriterion').value;
+
+        if (!candidate || !criterion) {
+            document.getElementById('evidenceDisplay').innerHTML = '<p class="text-muted">Select a candidate and criterion above.</p>';
+            return;
         }
-    }
-    
-    // DEBUG: Log to console to help troubleshoot
-    console.log('Evidence Display Debug:', {
-        candidate,
-        criterion,
-        hasInsightsData: !!insightsData,
-        hasCandidateInsights: !!candidateInsights,
-        hasJustifications: !!justifications,
-        justificationKeys: Object.keys(justifications),
-        specificJustification: justification,
-        densityCount: densityCount,
-        matchAttempted: !justifications[criterion] && !!justification ? 'fuzzy match succeeded' : 'exact match or not found'
-    });
-    
-    let html = `
+
+        const key = `${candidate}|||${criterion}`;
+        const evidence = evidenceMap[key];
+
+        if (!evidence || evidence.length === 0) {
+            document.getElementById('evidenceDisplay').innerHTML = '<div class="alert alert-info">No cached evidence for this combination. Re-run analysis to refresh evidence.</div>';
+            return;
+        }
+
+        // Evidence tuple structure: [raw_evidence, justification, score, density_count]
+        const rawEvidence = evidence[0];      // Verbatim quotes from resume
+        const densityCount = evidence[3] || 0;     // Deprecated density metric
+
+        // Get actual score from coverage data
+        const row = coverageData.find(r => r.Candidate === candidate);
+        const score = row ? parseFloat(row[criterion]) : 0;
+        const scoreColor = score >= thresholds.high ? 'success' : (score >= thresholds.low ? 'warning' : 'danger');
+
+        // Generate evidence depth indicator
+        let evidenceTag = '';
+        if (score >= 0.90) {
+            evidenceTag = '<span class="badge bg-success ms-2" style="font-size: 0.8rem;">🏆 Strong Peak Performance</span>';
+        } else if (densityCount >= 4) {
+            evidenceTag = `<span class="badge bg-info ms-2" style="font-size: 0.8rem;">📊 Extensive Track Record (${densityCount} mentions)</span>`;
+        } else if (densityCount >= 2) {
+            evidenceTag = `<span class="badge bg-secondary ms-2" style="font-size: 0.8rem;">✓ Multiple mentions (${densityCount})</span>`;
+        }
+
+        // Check if this candidate has insights (Top 5 with justifications)
+        const candidateInsights = insightsData ? insightsData[candidate] : null;
+        const justifications = candidateInsights && candidateInsights.justifications ? candidateInsights.justifications : {};
+
+        // FIXED: Try to find justification with flexible matching
+        // Sometimes GPT returns criterion names with slight differences or with score suffixes
+        let justification = justifications[criterion];  // Try exact match first
+
+        if (!justification && Object.keys(justifications).length > 0) {
+            // Try case-insensitive match
+            const criterionLower = criterion.toLowerCase().trim();
+            const matchingKey = Object.keys(justifications).find(key =>
+                key.toLowerCase().trim() === criterionLower
+            );
+            if (matchingKey) {
+                justification = justifications[matchingKey];
+            }
+        }
+
+        if (!justification && Object.keys(justifications).length > 0) {
+            // Try removing any score suffix like " (SCORE: 20% - WEAK match)"
+            const criterionClean = criterion.replace(/\s*\(SCORE:.*?\)/, '').trim();
+            const matchingKey = Object.keys(justifications).find(key =>
+                key.replace(/\s*\(SCORE:.*?\)/, '').trim().toLowerCase() === criterionClean.toLowerCase()
+            );
+            if (matchingKey) {
+                justification = justifications[matchingKey];
+            }
+        }
+
+        // DEBUG: Log to console to help troubleshoot
+        console.log('Evidence Display Debug:', {
+            candidate,
+            criterion,
+            hasInsightsData: !!insightsData,
+            hasCandidateInsights: !!candidateInsights,
+            hasJustifications: !!justifications,
+            justificationKeys: Object.keys(justifications),
+            specificJustification: justification,
+            densityCount: densityCount,
+            matchAttempted: !justifications[criterion] && !!justification ? 'fuzzy match succeeded' : 'exact match or not found'
+        });
+
+        let html = `
         <div class="alert alert-${scoreColor}">
             <strong>Score:</strong> <span class="fs-5">${getScoreIcon(score)}</span>${evidenceTag}
         </div>
     `;
-    
-    if (candidateInsights && justification) {
-        // TOP 5 WITH JUSTIFICATIONS: Show refined Phase 2 justification + raw evidence
-        html += `
+
+        if (candidateInsights && justification) {
+            // TOP 5 WITH JUSTIFICATIONS: Show refined Phase 2 justification + raw evidence
+            html += `
             <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
                 <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
                     <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #3b82f6;"></i>
@@ -1190,9 +1267,9 @@ function updateEvidenceDisplay() {
                 </div>
             </details>
         `;
-    } else if (candidateInsights && !justification) {
-        // HAS INSIGHTS BUT NO REFINED JUSTIFICATION (shouldn't happen with current pipeline)
-        html += `
+        } else if (candidateInsights && !justification) {
+            // HAS INSIGHTS BUT NO REFINED JUSTIFICATION (shouldn't happen with current pipeline)
+            html += `
             <div class="alert alert-info" style="border-left: 4px solid #3b82f6;">
                 <div class="d-flex align-items-start" style="gap: 12px;">
                     <i data-lucide="info" style="width: 20px; height: 20px; color: #3b82f6; flex-shrink: 0; margin-top: 2px;"></i>
@@ -1219,255 +1296,256 @@ function updateEvidenceDisplay() {
                 </div>
             </details>
         `;
-    } else {
-        // NOT TOP 5: Show "Unlock" CTA with premium styling matching insights page
-        html += `
+        } else {
+            // NOT TOP 5: Show "Unlock" CTA with premium styling matching insights page
+            html += `
             <div class="card text-center" style="background: white; padding: 48px 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);">
                 <div class="lock-icon" style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));">🔐</div>
                 <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
                 <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
-                    Unlock AI-generated strengths, gaps, and detailed evidence justifications for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
+                    Unlock AI-generated strengths, gaps, and detailed evidence justifications for just <strong>${{ "%.2f"| format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
                 </p>
                 <button onclick="showUnlockModal('${candidate}')" 
                    style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border: none; color: #1f2937; padding: 16px 36px; font-weight: 700; font-size: 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(212,175,55,0.4); transition: all 0.3s ease; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" 
                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(212,175,55,0.5)';" 
                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(212,175,55,0.4)';">
-                    🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
+                    🔓 Unlock Deep Insight (${{ "%.2f"| format(pricing['EXTRA_INSIGHT_PRICE']) }})
                 </button>
                 <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 16px; border: 1px solid #bbf7d0;">
-                    💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+                    💰 Your Balance: ${{ "%.2f"| format(current_user.balance_usd) }}
                 </div>
             </div>
         `;
-    }
-    
-    document.getElementById('evidenceDisplay').innerHTML = html;
-    
-    // Re-initialize Lucide icons for dynamically added content
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
+        }
 
-function scrollToEvidenceExplorer(candidateName) {
-    // Set the candidate in the Evidence Explorer dropdown
-    const candidateSelect = document.getElementById('evidenceCandidate');
-    candidateSelect.value = candidateName;
-    
-    // Scroll to Evidence Explorer
-    const evidenceExplorer = document.querySelector('.card-header:has(+ .card-body #evidenceCandidate)')?.closest('.card');
-    if (evidenceExplorer) {
-        evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Highlight the card briefly
-        evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
-        evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
-        setTimeout(() => {
-            evidenceExplorer.style.boxShadow = '';
-        }, 2000);
-    }
-    
-    // Trigger the evidence display update
-    updateEvidenceDisplay();
-}
+        document.getElementById('evidenceDisplay').innerHTML = html;
 
-function attachEventListeners() {
-    // Matrix cell click handler (event delegation)
-    const matrixBody = document.getElementById('matrixBody');
-    if (!matrixBody) {
-        console.error('[ERROR] matrixBody element not found - skipping event listeners');
-        return;
+        // Re-initialize Lucide icons for dynamically added content
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-    
-    matrixBody.addEventListener('click', (e) => {
-        const cell = e.target.closest('.matrix-cell');
-        if (cell) {
-            const candidate = cell.dataset.candidate;
-            const criterion = cell.dataset.criterion;
-            if (candidate && criterion) {
-                // Get evidence from evidence_map
-                const evidenceKey = `${candidate}|||${criterion}`;
-                const evidence = evidenceMap[evidenceKey] || ['', '', 0, 0];
-                const rawEvidence = evidence[0] || '';
-                const justification = evidence[1] || '';
-                
-                // Check if candidate is unlocked (has insights)
-                const isUnlocked = insightsData && insightsData[candidate] ? true : false;
-                
-                // Open side drawer
-                openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidate);
+
+    function scrollToEvidenceExplorer(candidateName) {
+        // Set the candidate in the Evidence Explorer dropdown
+        const candidateSelect = document.getElementById('evidenceCandidate');
+        candidateSelect.value = candidateName;
+
+        // Scroll to Evidence Explorer
+        const evidenceExplorer = document.querySelector('.card-header:has(+ .card-body #evidenceCandidate)')?.closest('.card');
+        if (evidenceExplorer) {
+            evidenceExplorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Highlight the card briefly
+            evidenceExplorer.style.transition = 'box-shadow 0.3s ease';
+            evidenceExplorer.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+            setTimeout(() => {
+                evidenceExplorer.style.boxShadow = '';
+            }, 2000);
+        }
+
+        // Trigger the evidence display update
+        updateEvidenceDisplay();
+    }
+
+    function attachEventListeners() {
+        // Matrix cell click handler (event delegation)
+        const matrixBody = document.getElementById('matrixBody');
+        if (!matrixBody) {
+            console.error('[ERROR] matrixBody element not found - skipping event listeners');
+            return;
+        }
+
+        matrixBody.addEventListener('click', (e) => {
+            const cell = e.target.closest('.matrix-cell');
+            if (cell) {
+                const candidate = cell.dataset.candidate;
+                const criterion = cell.dataset.criterion;
+                if (candidate && criterion) {
+                    // Get evidence from evidence_map
+                    const evidenceKey = `${candidate}|||${criterion}`;
+                    const evidence = evidenceMap[evidenceKey] || ['', '', 0, 0];
+                    const rawEvidence = evidence[0] || '';
+                    const justification = evidence[1] || '';
+
+                    // Check if candidate is unlocked (has insights)
+                    const isUnlocked = insightsData && insightsData[candidate] ? true : false;
+
+                    // Open side drawer
+                    openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidate);
+                }
             }
+        });
+
+        const sortBy = document.getElementById('sortBy');
+        if (sortBy) {
+            sortBy.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderMatrix();
+            });
+        }
+
+        document.getElementById('filterBy').addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+
+            if (currentFilter === 'custom') {
+                document.getElementById('customSelectionBox').style.display = 'block';
+                initializeCustomSelection();
+            } else {
+                document.getElementById('customSelectionBox').style.display = 'none';
+            }
+
+            renderMatrix();
+        });
+
+        const showScores = document.getElementById('showScores');
+        if (showScores) {
+            showScores.addEventListener('change', (e) => {
+                showScores = e.target.checked;
+                renderMatrix();
+                initializeTopCandidates(); // Update top candidates display too
+            });
+        }
+
+        const expandCategoriesEl = document.getElementById('expandCategories');
+        if (expandCategoriesEl) {
+            expandCategoriesEl.addEventListener('change', (e) => {
+                expandCategories = e.target.checked;
+                renderMatrix();
+            });
+        }
+
+        const evidenceCandidate = document.getElementById('evidenceCandidate');
+        if (evidenceCandidate) {
+            evidenceCandidate.addEventListener('change', updateEvidenceDisplay);
+        }
+
+        const evidenceCriterion = document.getElementById('evidenceCriterion');
+        if (evidenceCriterion) {
+            evidenceCriterion.addEventListener('change', updateEvidenceDisplay);
+        }
+    }
+
+    // Attach download button listener separately to ensure element exists
+    document.addEventListener('DOMContentLoaded', function () {
+        const downloadBtn = document.getElementById('downloadCSV');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function () {
+                downloadCSV();
+            });
         }
     });
-    
-    const sortBy = document.getElementById('sortBy');
-    if (sortBy) {
-        sortBy.addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            renderMatrix();
-        });
-    }
-    
-    document.getElementById('filterBy').addEventListener('change', (e) => {
-        currentFilter = e.target.value;
-        
-        if (currentFilter === 'custom') {
-            document.getElementById('customSelectionBox').style.display = 'block';
-            initializeCustomSelection();
-        } else {
-            document.getElementById('customSelectionBox').style.display = 'none';
-        }
-        
-        renderMatrix();
-    });
-    
-    const showScores = document.getElementById('showScores');
-    if (showScores) {
-        showScores.addEventListener('change', (e) => {
-            showScores = e.target.checked;
-            renderMatrix();
-            initializeTopCandidates(); // Update top candidates display too
-        });
-    }
-    
-    const expandCategoriesEl = document.getElementById('expandCategories');
-    if (expandCategoriesEl) {
-        expandCategoriesEl.addEventListener('change', (e) => {
-            expandCategories = e.target.checked;
-            renderMatrix();
-        });
-    }
-    
-    const evidenceCandidate = document.getElementById('evidenceCandidate');
-    if (evidenceCandidate) {
-        evidenceCandidate.addEventListener('change', updateEvidenceDisplay);
-    }
-    
-    const evidenceCriterion = document.getElementById('evidenceCriterion');
-    if (evidenceCriterion) {
-        evidenceCriterion.addEventListener('change', updateEvidenceDisplay);
-    }
-}
 
-// Attach download button listener separately to ensure element exists
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadBtn = document.getElementById('downloadCSV');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', function() {
-            downloadCSV();
-        });
-    }
-});
+    function initializeCustomSelection() {
+        const candidates = coverageData.map(row => row.Candidate);
+        selectedCandidates = candidates.slice(0, 3); // Default to top 3
 
-function initializeCustomSelection() {
-    const candidates = coverageData.map(row => row.Candidate);
-    selectedCandidates = candidates.slice(0, 3); // Default to top 3
-    
-    const html = candidates.map(cand => {
-        const checked = selectedCandidates.includes(cand) ? 'checked' : '';
-        return `
+        const html = candidates.map(cand => {
+            const checked = selectedCandidates.includes(cand) ? 'checked' : '';
+            return `
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="checkbox" id="cust_${cand}" value="${cand}" ${checked} onchange="toggleCustomCandidate('${cand}')">
                 <label class="form-check-label" for="cust_${cand}">${cand}</label>
             </div>
         `;
-    }).join('');
-    
-    document.getElementById('customCandidateCheckboxes').innerHTML = html;
-}
+        }).join('');
 
-function toggleCustomCandidate(candidate) {
-    if (selectedCandidates.includes(candidate)) {
-        selectedCandidates = selectedCandidates.filter(c => c !== candidate);
-    } else {
-        selectedCandidates.push(candidate);
+        document.getElementById('customCandidateCheckboxes').innerHTML = html;
     }
-    renderMatrix();
-}
 
-function downloadCSV() {
-    // Get current filtered/sorted data
-    let data = [...coverageData];
-    
-    // Check if we have data
-    if (!data || data.length === 0) {
-        alert('No data available to download');
-        return;
+    function toggleCustomCandidate(candidate) {
+        if (selectedCandidates.includes(candidate)) {
+            selectedCandidates = selectedCandidates.filter(c => c !== candidate);
+        } else {
+            selectedCandidates.push(candidate);
+        }
+        renderMatrix();
     }
-    
-    if (currentSort === 'name') {
-        data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
-    } else if (currentSort === 'score-desc') {
-        data.sort((a, b) => b.Overall - a.Overall);
-    } else if (currentSort === 'score-asc') {
-        data.sort((a, b) => a.Overall - b.Overall);
-    }
-    
-    if (currentFilter === 'top3') data = data.slice(0, 3);
-    else if (currentFilter === 'top5') data = data.slice(0, 5);
-    else if (currentFilter === 'top10') data = data.slice(0, 10);
-    else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
-        data = data.filter(row => selectedCandidates.includes(row.Candidate));
-    }
-    
-    // Transpose: Candidates as columns, Criteria as rows
-    // Get all criteria (exclude 'Candidate' field)
-    const candidateNames = data.map(row => row.Candidate);
-    const allKeys = Object.keys(data[0]);
-    const criteriaKeys = allKeys.filter(key => key !== 'Candidate');
-    
-    // Build transposed data with rounded values
-    const csvRows = [];
-    
-    // Header row: Criterion name + candidate names
-    csvRows.push(['Criterion', ...candidateNames].map(v => `"${v}"`).join(','));
-    
-    // Data rows: one row per criterion
-    criteriaKeys.forEach(criterion => {
-        const row = [criterion];
-        data.forEach(candidateRow => {
-            const value = candidateRow[criterion];
-            // Round numeric values to 2 decimal places
-            const roundedValue = typeof value === 'number' ? Math.round(value * 100) / 100 : value;
-            row.push(roundedValue);
+
+    function downloadCSV() {
+        // Get current filtered/sorted data
+        let data = [...coverageData];
+
+        // Check if we have data
+        if (!data || data.length === 0) {
+            alert('No data available to download');
+            return;
+        }
+
+        if (currentSort === 'name') {
+            data.sort((a, b) => a.Candidate.localeCompare(b.Candidate));
+        } else if (currentSort === 'score-desc') {
+            data.sort((a, b) => b.Overall - a.Overall);
+        } else if (currentSort === 'score-asc') {
+            data.sort((a, b) => a.Overall - b.Overall);
+        }
+
+        if (currentFilter === 'top3') data = data.slice(0, 3);
+        else if (currentFilter === 'top5') data = data.slice(0, 5);
+        else if (currentFilter === 'top10') data = data.slice(0, 10);
+        else if (currentFilter === 'custom' && selectedCandidates.length > 0) {
+            data = data.filter(row => selectedCandidates.includes(row.Candidate));
+        }
+
+        // Transpose: Candidates as columns, Criteria as rows
+        // Get all criteria (exclude 'Candidate' field)
+        const candidateNames = data.map(row => row.Candidate);
+        const allKeys = Object.keys(data[0]);
+        const criteriaKeys = allKeys.filter(key => key !== 'Candidate');
+
+        // Build transposed data with rounded values
+        const csvRows = [];
+
+        // Header row: Criterion name + candidate names
+        csvRows.push(['Criterion', ...candidateNames].map(v => `"${v}"`).join(','));
+
+        // Data rows: one row per criterion
+        criteriaKeys.forEach(criterion => {
+            const row = [criterion];
+            data.forEach(candidateRow => {
+                const value = candidateRow[criterion];
+                // Round numeric values to 2 decimal places
+                const roundedValue = typeof value === 'number' ? Math.round(value * 100) / 100 : value;
+                row.push(roundedValue);
+            });
+            csvRows.push(row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
         });
-        csvRows.push(row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
-    });
-    
-    const csv = csvRows.join('\n');
-    
-    // Download
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'coverage_matrix.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
 
-function toggleCategory(catId) {
-    const elem = document.getElementById(catId);
-    const toggle = document.getElementById('toggle_' + catId);
-    elem.classList.toggle('show');
-    toggle.textContent = elem.classList.contains('show') ? '▼' : '▶';
-}
+        const csv = csvRows.join('\n');
 
-// Feedback Functions
-function showNote() {
-    document.getElementById('improvement-note').style.display = 'block';
-    // Smooth scroll to textarea
-    setTimeout(() => {
-        document.getElementById('feedback-text').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('feedback-text').focus();
-    }, 100);
-}
+        // Download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'coverage_matrix.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
 
-async function submitVote(voteType) {
-    const improvementNote = voteType === 'down' ? document.getElementById('feedback-text').value : '';
-    const analysisId = {{ analysis.id }};
-    
+    function toggleCategory(catId) {
+        const elem = document.getElementById(catId);
+        const toggle = document.getElementById('toggle_' + catId);
+        elem.classList.toggle('show');
+        toggle.textContent = elem.classList.contains('show') ? '▼' : '▶';
+    }
+
+    // Feedback Functions
+    function showNote() {
+        document.getElementById('improvement-note').style.display = 'block';
+        // Smooth scroll to textarea
+        setTimeout(() => {
+            document.getElementById('feedback-text').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('feedback-text').focus();
+        }, 100);
+    }
+
+    async function submitVote(voteType) {
+        const improvementNote = voteType === 'down' ? document.getElementById('feedback-text').value : '';
+        const analysisId = {{ analysis.id }
+    };
+
     try {
         const response = await fetch('/submit_feedback', {
             method: 'POST',
@@ -1480,7 +1558,7 @@ async function submitVote(voteType) {
                 improvement_note: improvementNote
             })
         });
-        
+
         // Check if response is OK
         if (!response.ok) {
             const errorText = await response.text();
@@ -1488,9 +1566,9 @@ async function submitVote(voteType) {
             alert(`Failed to submit feedback (Error ${response.status}). Please try again or contact support.`);
             return;
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             // Hide the feedback form and show thank you message
             document.querySelector('.feedback-options').style.display = 'none';
@@ -1498,7 +1576,7 @@ async function submitVote(voteType) {
             document.getElementById('feedback-thanks').style.display = 'block';
             document.querySelector('.feedback-box h4:first-child').style.display = 'none';
             document.querySelector('.feedback-box p:first-of-type').style.display = 'none';
-            
+
             // Add a subtle success animation
             const feedbackBox = document.getElementById('feedbackBox');
             feedbackBox.style.transition = 'all 0.3s ease';
@@ -1514,22 +1592,22 @@ async function submitVote(voteType) {
     }
 }
 
-// Side Drawer Functions
-function openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidateName) {
-    const drawer = document.getElementById('evidenceDrawer');
-    const overlay = document.getElementById('drawerOverlay');
-    const title = document.getElementById('drawerTitle');
-    const contentWrapper = document.getElementById('drawerContentWrapper');
-    
-    // Set title with candidate name and criterion
-    title.textContent = `${candidateName} - ${criterion}`;
-    
-    // Build content based on lock status
-    let content = '';
-    
-    if (isUnlocked) {
-        // UNLOCKED: Show AI Justification + Raw Source Text
-        content = `
+    // Side Drawer Functions
+    function openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, candidateName) {
+        const drawer = document.getElementById('evidenceDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        const title = document.getElementById('drawerTitle');
+        const contentWrapper = document.getElementById('drawerContentWrapper');
+
+        // Set title with candidate name and criterion
+        title.textContent = `${candidateName} - ${criterion}`;
+
+        // Build content based on lock status
+        let content = '';
+
+        if (isUnlocked) {
+            // UNLOCKED: Show AI Justification + Raw Source Text
+            content = `
             <div class="card mb-3" style="border-left: 4px solid #3b82f6;">
                 <div class="card-header bg-light d-flex align-items-center" style="gap: 8px;">
                     <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #3b82f6;"></i>
@@ -1553,256 +1631,257 @@ function openEvidenceDrawer(criterion, rawEvidence, justification, isUnlocked, c
                 </div>
             </details>
         `;
-    } else {
-        // LOCKED: Show premium lock card
-        content = `
+        } else {
+            // LOCKED: Show premium lock card
+            content = `
             <div class="card text-center" style="background: white; padding: 48px 40px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);">
                 <div class="lock-icon" style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(212,175,55,0.3));">🔐</div>
                 <h3 style="color: #1f2937; margin-bottom: 12px; font-weight: 700; font-size: 28px;">Deep Insights Locked</h3>
                 <p style="color: #64748b; margin-bottom: 28px; font-size: 16px; line-height: 1.6;">
-                    Unlock AI-generated justifications and detailed evidence for just <strong>${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
+                    Unlock AI-generated justifications and detailed evidence for just <strong>${{ "%.2f"| format(pricing['EXTRA_INSIGHT_PRICE']) }}</strong>.
                 </p>
                 <button onclick="unlockCandidateFromDrawer('${candidateName}')" 
                    style="background: linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%); border: none; color: #1f2937; padding: 16px 36px; font-weight: 700; font-size: 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(212,175,55,0.4); transition: all 0.3s ease; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" 
                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(212,175,55,0.5)';" 
                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(212,175,55,0.4)';">
-                    🔓 Unlock Deep Insight (${{ "%.2f"|format(pricing['EXTRA_INSIGHT_PRICE']) }})
+                    🔓 Unlock Deep Insight (${{ "%.2f"| format(pricing['EXTRA_INSIGHT_PRICE']) }})
                 </button>
                 <div style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; color: #15803d; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-top: 16px; border: 1px solid #bbf7d0;">
-                    💰 Your Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
+                    💰 Your Balance: ${{ "%.2f"| format(current_user.balance_usd) }}
                 </div>
             </div>
         `;
+        }
+
+        contentWrapper.innerHTML = content;
+
+        // Show overlay
+        overlay.style.display = 'block';
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+
+        // Slide in drawer
+        setTimeout(() => {
+            drawer.style.right = '0';
+        }, 10);
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-    
-    contentWrapper.innerHTML = content;
-    
-    // Show overlay
-    overlay.style.display = 'block';
-    setTimeout(() => {
-        overlay.style.opacity = '1';
-    }, 10);
-    
-    // Slide in drawer
-    setTimeout(() => {
-        drawer.style.right = '0';
-    }, 10);
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-    
-    // Re-initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+
+    function closeEvidenceDrawer() {
+        const drawer = document.getElementById('evidenceDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+
+        // Slide out drawer
+        drawer.style.right = '-600px';
+
+        // Fade out overlay
+        overlay.style.opacity = '0';
+
+        // Hide overlay after transition
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
     }
-}
 
-function closeEvidenceDrawer() {
-    const drawer = document.getElementById('evidenceDrawer');
-    const overlay = document.getElementById('drawerOverlay');
-    
-    // Slide out drawer
-    drawer.style.right = '-600px';
-    
-    // Fade out overlay
-    overlay.style.opacity = '0';
-    
-    // Hide overlay after transition
-    setTimeout(() => {
-        overlay.style.display = 'none';
-    }, 300);
-    
-    // Restore body scroll
-    document.body.style.overflow = 'auto';
-}
-
-function unlockCandidateFromDrawer(candidateName) {
-    // Close drawer first
-    closeEvidenceDrawer();
-    
-    // Trigger the main unlock flow
-    showUnlockModal(candidateName);
-}
-
-// Close drawer with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
+    function unlockCandidateFromDrawer(candidateName) {
+        // Close drawer first
         closeEvidenceDrawer();
+
+        // Trigger the main unlock flow
+        showUnlockModal(candidateName);
     }
-});
 
-// Unlock Modal Functions
-let unlockCandidateName = '';
-const unlockAnalysisId = {{ analysis.id }};
-
-function showUnlockModal(candidateName) {
-    unlockCandidateName = candidateName;
-    document.getElementById('modalCandidateName').textContent = candidateName;
-    const modal = document.getElementById('unlockModal');
-    modal.style.display = 'block';
-    
-    // Re-initialize Lucide icons in modal
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function closeUnlockModal() {
-    document.getElementById('unlockModal').style.display = 'none';
-    unlockCandidateName = '';
-}
-
-function confirmUnlock() {
-    // Find the unlock button and show loading state
-    const confirmBtn = document.getElementById('confirmUnlockBtn');
-    const originalText = confirmBtn.innerHTML;
-    
-    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
-    confirmBtn.disabled = true;
-    
-    // Make AJAX request to unlock
-    fetch(`/unlock-candidate/${unlockAnalysisId}/${encodeURIComponent(unlockCandidateName)}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
+    // Close drawer with Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeEvidenceDrawer();
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update balance in header
-            const balanceEl = document.querySelector('.balance-amount');
-            if (balanceEl) {
-                balanceEl.textContent = `$${data.new_balance.toFixed(2)}`;
-            }
-            
-            // Show success message in modal
-            confirmBtn.innerHTML = '✓ Success! Reloading...';
-            confirmBtn.style.background = '#10b981';
-            
-            // Reload the page to show new insights (maintains scroll position)
-            const scrollPos = window.scrollY;
-            sessionStorage.setItem('scrollPosition', scrollPos);
-            setTimeout(() => {
-                window.location.reload();
-            }, 800);
-        } else if (data.error === 'Insufficient balance') {
-            closeUnlockModal();
-            alert('Insufficient balance. Redirecting to top-up page...');
-            window.location.href = data.redirect;
-        } else {
-            closeUnlockModal();
-            alert(`Error: ${data.error}\n\nPlease check the browser console for details or try again.`);
-            confirmBtn.innerHTML = originalText;
-            confirmBtn.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Error unlocking candidate:', error);
-        closeUnlockModal();
-        alert('Failed to unlock insights. Please try again.\n\nMake sure Flask server is running and check browser console for details.');
-        confirmBtn.innerHTML = originalText;
-        confirmBtn.disabled = false;
     });
-}
 
-// Close modal when clicking outside
-document.getElementById('unlockModal')?.addEventListener('click', function(e) {
-    if (e.target.id === 'unlockModal') {
-        closeUnlockModal();
+    // Unlock Modal Functions
+    let unlockCandidateName = '';
+    const unlockAnalysisId = {{ analysis.id }};
+
+    function showUnlockModal(candidateName) {
+        unlockCandidateName = candidateName;
+        document.getElementById('modalCandidateName').textContent = candidateName;
+        const modal = document.getElementById('unlockModal');
+        modal.style.display = 'block';
+
+        // Re-initialize Lucide icons in modal
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-});
+
+    function closeUnlockModal() {
+        document.getElementById('unlockModal').style.display = 'none';
+        unlockCandidateName = '';
+    }
+
+    function confirmUnlock() {
+        // Find the unlock button and show loading state
+        const confirmBtn = document.getElementById('confirmUnlockBtn');
+        const originalText = confirmBtn.innerHTML;
+
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+        confirmBtn.disabled = true;
+
+        // Make AJAX request to unlock
+        fetch(`/unlock-candidate/${unlockAnalysisId}/${encodeURIComponent(unlockCandidateName)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update balance in header
+                    const balanceEl = document.querySelector('.balance-amount');
+                    if (balanceEl) {
+                        balanceEl.textContent = `$${data.new_balance.toFixed(2)}`;
+                    }
+
+                    // Show success message in modal
+                    confirmBtn.innerHTML = '✓ Success! Reloading...';
+                    confirmBtn.style.background = '#10b981';
+
+                    // Reload the page to show new insights (maintains scroll position)
+                    const scrollPos = window.scrollY;
+                    sessionStorage.setItem('scrollPosition', scrollPos);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 800);
+                } else if (data.error === 'Insufficient balance') {
+                    closeUnlockModal();
+                    alert('Insufficient balance. Redirecting to top-up page...');
+                    window.location.href = data.redirect;
+                } else {
+                    closeUnlockModal();
+                    alert(`Error: ${data.error}\n\nPlease check the browser console for details or try again.`);
+                    confirmBtn.innerHTML = originalText;
+                    confirmBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error unlocking candidate:', error);
+                closeUnlockModal();
+                alert('Failed to unlock insights. Please try again.\n\nMake sure Flask server is running and check browser console for details.');
+                confirmBtn.innerHTML = originalText;
+                confirmBtn.disabled = false;
+            });
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('unlockModal')?.addEventListener('click', function (e) {
+        if (e.target.id === 'unlockModal') {
+            closeUnlockModal();
+        }
+    });
 </script>
 
 <style>
-.sticky-top {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: #f8f9fa;
-}
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f9fa;
+    }
 
-.cursor-pointer {
-    cursor: pointer;
-}
+    .cursor-pointer {
+        cursor: pointer;
+    }
 
-.table-sm td, .table-sm th {
-    padding: 8px 12px;
-}
+    .table-sm td,
+    .table-sm th {
+        padding: 8px 12px;
+    }
 
-#coverageMatrix td,
-#coverageMatrix th {
-    text-align: center;
-    vertical-align: middle;
-}
+    #coverageMatrix td,
+    #coverageMatrix th {
+        text-align: center;
+        vertical-align: middle;
+    }
 
-#coverageMatrix th:first-child,
-#coverageMatrix td:first-child {
-    text-align: left;
-}
+    #coverageMatrix th:first-child,
+    #coverageMatrix td:first-child {
+        text-align: left;
+    }
 
-pre {
-    font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
-}
+    pre {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
 </style>
 
 <script>
-// Success Toast Functions
-function scrollToTopCandidate() {
-    const topCandidatesCard = document.getElementById('topCandidates');
-    if (topCandidatesCard) {
-        topCandidatesCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Add a subtle highlight effect
-        const card = topCandidatesCard.closest('.card');
-        if (card) {
-            card.style.transition = 'box-shadow 0.3s ease';
-            card.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
-            setTimeout(() => {
-                card.style.boxShadow = '';
-            }, 2000);
-        }
-    }
-}
-
-function dismissToast() {
-    const toast = document.getElementById('successToast');
-    if (toast) {
-        toast.style.animation = 'slideOutUp 0.4s ease-in';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 400);
-    }
-}
-
-// Convert UTC timestamps to user's local timezone
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.local-time').forEach(function(elem) {
-        const utcTime = elem.getAttribute('data-utc');
-        if (utcTime) {
-            const date = new Date(utcTime);
-            // Check if we need time or just date
-            if (elem.textContent.includes('at')) {
-                const options = {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                };
-                elem.textContent = date.toLocaleString('en-US', options);
-            } else {
-                const options = {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                };
-                elem.textContent = date.toLocaleDateString('en-US', options);
+    // Success Toast Functions
+    function scrollToTopCandidate() {
+        const topCandidatesCard = document.getElementById('topCandidates');
+        if (topCandidatesCard) {
+            topCandidatesCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a subtle highlight effect
+            const card = topCandidatesCard.closest('.card');
+            if (card) {
+                card.style.transition = 'box-shadow 0.3s ease';
+                card.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                }, 2000);
             }
         }
+    }
+
+    function dismissToast() {
+        const toast = document.getElementById('successToast');
+        if (toast) {
+            toast.style.animation = 'slideOutUp 0.4s ease-in';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 400);
+        }
+    }
+
+    // Convert UTC timestamps to user's local timezone
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.local-time').forEach(function (elem) {
+            const utcTime = elem.getAttribute('data-utc');
+            if (utcTime) {
+                const date = new Date(utcTime);
+                // Check if we need time or just date
+                if (elem.textContent.includes('at')) {
+                    const options = {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    };
+                    elem.textContent = date.toLocaleString('en-US', options);
+                } else {
+                    const options = {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    };
+                    elem.textContent = date.toLocaleDateString('en-US', options);
+                }
+            }
+        });
     });
-});
 </script>
 
 <!-- Sticky Bottom Bar -->
