@@ -148,22 +148,35 @@
     <!-- Quick Stats -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px;">
         <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">TOTAL ANALYSES</div>
+            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.5px;">TOTAL JOBS MANAGED</div>
             <div style="color: #1f2937; font-size: 32px; font-weight: bold;">{{ analyses|length }}</div>
         </div>
         <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">TOTAL CANDIDATES</div>
+            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.5px;">TOTAL CANDIDATES RANKED</div>
             <div style="color: #1f2937; font-size: 32px; font-weight: bold;">
                 {{ analyses|sum(attribute='num_candidates') }}
             </div>
+            <div style="color: #9ca3af; font-size: 12px; margin-top: 5px;">100% of resumes analyzed</div>
         </div>
         <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">TOTAL COST</div>
-            <div style="color: #1f2937; font-size: 32px; font-weight: bold;">
-                ${{ "%.2f"|format(analyses|sum(attribute='cost_usd')) }}
+            <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.5px;">DEEP INSIGHTS GENERATED</div>
+            <div style="color: #1f2937; font-size: 32px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #f59e0b;">
+                    <path d="M12 2v1"/><path d="M12 21v1"/><path d="m4.93 4.93.7.7"/><path d="m18.36 18.36.71.71"/><path d="M2 12h1"/><path d="M21 12h1"/><path d="m4.93 19.07.7-.7"/><path d="m18.36 5.64.71-.71"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                {{ total_deep_insights }}
             </div>
         </div>
     </div>
+    
+    <style>
+        @media (max-width: 768px) {
+            /* Stack summary boxes vertically on mobile */
+            div[style*="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
     
     {% else %}
     <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">

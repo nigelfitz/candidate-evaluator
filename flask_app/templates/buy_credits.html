@@ -149,4 +149,67 @@
         </a>
     </div>
 </div>
+
+<style>
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        gap: 16px !important;
+    }
+}
+
+/* Mobile-Only Enhancements - Small Phones */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 12px !important;
+    }
+    
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Balance card compact */
+    div[style*="linear-gradient(135deg, #667eea"] {
+        padding: 16px !important;
+        margin-bottom: 24px !important;
+    }
+    
+    div[style*="font-size: 36px"] {
+        font-size: 28px !important;
+    }
+    
+    /* Package cards grid */
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        margin-bottom: 24px !important;
+    }
+    
+    /* Package cards */
+    div[style*="border: 2px solid"] {
+        padding: 20px !important;
+    }
+    
+    div[style*="border: 2px solid"] h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Credit usage guide */
+    div[style*="background: #eff6ff"] {
+        padding: 20px !important;
+    }
+    
+    div[style*="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px"] {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    /* Form elements */
+    .btn {
+        font-size: 0.95rem;
+        padding: 12px 20px;
+    }
+}
+</style>
+
 {% endblock %}

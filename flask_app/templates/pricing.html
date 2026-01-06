@@ -184,6 +184,61 @@
             gap: 2rem;
         }
     }
+    
+    /* Mobile-Only Enhancements - Small Phones */
+    @media (max-width: 480px) {
+        .pricing-container {
+            padding: 2rem 1rem;
+        }
+        
+        .pricing-container h1 {
+            font-size: 1.75rem;
+        }
+        
+        .pricing-container > p {
+            font-size: 1rem;
+        }
+        
+        .pricing-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .price-card {
+            padding: 1.5rem;
+        }
+        
+        .price-card h3 {
+            font-size: 1.25rem;
+        }
+        
+        .price {
+            font-size: 2rem;
+        }
+        
+        .price-per {
+            font-size: 0.875rem;
+        }
+        
+        .price-card li {
+            font-size: 0.9rem;
+            padding: 0.4rem 0;
+        }
+        
+        .cta-button {
+            font-size: 0.95rem;
+            padding: 12px 20px;
+        }
+        
+        .badge-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .badge-text {
+            font-size: 0.7rem;
+        }
+    }
 </style>
 {% endblock %}
 

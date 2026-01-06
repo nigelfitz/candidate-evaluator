@@ -31,6 +31,71 @@ except ImportError:
 
 
 # ============================================================================
+# XML SANITIZATION HELPER
+# ============================================================================
+
+def sanitize_for_xml(text: str) -> str:
+    """
+    Sanitize text for safe inclusion in Word XML documents via python-docx.
+    NOTE: python-docx handles XML entity escaping (&, <, >) automatically.
+    We only need to remove invalid XML characters.
+    
+    Args:
+        text: Raw text that may contain problematic characters
+        
+    Returns:
+        Sanitized text safe for Word XML
+    """
+    if not text:
+        return ""
+    
+    # Remove control characters except tab, newline, carriage return
+    # XML 1.0 spec allows: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
+    # This removes characters that are ILLEGAL in XML (like \x00-\x08, \x0B, etc.)
+    sanitized = ''.join(
+        char for char in text 
+        if char in '\t\n\r' or (ord(char) >= 0x20 and ord(char) <= 0xD7FF) or (ord(char) >= 0xE000 and ord(char) <= 0xFFFD)
+    )
+    
+    return sanitized
+
+
+def sanitize_for_pdf(text: str) -> str:
+    """
+    Sanitize text for safe inclusion in PDF documents.
+    ReportLab can choke on certain Unicode characters and control characters.
+    
+    Args:
+        text: Raw text that may contain problematic characters
+        
+    Returns:
+        Sanitized text safe for PDF generation
+    """
+    if not text:
+        return ""
+    
+    # Remove control characters except tab, newline, carriage return
+    sanitized = ''.join(
+        char for char in text 
+        if char in '\t\n\r' or ord(char) >= 0x20
+    )
+    
+    # Replace problematic Unicode characters that ReportLab struggles with
+    sanitized = sanitized.replace('\u2018', "'").replace('\u2019', "'")  # Single quotes
+    sanitized = sanitized.replace('\u201c', '"').replace('\u201d', '"')  # Double quotes
+    sanitized = sanitized.replace('\u201a', "'").replace('\u201e', '"')  # Low quotes
+    sanitized = sanitized.replace('\u2013', '-').replace('\u2014', '--')  # En/em dashes
+    sanitized = sanitized.replace('\u2026', '...')  # Ellipsis
+    
+    # Escape XML special characters for ReportLab Paragraph
+    sanitized = sanitized.replace('&', '&amp;')
+    sanitized = sanitized.replace('<', '&lt;')
+    sanitized = sanitized.replace('>', '&gt;')
+    
+    return sanitized
+
+
+# ============================================================================
 # PDF FOOTER FUNCTION
 # ============================================================================
 
@@ -270,15 +335,24 @@ def to_individual_candidate_pdf(
                 evidence_key = (candidate_name, crit)
                 if evidence_key in evidence_map:
                     evidence_tuple = evidence_map[evidence_key]
-                    # New 4-tuple format: (raw_evidence, justification, score, density)
-                    justification = evidence_tuple[1] if len(evidence_tuple) > 1 else ''
+                    # Handle different evidence_map formats
+                    # 4-tuple format: (raw_evidence, justification, score, density)
+                    # Sometimes it might be just a float (old format)
+                    justification = ''
+                    if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 1:
+                        potential_justification = evidence_tuple[1]
+                        # Ensure it's actually a string, not a float or other type
+                        if isinstance(potential_justification, str):
+                            justification = potential_justification
                     
                     story.append(Paragraph(f"<b>{crit}</b> (Score: {score * 100:.0f}%)", styles['Heading4']))
                     
                     if has_ai_insights:
                         # UNLOCKED: Show AI Justification only (no raw evidence)
                         if justification:
-                            story.append(Paragraph(justification, styles['Normal']))
+                            # Sanitize justification for PDF to prevent generation errors
+                            safe_justification = sanitize_for_pdf(justification)
+                            story.append(Paragraph(safe_justification, styles['Normal']))
                         else:
                             story.append(Paragraph("<i>No justification available</i>", styles['Normal']))
                     else:
@@ -517,12 +591,22 @@ def to_individual_candidate_docx(
                     evidence_key = (candidate_name, crit)
                     if evidence_key in evidence_map:
                         evidence_tuple = evidence_map[evidence_key]
+                        # Handle different evidence_map formats
                         # 4-tuple format: (raw_evidence, justification, score, density)
-                        justification = evidence_tuple[1] if len(evidence_tuple) > 1 else ''
+                        # Sometimes it might be just a float (old format)
+                        justification = ''
+                        if isinstance(evidence_tuple, (list, tuple)) and len(evidence_tuple) > 1:
+                            potential_justification = evidence_tuple[1]
+                            # Ensure it's actually a string, not a float or other type
+                            if isinstance(potential_justification, str):
+                                justification = potential_justification
                         
                         if justification:
                             doc.add_heading(f"{crit} (Score: {score * 100:.0f}%)", 2)
-                            doc.add_paragraph(justification)
+                            # Split into smaller paragraphs to avoid issues with long text
+                            for para_text in justification.split('\n'):
+                                if para_text.strip():
+                                    doc.add_paragraph(para_text.strip())
             else:
                 # LOCKED: Show tier enforcement message
                 locked_para = doc.add_paragraph()

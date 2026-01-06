@@ -2899,9 +2899,21 @@ def create_app(config_name=None):
             Analysis.coverage_data.isnot(None)
         ).order_by(db.desc(Analysis.created_at)).limit(50).all()
         
+        # Calculate total deep insights generated
+        total_deep_insights = 0
+        for analysis in analyses:
+            if analysis.gpt_candidates:
+                try:
+                    gpt_list = json.loads(analysis.gpt_candidates)
+                    if isinstance(gpt_list, list):
+                        total_deep_insights += len(gpt_list)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        
         return render_template('job_history.html', 
                              user=current_user,
-                             analyses=analyses)
+                             analyses=analyses,
+                             total_deep_insights=total_deep_insights)
     
     @app.route('/delete-analysis/<int:analysis_id>', methods=['POST'])
     @login_required

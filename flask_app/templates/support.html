@@ -95,6 +95,57 @@
         border-radius: 6px;
         margin-bottom: 25px;
     }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .legal-container {
+            margin: 40px auto;
+        }
+        
+        .support-form {
+            padding: 20px;
+        }
+    }
+    
+    /* Mobile-Only Enhancements - Small Phones */
+    @media (max-width: 480px) {
+        .legal-container {
+            margin: 30px auto;
+            padding: 0 12px;
+        }
+        
+        .legal-container h1 {
+            font-size: 1.75rem;
+        }
+        
+        .support-form {
+            padding: 16px;
+            margin-top: 20px;
+        }
+        
+        .support-form label {
+            font-size: 0.95rem;
+        }
+        
+        .support-form input,
+        .support-form textarea {
+            font-size: 16px !important;
+            padding: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .cta-button {
+            width: 100%;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+        }
+        
+        .success-message,
+        .error-message {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+    }
 </style>
 
 <div class="legal-container">

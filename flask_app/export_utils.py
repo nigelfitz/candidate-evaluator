@@ -45,6 +45,36 @@ except ImportError:
 
 
 # ============================================================================
+# XML SANITIZATION HELPER
+# ============================================================================
+
+def sanitize_for_xml(text: str) -> str:
+    """
+    Sanitize text for safe inclusion in Word XML documents via python-docx.
+    NOTE: python-docx handles XML entity escaping (&, <, >) automatically.
+    We only need to remove invalid XML characters.
+    
+    Args:
+        text: Raw text that may contain problematic characters
+        
+    Returns:
+        Sanitized text safe for Word XML
+    """
+    if not text:
+        return ""
+    
+    # Remove control characters except tab, newline, carriage return
+    # XML 1.0 spec allows: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
+    # This removes characters that are ILLEGAL in XML (like \x00-\x08, \x0B, etc.)
+    sanitized = ''.join(
+        char for char in text 
+        if char in '\t\n\r' or (ord(char) >= 0x20 and ord(char) <= 0xD7FF) or (ord(char) >= 0xE000 and ord(char) <= 0xFFFD)
+    )
+    
+    return sanitized
+
+
+# ============================================================================
 # PDF PREVIEW UTILITIES
 # ============================================================================
 

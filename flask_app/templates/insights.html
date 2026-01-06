@@ -160,6 +160,101 @@
             word-wrap: break-word;
         }
         
+        /* PDF button stacks */
+        .candidate-pdf-btn {
+            margin-bottom: 12px;
+        }
+        
+        /* Card adjustments */
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        /* Unlock overlay */
+        .unlock-overlay-container {
+            min-height: 300px;
+        }
+    }
+    
+    /* Mobile-Only Enhancements - Small Phones */
+    @media (max-width: 480px) {
+        .insights-container {
+            padding: 0 8px;
+        }
+        
+        /* Tab navigation - vertical stack on mobile */
+        .btn-group {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+            min-width: 100%;
+            flex: 1 1 100%;
+            font-size: 14px;
+            padding: 10px 12px;
+        }
+        
+        /* Navigation buttons smaller */
+        .candidate-nav-btns button {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* Candidate name and score */
+        h3 {
+            font-size: 1.25rem;
+        }
+        
+        /* Score badges compact */
+        .badge {
+            font-size: 11px;
+            padding: 3px 6px;
+        }
+        
+        /* Navigation arrows */
+        .candidate-nav-btns button {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* PDF button */
+        .candidate-pdf-btn {
+            font-size: 0.85rem;
+            padding: 8px 12px;
+        }
+        
+        /* Card content */
+        .card {
+            padding: 12px;
+        }
+        
+        .card h4 {
+            font-size: 1.1rem;
+        }
+        
+        /* Unlock overlay */
+        .unlock-overlay-container {
+            min-height: 250px;
+            border-radius: 12px;
+        }
+        
+        .unlock-content h3 {
+            font-size: 1.5rem;
+        }
+        
+        .unlock-btn-primary {
+            font-size: 14px;
+            padding: 12px 24px;
+        }
+        
+        .balance-display {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        }
+        
         .text-muted.small {
             font-size: 0.85rem;
             line-height: 1.4;
@@ -342,7 +437,7 @@
     <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div class="text-center">
             <h4 style="color: #1f2937; margin-bottom: 10px;">💡 Historical Candidate Insights</h4>
-            <p class="text-muted mb-0">Viewing saved insights from a previous analysis</p>
+            <p class="text-muted mb-0">Viewing saved analysis from <span class="local-time" data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span></p>
             <div class="mt-3" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                 <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis_id) }}" style="display: inline;">
                     <button type="submit" class="btn btn-primary" 
@@ -372,18 +467,18 @@
     {% endif %}
     
     <!-- Unified Navigation Bar -->
-    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row;">
-        <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+    <div class="btn-group mb-3" role="group" style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
+        <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
-            Results
+            <span>Results</span>
         </a>
-        <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+        <a href="{{ url_for('insights', analysis_id=analysis_id) }}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
-            Candidate Insights
+            <span>Insights</span>
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 0 0 auto;">
+        <a href="{{ url_for('exports', analysis_id=analysis_id) }}" class="btn btn-outline-primary" style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
-            Export Reports
+            <span>Export</span>
         </a>
     </div>
     
@@ -1094,12 +1189,25 @@ window.addEventListener('load', function() {
         const utcTime = elem.getAttribute('data-utc');
         if (utcTime) {
             const date = new Date(utcTime);
-            const options = {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            };
-            elem.textContent = date.toLocaleDateString('en-US', options);
+            // Check if we need time or just date
+            if (elem.textContent.includes('at')) {
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                };
+                elem.textContent = date.toLocaleString('en-US', options);
+            } else {
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                };
+                elem.textContent = date.toLocaleDateString('en-US', options);
+            }
         }
     });
 });

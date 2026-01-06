@@ -410,6 +410,130 @@
         .info-grid {
             grid-template-columns: 1fr;
         }
+        
+        /* Wallet bar improvements */
+        .wallet-bar {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .wallet-left,
+        .wallet-right {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        /* Analysis cards */
+        .analysis-card {
+            padding: 1.25rem;
+        }
+        
+        /* Pricing block */
+        .pricing-block {
+            padding: 2rem 1.5rem;
+        }
+        
+        .pricing-block .price {
+            font-size: 2.5rem;
+        }
+    }
+    
+    /* Mobile-Only Enhancements - Small Phones */
+    @media (max-width: 480px) {
+        .hero-section {
+            padding: 1.5rem 1rem;
+        }
+        
+        .hero-section h1 {
+            font-size: 1.5rem;
+        }
+        
+        .hero-section p {
+            font-size: 0.95rem;
+        }
+        
+        .hero-section i {
+            width: 48px;
+            height: 48px;
+        }
+        
+        /* Wallet bar compact */
+        .wallet-bar {
+            padding: 0.875rem;
+        }
+        
+        .wallet-balance {
+            font-size: 1.5rem;
+        }
+        
+        .wallet-label {
+            font-size: 0.85rem;
+        }
+        
+        .btn-add-funds {
+            font-size: 0.9rem;
+            padding: 10px 16px;
+        }
+        
+        /* Analysis card compact */
+        .analysis-card {
+            padding: 1rem;
+        }
+        
+        .analysis-card h3 {
+            font-size: 1.1rem;
+        }
+        
+        .analysis-meta {
+            font-size: 0.85rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        /* Info cards */
+        .info-card {
+            padding: 1.25rem;
+        }
+        
+        .info-card h3 {
+            font-size: 1.1rem;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+        
+        .empty-state .emoji {
+            font-size: 3rem;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.15rem;
+        }
+        
+        /* Pricing block */
+        .pricing-block {
+            padding: 1.5rem 1rem;
+        }
+        
+        .pricing-block h2 {
+            font-size: 1.5rem;
+        }
+        
+        .pricing-block .price {
+            font-size: 2rem;
+        }
+        
+        .pricing-block p {
+            font-size: 1rem;
+        }
+        
+        .pricing-block li {
+            font-size: 0.9rem;
+        }
     }
 </style>
 {% endblock %}

@@ -370,6 +370,72 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .pricing-card {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Mobile-Only Enhancements - Small Phones */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 12px !important;
+            }
+            
+            h1 {
+                font-size: 1.75rem !important;
+            }
+            
+            h2 {
+                font-size: 1.25rem !important;
+            }
+            
+            /* Balance card compact */
+            div[style*="linear-gradient(135deg, #667eea"] {
+                padding: 24px 20px !important;
+                margin-bottom: 30px !important;
+            }
+            
+            div[style*="font-size: 48px"] {
+                font-size: 36px !important;
+            }
+            
+            /* Pricing cards grid */
+            div[style*="grid-template-columns: repeat(auto-fit"] {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+            
+            .pricing-card > div {
+                padding: 20px !important;
+            }
+            
+            .pricing-card h3 {
+                font-size: 1.25rem !important;
+            }
+            
+            .pricing-card div[style*="font-size: 48px"] {
+                font-size: 32px !important;
+            }
+            
+            /* Icons */
+            i[data-lucide] {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            /* Transaction history */
+            .table {
+                font-size: 0.85rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 8px 6px;
+            }
+        }
     `;
     document.head.appendChild(style);
 </script>

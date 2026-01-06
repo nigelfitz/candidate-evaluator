@@ -554,6 +554,76 @@ document.addEventListener('DOMContentLoaded', function() {
 .progress-text-animated {
     animation: pulse 2s ease-in-out infinite;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px 100px 15px !important;
+    }
+    
+    /* Form card */
+    div[style*="background: white"][style*="border-radius: 12px"] {
+        padding: 20px !important;
+    }
+    
+    /* Truncation warning */
+    div[style*="background: linear-gradient(135deg, #dbeafe"] {
+        padding: 16px !important;
+    }
+}
+
+/* Mobile-Only Enhancements - Small Phones */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px 12px 90px 12px !important;
+    }
+    
+    /* Form card compact */
+    div[style*="background: white"][style*="border-radius: 12px"] {
+        padding: 16px !important;
+        border-radius: 8px !important;
+    }
+    
+    h2 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Warning banners */
+    div[style*="background: linear-gradient"] {
+        padding: 12px !important;
+        border-radius: 8px !important;
+    }
+    
+    div[style*="background: linear-gradient"] h3 {
+        font-size: 1rem !important;
+    }
+    
+    div[style*="background: linear-gradient"] p {
+        font-size: 0.875rem !important;
+    }
+    
+    div[style*="background: linear-gradient"] i {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    /* Insights mode selector */
+    select {
+        font-size: 0.9rem !important;
+        padding: 10px !important;
+    }
+    
+    /* Modal adjustments */
+    div[style*="max-width: 600px"] {
+        width: 95% !important;
+        padding: 24px !important;
+    }
+    
+    div[style*="max-width: 500px"] {
+        width: 95% !important;
+        padding: 24px !important;
+    }
+}
 </style>
 
 <!-- Include Bottom Bar -->
