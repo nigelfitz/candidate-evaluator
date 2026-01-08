@@ -70,7 +70,7 @@ margin-left: 10px; }
         Health Monitor. Test changes carefully before saving.</p>
 </div>
 
-<form method="POST" action="{{ url_for('admin_save_pricing') }}">
+<form method="POST" action="{{ url_for('admin.admin_save_pricing') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <!-- Standard Analysis Pricing -->
     <div class="pricing-section">

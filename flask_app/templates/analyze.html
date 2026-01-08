@@ -10,11 +10,12 @@
 {% include 'workflow_stepper.html' %}
 
 <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 40px 20px 120px 20px;">
-    {% if current_user.balance_usd < 5 %} <div class="alert alert-warning mb-3" style="padding: 1rem;">
+    {% if current_user.balance_usd < 5 %}
+    <div class="alert alert-warning mb-3" style="padding: 1rem;">
         <i data-lucide="alert-triangle" style="width: 18px; height: 18px; margin-right: 6px;"></i>
         Low Balance: ${{ "%.2f"|format(current_user.balance_usd) }}
-</div>
-{% endif %}
+    </div>
+    {% endif %}
 
 <!-- STEP 1: Upload Job Description (only show if step=jd or no JD uploaded) -->
 {% if step_name == 'jd' %}
@@ -33,7 +34,7 @@
                 extracted</div>
             {% endif %}
         </div>
-        <form method="POST" action="{{ url_for('clear_session') }}" style="display: inline;"
+        <form method="POST" action="{{ url_for('analysis.clear_session') }}" style="display: inline;"
             onsubmit="return confirm('Delete this JD and start over? This will also clear criteria and uploaded resumes.')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn btn-sm btn-danger">🗑️ Delete JD</button>
@@ -56,7 +57,7 @@
 </div>
 {% else %}
 <!-- Show upload form -->
-<form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="jdForm">
+<form method="POST" action="{{ url_for('analysis.analyze') }}" enctype="multipart/form-data" id="jdForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="action" value="upload_jd">
 
@@ -116,7 +117,7 @@
                 <div style="font-weight: 600; color: #1f2937;">{{ resume.candidate_name }}</div>
                 <div style="font-size: 14px; color: #6b7280;">{{ resume.file_name }}</div>
             </div>
-            <form method="POST" action="{{ url_for('delete_resume', resume_id=resume.id) }}" style="display: inline;"
+            <form method="POST" action="{{ url_for('analysis.delete_resume', resume_id=resume.id) }}" style="display: inline;"
                 onsubmit="return confirm('Remove this resume?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="btn btn-sm btn-danger">🗑️ Remove</button>
@@ -129,7 +130,7 @@
 
 <!-- Upload more resumes form -->
 <div id="upload-resumes"></div>
-<form method="POST" action="{{ url_for('analyze') }}" enctype="multipart/form-data" id="resumeUploadForm">
+<form method="POST" action="{{ url_for('analysis.analyze') }}" enctype="multipart/form-data" id="resumeUploadForm">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="action" value="upload_resumes">
     <input type="hidden" name="override_limit" id="overrideLimitField" value="false">
@@ -270,6 +271,7 @@
 </style>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     // ===== Tooltip Hover Functionality =====
     const infoIcon = document.querySelector('.info-icon');
     const tooltipContent = document.querySelector('.tooltip-content');
@@ -292,9 +294,16 @@
     const selectedFileName = document.getElementById('selectedFileName');
     const jdText = document.getElementById('jdText');
 
+    console.log('Dropzone elements:', { dropzone, jdFileInput, dropzoneContent, fileSelectedInfo });
+
     if (dropzone && jdFileInput) {
+        console.log('Setting up dropzone event listeners...');
+        
         // Click to browse
-        dropzone.addEventListener('click', () => jdFileInput.click());
+        dropzone.addEventListener('click', () => {
+            console.log('Dropzone clicked');
+            jdFileInput.click();
+        });
 
         // File input change
         jdFileInput.addEventListener('change', (e) => {
@@ -350,6 +359,14 @@
         });
     }
 
+    // Helper to update button state
+    function updateContinueButton(enabled) {
+        const btn = document.getElementById('continueButton');
+        if (btn) {
+            btn.disabled = !enabled;
+        }
+    }
+
     // Helper to update button text
     function updateContinueButtonText(text) {
         const btnText = document.getElementById('continueButtonText');
@@ -359,7 +376,7 @@
     }
 
     // Resume limit configuration (from backend)
-    const MAX_RESUMES_PER_UPLOAD = {{ system_settings.get('max_resumes_per_upload', 200) if system_settings else 200 }};
+    const MAX_RESUMES_PER_UPLOAD = {{ system_settings.get('max_resumes_per_upload', {}).get('value', 200) if system_settings else 200 }};
     let proceedWithAllFiles = false;  // Flag to allow override
 
     // ===== Resume Dropzone Functionality =====
@@ -604,18 +621,20 @@
     // Clear session function
     function clearSession() {
         if (confirm('This will clear the uploaded JD and extracted criteria. Continue?')) {
-            fetch('{{ url_for("clear_session") }}', {
+            fetch('{{ url_for("analysis.clear_session") }}', {
                 method: 'POST'
             }).then(() => window.location.reload());
         }
     }
+
+}); // End DOMContentLoaded
 </script>
 
 <!-- Include Bottom Bar -->
 {% if step_name == 'jd' %}
 {% if jd_data %}
 {% set show_back_button = False %}
-{% set continue_url = url_for('review_criteria') %}
+{% set continue_url = url_for('analysis.review_criteria') %}
 {% set continue_text = 'Continue to Criteria' %}
 {% set continue_disabled = False %}
 {% else %}
@@ -627,9 +646,9 @@
 {% endif %}
 {% elif step_name == 'resumes' %}
 {% set show_back_button = True %}
-{% set back_url = url_for('review_criteria') %}
+{% set back_url = url_for('analysis.review_criteria') %}
 {% if uploaded_resumes %}
-{% set continue_url = url_for('run_analysis_route') %}
+{% set continue_url = url_for('analysis.run_analysis_route') %}
 {% set continue_text = 'Continue to Run Analysis →' %}
 {% set continue_disabled = False %}
 {% else %}

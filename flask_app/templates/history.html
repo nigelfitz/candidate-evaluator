@@ -6,7 +6,7 @@
 <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 40px 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
         <h1 style="color: #1f2937; margin: 0;">📊 Analysis History</h1>
-        <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+        <a href="{{ url_for('analysis.analyze') }}" class="btn btn-primary">
             ➕ New Analysis
         </a>
     </div>
@@ -109,12 +109,12 @@
                     
                     <!-- Card Actions -->
                     <div style="padding: 15px 20px; display: flex; gap: 10px;">
-                        <a href="{{ url_for('results', analysis_id=analysis.id) }}" 
+                        <a href="{{ url_for('analysis.results', analysis_id=analysis.id) }}" 
                            class="btn btn-primary"
                            style="flex: 1; text-align: center; padding: 10px; font-size: 14px;">
                             📊 View Results
                         </a>
-                        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" 
+                        <a href="{{ url_for('export.exports', analysis_id=analysis.id) }}" 
                            class="btn btn-secondary"
                            style="flex: 1; text-align: center; padding: 10px; font-size: 14px;">
                             📄 Export
@@ -135,7 +135,7 @@
                 <div style="font-size: 48px; margin-bottom: 20px;">🎯</div>
                 <h2 style="color: #6b7280; margin-bottom: 10px;">No analyses yet</h2>
                 <p style="color: #9ca3af; margin-bottom: 30px;">Start analyzing candidates to see your results here</p>
-                <a href="{{ url_for('analyze') }}" class="btn btn-primary" style="display: inline-block;">
+                <a href="{{ url_for('analysis.analyze') }}" class="btn btn-primary" style="display: inline-block;">
                     Start Analysis
                 </a>
             </div>
@@ -176,7 +176,7 @@
                             <td style="padding: 16px;">
                                 {% if transaction.analysis_id %}
                                     <!-- Job with link to results -->
-                                    <a href="{{ url_for('results', analysis_id=transaction.analysis_id) }}" 
+                                    <a href="{{ url_for('analysis.results', analysis_id=transaction.analysis_id) }}" 
                                        style="color: #1f77b4; text-decoration: none; font-weight: 500; display: block; margin-bottom: 4px;"
                                        onmouseover="this.style.textDecoration='underline'"
                                        onmouseout="this.style.textDecoration='none'">
@@ -258,7 +258,7 @@
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
-        <a href="{{ url_for('dashboard') }}" 
+        <a href="{{ url_for('dashboard.dashboard') }}" 
            style="color: #1f77b4; text-decoration: none; font-weight: 500;"
            onmouseover="this.style.textDecoration='underline'"
            onmouseout="this.style.textDecoration='none'">

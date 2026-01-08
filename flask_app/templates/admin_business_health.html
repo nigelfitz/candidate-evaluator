@@ -161,7 +161,7 @@ border-bottom: 3px solid #667eea; }
 </div>
 
 <!-- Calculator Settings Form -->
-<form method="POST" action="{{ url_for('admin_save_business_health') }}">
+<form method="POST" action="{{ url_for('admin.admin_save_business_health') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <h2 class="section-title">⚙️ Calculator Settings</h2>
 
@@ -205,7 +205,7 @@ border-bottom: 3px solid #667eea; }
         <div class="alert alert-info" style="margin-top: 10px;">
             <strong>Current Price: $<span id="standard_revenue">{{ pricing.standard_tier_price.value
                     }}</span></strong><br>
-            <small>Revenue is managed on the <a href="{{ url_for('admin_pricing') }}" style="color: #0066cc;">Pricing &
+            <small>Revenue is managed on the <a href="{{ url_for('admin.admin_pricing') }}" style="color: #0066cc;">Pricing &
                     Revenue</a> page (Single Source of Truth)</small>
         </div>
     </div>

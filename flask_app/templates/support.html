@@ -163,7 +163,7 @@
     {% endif %}
     {% endwith %}
 
-    <form class="support-form" action="{{ url_for('support') }}" method="POST">
+    <form class="support-form" action="{{ url_for('main.support') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <label for="name">Your Name</label>
         <input type="text" id="name" name="name" placeholder="John Smith" required>

@@ -111,9 +111,9 @@ z-index: 1000; }
 
 <!-- Action Buttons -->
 <div class="action-buttons">
-    <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}" class="btn btn-success"
+    <a href="{{ url_for('admin.admin_balance_adjustment', user_id=user.id) }}" class="btn btn-success"
         style="text-decoration: none;">💰 Adjust Balance</a>
-    <a href="{{ url_for('admin_refund', user_id=user.id) }}" class="btn btn-danger"
+    <a href="{{ url_for('admin.admin_refund', user_id=user.id) }}" class="btn btn-danger"
         style="text-decoration: none; background: #dc2626; border-color: #dc2626;">💸 Process Refund</a>
     <button onclick="confirmResetPassword()" class="btn btn-warning">🔑 Reset Password</button>
     {% if user.is_suspended %}
@@ -126,14 +126,14 @@ z-index: 1000; }
 </div>
 
 <!-- Hidden Forms for POST actions -->
-<form id="resetPasswordForm" method="POST" action="{{ url_for('admin_reset_password', user_id=user.id) }}"
+<form id="resetPasswordForm" method="POST" action="{{ url_for('admin.admin_reset_password', user_id=user.id) }}"
     style="display: none;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /></form>
-<form id="suspendForm" method="POST" action="{{ url_for('admin_suspend_user', user_id=user.id) }}"
+<form id="suspendForm" method="POST" action="{{ url_for('admin.admin_suspend_user', user_id=user.id) }}"
     style="display: none;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="reason" id="suspendReason">
 </form>
-<form id="unsuspendForm" method="POST" action="{{ url_for('admin_unsuspend_user', user_id=user.id) }}"
+<form id="unsuspendForm" method="POST" action="{{ url_for('admin.admin_unsuspend_user', user_id=user.id) }}"
     style="display: none;"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /></form>
 
 {% if get_flashed_messages() %}
@@ -211,7 +211,7 @@ z-index: 1000; }
                                 {% endif %}
                             </td>
                             <td style="padding: 16px; text-align: center;">
-                                <a href="{{ url_for('results', analysis_id=analysis.id) }}" target="_blank"
+                                <a href="{{ url_for('analysis.results', analysis_id=analysis.id) }}" target="_blank"
                                     style="background: #3b82f6; color: white; padding: 6px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
                                     onmouseover="this.style.background='#2563eb'"
                                     onmouseout="this.style.background='#3b82f6'">

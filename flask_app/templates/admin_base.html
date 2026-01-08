@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <a href="{{ url_for('admin_logout') }}" class="btn btn-danger" style="position: fixed; top: 20px; right: 20px; z-index: 10001;">🔒 Logout</a>
+    <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-danger" style="position: fixed; top: 20px; right: 20px; z-index: 10001;">🔒 Logout</a>
     
     <div class="admin-container">
         {% include 'admin_nav.html' %}

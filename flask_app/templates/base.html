@@ -490,7 +490,7 @@
 
 <body>
     <nav class="navbar">
-        <a href="{{ url_for('landing') if not current_user.is_authenticated else url_for('dashboard') }}"
+        <a href="{{ url_for('main.landing') if not current_user.is_authenticated else url_for('dashboard.dashboard') }}"
             class="navbar-brand">
             <span class="brand-bold">Candidate</span><span class="brand-light">Evaluator</span>
         </a>
@@ -501,33 +501,33 @@
         </button>
         <div class="navbar-menu" id="navbarMenu">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i
+            <a href="{{ url_for('dashboard.dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i
                     data-lucide="layout-dashboard"
                     style="width: 18px; height: 18px; margin-right: 6px;"></i>Dashboard</a>
-            <a href="{{ url_for('analyze', new=1) }}" class="btn btn-primary"
+            <a href="{{ url_for('analysis.analyze', new=1) }}" class="btn btn-primary"
                 style="font-size: 0.9rem; padding: 0.5rem 1rem;"><i data-lucide="plus"
                     style="width: 16px; height: 16px; margin-right: 4px;"></i>New Analysis</a>
-            <a href="{{ url_for('job_history') }}"
+            <a href="{{ url_for('dashboard.job_history') }}"
                 class="{% if request.endpoint == 'job_history' %}active{% endif %}"><i data-lucide="folder"
                     style="width: 18px; height: 18px; margin-right: 6px;"></i>Job History</a>
-            <a href="{{ url_for('help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}"><i
+            <a href="{{ url_for('main.help') }}" class="{% if request.endpoint == 'help' %}active{% endif %}"><i
                     data-lucide="help-circle" style="width: 18px; height: 18px; margin-right: 6px;"></i>Help</a>
             <a href="{{ url_for('payments.wallet') }}" class="wallet-balance"
                 style="color: #059669; font-weight: 600; padding: 0.5rem 1rem; background: #d1fae5; border-radius: 6px; text-decoration: none;"><i
                     data-lucide="wallet" style="width: 18px; height: 18px; margin-right: 6px;"></i><span
                     class="balance-amount">${{ "%.2f"|format(current_user.balance_usd) }}</span></a>
-            <a href="{{ url_for('account') }}"
+            <a href="{{ url_for('dashboard.account') }}"
                 class="{% if request.endpoint == 'account' or request.endpoint == 'settings' %}active{% endif %}"><i
                     data-lucide="user" style="width: 18px; height: 18px; margin-right: 6px;"></i>Account</a>
             <a href="{{ url_for('auth.logout') }}" style="color: #666;"><i data-lucide="log-out"
                     style="width: 18px; height: 18px; margin-right: 6px;"></i>Logout</a>
             {% else %}
-            <a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
-            <a href="{{ url_for('features') }}"
+            <a href="{{ url_for('main.landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a>
+            <a href="{{ url_for('main.features') }}"
                 class="{% if request.endpoint == 'features' %}active{% endif %}">Features</a>
-            <a href="{{ url_for('pricing') }}"
+            <a href="{{ url_for('main.pricing') }}"
                 class="{% if request.endpoint == 'pricing' %}active{% endif %}">Pricing</a>
-            <a href="{{ url_for('security') }}"
+            <a href="{{ url_for('main.security') }}"
                 class="{% if request.endpoint == 'security' %}active{% endif %}">Security</a>
             <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In</a>
             <a href="{{ url_for('auth.register') }}" class="btn btn-success">Get Started</a>
@@ -554,10 +554,10 @@
     <footer>
         <p>&copy; 2026 Candidate Evaluator. All rights reserved.</p>
         <p>
-            <a href="{{ url_for('security') }}">Security & Data Privacy</a> |
-            <a href="{{ url_for('privacy') }}">Privacy Policy</a> |
-            <a href="{{ url_for('terms') }}">Terms of Service</a> |
-            <a href="{{ url_for('support') }}">Contact Support</a>
+            <a href="{{ url_for('main.security') }}">Security & Data Privacy</a> |
+            <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> |
+            <a href="{{ url_for('main.terms') }}">Terms of Service</a> |
+            <a href="{{ url_for('main.support') }}">Contact Support</a>
         </p>
     </footer>
 

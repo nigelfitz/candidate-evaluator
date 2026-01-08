@@ -46,7 +46,7 @@
 
                     <!-- Action Buttons -->
                     <div style="margin-top: 24px;">
-                        <form method="POST" action="{{ url_for('analyze') }}">
+                        <form method="POST" action="{{ url_for('analysis.analyze') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <input type="hidden" name="action" value="confirm_jd_length">
                             <button type="submit"
@@ -61,7 +61,7 @@
                     <!-- Abandon Job Button -->
                     <div
                         style="margin-top: 16px; text-align: center; padding-top: 16px; border-top: 1px solid #bfdbfe;">
-                        <a href="{{ url_for('analyze', new='1') }}"
+                        <a href="{{ url_for('analysis.analyze', new='1') }}"
                             style="display: inline-block; padding: 8px 16px; background: transparent; border: 1px solid #cbd5e1; border-radius: 6px; color: #64748b; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s;"
                             onmouseover="this.style.borderColor='#94a3b8'; this.style.color='#475569'"
                             onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b'">

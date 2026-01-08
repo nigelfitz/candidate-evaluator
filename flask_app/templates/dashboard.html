@@ -544,7 +544,7 @@
     <div style="margin-bottom: 0.5rem;"><i data-lucide="target" style="width: 64px; height: 64px; stroke-width: 1.5; color: #2563eb;"></i></div>
     <h1>{% if current_user.is_authenticated %}Welcome back, {{ current_user.name or current_user.email.split('@')[0] }}!{% else %}Welcome to Candidate Evaluator{% endif %}</h1>
     <p>AI-powered candidate screening made simple</p>
-    <a href="{{ url_for('auth.register') if not current_user.is_authenticated else url_for('analyze', new=1) }}" class="btn-hero">
+    <a href="{{ url_for('auth.register') if not current_user.is_authenticated else url_for('analysis.analyze', new=1) }}" class="btn-hero">
         {% if current_user.is_authenticated %}<i data-lucide="plus" style="width: 18px; height: 18px; margin-right: 6px;"></i>Start New Analysis{% else %}Get Started Free{% endif %}
     </a>
 </div>
@@ -585,7 +585,7 @@
 <!-- Recent Analyses Section -->
 <div class="section-header">
     <h2><i data-lucide="folder" style="width: 28px; height: 28px; margin-right: 8px; vertical-align: middle;"></i>Recent Analyses</h2>
-    {% if recent_analyses %}<a href="{{ url_for('job_history') }}" class="view-all">View All →</a>{% endif %}
+    {% if recent_analyses %}<a href="{{ url_for('dashboard.job_history') }}" class="view-all">View All →</a>{% endif %}
 </div>
 
 {% if recent_analyses %}
@@ -606,7 +606,7 @@
             </div>
         </div>
         <div class="analysis-card-actions">
-            <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn-view">View Results</a>
+            <a href="{{ url_for('analysis.results', analysis_id=analysis.id) }}" class="btn-view">View Results</a>
         </div>
     </div>
     {% endfor %}
@@ -616,7 +616,7 @@
     <div class="icon" style="margin-bottom: 1rem;"><i data-lucide="plus-circle" style="width: 80px; height: 80px; stroke-width: 1.5; color: #94a3b8;"></i></div>
     <h3>Start Your First Analysis</h3>
     <p>Upload a job description and resumes to see AI-powered insights</p>
-    <a href="{{ url_for('analyze', new=1) }}" class="btn-hero">Start Your First Analysis</a>
+    <a href="{{ url_for('analysis.analyze', new=1) }}" class="btn-hero">Start Your First Analysis</a>
 </div>
 {% endif %}
 
@@ -663,7 +663,7 @@
         <h3>100% Private Environment</h3>
         <p>Your data is processed in an isolated environment. Files are never used for public model training, ensuring total sovereignty.</p>
         <p style="margin-top: 0.75rem; font-size: 0.9rem;">
-            <a href="{{ url_for('security') }}" style="color: #2563eb; text-decoration: underline;">View Security Standards</a>
+            <a href="{{ url_for('main.security') }}" style="color: #2563eb; text-decoration: underline;">View Security Standards</a>
         </p>
     </div>
 </div>

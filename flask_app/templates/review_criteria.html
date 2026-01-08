@@ -45,7 +45,7 @@
                 <i data-lucide="chevron-down" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 4px;"></i>
             </button>
             <div class="dropdown-menu-custom" id="manageDataMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 200px; z-index: 1000;">
-                <a class="dropdown-item-custom" href="{{ url_for('export_criteria') }}" style="display: block; padding: 10px 16px; color: #1f2937; text-decoration: none; transition: background 0.2s;">
+                <a class="dropdown-item-custom" href="{{ url_for('analysis.export_criteria') }}" style="display: block; padding: 10px 16px; color: #1f2937; text-decoration: none; transition: background 0.2s;">
                     <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;"></i>
                     Export to CSV
                 </a>
@@ -105,9 +105,9 @@
                             <i data-lucide="file" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 8px;"></i>
                             Original PDF File
                         </h5>
-                        <iframe src="{{ url_for('view_jd_pdf') }}" width="100%" height="600px" style="border: 1px solid #ddd; border-radius: 6px;"></iframe>
+                        <iframe src="{{ url_for('analysis.view_jd_pdf') }}" width="100%" height="600px" style="border: 1px solid #ddd; border-radius: 6px;"></iframe>
                         <div class="mt-2">
-                            <a href="{{ url_for('view_jd_pdf') }}" download="{{ jd_filename }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ url_for('analysis.view_jd_pdf') }}" download="{{ jd_filename }}" class="btn btn-sm btn-outline-primary">
                                 <i data-lucide="download" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;"></i>
                                 Download PDF
                             </a>
@@ -311,7 +311,7 @@ function importCriteria(input) {
     const formData = new FormData();
     formData.append('criteria_file', file);
     
-    fetch('{{ url_for("import_criteria") }}', {
+    fetch('{{ url_for("analysis.import_criteria") }}', {
         method: 'POST',
         body: formData
     })
@@ -340,9 +340,12 @@ function markChanged() {
 function saveChanges() {
     const jobTitle = document.getElementById('jobTitleInput').value.trim();
     
-    fetch('{{ url_for("review_criteria") }}', {
+    fetch('{{ url_for("analysis.review_criteria") }}', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
         body: JSON.stringify({
             criteria: criteriaData,
             job_title: jobTitle
@@ -494,8 +497,8 @@ details[open] summary {
 
 <!-- Include Bottom Bar -->
 {% set show_back_button = True %}
-{% set back_url = url_for('analyze', step='jd') %}
-{% set continue_url = url_for('analyze', step='resumes') %}
+{% set back_url = url_for('analysis.analyze', step='jd') %}
+{% set continue_url = url_for('analysis.analyze', step='resumes') %}
 {% set continue_text = 'Save and Continue to Upload Resumes →' %}
 {% set continue_disabled = False %}
 {% set continue_onclick = 'saveAndContinue()' %}
@@ -519,7 +522,7 @@ function saveAndContinue() {
     const jobTitle = document.getElementById('jobTitleInput').value.trim();
     
     // Save to backend
-    fetch('{{ url_for("review_criteria") }}', {
+    fetch('{{ url_for("analysis.review_criteria") }}', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -532,7 +535,7 @@ function saveAndContinue() {
         if (data.success) {
             // Successfully saved - navigate to next step
             hasChanges = false; // Clear changes flag to prevent beforeunload prompt
-            window.location.href = '{{ url_for("analyze", step="resumes") }}';
+            window.location.href = '{{ url_for("analysis.analyze", step="resumes") }}';
         } else {
             // Save failed - show error and re-enable button
             alert('Error saving changes: ' + data.message);

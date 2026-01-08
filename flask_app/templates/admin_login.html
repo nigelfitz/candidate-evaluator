@@ -99,10 +99,10 @@
 
         <div class="text-center mt-3">
             {% if not totp_enabled and not locked_out %}
-            <a href="{{ url_for('admin_setup_2fa') }}" class="text-primary small">Setup 2FA</a>
+            <a href="{{ url_for('admin.admin_setup_2fa') }}" class="text-primary small">Setup 2FA</a>
             <span class="text-muted"> | </span>
             {% endif %}
-            <a href="{{ url_for('landing') }}" class="text-muted">← Back to Home</a>
+            <a href="{{ url_for('main.landing') }}" class="text-muted">← Back to Home</a>
         </div>
     </div>
 

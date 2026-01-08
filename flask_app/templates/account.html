@@ -32,7 +32,7 @@
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 32px; margin-bottom: 10px;">💰</div>
-                <a href="{{ url_for('job_history') }}" 
+                <a href="{{ url_for('dashboard.job_history') }}" 
                    style="display: inline-block; 
                           padding: 8px 16px; 
                           background: rgba(255,255,255,0.2); 
@@ -87,7 +87,7 @@
                         {% if transaction.analysis_id and transaction.analysis_id in existing_analyses %}
                             {# Analysis exists - show clickable link with Job# #}
                             {% set analysis = transactions_analyses.get(transaction.analysis_id) %}
-                            <a href="{{ url_for('results', analysis_id=transaction.analysis_id) }}" 
+                            <a href="{{ url_for('analysis.results', analysis_id=transaction.analysis_id) }}" 
                                style="color: #1f77b4; text-decoration: none; font-weight: 500; display: block; margin-bottom: 4px;"
                                onmouseover="this.style.textDecoration='underline'"
                                onmouseout="this.style.textDecoration='none'">
@@ -139,7 +139,7 @@
     {% endif %}
     
     <div style="text-align: center; margin-top: 40px;">
-        <a href="{{ url_for('dashboard') }}" 
+        <a href="{{ url_for('dashboard.dashboard') }}" 
            style="color: #1f77b4; text-decoration: none; font-weight: 500;"
            onmouseover="this.style.textDecoration='underline'"
            onmouseout="this.style.textDecoration='none'">
@@ -204,7 +204,7 @@
                         onmouseout="this.style.background='#f3f4f6'">
                     Cancel
                 </button>
-                <form method="POST" action="{{ url_for('delete_account') }}" style="flex: 1; margin: 0;" id="deleteAccountForm">
+                <form method="POST" action="{{ url_for('dashboard.delete_account') }}" style="flex: 1; margin: 0;" id="deleteAccountForm">
                     <button type="button"
                             onclick="submitDeleteAccount()"
                             id="confirmDeleteBtn"

@@ -65,7 +65,7 @@
                     {{ item.transaction_count }}
                 </td>
                 <td style="padding: 16px; text-align: center;">
-                    <a href="{{ url_for('admin_balance_adjustment', user_id=item.user.id) }}" 
+                    <a href="{{ url_for('admin.admin_balance_adjustment', user_id=item.user.id) }}" 
                        style="background: #6366f1; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-block; transition: all 0.2s;"
                        onmouseover="this.style.background='#4f46e5'"
                        onmouseout="this.style.background='#6366f1'">

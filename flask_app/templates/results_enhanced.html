@@ -357,7 +357,7 @@
                 </div>
             </div>
             <div>
-                <a href="{{ url_for('admin_user_detail', user_id=analysis.user_id) }}"
+                <a href="{{ url_for('admin.admin_user_detail', user_id=analysis.user_id) }}"
                     style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.2s;"
                     onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
                     ← Back to User Detail
@@ -412,7 +412,7 @@
                     data-utc="{{ analysis.created_at|to_local_time }}">{{ analysis.created_at.strftime('%B %d, %Y at
                     %I:%M %p') }}</span></p>
             <div class="mt-3" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <form method="POST" action="{{ url_for('load_analysis_to_draft', analysis_id=analysis.id) }}"
+                <form method="POST" action="{{ url_for('analysis.load_analysis_to_draft', analysis_id=analysis.id) }}"
                     style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <button type="submit" class="btn btn-primary"
@@ -444,17 +444,17 @@
     <!-- Unified Navigation Bar -->
     <div class="btn-group mb-3" role="group"
         style="box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px;">
-        <a href="{{ url_for('results', analysis_id=analysis.id) }}" class="btn btn-primary"
+        <a href="{{ url_for('analysis.results', analysis_id=analysis.id) }}" class="btn btn-primary"
             style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="grid-3x3" style="width: 18px; height: 18px;"></i>
             <span>Results</span>
         </a>
-        <a href="{{ url_for('insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+        <a href="{{ url_for('analysis.insights', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
             style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px; {{ 'opacity: 0.5; pointer-events: none;' if not analysis.insights_data else '' }}">
             <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i>
             <span>Insights</span>
         </a>
-        <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
+        <a href="{{ url_for('export.exports', analysis_id=analysis.id) }}" class="btn btn-outline-primary"
             style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: center; min-width: 120px;">
             <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
             <span>Export</span>
@@ -831,7 +831,7 @@
 
     // Navigate to Insights page with candidate pre-selected
     function switchToInsightsTab(candidateName) {
-        const insightsUrl = "{{ url_for('insights', analysis_id=analysis.id) }}";
+        const insightsUrl = "{{ url_for('analysis.insights', analysis_id=analysis.id) }}";
         window.location.href = `${insightsUrl}?candidate=${encodeURIComponent(candidateName)}`;
     }
 
@@ -1259,7 +1259,7 @@
                 </summary>
                 <div class="card-body">
                     <div class="mb-2 d-flex justify-content-end">
-                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ url_for('analysis.view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
                             📄 View Full Resume
                         </a>
                     </div>
@@ -1288,7 +1288,7 @@
                 </summary>
                 <div class="card-body">
                     <div class="mb-2 d-flex justify-content-end">
-                        <a href="{{ url_for('view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ url_for('analysis.view_candidate_file', analysis_id=analysis.id, candidate_name='') }}${encodeURIComponent(candidate)}" target="_blank" class="btn btn-sm btn-outline-primary">
                             📄 View Full Resume
                         </a>
                     </div>
@@ -1543,15 +1543,14 @@
 
     async function submitVote(voteType) {
         const improvementNote = voteType === 'down' ? document.getElementById('feedback-text').value : '';
-        const analysisId = {{ analysis.id }
-    };
+        const analysisId = {{ analysis.id }};
 
-    try {
-        const response = await fetch('/submit_feedback', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+        try {
+            const response = await fetch('/submit_feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             body: JSON.stringify({
                 analysis_id: analysisId,
                 vote: voteType,
@@ -1887,9 +1886,9 @@
 <!-- Sticky Bottom Bar -->
 {% if is_current_draft_analysis %}
 {% set show_back_button = False %}
-{% set back_url = url_for('dashboard') %}
+{% set back_url = url_for('dashboard.dashboard') %}
 {% set continue_text = 'Start New Analysis' %}
-{% set continue_url = url_for('analyze', new=1) %}
+{% set continue_url = url_for('analysis.analyze', new=1) %}
 {% set continue_disabled = false %}
 {% include 'workflow_bottom_bar.html' %}
 {% endif %}

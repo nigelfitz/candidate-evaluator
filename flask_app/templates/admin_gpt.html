@@ -133,7 +133,7 @@ border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(
 </div>
 </div>
 
-<form method="POST" action="{{ url_for('admin_save_settings') }}">
+<form method="POST" action="{{ url_for('admin.admin_save_settings') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <!-- Core Two-Agent Settings -->
     <div class="settings-card">
@@ -751,27 +751,18 @@ border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(
         }
     }
 
-    // Finance dropdown functionality
+    // Finance dropdown functionality (optional on this page)
     const financeContainer = document.querySelector('.finance-menu-container');
     const dropdown = document.querySelector('.finance-dropdown');
 
-    console.log('Finance container:', financeContainer);
-    console.log('Dropdown:', dropdown);
-
     if (financeContainer && dropdown) {
-        console.log('Setting up dropdown event listeners');
-
         financeContainer.addEventListener('mouseenter', () => {
-            console.log('Mouse entered finance container');
             dropdown.style.display = 'block';
         });
 
         financeContainer.addEventListener('mouseleave', () => {
-            console.log('Mouse left finance container');
             dropdown.style.display = 'none';
         });
-    } else {
-        console.error('Finance container or dropdown not found!');
     }
 
     // System Settings dropdown functionality

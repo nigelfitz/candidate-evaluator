@@ -65,7 +65,7 @@
             </div>
             
             <!-- Search and Filters -->
-            <form method="GET" action="{{ url_for('admin_users') }}">
+            <form method="GET" action="{{ url_for('admin.admin_users') }}">
                 <div class="filters">
                     <input type="text" name="search" class="form-control" placeholder="Search by email or name..." value="{{ search }}">
                     <select name="online" class="form-select" style="width: 150px;" onchange="this.form.submit()">
@@ -124,7 +124,7 @@
                         <td>${{ "%.2f"|format(user.total_revenue_usd) }}</td>
                         <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                         <td>
-                            <a href="{{ url_for('admin_user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary">View</a>
+                            <a href="{{ url_for('admin.admin_user_detail', user_id=user.id) }}" class="btn btn-sm btn-primary">View</a>
                         </td>
                     </tr>
                     {% endfor %}

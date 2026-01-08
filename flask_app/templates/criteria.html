@@ -13,7 +13,7 @@
                 </div>
                 <div>
                     {% if analysis_id %}
-                    <a href="{{ url_for('results', analysis_id=analysis_id) }}" class="btn btn-secondary">
+                    <a href="{{ url_for('analysis.results', analysis_id=analysis_id) }}" class="btn btn-secondary">
                         ← Back to Results
                     </a>
                     {% endif %}
@@ -234,7 +234,7 @@ function saveAllChanges() {
     if (!confirm('Save changes and re-run analysis? This will cost $4 + any AI insights selected.')) return;
     
     // Send to server
-    fetch('{{ url_for("update_criteria", analysis_id=analysis_id if analysis_id else 0) }}', {
+    fetch('{{ url_for("analysis.update_criteria", analysis_id=analysis_id if analysis_id else 0) }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

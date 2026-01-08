@@ -23,7 +23,7 @@ font-size: 18px;
 
 {% block content %}
 <div style="margin-bottom: 30px;">
-    <a href="{{ url_for('admin_balance_audit') }}" style="color: #6366f1; text-decoration: none; font-weight: 600;">
+    <a href="{{ url_for('admin.admin_balance_audit') }}" style="color: #6366f1; text-decoration: none; font-weight: 600;">
         ← Back to Balance Audit
     </a>
 </div>
@@ -105,7 +105,7 @@ font-size: 18px;
                     style="color: #16a34a; font-size: 18px;">${{ "%.2f"|format(max_refundable) }}</span></div>
             <div style="color: #6b7280; font-size: 13px;">(Excludes promotional/bonus funds)</div>
         </div>
-        <a href="{{ url_for('admin_refund', user_id=user.id) }}"
+        <a href="{{ url_for('admin.admin_refund', user_id=user.id) }}"
             style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
             💸 Go to Refund Page →
         </a>
@@ -165,7 +165,7 @@ font-size: 18px;
 </div>
 
 <!-- Type 1: Silent Adjustment Form -->
-<form method="POST" action="{{ url_for('admin_balance_adjustment', user_id=user.id) }}"
+<form method="POST" action="{{ url_for('admin.admin_balance_adjustment', user_id=user.id) }}"
     style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 30px; border-left: 4px solid #8b5cf6;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="adjustment_type" value="silent">
@@ -206,7 +206,7 @@ font-size: 18px;
 </form>
 
 <!-- Type 2: Transaction Adjustment Form -->
-<form method="POST" action="{{ url_for('admin_balance_adjustment', user_id=user.id) }}"
+<form method="POST" action="{{ url_for('admin.admin_balance_adjustment', user_id=user.id) }}"
     style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #10b981;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="adjustment_type" value="transaction">
@@ -241,7 +241,7 @@ font-size: 18px;
     </div>
 
     <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <a href="{{ url_for('admin_balance_audit') }}"
+        <a href="{{ url_for('admin.admin_balance_audit') }}"
             style="padding: 12px 24px; background: #e5e7eb; color: #374151; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
             Cancel
         </a>

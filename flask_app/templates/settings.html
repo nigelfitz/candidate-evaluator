@@ -7,7 +7,7 @@
     <h1 style="margin-bottom: 1rem;">⚙️ Settings & Preferences</h1>
     <p style="color: #666; margin-bottom: 2rem;">Customize your experience and set default values for analysis.</p>
 
-    <form method="POST" action="{{ url_for('settings') }}">
+    <form method="POST" action="{{ url_for('dashboard.settings') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
         <!-- Threshold Preferences -->
@@ -79,7 +79,7 @@
         <!-- Action Buttons -->
         <div style="margin-top: 2rem; display: flex; gap: 1rem;">
             <button type="submit" class="btn btn-primary">💾 Save Settings</button>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

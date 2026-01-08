@@ -1,0 +1,650 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Candidate Evaluator</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23667eea' rx='20'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>✓</text></svg>">
+    <meta name="csrf-token" content="IjhhMjJlN2ZmZWIyMTZiNjg1ZWNlZmFmYjYzOTJhOGQ5NzhiYTQwMjIi.aV3lfA.R2rErfYcEqXaUB2kVsuV6k4WO-c">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            overflow-x: hidden;
+            max-width: 100vw;
+            position: relative;
+        }
+
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            color: #1e293b;
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .navbar-brand .brand-bold {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .navbar-brand .brand-light {
+            font-weight: 300;
+            color: #64748b;
+            margin-left: 0.15rem;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .navbar-menu a.btn-primary,
+        .navbar-menu a.btn-success {
+            color: white;
+        }
+
+        .navbar-menu a:hover {
+            color: #1f77b4;
+            background-color: #f0f4f8;
+        }
+
+        .navbar-menu a.btn-primary:hover,
+        .navbar-menu a.btn-success:hover {
+            color: white;
+            background-color: #155a8a;
+        }
+
+        /* Fixed widths for auth buttons to prevent wrapping */
+        .navbar-menu a.btn-primary,
+        .navbar-menu a.btn-success {
+            min-width: 100px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Wallet tooltip */
+        .wallet-balance {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .wallet-balance:hover::after {
+            content: 'Wallet Balance. Click to add funds';
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-menu a.active {
+            color: #1f77b4;
+            background-color: #e3f2fd;
+            font-weight: 600;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: #1e293b;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        /* Intermediate breakpoint - reduce spacing to fit more menu items */
+        @media (max-width: 1100px) {
+            .navbar {
+                padding: 1rem 1rem;
+            }
+
+            .navbar-menu {
+                gap: 0.75rem;
+            }
+
+            .navbar-menu a {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .navbar-menu {
+                position: fixed;
+                top: 60px;
+                right: -100%;
+                width: 280px;
+                height: calc(100vh - 60px);
+                background: white;
+                flex-direction: column;
+                padding: 1.5rem;
+                box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+                transition: right 0.3s;
+                align-items: flex-start;
+                gap: 0.5rem;
+                z-index: 1001;
+            }
+
+            .navbar-menu.active {
+                right: 0;
+            }
+
+            .navbar-menu a {
+                width: 100%;
+                padding: 0.8rem 1rem;
+            }
+
+            /* Backdrop overlay when menu is open */
+            .navbar-menu.active::before {
+                content: '';
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: -1;
+                pointer-events: none;
+            }
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #1f77b4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #155a8a;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .flash-messages {
+            margin: 1rem 0;
+        }
+
+        .flash {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .flash-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1f77b4;
+        }
+
+        .credit-balance {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .credit-amount {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Refinement - App-like experience on phones */
+        @media (max-width: 1100px) {
+
+            /* Prevent text from hitting edges */
+            body {
+                font-size: 16px;
+            }
+
+            .container,
+            section {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            /* Stack grid elements */
+            .pricing-grid,
+            .steps-container {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Make buttons easy to tap */
+            .cta-button,
+            .btn-hero {
+                width: 100%;
+                text-align: center;
+                padding: 18px;
+            }
+
+            /* Ensure all interactive elements meet 44px minimum tap target */
+            .navbar-menu a,
+            .btn,
+            a,
+            button,
+            input[type="submit"],
+            input[type="button"],
+            .faq-item summary {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
+
+            /* Ensure button text stays centered */
+            .btn,
+            button,
+            input[type="submit"],
+            input[type="button"],
+            .cta-button,
+            .btn-hero {
+                text-align: center;
+                justify-content: center;
+            }
+        }
+
+        /* Additional Mobile-Only Enhancements - Small Phones */
+        @media (max-width: 480px) {
+
+            /* Tighter spacing on very small screens */
+            body {
+                font-size: 15px;
+                line-height: 1.5;
+            }
+
+            h1 {
+                font-size: 1.75rem !important;
+            }
+
+            h2 {
+                font-size: 1.5rem !important;
+            }
+
+            h3 {
+                font-size: 1.25rem !important;
+            }
+
+            h4 {
+                font-size: 1.1rem !important;
+            }
+
+            /* Compact padding */
+            .container,
+            section {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            /* Navbar adjustments */
+            .navbar {
+                padding: 0.75rem 1rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            /* Footer adjustments */
+            footer {
+                padding: 1.5rem 1rem;
+                margin-top: 2rem;
+                font-size: 0.9rem;
+            }
+
+            /* Card spacing */
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            /* Button sizing */
+            .btn,
+            .cta-button {
+                font-size: 0.95rem;
+                padding: 14px 20px;
+            }
+
+            /* Form elements */
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="number"],
+            textarea,
+            select {
+                font-size: 16px !important;
+                /* Prevents zoom on iOS */
+                padding: 12px;
+            }
+
+            /* Tables - make scrollable */
+            table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                font-size: 0.85rem;
+            }
+
+            /* Credit display */
+            .credit-amount {
+                font-size: 2rem;
+            }
+
+            .credit-balance {
+                padding: 1rem;
+            }
+        }
+    </style>
+    
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/"
+            class="navbar-brand">
+            <span class="brand-bold">Candidate</span><span class="brand-light">Evaluator</span>
+        </a>
+        <button class="hamburger" onclick="toggleMobileMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="navbar-menu" id="navbarMenu">
+            
+            <a href="/" class="">Home</a>
+            <a href="/features"
+                class="">Features</a>
+            <a href="/pricing"
+                class="">Pricing</a>
+            <a href="/security"
+                class="">Security</a>
+            <a href="/auth/login" class="btn btn-primary">Log In</a>
+            <a href="/auth/register" class="btn btn-success">Get Started</a>
+            
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        
+        <div class="flash-messages">
+            
+            
+            <div class="flash flash-info">Please log in to access this page</div>
+            
+            
+        </div>
+        
+        
+
+        
+<div class="card" style="max-width: 500px; margin: 4rem auto;">
+    <h1 class="card-header">Welcome Back</h1>
+    <p style="color: #666; margin-bottom: 2rem;">Login to your Candidate Evaluator account</p>
+    
+    <form method="POST" action="/auth/login">
+        <input type="hidden" name="csrf_token" value="IjhhMjJlN2ZmZWIyMTZiNjg1ZWNlZmFmYjYzOTJhOGQ5NzhiYTQwMjIi.aV3lfA.R2rErfYcEqXaUB2kVsuV6k4WO-c"/>
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
+            <input type="email" name="email" required 
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Password</label>
+            <input type="password" name="password" required 
+                   style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" name="remember" value="1" style="margin-right: 0.5rem;">
+                <span>Remember me</span>
+            </label>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            Login
+        </button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
+        <p style="color: #666;">Don't have an account? 
+            <a href="/auth/register" style="color: #1f77b4; text-decoration: none; font-weight: 500;">Sign up</a>
+        </p>
+    </div>
+</div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Candidate Evaluator. All rights reserved.</p>
+        <p>
+            <a href="/security">Security & Data Privacy</a> |
+            <a href="/privacy">Privacy Policy</a> |
+            <a href="/terms">Terms of Service</a> |
+            <a href="/support">Contact Support</a>
+        </p>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+        });
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('navbarMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('navbarMenu');
+            const hamburger = document.querySelector('.hamburger');
+            if (menu && !menu.contains(event.target) && !hamburger.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+
+        // Workflow protection - warn users before leaving workflow pages with unsaved work
+        
+
+        // Update balance after Stripe payment redirect
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if we just returned from Stripe (session_id in URL)
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+
+            if (sessionId) {
+                // Fetch updated user balance from server
+                fetch('/api/get-balance', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.balance !== undefined) {
+                            // Update all balance displays on the page
+                            const balanceElements = document.querySelectorAll('.balance-amount');
+                            balanceElements.forEach(el => {
+                                el.textContent = `$${parseFloat(data.balance).toFixed(2)}`;
+                            });
+
+                            // Clean URL by removing session_id parameter without reload
+                            const newUrl = new URL(window.location);
+                            newUrl.searchParams.delete('session_id');
+                            window.history.replaceState({}, '', newUrl);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching balance:', error);
+                        // Fallback: reload page to get updated balance from server
+                        // But only if we haven't already removed the session_id
+                        if (window.location.search.includes('session_id')) {
+                            const newUrl = new URL(window.location);
+                            newUrl.searchParams.delete('session_id');
+                            window.location.href = newUrl.toString();
+                        }
+                    });
+            }
+        });
+    </script>
+
+    
+</body>
+
+</html>

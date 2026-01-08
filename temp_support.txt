@@ -1,0 +1,46 @@
+﻿
+>     @app.route('/support', methods=['GET', 'POST'])
+      def support():
+          """Contact Support page with form submission"""
+          if request.method == 'POST':
+              name = request.form.get('name', '').strip()
+              email = request.form.get('email', '').strip()
+              subject = request.form.get('subject', '').strip()
+              message = request.form.get('message', '').strip()
+              
+              if not all([name, email, subject, message]):
+                  flash('Please fill in all fields.', 'error')
+                  return render_template('support.html')
+              
+              # Send support email
+              try:
+                  from email_utils import send_support_email
+                  send_support_email(
+                      user_name=name,
+                      user_email=email,
+                      subject=subject,
+                      message=message
+                  )
+                  flash('Your message has been sent! We\'ll get back to you within 24 hours.', 
+'success')
+                  return redirect(url_for('support'))
+              except Exception as e:
+                  print(f"ERROR: Failed to send support email: {e}")
+                  flash('There was an error sending your message. Please try emailing us 
+directly at contact@candidateevaluator.com', 'error')
+                  return render_template('support.html')
+          
+          return render_template('support.html')
+      
+      @app.route('/dashboard')
+      @login_required
+      def dashboard():
+          """Dashboard - logged-in users only"""
+          # Get recent analyses for the user
+          recent_analyses = Analysis.query.filter_by(
+              user_id=current_user.id
+          ).order_by(
+              Analysis.created_at.desc()
+          ).limit(5).all()
+
+

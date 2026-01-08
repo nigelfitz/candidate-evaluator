@@ -63,7 +63,7 @@ border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(
     <strong>⚠️ Important:</strong> These settings control critical system behavior. Changes take effect immediately.
 </div>
 
-<form method="POST" action="{{ url_for('admin_system_save') }}">
+<form method="POST" action="{{ url_for('admin.admin_system_save') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <!-- Registration Toggle -->
     <div class="setting-item">

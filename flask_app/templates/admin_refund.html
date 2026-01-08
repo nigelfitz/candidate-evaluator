@@ -8,7 +8,7 @@
 
 {% block content %}
 <div style="margin-bottom: 30px;">
-    <a href="{{ url_for('admin_balance_audit') }}" style="color: #6366f1; text-decoration: none; font-weight: 600;">
+    <a href="{{ url_for('admin.admin_balance_audit') }}" style="color: #6366f1; text-decoration: none; font-weight: 600;">
         ← Back to Balance Audit
     </a>
 </div>
@@ -95,7 +95,7 @@
 </div>
 
 <!-- REFUND FORM -->
-<form method="POST" action="{{ url_for('admin_refund', user_id=user.id) }}" onsubmit="return confirmRefund()"
+<form method="POST" action="{{ url_for('admin.admin_refund', user_id=user.id) }}" onsubmit="return confirmRefund()"
     style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #dc2626;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -150,7 +150,7 @@
     </div>
 
     <div style="display: flex; gap: 15px; justify-content: flex-end; border-top: 2px solid #f3f4f6; padding-top: 25px;">
-        <a href="{{ url_for('admin_balance_audit') }}"
+        <a href="{{ url_for('admin.admin_balance_audit') }}"
             style="padding: 14px 28px; background: #e5e7eb; color: #374151; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">
             Cancel
         </a>
@@ -168,7 +168,7 @@
         If this refund creates a discrepancy between Available Balance and Transaction History Balance,
         you can use the <strong>Silent Adjustment</strong> feature to fix it.
     </p>
-    <a href="{{ url_for('admin_balance_adjustment', user_id=user.id) }}"
+    <a href="{{ url_for('admin.admin_balance_adjustment', user_id=user.id) }}"
         style="display: inline-block; padding: 10px 20px; background: #3b82f6; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;">
         Go to Balance Adjustment →
     </a>
@@ -201,8 +201,7 @@
 
     function confirmRefund() {
         const amount = parseFloat(document.getElementById('refundAmount').value);
-        const maxRefundable = {{ max_refundable }
-    };
+        const maxRefundable = {{ max_refundable }};
 
     // Check if amount is positive
     if (amount > 0) {

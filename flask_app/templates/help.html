@@ -219,7 +219,7 @@
                 <li>Treat scores as <strong>evidence strength</strong>, not pass/fail</li>
                 <li>Use the Coverage matrix to spot strengths and gaps</li>
                 <li>Use the Evidence Explorer to view exact resume snippets behind each score</li>
-                <li>Adjust scoring thresholds in <a href="{{ url_for('settings') }}">Settings</a> if you want stricter or more lenient classifications</li>
+                <li>Adjust scoring thresholds in <a href="{{ url_for('dashboard.settings') }}">Settings</a> if you want stricter or more lenient classifications</li>
             </ul>
         </div>
     </div>
@@ -236,7 +236,7 @@
                 <h4 style="color: #1e40af; margin-bottom: 0.5rem;">🔒 Enterprise-Grade Security</h4>
                 <p style="color: #1e293b; margin-bottom: 0.75rem;">Your data is processed in an <strong>isolated AI environment</strong>. Files are never used for public model training, ensuring total data sovereignty and zero cross-contamination.</p>
                 <p style="margin: 0;">
-                    <a href="{{ url_for('security') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">View our Security & Data Privacy Standards →</a>
+                    <a href="{{ url_for('main.security') }}" style="color: #2563eb; font-weight: 600; text-decoration: underline;">View our Security & Data Privacy Standards →</a>
                 </p>
             </div>
             
@@ -289,7 +289,7 @@
             
             <div class="faq-item">
                 <h3 class="faq-q">How much does it cost?</h3>
-                <p class="faq-a">Candidate Evaluator uses a flexible credit-based model. Your first job is included as part of our Test Drive offer. For detailed pricing on Standard Jobs and bulk Credit Bonuses, please visit our <a href="{{ url_for('pricing') }}" style="color: #2563eb; text-decoration: underline;">Pricing Page</a>.</p>
+                <p class="faq-a">Candidate Evaluator uses a flexible credit-based model. Your first job is included as part of our Test Drive offer. For detailed pricing on Standard Jobs and bulk Credit Bonuses, please visit our <a href="{{ url_for('main.pricing') }}" style="color: #2563eb; text-decoration: underline;">Pricing Page</a>.</p>
             </div>
             
             <div class="faq-item">

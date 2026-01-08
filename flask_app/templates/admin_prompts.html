@@ -91,7 +91,7 @@ font-weight: 600; margin-left: 10px; }
     </div>
 </div>
 
-<form method="POST" action="{{ url_for('admin_save_prompts') }}">
+<form method="POST" action="{{ url_for('admin.admin_save_prompts') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <!-- JD EXTRACTION TAB -->
     <div id="jd-content" class="prompt-content active">

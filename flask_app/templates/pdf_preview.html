@@ -13,10 +13,10 @@
                     <p class="text-muted mb-0">{{ analysis.job_title }}</p>
                 </div>
                 <div>
-                    <a href="{{ url_for('exports', analysis_id=analysis.id) }}" class="btn btn-outline-secondary btn-sm">
+                    <a href="{{ url_for('export.exports', analysis_id=analysis.id) }}" class="btn btn-outline-secondary btn-sm">
                         ← Back to Exports
                     </a>
-                    <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}" class="btn btn-danger btn-sm">
+                    <a href="{{ url_for('export.export_executive_pdf', analysis_id=analysis.id) }}" class="btn btn-danger btn-sm">
                         <i class="bi bi-download"></i> Download PDF
                     </a>
                 </div>
@@ -49,7 +49,7 @@
             <!-- Download reminder -->
             <div class="alert alert-success text-center">
                 <i class="bi bi-download"></i>
-                <a href="{{ url_for('export_executive_pdf', analysis_id=analysis.id) }}" class="alert-link">
+                <a href="{{ url_for('export.export_executive_pdf', analysis_id=analysis.id) }}" class="alert-link">
                     Download the complete PDF
                 </a> to save or share this report
             </div>

@@ -1,0 +1,85 @@
+﻿
+      # Main routes
+>     @app.route('/')
+      def landing():
+          """Landing page - shows marketing page for non-logged-in users, redirects to 
+dashboard for logged-in"""
+          if current_user.is_authenticated:
+              return redirect(url_for('dashboard'))
+          
+          # Load pricing for display
+          pricing_path = os.path.join(os.path.dirname(__file__), 'config', 
+'pricing_settings.json')
+          with open(pricing_path, 'r', encoding='utf-8') as f:
+              pricing_config = json.load(f)
+          
+          return render_template('landing.html', pricing=pricing_config)
+      
+>     @app.route('/pricing')
+      def pricing():
+          """Pricing page"""
+          pricing_path = os.path.join(os.path.dirname(__file__), 'config', 
+'pricing_settings.json')
+          with open(pricing_path, 'r', encoding='utf-8') as f:
+              pricing_config = json.load(f)
+          test_drive_price = pricing_config['standard_tier_price']['value'] - 
+pricing_config['new_user_welcome_credit']['value']
+          return render_template('pricing.html', 
+                               pricing=pricing_config,
+                               test_drive_price=test_drive_price)
+      
+>     @app.route('/security')
+      def security():
+          """Security and data privacy page"""
+          return render_template('security.html')
+      
+>     @app.route('/favicon.ico')
+      def favicon():
+          """Return 204 No Content for favicon requests to avoid 404s"""
+          return '', 204
+      
+>     @app.route('/features')
+      def features():
+          """Features deep dive page"""
+          return render_template('features.html')
+      
+>     @app.route('/privacy')
+      def privacy():
+          """Privacy Policy page"""
+          return render_template('privacy.html')
+      
+>     @app.route('/terms')
+      def terms():
+          """Terms of Service page"""
+          return render_template('terms.html')
+      
+      @app.route('/support', methods=['GET', 'POST'])
+      def support():
+          """Contact Support page with form submission"""
+          if request.method == 'POST':
+              name = request.form.get('name', '').strip()
+              email = request.form.get('email', '').strip()
+              subject = request.form.get('subject', '').strip()
+              message = request.form.get('message', '').strip()
+              
+              if not all([name, email, subject, message]):
+                  flash('Please fill in all fields.', 'error')
+      
+>     @app.route('/help')
+      def help():
+          """Help and FAQ page"""
+          return render_template('help.html', user=current_user)
+      
+      @app.route('/settings', methods=['GET', 'POST'])
+      @login_required
+      def settings():
+          """User settings and preferences"""
+          user_settings = UserSettings.get_or_create(current_user.id)
+          
+          if request.method == 'POST':
+              try:
+                  # Update threshold preferences
+                  hi_threshold = request.form.get('hi_threshold', type=int)
+                  lo_threshold = request.form.get('lo_threshold', type=int)
+
+
