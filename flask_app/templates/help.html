@@ -156,70 +156,69 @@
             <span class="toggle-icon">▼</span>
         </div>
         <div class="section-content" id="scoring">
-            <h3>What do the scores mean?</h3>
+            <h3>How are the scores calculated?</h3>
             <p>
-                Each score is a <strong>semantic similarity</strong> between a JD <strong>criterion</strong> and the 
-                <strong>most relevant snippet</strong> in a candidate's resume. It ranges from <strong>0%</strong> 
-                (not similar) to <strong>100%</strong> (nearly identical in meaning).
+                Our AI evaluates candidates based on the <strong>depth of evidence</strong> provided in their resume for each criterion. 
+                It doesn't just look for keywords; it analyzes professional context and career impact.
             </p>
             
-            <div class="score-ranges">
-                <div class="score-range high">
-                    <div class="score-label">✅ Strong (≥70%)</div>
-                    <div class="score-desc">Excellent to good alignment</div>
-                </div>
-                <div class="score-range medium">
-                    <div class="score-label">⚠️ Moderate (45%–70%)</div>
-                    <div class="score-desc">Partial or indirect match</div>
-                </div>
-                <div class="score-range low">
-                    <div class="score-label">⛔ Weak (<45%)</div>
-                    <div class="score-desc">Minimal Evidence Found</div>
-                </div>
-            </div>
-            
-            <div class="example-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
-                <h4 style="margin-top: 0; color: #1e40af;">💡 The AI Co-Pilot</h4>
-                <p style="margin-bottom: 0;">While our AI identifies evidence with 99% accuracy, these scores are designed to be your 'Co-Pilot.' They highlight the strongest matches so you can apply your human expertise where it matters most: the interview.</p>
+            <div class="example-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="margin-top: 0; color: #1e40af;">🎯 The Three Pillars of a High Score</h4>
+                <p style="margin-bottom: 0.75rem;">To achieve a <strong>"Strong"</strong> score (80%–100%), the AI looks for three specific markers:</p>
+                <ol style="margin-bottom: 0.75rem;">
+                    <li><strong>Skill Mastery:</strong> Does the candidate possess the required technical or soft skill?</li>
+                    <li><strong>Professional Context:</strong> Has the candidate applied this skill in a recent professional role (e.g., as a CFO or Manager)?</li>
+                    <li><strong>Proven Outcome:</strong> Does the resume cite a specific result, achievement, or metric (e.g., "Led budget preparation for a $10M portfolio")?</li>
+                </ol>
+                <p style="margin-bottom: 0;">The more pillars present, the higher the score. A score of 60% might indicate the skill is listed but lacks professional context or specific outcomes.</p>
             </div>
             
             <h3>Quick Reference Ranges</h3>
-            <ul>
-                <li><strong>75%–100%:</strong> Excellent alignment</li>
-                <li><strong>60%–74%:</strong> Good</li>
-                <li><strong>45%–59%:</strong> Moderate (partial/indirect)</li>
-                <li><strong>30%–44%:</strong> Developing/Limited Match</li>
-                <li><strong>&lt;30%:</strong> Minimal Evidence Found</li>
-            </ul>
+            <div class="score-ranges">
+                <div class="score-range high">
+                    <div class="score-label">✅ Strong (80%–100%)</div>
+                    <div class="score-desc">The candidate provides clear evidence of the skill, often backed by specific job titles, companies, and measurable results.</div>
+                </div>
+                <div class="score-range medium">
+                    <div class="score-label">⚠️ Moderate (40%–79%)</div>
+                    <div class="score-desc">The skill is mentioned, but the resume may lack recent context or specific details on how it was applied.</div>
+                </div>
+                <div class="score-range low">
+                    <div class="score-label">⛔ Weak (0%–39%)</div>
+                    <div class="score-desc">There is little to no mention of the skill or relevant professional experience in the provided document.</div>
+                </div>
+            </div>
             
-            <p><strong>Overall</strong> is a weighted average of all criteria scores.</p>
+            <p style="margin-top: 1.5rem;"><strong>Overall Score:</strong> This is a weighted average of all criteria scores, giving you an at-a-glance measure of candidate fit.</p>
             
-            <h3>How it's calculated (plain English)</h3>
-            <ol>
-                <li>The resume is split into chunks (approximately 1,200 characters each)</li>
-                <li>For each <strong>criterion</strong>, we compare it to every chunk and keep the <strong>best match</strong></li>
-                <li>The similarity comes from vector math (cosine similarity on embeddings), which captures meaning overlap, not just exact words</li>
-            </ol>
+            <div class="example-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="margin-top: 0; color: #1e40af;">💡 The AI Co-Pilot</h4>
+                <p style="margin-bottom: 0;">While our AI identifies evidence with expert-level precision, these scores are designed to be your 'Co-Pilot.' They highlight the strongest matches so you can apply your human expertise where it matters most: the interview.</p>
+            </div>
             
             <h3>Examples</h3>
             <div class="example-box">
-                <p><strong>Criterion:</strong> "Project management with Agile/Scrum"</p>
-                <p><strong>Resume:</strong> "Led a 10-person team delivering sprints using Scrum ceremonies"</p>
-                <p class="score-result">→ Score <span class="score-tag score-tag-high">75%–85%</span> (strong, direct alignment)</p>
+                <p><strong>Example 1 (Score: 100% - Strong)</strong></p>
+                <p><strong>Criterion:</strong> "Financial Modeling in Excel"</p>
+                <p><strong>Resume:</strong> "Built complex multi-office budget models in Excel as CFO at SLF Lawyers, resulting in a 15% efficiency gain."</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-high">100%</span></p>
+                <p><strong>Why:</strong> Mentions the skill, a senior professional role (Anchor), and a clear outcome.</p>
             </div>
             
             <div class="example-box">
-                <p><strong>Criterion:</strong> "Python data analysis"</p>
-                <p><strong>Resume:</strong> "Automated Excel reports; some VBA macros"</p>
-                <p class="score-result">→ Score <span class="score-tag score-tag-medium">35%–50%</span> (partial/weak — tooling mismatch)</p>
+                <p><strong>Example 2 (Score: 60% - Moderate)</strong></p>
+                <p><strong>Criterion:</strong> "Financial Modeling in Excel"</p>
+                <p><strong>Resume:</strong> "Proficient in Microsoft Excel and financial analysis."</p>
+                <p class="score-result">→ Score <span class="score-tag score-tag-medium">60%</span></p>
+                <p><strong>Why:</strong> The skill is mentioned, but lacks a professional anchor or a specific outcome.</p>
             </div>
             
             <h3>How to use the scores</h3>
             <ul>
-                <li>Treat scores as <strong>evidence strength</strong>, not pass/fail</li>
-                <li>Use the Coverage matrix to spot strengths and gaps</li>
-                <li>Use the Evidence Explorer to view exact resume snippets behind each score</li>
-                <li>Adjust scoring thresholds in <a href="{{ url_for('dashboard.settings') }}">Settings</a> if you want stricter or more lenient classifications</li>
+                <li>Treat scores as <strong>evidence strength indicators</strong>, not pass/fail thresholds</li>
+                <li>Use the Coverage Matrix to spot strengths and gaps across all candidates</li>
+                <li>Use Deep Insights to see Professional Anchors (job titles + companies) behind each strength</li>
+                <li>Review AI-generated Interview Questions to probe areas with moderate scores</li>
             </ul>
         </div>
     </div>
@@ -322,6 +321,29 @@
             </div>
             
             <div class="faq-item">
+                <h3 class="faq-q">Why did a candidate score 60% if they have the skill listed on their resume?</h3>
+                <p class="faq-a">A score of 60% indicates a <strong>"Moderate Match."</strong> This usually occurs when a skill is listed (e.g., in a "Skills" section) but isn't supported by detailed descriptions of projects or outcomes in their "Experience" section. For example, a candidate listing "Advanced Excel" may score lower than one who describes "using Advanced Excel to manage multi-office budgets at Wayne Enterprises".</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">What are "Professional Anchors"?</h3>
+                <p class="faq-a">Our Deep Insights use <strong>"Professional Anchors"</strong> to link strengths directly to a candidate's history. This means every claim we make is tied to a specific job title and company found in their resume, ensuring the analysis is grounded in fact rather than generic AI summaries.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">Can a candidate's score be improved?</h3>
+                <p class="faq-a">Scores are based strictly on the provided resume. If a candidate has a lower score due to a brief resume, we recommend using our AI-generated Interview Questions to dig deeper into those specific areas during your screening call.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h3 class="faq-q">Where can I find the suggested Interview Questions?</h3>
+                <p class="faq-a">Suggested interview questions are integrated directly into your candidate reports.</p>
+                <p class="faq-a"><strong>For High-Scoring Criteria:</strong> In the Deep Insights section, the AI may suggest "Discovery Questions" to help you verify the specific achievements mentioned in the resume.</p>
+                <p class="faq-a"><strong>For Low-Scoring Criteria:</strong> In the Detailed Scores section, if a candidate scores 0% due to missing evidence, the AI often provides a "Targeted Question". This allows you to quickly ask the candidate about that specific skill during a screening call to see if it was simply omitted from their resume.</p>
+                <p class="faq-a"><strong>How should I use these questions?</strong> Think of these questions as your "AI Co-Pilot" for the first interview. They are designed to help you dig past generic bullet points and find the Professional Anchors—the real-world companies and outcomes—that prove a candidate can do the job.</p>
+            </div>
+            
+            <div class="faq-item">
                 <h3 class="faq-q">What happens to my data after I log out?</h3>
                 <p class="faq-a">Your data is processed in a Siloed AI Environment. While OpenAI retains API request data for 30 days for integrity monitoring, it is never used for training. Your data belongs to you, and stays in your account until you choose to delete it.</p>
             </div>
@@ -382,6 +404,16 @@
             </ul>
         </div>
     </div>
+    
+    <!-- Pro-Tip Box -->
+    <div class="pro-tip-box">
+        <h3 style="margin-top: 0; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.5rem;">💡</span> Pro-Tip: You Haven't Missed Anyone!
+        </h3>
+        <p style="margin-bottom: 0; line-height: 1.6;">
+            Remember, we analyze <strong>every single resume</strong> against <strong>every single criterion</strong>, regardless of the tier you choose. The 'Standard' tier provides a Full Ranking of your entire candidate pool using our Intelligent Filtering logic. The 'Deep Insights' are simply the 'Deep Dives' we've prepared to help you get ready for your first round of interviews. You can always unlock more insights for any candidate later!
+        </p>
+    </div>
 </div>
 
 <style>
@@ -389,6 +421,15 @@
         max-width: 1000px;
         margin: 2rem auto;
         padding: 0 1rem;
+    }
+    
+    .pro-tip-box {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
     }
     
     .help-search-bar {

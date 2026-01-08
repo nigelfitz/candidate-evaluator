@@ -35,19 +35,19 @@
     "usage": "Called only for candidates you select for 'Deep Insights' (typically top 3-10). Low volume, high value."
   },
   "ranker_temperature": {
-    "value": 0.0,
+    "value": 0.15,
     "description": "Temperature for RANKER_AGENT (0.0 = deterministic, 2.0 = creative)",
     "range": [
       0.0,
       2.0
     ],
-    "explanation": "RANKER needs consistency across thousands of scoring calls. 0.1 ensures same resume+criterion always gets same score. Higher values introduce randomness.",
-    "recommended": 0.1,
+    "explanation": "RANKER needs consistency across thousands of scoring calls. 0.15 allows nuanced scoring (e.g., 65 vs 70) while maintaining consistency. Higher values introduce randomness.",
+    "recommended": 0.15,
     "cost_impact": "No cost impact - only affects consistency",
     "quality_impact": "0.1 = highly consistent scoring. 0.3+ = scores may vary on re-run. Keep LOW for ranker."
   },
   "insight_temperature": {
-    "value": 0.4,
+    "value": 0.5,
     "description": "Temperature for INSIGHT_AGENT (0.0 = deterministic, 2.0 = creative)",
     "range": [
       0.0,
