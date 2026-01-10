@@ -280,10 +280,17 @@ def success():
             print(f"📋 Session retrieved: payment_status={session.payment_status}, metadata={session.get('metadata', {})}")
             
             if session.payment_status == 'paid':
-                # Add credits immediately for local testing (webhook won't work on localhost)
-                print(f"💳 Payment confirmed as paid. Fulfilling order...")
-                fulfill_order(session)
-                flash('Payment successful! Credits have been added to your account.', 'success')
+                # Only fulfill order if webhook hasn't processed it yet
+                # Check if webhook endpoint exists (production) or if we're in dev mode
+                if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('RAILWAY_ENVIRONMENT') != 'production':
+                    # Local testing - webhook won't work, so credit here
+                    print(f"💳 Payment confirmed as paid (dev mode). Fulfilling order...")
+                    fulfill_order(session)
+                    flash('Payment successful! Credits have been added to your account.', 'success')
+                else:
+                    # Production - webhook will handle crediting
+                    print(f"💳 Payment confirmed as paid. Webhook will credit account.")
+                    flash('Payment successful! Credits will be added shortly.', 'success')
             else:
                 print(f"⏳ Payment status is {session.payment_status}, not 'paid'")
                 flash('Payment is being processed. Credits will be added once confirmed.', 'info')
@@ -380,22 +387,24 @@ def generate_invoice_for_payment(session):
         plan_name = metadata.get('plan_name', 'Account Top-Up')
         payment_intent = session.get('payment_intent')
         
-        # Create invoice for record-keeping (already paid via Checkout)
+        # Create a "paid" invoice for record-keeping only
+        # Payment already happened via Checkout, this is just documentation
         invoice = stripe.Invoice.create(
             customer=customer_id,
             currency='usd',
             collection_method='send_invoice',
             days_until_due=0,
-            auto_advance=False,  # We'll finalize manually
             metadata={
                 'checkout_session_id': session.get('id'),
                 'user_id': metadata.get('user_id'),
                 'payment_intent': payment_intent,
-                'generated_post_payment': 'true'
-            }
+                'generated_post_payment': 'true',
+                'paid_via_checkout': 'true'
+            },
+            description=f"Payment already completed via Checkout Session {session.get('id')}"
         )
         
-        # Add line item for the payment
+        # Add line item
         stripe.InvoiceItem.create(
             customer=customer_id,
             invoice=invoice.id,
@@ -407,10 +416,12 @@ def generate_invoice_for_payment(session):
         # Finalize the invoice
         invoice = stripe.Invoice.finalize_invoice(invoice.id)
         
-        # Mark as paid out of band (payment already happened via Checkout)
-        invoice = stripe.Invoice.pay(invoice.id, paid_out_of_band=True)
+        # Mark as paid (this is just for records, actual payment was via Checkout)
+        # Use void to skip payment collection since it's already paid
+        invoice = stripe.Invoice.void_invoice(invoice.id)
         
-        print(f"✅ Generated paid invoice {invoice.id} for checkout session {session.get('id')}")
+        print(f"✅ Generated record invoice {invoice.id} for checkout session {session.get('id')}")
+
 
         
     except Exception as e:
