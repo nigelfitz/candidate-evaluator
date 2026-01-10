@@ -81,7 +81,7 @@ def add_test_funds():
 @payments_bp.route('/create-checkout', methods=['POST'])
 @login_required
 def create_checkout():
-    """Create Stripe Checkout session for adding funds"""
+    """Create Stripe Checkout Session with auto-redirect"""
     try:
         # Check if Stripe is configured
         if not Config.STRIPE_SECRET_KEY:
@@ -101,46 +101,58 @@ def create_checkout():
         # Get return_to parameter for redirect after payment
         return_to = request.form.get('return_to', 'dashboard')
         
-        # Create Stripe Checkout Session
+        # Get or create Stripe customer
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=current_user.name or current_user.email,
+                metadata={'user_id': current_user.id}
+            )
+            current_user.stripe_customer_id = customer.id
+            db.session.commit()
+        
+        # Create Checkout Session with auto-redirect
         checkout_session = stripe.checkout.Session.create(
+            customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
                     'currency': 'usd',
-                    'unit_amount': int(amount * 100),  # Convert dollars to cents
+                    'unit_amount': int(amount * 100),
                     'product_data': {
-                        'name': 'Account Funds',
-                        'description': f"Add ${amount:.2f} to your Candidate Evaluator account",
+                        'name': 'Account Balance',
+                        'description': f'Add ${amount:.2f} to your account',
                     },
                 },
                 'quantity': 1,
             }],
             mode='payment',
-            currency='usd',  # Explicitly set currency
-            success_url=url_for('payments.success', return_to=return_to, _external=True) + '&session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('payments.buy_credits', return_to=return_to, _external=True),
-            client_reference_id=str(current_user.id),
+            success_url=url_for('payments.success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&return_to={return_to}',
+            cancel_url=url_for('payments.buy_credits', _external=True),
             metadata={
                 'user_id': current_user.id,
                 'amount_usd': f"{amount:.2f}",
-                'current_balance': f"{current_user.balance_usd:.2f}"
+                'current_balance': f"{current_user.balance_usd:.2f}",
+                'return_to': return_to,
+                'generate_invoice': 'true'  # Flag to generate invoice after payment
             }
         )
         
         return redirect(checkout_session.url, code=303)
+        return redirect(invoice_url, code=303)
         
     except Exception as e:
         print(f"ERROR: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
-        flash(f'Error creating checkout session: {str(e)}', 'error')
+        flash(f'Error creating invoice: {str(e)}', 'error')
         return redirect(url_for('payments.buy_credits'))
 
 
 @payments_bp.route('/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
-    """Create Stripe Checkout session with custom return URL (for modal quick-pay)"""
+    """Create Stripe Checkout Session (for modal quick-pay)"""
     try:
         # Check if Stripe is configured
         if not Config.STRIPE_SECRET_KEY:
@@ -202,9 +214,19 @@ def create_checkout_session():
             product_name = 'Account Balance'
             product_description = f'Add ${credit_amount:.2f} to your account'
         
-        # Create Stripe Checkout Session with custom success URL
-        # Convert to cents using Decimal for precision
+        # Get or create Stripe customer
+        if not current_user.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=current_user.name or current_user.email,
+                metadata={'user_id': current_user.id}
+            )
+            current_user.stripe_customer_id = customer.id
+            db.session.commit()
+        
+        # Create Checkout Session with auto-redirect
         checkout_session = stripe.checkout.Session.create(
+            customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
@@ -218,17 +240,16 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='payment',
-            currency='usd',  # Explicitly set currency
             success_url=url_for('payments.success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&return_to={return_url}',
             cancel_url=return_url,
-            client_reference_id=str(current_user.id),
             metadata={
                 'user_id': current_user.id,
                 'charge_amount': f"{charge_amount:.2f}",
                 'credit_amount': f"{credit_amount:.2f}",
                 'is_bundle': str(is_bundle),
                 'plan_name': plan_name,
-                'current_balance': f"{current_user.balance_usd:.2f}"
+                'current_balance': f"{current_user.balance_usd:.2f}",
+                'generate_invoice': 'true'  # Flag to generate invoice after payment
             }
         )
         
@@ -313,17 +334,81 @@ def webhook():
         print(f"❌ Error constructing webhook event: {str(e)}")
         return jsonify({'error': str(e)}), 400
     
-    # Handle the checkout.session.completed event
-    if event['type'] == 'checkout.session.completed':
+    # Handle invoice payment events (for Invoice API)
+    if event['type'] in ['invoice.paid', 'invoice.payment_succeeded']:
+        invoice = event['data']['object']
+        print(f"💰 Processing {event['type']} for customer {invoice.get('customer', 'unknown')}")
+        
+        # Fulfill the purchase using invoice metadata
+        fulfill_order_from_invoice(invoice)
+    
+    # Handle checkout sessions
+    elif event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         print(f"💰 Processing checkout.session.completed for user {session.get('metadata', {}).get('user_id', 'unknown')}")
         
         # Fulfill the purchase
         fulfill_order(session)
+        
+        # Generate invoice PDF if requested
+        if session.get('metadata', {}).get('generate_invoice') == 'true':
+            try:
+                generate_invoice_for_payment(session)
+            except Exception as e:
+                print(f"⚠️ Failed to generate invoice: {str(e)}")
+                # Don't fail the webhook if invoice generation fails
     else:
         print(f"ℹ️ Ignoring event type: {event['type']}")
     
     return jsonify({'status': 'success'}), 200
+
+
+def generate_invoice_for_payment(session):
+    """Generate an Invoice PDF after successful Checkout payment"""
+    try:
+        stripe.api_key = Config.STRIPE_SECRET_KEY
+        
+        customer_id = session.get('customer')
+        if not customer_id:
+            print("⚠️ No customer ID in session, skipping invoice generation")
+            return
+        
+        metadata = session.get('metadata', {})
+        charge_amount = Decimal(metadata.get('charge_amount', metadata.get('amount_usd', '0')))
+        credit_amount = Decimal(metadata.get('credit_amount', charge_amount))
+        plan_name = metadata.get('plan_name', 'Account Top-Up')
+        
+        # Create invoice
+        invoice = stripe.Invoice.create(
+            customer=customer_id,
+            currency='usd',
+            auto_advance=True,
+            collection_method='charge_automatically',  # Already paid
+            metadata={
+                'checkout_session_id': session.get('id'),
+                'user_id': metadata.get('user_id'),
+                'generated_post_payment': 'true'
+            }
+        )
+        
+        # Add line item for the payment
+        stripe.InvoiceItem.create(
+            customer=customer_id,
+            invoice=invoice.id,
+            amount=int(charge_amount * 100),
+            currency='usd',
+            description=f"{plan_name} - Account Balance"
+        )
+        
+        # Mark invoice as paid (since payment already happened)
+        invoice = stripe.Invoice.finalize_invoice(invoice.id)
+        stripe.Invoice.pay(invoice.id, paid_out_of_band=True)
+        
+        print(f"✅ Generated invoice {invoice.id} for checkout session {session.get('id')}")
+        
+    except Exception as e:
+        print(f"❌ Error generating invoice: {str(e)}")
+        raise
 
 
 def fulfill_order(session):
@@ -337,6 +422,10 @@ def fulfill_order(session):
         
         user = User.query.get(user_id)
         if user:
+            # Update stripe_customer_id if not already set
+            if not user.stripe_customer_id and session.get('customer'):
+                user.stripe_customer_id = session['customer']
+            
             bonus_amount = credit_amount - charge_amount
             
             # Add base purchase amount
@@ -375,6 +464,66 @@ def fulfill_order(session):
         
     except Exception as e:
         print(f"❌ Error fulfilling order: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # In production, you should log this and have a retry mechanism
+
+
+def fulfill_order_from_invoice(invoice):
+    """Add funds to user account after successful invoice payment"""
+    try:
+        # Invoice metadata is stored on the invoice object directly
+        metadata = invoice.get('metadata', {})
+        user_id = int(metadata['user_id'])
+        charge_amount = Decimal(metadata.get('charge_amount', metadata.get('amount_usd', '0')))
+        credit_amount = Decimal(metadata.get('credit_amount', charge_amount))
+        is_bundle = metadata.get('is_bundle', 'False') == 'True'
+        plan_name = metadata.get('plan_name', 'Account Top-Up')
+        
+        user = User.query.get(user_id)
+        if user:
+            # Update stripe_customer_id if not already set
+            if not user.stripe_customer_id and invoice.get('customer'):
+                user.stripe_customer_id = invoice['customer']
+            
+            bonus_amount = credit_amount - charge_amount
+            
+            # Add base purchase amount
+            user.balance_usd += charge_amount
+            purchase_transaction = Transaction(
+                user_id=user_id,
+                amount_usd=charge_amount,
+                transaction_type='credit',
+                description=f"Stripe Invoice - {plan_name}",
+                stripe_payment_id=invoice.get('payment_intent'),
+                stripe_amount_cents=invoice.get('amount_paid', 0)
+            )
+            db.session.add(purchase_transaction)
+            
+            # Add bonus as separate transaction if applicable
+            if bonus_amount > 0:
+                user.balance_usd += bonus_amount
+                bonus_transaction = Transaction(
+                    user_id=user_id,
+                    amount_usd=bonus_amount,
+                    transaction_type='credit',
+                    description=f"Volume Bonus - {plan_name}",
+                    stripe_payment_id=invoice.get('payment_intent'),
+                    stripe_amount_cents=0  # Bonus doesn't have a Stripe charge
+                )
+                db.session.add(bonus_transaction)
+            
+            # Track revenue (only the amount actually paid)
+            user.total_revenue_usd = (user.total_revenue_usd or Decimal('0')) + charge_amount
+            
+            db.session.commit()
+            
+            print(f"✅ Successfully added ${credit_amount:.2f} to user {user_id}. New balance: ${user.balance_usd:.2f}")
+            if bonus_amount > 0:
+                print(f"   🎁 Bonus applied: Charged ${charge_amount:.2f}, bonus ${bonus_amount:.2f}, total credited ${credit_amount:.2f}")
+        
+    except Exception as e:
+        print(f"❌ Error fulfilling invoice order: {str(e)}")
         import traceback
         traceback.print_exc()
         # In production, you should log this and have a retry mechanism

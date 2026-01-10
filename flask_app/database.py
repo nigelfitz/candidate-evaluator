@@ -18,6 +18,9 @@ class User(UserMixin, db.Model):
     balance_usd = db.Column(db.Numeric(10, 2), default=0.00, nullable=False)
     welcome_bonus_claimed = db.Column(db.Boolean, default=False, nullable=False)  # Track if signup bonus was given
     
+    # Stripe customer ID for Invoice API
+    stripe_customer_id = db.Column(db.String(255), nullable=True)
+    
     # Account status
     is_suspended = db.Column(db.Boolean, default=False, nullable=False)
     suspension_reason = db.Column(db.String(500))
