@@ -111,7 +111,7 @@ def create_checkout():
             current_user.stripe_customer_id = customer.id
             db.session.commit()
         
-        # Create Checkout Session with auto-redirect
+        # Create Checkout Session with automatic invoice creation
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
@@ -129,17 +129,25 @@ def create_checkout():
             mode='payment',
             success_url=url_for('payments.success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&return_to={return_to}',
             cancel_url=url_for('payments.buy_credits', _external=True),
+            invoice_creation={
+                'enabled': True,
+                'invoice_data': {
+                    'metadata': {
+                        'user_id': current_user.id,
+                        'amount_usd': f"{amount:.2f}",
+                        'current_balance': f"{current_user.balance_usd:.2f}"
+                    }
+                }
+            },
             metadata={
                 'user_id': current_user.id,
                 'amount_usd': f"{amount:.2f}",
                 'current_balance': f"{current_user.balance_usd:.2f}",
-                'return_to': return_to,
-                'generate_invoice': 'true'  # Flag to generate invoice after payment
+                'return_to': return_to
             }
         )
         
         return redirect(checkout_session.url, code=303)
-        return redirect(invoice_url, code=303)
         
     except Exception as e:
         print(f"ERROR: {type(e).__name__}: {str(e)}")
@@ -224,7 +232,7 @@ def create_checkout_session():
             current_user.stripe_customer_id = customer.id
             db.session.commit()
         
-        # Create Checkout Session with auto-redirect
+        # Create Checkout Session with automatic invoice creation
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
@@ -242,14 +250,25 @@ def create_checkout_session():
             mode='payment',
             success_url=url_for('payments.success', _external=True) + f'?session_id={{CHECKOUT_SESSION_ID}}&return_to={return_url}',
             cancel_url=return_url,
+            invoice_creation={
+                'enabled': True,
+                'invoice_data': {
+                    'metadata': {
+                        'user_id': current_user.id,
+                        'charge_amount': f"{charge_amount:.2f}",
+                        'credit_amount': f"{credit_amount:.2f}",
+                        'is_bundle': str(is_bundle),
+                        'plan_name': plan_name
+                    }
+                }
+            },
             metadata={
                 'user_id': current_user.id,
                 'charge_amount': f"{charge_amount:.2f}",
                 'credit_amount': f"{credit_amount:.2f}",
                 'is_bundle': str(is_bundle),
                 'plan_name': plan_name,
-                'current_balance': f"{current_user.balance_usd:.2f}",
-                'generate_invoice': 'true'  # Flag to generate invoice after payment
+                'current_balance': f"{current_user.balance_usd:.2f}"
             }
         )
         
@@ -355,80 +374,15 @@ def webhook():
         session = event['data']['object']
         print(f"💰 Processing checkout.session.completed for user {session.get('metadata', {}).get('user_id', 'unknown')}")
         
-        # Fulfill the purchase
+        # Fulfill the purchase (credit user account)
         fulfill_order(session)
         
-        # Generate invoice PDF if requested
-        if session.get('metadata', {}).get('generate_invoice') == 'true':
-            try:
-                generate_invoice_for_payment(session)
-            except Exception as e:
-                print(f"⚠️ Failed to generate invoice: {str(e)}")
-                # Don't fail the webhook if invoice generation fails
+        # Invoice is automatically created by Stripe (via invoice_creation parameter)
+        print(f"✅ Invoice automatically created by Stripe for session {session.get('id')}")
     else:
         print(f"ℹ️ Ignoring event type: {event['type']}")
     
     return jsonify({'status': 'success'}), 200
-
-
-def generate_invoice_for_payment(session):
-    """Generate an Invoice PDF after successful Checkout payment"""
-    try:
-        stripe.api_key = Config.STRIPE_SECRET_KEY
-        
-        customer_id = session.get('customer')
-        if not customer_id:
-            print("⚠️ No customer ID in session, skipping invoice generation")
-            return
-        
-        metadata = session.get('metadata', {})
-        charge_amount = Decimal(metadata.get('charge_amount', metadata.get('amount_usd', '0')))
-        credit_amount = Decimal(metadata.get('credit_amount', charge_amount))
-        plan_name = metadata.get('plan_name', 'Account Top-Up')
-        payment_intent = session.get('payment_intent')
-        
-        # Create a "paid" invoice for record-keeping only
-        # Payment already happened via Checkout, this is just documentation
-        invoice = stripe.Invoice.create(
-            customer=customer_id,
-            currency='usd',
-            collection_method='send_invoice',
-            days_until_due=0,
-            metadata={
-                'checkout_session_id': session.get('id'),
-                'user_id': metadata.get('user_id'),
-                'payment_intent': payment_intent,
-                'generated_post_payment': 'true',
-                'paid_via_checkout': 'true'
-            },
-            description=f"Payment already completed via Checkout Session {session.get('id')}"
-        )
-        
-        # Add line item
-        stripe.InvoiceItem.create(
-            customer=customer_id,
-            invoice=invoice.id,
-            amount=int(charge_amount * 100),
-            currency='usd',
-            description=f"{plan_name} - Account Balance"
-        )
-        
-        # Finalize the invoice
-        invoice = stripe.Invoice.finalize_invoice(invoice.id)
-        
-        # Mark as paid (this is just for records, actual payment was via Checkout)
-        # Use void to skip payment collection since it's already paid
-        invoice = stripe.Invoice.void_invoice(invoice.id)
-        
-        print(f"✅ Generated record invoice {invoice.id} for checkout session {session.get('id')}")
-
-
-        
-    except Exception as e:
-        print(f"❌ Error generating invoice: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
 
 
 def fulfill_order(session):
