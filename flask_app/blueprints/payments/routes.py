@@ -380,15 +380,17 @@ def generate_invoice_for_payment(session):
         plan_name = metadata.get('plan_name', 'Account Top-Up')
         payment_intent = session.get('payment_intent')
         
-        # Create a paid invoice by attaching the payment intent
+        # Create invoice for record-keeping (already paid via Checkout)
         invoice = stripe.Invoice.create(
             customer=customer_id,
             currency='usd',
-            collection_method='charge_automatically',
+            collection_method='send_invoice',
+            days_until_due=0,
             auto_advance=False,  # We'll finalize manually
             metadata={
                 'checkout_session_id': session.get('id'),
                 'user_id': metadata.get('user_id'),
+                'payment_intent': payment_intent,
                 'generated_post_payment': 'true'
             }
         )
@@ -402,17 +404,14 @@ def generate_invoice_for_payment(session):
             description=f"{plan_name} - Account Balance"
         )
         
-        # Finalize and mark as paid
+        # Finalize the invoice
         invoice = stripe.Invoice.finalize_invoice(invoice.id)
         
-        # Mark invoice as paid outside of Stripe (since payment already completed via Checkout)
-        stripe.Invoice.mark_uncollectible(invoice.id)
-        stripe.Invoice.modify(
-            invoice.id,
-            paid_out_of_band=True
-        )
+        # Mark as paid out of band (payment already happened via Checkout)
+        invoice = stripe.Invoice.pay(invoice.id, paid_out_of_band=True)
         
-        print(f"✅ Generated invoice {invoice.id} for checkout session {session.get('id')}")
+        print(f"✅ Generated paid invoice {invoice.id} for checkout session {session.get('id')}")
+
         
     except Exception as e:
         print(f"❌ Error generating invoice: {str(e)}")
