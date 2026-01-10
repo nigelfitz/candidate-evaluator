@@ -104,6 +104,7 @@ def create_app(config_name=None):
     from blueprints.admin import admin_bp
     from blueprints.api import api_bp
     from migrate_db_web import migrate_bp
+    from migrate_description_web import migrate_desc_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(payments_bp)
@@ -114,6 +115,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(migrate_bp)
+    app.register_blueprint(migrate_desc_bp)
     
     # Exempt specific routes from CSRF
     csrf.exempt(analysis_bp)
@@ -121,6 +123,7 @@ def create_app(config_name=None):
     csrf.exempt(payments_bp)
     csrf.exempt(export_bp)
     csrf.exempt(migrate_bp)
+    csrf.exempt(migrate_desc_bp)
     
     # Error handlers
     @app.errorhandler(404)
