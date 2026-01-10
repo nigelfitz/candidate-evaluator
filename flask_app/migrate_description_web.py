@@ -5,7 +5,7 @@ Visit: /admin/migrate-transaction-description
 from flask import Blueprint, jsonify
 from database import db
 from sqlalchemy import text, inspect
-from auth import admin_required
+from blueprints.auth import admin_required
 
 migrate_desc_bp = Blueprint('migrate_desc', __name__)
 
