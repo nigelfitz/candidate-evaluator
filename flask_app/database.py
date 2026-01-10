@@ -88,7 +88,7 @@ class Transaction(db.Model):
     # Transaction details
     amount_usd = db.Column(db.Numeric(10, 2), nullable=False)  # Positive for deposits, negative for charges
     transaction_type = db.Column(db.String(20), nullable=False)  # 'credit' or 'debit'
-    description = db.Column(db.String(255))
+    description = db.Column(db.Text)
     
     # Link to analysis (nullable since credit purchases don't have analysis)
     analysis_id = db.Column(db.Integer, db.ForeignKey('analyses.id', ondelete='SET NULL'), nullable=True, index=True)
