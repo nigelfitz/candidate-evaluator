@@ -314,6 +314,7 @@ def success():
 
 
 @payments_bp.route('/webhook', methods=['POST'])
+@payments_bp.route('/api/stripe-webhook', methods=['POST'])
 def webhook():
     """Handle Stripe webhook events"""
     payload = request.get_data()
