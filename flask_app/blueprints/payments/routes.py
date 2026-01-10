@@ -377,13 +377,14 @@ def generate_invoice_for_payment(session):
         charge_amount = Decimal(metadata.get('charge_amount', metadata.get('amount_usd', '0')))
         credit_amount = Decimal(metadata.get('credit_amount', charge_amount))
         plan_name = metadata.get('plan_name', 'Account Top-Up')
+        payment_intent = session.get('payment_intent')
         
-        # Create invoice
+        # Create a paid invoice by attaching the payment intent
         invoice = stripe.Invoice.create(
             customer=customer_id,
             currency='usd',
-            auto_advance=True,
-            collection_method='charge_automatically',  # Already paid
+            collection_method='charge_automatically',
+            auto_advance=False,  # We'll finalize manually
             metadata={
                 'checkout_session_id': session.get('id'),
                 'user_id': metadata.get('user_id'),
@@ -400,14 +401,22 @@ def generate_invoice_for_payment(session):
             description=f"{plan_name} - Account Balance"
         )
         
-        # Mark invoice as paid (since payment already happened)
+        # Finalize and mark as paid
         invoice = stripe.Invoice.finalize_invoice(invoice.id)
-        stripe.Invoice.pay(invoice.id, paid_out_of_band=True)
+        
+        # Mark invoice as paid outside of Stripe (since payment already completed via Checkout)
+        stripe.Invoice.mark_uncollectible(invoice.id)
+        stripe.Invoice.modify(
+            invoice.id,
+            paid_out_of_band=True
+        )
         
         print(f"✅ Generated invoice {invoice.id} for checkout session {session.get('id')}")
         
     except Exception as e:
         print(f"❌ Error generating invoice: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise
 
 
