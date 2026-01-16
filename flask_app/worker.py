@@ -161,7 +161,7 @@ def send_completion_email(user, analysis, job):
                     <!-- CTA Button -->
                     <tr>
                         <td style="padding: 0 32px 32px 32px; text-align: center;">
-                            <a href="https://candidateevaluator.com/analysis/results/{analysis.id}" 
+                            <a href="https://candidateevaluator.com/results/{analysis.id}" 
                                style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
                                 📊 View Full Results
                             </a>

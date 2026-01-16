@@ -44,14 +44,14 @@
                             <span class="badge bg-primary" style="font-size: 1rem; padding: 8px 16px;">Processing</span>
                         </div>
                         
-                        <div class="progress mb-3" style="height: 30px; background: #e9ecef;">
+                        <div class="progress mb-3" style="height: 30px; background: #e9ecef; overflow: hidden;">
                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary job-progress" 
                                  role="progressbar" 
-                                 style="width: {{ (job.progress / job.total * 100) if job.total > 0 else 0 }}%"
+                                 style="width: {{ (job.progress / job.total * 100) if job.total > 0 else 0 }}%; display: flex; align-items: center; justify-content: center;"
                                  aria-valuenow="{{ job.progress }}" 
                                  aria-valuemin="0" 
                                  aria-valuemax="{{ job.total }}">
-                                <span class="progress-text" style="font-size: 1rem; font-weight: 600; color: #1f2937;">{{ job.progress }} / {{ job.total }} resumes analyzed</span>
+                                <span class="progress-text" style="font-size: 1rem; font-weight: 600; color: #1f2937; white-space: nowrap;">{{ job.progress }} / {{ job.total }} resumes analyzed</span>
                             </div>
                         </div>
                         
