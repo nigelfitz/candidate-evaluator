@@ -32,7 +32,7 @@
                 </li>
                 <li>
                     <strong>Upload Candidate Resumes</strong>
-                    <p>Upload candidate Resumes/CVs (processing can get congested with too many, so we suggest 100 or fewer per batch.)</p>
+                    <p>Upload candidate Resumes/CVs (up to {{ max_resumes }} per batch). Jobs with more than {{ background_threshold }} resumes automatically process in the background, allowing you to close your browser and receive an email when complete.</p>
                 </li>
                 <li>
                     <strong>Run Analysis</strong>
@@ -59,6 +59,19 @@
                 When screening many candidates (100+), we recommend a strategic approach that gives you faster results, 
                 better reliability, and more control over the hiring process.
             </p>
+            
+            <div class="info-box" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4 style="color: #1e40af; margin-top: 0;">🚀 Automatic Background Processing</h4>
+                <p>For jobs with <strong>more than {{ background_threshold }} resumes</strong>, the system automatically uses background processing:</p>
+                <ul style="margin-bottom: 0.5rem;">
+                    <li><strong>No timeouts:</strong> Large batches process reliably without browser timeout issues</li>
+                    <li><strong>Close your browser:</strong> You don't need to keep the page open - your job keeps running</li>
+                    <li><strong>Email notification:</strong> You'll receive an email with a direct link when your analysis is ready</li>
+                    <li><strong>Check progress:</strong> View real-time progress on the "Background Jobs" page (appears in top menu when jobs are running)</li>
+                    <li><strong>Typical time:</strong> 3-5 minutes for batches of 75 to 100 resumes</li>
+                </ul>
+                <p style="margin-bottom: 0; margin-top: 1rem; font-style: italic;">💡 <strong>Tip:</strong> While background processing handles technical reliability, the Two-Pass Strategy below is still recommended for better decision-making and cost efficiency.</p>
+            </div>
             
             <div class="best-practice-box">
                 <h4>🎯 Recommended Strategy: Two-Pass Screening</h4>
@@ -126,6 +139,7 @@
             <div class="tip-box" style="margin-top: 1.5rem;">
                 <h4>💡 Pro Tips</h4>
                 <ul>
+                    <li><strong>Large batches ({{ background_threshold }}+ resumes):</strong> Run automatically in the background - check the "Background Jobs" menu item (appears when jobs are active) or wait for your email notification</li>
                     <li><strong>Use the batch feature:</strong> Click "Run New Batch with Same Criteria" on any historical job to load its exact criteria for new candidates—ensures fair comparison across batches</li>
                     <li><strong>Early insights:</strong> Processing batches early gives you a "sneak peek" at application quality before all resumes arrive</li>
                     <li><strong>Adjust criteria:</strong> If early batches show unexpectedly low scores, you can refine your criteria before processing remaining candidates</li>
@@ -136,14 +150,14 @@
             
             <h3>Why Not Process All at Once?</h3>
             <p>
-                While the system can handle larger batches, breaking them up provides:
+                While the system can handle larger batches (batches over {{ background_threshold }} resumes automatically use background processing, so you won't experience timeouts), breaking them up still provides:
             </p>
             <ul>
-                <li><strong>High-Velocity Shortlisting:</strong> Smaller batches complete in minutes instead of potentially timing out</li>
-                <li><strong>Surgical Precision:</strong> Less chance of API rate limits or processing errors</li>
-                <li><strong>Progressive insights:</strong> Start reviewing candidates while others are being processed</li>
+                <li><strong>Strategic decision-making:</strong> Early batches reveal application quality before processing everyone</li>
+                <li><strong>Progressive insights:</strong> Start reviewing top candidates while others are being processed</li>
                 <li><strong>Easier management:</strong> Simpler to spot and fix any issues with specific candidates</li>
                 <li><strong>Lower costs:</strong> Focus expensive AI insights on only the candidates who matter</li>
+                <li><strong>Criteria refinement:</strong> Adjust your criteria based on early results before processing remaining candidates</li>
             </ul>
         </div>
     </div>

@@ -54,7 +54,19 @@ def terms():
 @main_bp.route('/help')
 def help():
     """Help and FAQ page"""
-    return render_template('help.html', user=current_user)
+    # Load system settings for dynamic values
+    settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'system_settings.json')
+    with open(settings_path, 'r', encoding='utf-8') as f:
+        system_settings = json.load(f)
+    
+    # Extract just the values from the settings objects
+    max_resumes = system_settings.get('max_resumes_per_upload', {}).get('value', 200)
+    background_threshold = system_settings.get('background_queue_threshold', {}).get('value', 75)
+    
+    return render_template('help.html', 
+                         user=current_user,
+                         max_resumes=max_resumes,
+                         background_threshold=background_threshold)
 
 @main_bp.route('/support', methods=['GET', 'POST'])
 def support():
