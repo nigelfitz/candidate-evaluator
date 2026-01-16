@@ -168,12 +168,15 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
             resume_text=resume_text
         )
 
-        # Retry logic for rate limits
-        max_retries = 5
-        retry_delay = 1.0  # Start with 1 second
+        # Retry logic for rate limits - REDUCED from 5 to 2 to prevent cost explosions
+        max_retries = 2
+        retry_delay = 2.0  # Start with 2 seconds (longer initial wait)
         
         for attempt in range(max_retries):
             try:
+                if attempt > 0:
+                    print(f"⚠️  RETRY {attempt}/{max_retries-1} for criterion: {criterion[:50]}...")
+                
                 response = await self.client.chat.completions.create(
                     model=self.ranker_model,
                     messages=[
