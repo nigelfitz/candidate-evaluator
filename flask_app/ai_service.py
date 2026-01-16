@@ -144,12 +144,14 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
         resume_text: str,
         jd_text: str,
         criterion: str,
-        is_anchor: bool
+        is_anchor: bool,
+        semaphore: asyncio.Semaphore = None
     ) -> CriterionScore:
         """
         Score ONE candidate against ONE criterion using RANKER_AGENT.
         
         This is the atomic scoring unit - called in parallel for all criteria.
+        Uses semaphore to limit concurrent OpenAI API calls.
         """
         # Load prompts from admin-configurable prompts.json
         prompts = load_prompts()
@@ -177,16 +179,30 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                 if attempt > 0:
                     print(f"⚠️  RETRY {attempt}/{max_retries-1} for criterion: {criterion[:50]}...")
                 
-                response = await self.client.chat.completions.create(
-                    model=self.ranker_model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=RANKER_TEMPERATURE,
-                    max_tokens=RANKER_MAX_TOKENS,
-                    response_format={"type": "json_object"}
-                )
+                # Acquire semaphore before making OpenAI API call
+                if semaphore:
+                    async with semaphore:
+                        response = await self.client.chat.completions.create(
+                            model=self.ranker_model,
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": user_prompt}
+                            ],
+                            temperature=RANKER_TEMPERATURE,
+                            max_tokens=RANKER_MAX_TOKENS,
+                            response_format={"type": "json_object"}
+                        )
+                else:
+                    response = await self.client.chat.completions.create(
+                        model=self.ranker_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt}
+                        ],
+                        temperature=RANKER_TEMPERATURE,
+                        max_tokens=RANKER_MAX_TOKENS,
+                        response_format={"type": "json_object"}
+                    )
                 
                 result = json.loads(response.choices[0].message.content)
                 
@@ -240,44 +256,44 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
     ) -> CandidateEvaluation:
         """
         Score ONE candidate against ALL criteria in parallel.
-        Uses semaphore to limit concurrent API calls.
+        Semaphore is passed to individual criterion calls to limit OpenAI API concurrency.
         """
-        async with semaphore:
-            # Create tasks for all criteria
-            tasks = [
-                self.score_candidate_single_criterion(
-                    resume_text=resume_text,
-                    jd_text=jd_text,
-                    criterion=crit["criterion"],
-                    is_anchor=crit.get("is_anchor", False)
-                )
-                for crit in criteria
-            ]
-            
-            # Execute all criteria scoring in parallel
-            criterion_scores = await asyncio.gather(*tasks)
-            
-            # Calculate overall score (weighted average)
-            weights = [crit.get("weight", 1.0) for crit in criteria]
-            weighted_scores = [
-                score.score * weights[i] 
-                for i, score in enumerate(criterion_scores)
-            ]
-            overall_score = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
-            
-            # Identify missing anchors
-            missing_anchors = [
-                score.criterion 
-                for score in criterion_scores 
-                if score.is_anchor and score.score < 50
-            ]
-            
-            return CandidateEvaluation(
-                candidate_name=candidate_name,
-                overall_score=overall_score,
-                criterion_scores=criterion_scores,
-                missing_anchors=missing_anchors
+        # Create tasks for all criteria - semaphore handled at API call level
+        tasks = [
+            self.score_candidate_single_criterion(
+                resume_text=resume_text,
+                jd_text=jd_text,
+                criterion=crit["criterion"],
+                is_anchor=crit.get("is_anchor", False),
+                semaphore=semaphore
             )
+            for crit in criteria
+        ]
+        
+        # Execute all criteria scoring in parallel
+        criterion_scores = await asyncio.gather(*tasks)
+        
+        # Calculate overall score (weighted average)
+        weights = [crit.get("weight", 1.0) for crit in criteria]
+        weighted_scores = [
+            score.score * weights[i] 
+            for i, score in enumerate(criterion_scores)
+        ]
+        overall_score = sum(weighted_scores) / sum(weights) if sum(weights) > 0 else 0.0
+        
+        # Identify missing anchors
+        missing_anchors = [
+            score.criterion 
+            for score in criterion_scores 
+            if score.is_anchor and score.score < 50
+        ]
+        
+        return CandidateEvaluation(
+            candidate_name=candidate_name,
+            overall_score=overall_score,
+            criterion_scores=criterion_scores,
+            missing_anchors=missing_anchors
+        )
     
     
     # ============================================
