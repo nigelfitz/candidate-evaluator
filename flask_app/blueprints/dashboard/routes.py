@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user, logout_user
-from database import db, User, Transaction, Analysis, Draft, Feedback, UserSettings
+from database import db, User, Transaction, Analysis, Draft, Feedback, UserSettings, JobQueue
 from datetime import datetime, timezone
 from decimal import Decimal
 import json
@@ -29,12 +29,26 @@ def dashboard():
     # Get current draft if exists
     draft = Draft.query.filter_by(user_id=current_user.id).first()
     
+    # Check for active background jobs
+    active_jobs = JobQueue.query.filter_by(
+        user_id=current_user.id
+    ).filter(
+        JobQueue.status.in_(['pending', 'processing'])
+    ).order_by(
+        JobQueue.created_at.desc()
+    ).all()
+    
     # Load pricing settings for welcome credit display
     pricing_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'pricing_settings.json')
     with open(pricing_path, 'r') as f:
         pricing_config = json.load(f)
     
-    return render_template('dashboard.html', user=current_user, recent_analyses=recent_analyses, draft=draft, pricing=pricing_config)
+    return render_template('dashboard.html', 
+                         user=current_user, 
+                         recent_analyses=recent_analyses, 
+                         draft=draft, 
+                         pricing=pricing_config,
+                         active_jobs=active_jobs)
 
 
 @dashboard_bp.route('/api/get-balance')
@@ -141,6 +155,15 @@ def delete_account():
 @login_required
 def job_history():
     """Job analysis history - only show completed analyses"""
+    # Get active jobs for in-progress section
+    active_jobs = JobQueue.query.filter_by(
+        user_id=current_user.id
+    ).filter(
+        JobQueue.status.in_(['pending', 'processing'])
+    ).order_by(
+        JobQueue.created_at.desc()
+    ).all()
+    
     # Filter to only show analyses with coverage_data (completed jobs)
     # This excludes incomplete analyses where the job failed
     analyses = Analysis.query.filter_by(user_id=current_user.id).filter(
@@ -162,7 +185,8 @@ def job_history():
     return render_template('job_history.html', 
                          user=current_user,
                          analyses=analyses,
-                         total_deep_insights=total_deep_insights)
+                         total_deep_insights=total_deep_insights,
+                         active_jobs=active_jobs)
 
 
 @dashboard_bp.route('/delete-analysis/<int:analysis_id>', methods=['POST'])
@@ -245,3 +269,70 @@ def settings():
     return render_template('settings.html', 
                          user=current_user,
                          settings=user_settings)
+
+
+@dashboard_bp.route('/jobs')
+@login_required
+def job_queue_status():
+    """Display user's queued and processing jobs"""
+    # Get all jobs for this user, most recent first
+    jobs = JobQueue.query.filter_by(
+        user_id=current_user.id
+    ).order_by(
+        JobQueue.created_at.desc()
+    ).all()
+    
+    # Separate by status for display
+    pending_jobs = [j for j in jobs if j.status == 'pending']
+    processing_jobs = [j for j in jobs if j.status == 'processing']
+    completed_jobs = [j for j in jobs if j.status == 'completed']
+    failed_jobs = [j for j in jobs if j.status == 'failed']
+    
+    return render_template('job_queue.html',
+                         user=current_user,
+                         pending_jobs=pending_jobs,
+                         processing_jobs=processing_jobs,
+                         completed_jobs=completed_jobs,
+                         failed_jobs=failed_jobs)
+
+
+@dashboard_bp.route('/api/job-status/<int:job_id>')
+@login_required
+def get_job_status(job_id):
+    """API endpoint for polling job status"""
+    job = JobQueue.query.filter_by(
+        id=job_id,
+        user_id=current_user.id  # Security: only return user's own jobs
+    ).first_or_404()
+    
+    return jsonify({
+        'id': job.id,
+        'status': job.status,
+        'progress': job.progress,
+        'total': job.total,
+        'error_message': job.error_message,
+        'analysis_id': job.analysis_id,
+        'created_at': job.created_at.isoformat() if job.created_at else None,
+        'completed_at': job.completed_at.isoformat() if job.completed_at else None
+    })
+
+
+@dashboard_bp.route('/api/cancel-job/<int:job_id>', methods=['POST'])
+@login_required
+def cancel_job(job_id):
+    """Cancel a pending job"""
+    job = JobQueue.query.filter_by(
+        id=job_id,
+        user_id=current_user.id  # Security: only cancel user's own jobs
+    ).first_or_404()
+    
+    if job.status not in ['pending', 'processing']:
+        return jsonify({'error': 'Job cannot be cancelled'}), 400
+    
+    job.status = 'failed'
+    job.error_message = 'Cancelled by user'
+    job.completed_at = datetime.now(timezone.utc)
+    db.session.commit()
+    
+    flash('Job cancelled successfully', 'success')
+    return jsonify({'success': True})

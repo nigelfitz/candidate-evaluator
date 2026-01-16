@@ -568,7 +568,16 @@ async def run_global_ranking(
         List of CandidateEvaluation objects sorted by overall_score
     """
     ai_service = AIService()
-    semaphore = asyncio.Semaphore(25)  # Limit concurrent API calls
+    
+    # Get concurrency limit from system settings
+    import os
+    import json
+    settings_path = os.path.join(os.path.dirname(__file__), 'config', 'system_settings.json')
+    with open(settings_path, 'r') as f:
+        system_settings = json.load(f)
+    concurrency_limit = system_settings.get('api_concurrency_limit', {}).get('value', 10)
+    
+    semaphore = asyncio.Semaphore(concurrency_limit)  # Limit concurrent API calls to avoid rate limits
     
     # Create tasks for all candidates with error handling wrapper
     async def score_with_error_handling(candidate_name: str, resume_text: str):

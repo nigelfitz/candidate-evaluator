@@ -552,6 +552,61 @@
 <!-- Wallet Bar -->
 {% if current_user.is_authenticated %}
 
+<!-- Active Background Jobs Alert -->
+{% if active_jobs %}
+<div class="alert" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); border: none;">
+    <div style="display: flex; align-items: start; gap: 20px;">
+        <i data-lucide="activity" style="width: 48px; height: 48px; flex-shrink: 0; margin-top: 4px;"></i>
+        <div style="flex: 1;">
+            <h3 style="margin: 0 0 12px 0; font-size: 22px; font-weight: 700; color: white;">
+                🔄 {% if active_jobs|length == 1 %}Analysis Running in Background{% else %}{{ active_jobs|length }} Analyses Running{% endif %}
+            </h3>
+            
+            {% for job in active_jobs %}
+            <div style="background: rgba(255,255,255,0.15); padding: 16px; border-radius: 8px; margin-bottom: {% if not loop.last %}12px{% else %}16px{% endif %};">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                    <div>
+                        <strong style="font-size: 16px;">{{ job.total }} resumes • {{ 'Deep Insights' if job.insights_mode == 'deep' else 'Quick Scoring' }}</strong>
+                        <div style="font-size: 14px; opacity: 0.9; margin-top: 4px;">
+                            {% if job.status == 'processing' %}
+                                <span style="color: #86efac;">● Processing</span> - {{ job.progress }} of {{ job.total }} analyzed
+                            {% else %}
+                                <span style="color: #fde047;">● Queued</span> - Starting soon
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if job.status == 'processing' %}
+                <div class="progress" style="height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+                    <div style="height: 100%; background: white; width: {{ (job.progress / job.total * 100) if job.total > 0 else 0 }}%; transition: width 0.3s;"></div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <a href="{{ url_for('dashboard.job_queue_status') }}" 
+               class="btn" 
+               style="background: white; color: #8b5cf6; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; transition: all 0.2s;">
+                📊 View Progress & Details →
+            </a>
+            <p style="margin: 12px 0 0 0; font-size: 14px; opacity: 0.9;">
+                💡 This page auto-refreshes. You'll also receive an email when complete.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Add auto-refresh script for active jobs -->
+{% if active_jobs %}
+<script>
+    // Auto-refresh dashboard every 10 seconds if there are active jobs
+    setTimeout(function() {
+        location.reload();
+    }, 10000);
+</script>
+{% endif %}
+{% endif %}
+
 <!-- Welcome Banner for New Users -->
 {% if current_user.welcome_bonus_claimed and current_user.total_analyses_count == 0 %}
 <div id="welcomeBanner" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); position: relative;">

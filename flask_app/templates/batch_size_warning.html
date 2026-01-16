@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div style="max-width: 800px; margin: 0 auto;">
+
+        {% if is_error %}
+        <!-- Hard Error: Exceeds Single Upload Limit -->
+        <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 32px; border: 2px solid #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);">
+            <div style="display: flex; gap: 20px; margin-bottom: 24px;">
+                <i data-lucide="octagon-x" style="width: 56px; height: 56px; color: #dc2626; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h2 style="color: #dc2626; margin: 0 0 16px 0; font-size: 24px; font-weight: 700;">
+                        🚫 Upload Limit Exceeded
+                    </h2>
+                    <p style="color: #991b1b; font-size: 16px; line-height: 1.6; margin: 0;">
+                        You attempted to upload <strong>{{ new_upload_count }} resumes</strong>, but the system limit is <strong>{{ max_allowed }} resumes per job</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <h3 style="color: #dc2626; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                    ⚠️ Why This Limit Exists
+                </h3>
+                <p style="color: #6b7280; margin: 0 0 12px 0; font-size: 14px; line-height: 1.6;">
+                    Large batch jobs (over {{ max_allowed }} resumes) can cause:
+                </p>
+                <ul style="color: #6b7280; margin: 0 0 12px 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                    <li><strong>Timeout errors:</strong> Processing takes longer than Cloudflare's 100-second limit</li>
+                    <li><strong>Server overload:</strong> May impact performance for other users</li>
+                    <li><strong>Failed jobs:</strong> No results and wasted credits</li>
+                </ul>
+                <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+                    <strong>This limit protects you from wasted time and credits.</strong>
+                </p>
+            </div>
+
+            <div style="background: #fef3c7; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
+                <h3 style="color: #92400e; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                    💡 Recommended Solution
+                </h3>
+                <p style="color: #92400e; margin: 0 0 12px 0; font-size: 14px; line-height: 1.6;">
+                    Break your {{ new_upload_count }} resumes into smaller batches:
+                </p>
+                <div style="background: white; border-radius: 6px; padding: 16px; margin-bottom: 12px;">
+                    <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.6;">
+                        <strong>Option 1: Multiple Jobs</strong><br>
+                        • Create {{ ((new_upload_count / max_allowed) | round(0, 'ceil')) | int }} separate jobs of {{ max_allowed }} resumes each<br>
+                        • Review results for each batch individually<br>
+                        • Each job completes quickly and reliably
+                    </p>
+                </div>
+                <div style="background: white; border-radius: 6px; padding: 16px;">
+                    <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.6;">
+                        <strong>Option 2: Pre-screen Your Candidates</strong><br>
+                        • Review resumes manually first<br>
+                        • Upload only the {{ max_allowed }} most promising candidates<br>
+                        • Get faster results and save on analysis costs
+                    </p>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="{{ url_for('analysis.analyze', step='resumes') }}" 
+                   style="display: inline-block; background: #dc2626; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s;">
+                    ← Back to Upload (Select Fewer Files)
+                </a>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Soft Warning: Would Exceed With Existing Resumes -->
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 32px; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+            <div style="display: flex; gap: 20px; margin-bottom: 24px;">
+                <i data-lucide="alert-triangle" style="width: 56px; height: 56px; color: #b45309; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h2 style="color: #b45309; margin: 0 0 16px 0; font-size: 24px; font-weight: 700;">
+                        ⚠️ Large Batch Detected
+                    </h2>
+                    <p style="color: #92400e; font-size: 16px; line-height: 1.6; margin: 0;">
+                        You're about to analyze <strong>{{ total_after_upload }} total resumes</strong> ({{ existing_resume_count }} existing + {{ new_upload_count }} new), which exceeds the recommended limit of <strong>{{ max_allowed }} resumes</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <h3 style="color: #dc2626; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                    ⚠️ High Risk of Timeout Failure
+                </h3>
+                <p style="color: #6b7280; margin: 0 0 12px 0; font-size: 14px; line-height: 1.6;">
+                    <strong>Jobs this large typically fail due to:</strong>
+                </p>
+                <ul style="color: #6b7280; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                    <li><strong>100-second timeout:</strong> Cloudflare terminates requests after 100 seconds</li>
+                    <li><strong>Processing time:</strong> {{ total_after_upload }} resumes with AI analysis takes 3-5+ minutes</li>
+                    <li><strong>No retry mechanism:</strong> If it times out, you'll see an error and lose your credits</li>
+                </ul>
+            </div>
+
+            <div style="background: #fee2e2; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #ef4444;">
+                <h3 style="color: #dc2626; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                    ❌ If You Proceed and Get a Timeout:
+                </h3>
+                <ul style="color: #991b1b; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
+                    <li>You'll see a "524 - A timeout occurred" error</li>
+                    <li>No results will be saved</li>
+                    <li>Your credits will be lost</li>
+                    <li>You'll need to start over with a smaller batch</li>
+                </ul>
+            </div>
+
+            <div style="background: #dcfce7; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #22c55e;">
+                <h3 style="color: #166534; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                    ✅ Recommended Actions
+                </h3>
+                <div style="background: white; border-radius: 6px; padding: 16px; margin-bottom: 12px;">
+                    <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.6;">
+                        <strong>Best: Remove some resumes</strong><br>
+                        • Go back and keep only your top {{ max_allowed }} candidates<br>
+                        • Run remaining candidates in a second job<br>
+                        • Guaranteed success, no wasted credits
+                    </p>
+                </div>
+                <div style="background: white; border-radius: 6px; padding: 16px;">
+                    <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.6;">
+                        <strong>Alternative: Start a new job</strong><br>
+                        • Clear your current draft<br>
+                        • Create separate jobs for different candidate pools<br>
+                        • Keep each job under {{ max_allowed }} resumes
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('analysis.analyze', step='resumes') }}" 
+                   style="display: inline-block; background: #22c55e; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s;">
+                    ← Back to Manage Resumes (Recommended)
+                </a>
+                <form method="POST" action="{{ url_for('analysis.analyze') }}" style="display: inline;">
+                    <input type="hidden" name="action" value="proceed_large_batch">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            style="background: #f59e0b; color: white; padding: 14px 32px; border-radius: 8px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.2s;"
+                            onclick="return confirm('⚠️ WARNING: This job will likely fail with a timeout error and you will lose your credits. Are you absolutely sure you want to proceed?');">
+                        Proceed Anyway (Not Recommended)
+                    </button>
+                </form>
+            </div>
+
+            <p style="text-align: center; color: #92400e; font-size: 12px; margin: 20px 0 0 0;">
+                <strong>Note:</strong> The system administrator can adjust the {{ max_allowed }}-resume limit in Admin Settings if your use case requires larger batches with background processing enabled.
+            </p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}

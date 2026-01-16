@@ -58,7 +58,7 @@ def create_app(config_name=None):
             return None
         # Update last_seen timestamp for online status tracking (naive UTC)
         if user:
-            user.last_seen = datetime.utcnow()
+            user.last_seen = datetime.now(timezone.utc)
             db.session.commit()
         return user
     
@@ -81,9 +81,22 @@ def create_app(config_name=None):
     # Make datetime and timedelta available in templates
     @app.context_processor
     def inject_datetime():
+        from flask_login import current_user
+        from database import JobQueue
+        
+        # Get active jobs for menu visibility
+        active_jobs = []
+        if current_user.is_authenticated:
+            active_jobs = JobQueue.query.filter_by(
+                user_id=current_user.id
+            ).filter(
+                JobQueue.status.in_(['pending', 'processing'])
+            ).all()
+        
         return {
             'now': datetime.utcnow,
-            'timedelta': timedelta
+            'timedelta': timedelta,
+            'active_jobs': active_jobs
         }
     
     @app.template_filter('number_format')

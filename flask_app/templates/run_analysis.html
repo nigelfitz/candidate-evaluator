@@ -746,12 +746,23 @@
                         console.log(`  ${key}: ${value}`);
                     }
 
+                    // Set a timeout to detect if request takes too long
+                    const timeoutDuration = 95000; // 95 seconds (before Cloudflare's 100s timeout)
+                    let timeoutId = setTimeout(() => {
+                        console.warn('[TIMEOUT] Request exceeded 95 seconds, likely will timeout');
+                        clearInterval(progressInterval);
+                        overlay.style.display = 'none';
+                        // Redirect to timeout error page
+                        window.location.href = "{{ url_for('analysis.timeout_error_route') }}?resume_count={{ resume_count }}";
+                    }, timeoutDuration);
+
                     fetch(form.action, {
                         method: 'POST',
                         body: formData,
                         credentials: 'same-origin'
                     })
                         .then(response => {
+                            clearTimeout(timeoutId); // Clear timeout if we got a response
                             console.log('[DEBUG] Fetch response:', { redirected: response.redirected, ok: response.ok, status: response.status, url: response.url });
                             if (response.redirected) {
                                 // Fetch automatically followed redirect - use the final URL
@@ -782,10 +793,19 @@
                             }
                         })
                         .catch(error => {
+                            clearTimeout(timeoutId); // Clear timeout on error
                             console.error('Analysis error:', error);
                             clearInterval(progressInterval);
-                            alert('An error occurred during analysis. Please try again.');
-                            overlay.style.display = 'none';
+                            
+                            // Check if this is a network timeout or server error
+                            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                                // Likely a timeout - redirect to timeout error page
+                                console.warn('[ERROR] Network timeout detected, redirecting to timeout page');
+                                window.location.href = "{{ url_for('analysis.timeout_error_route') }}?resume_count={{ resume_count }}";
+                            } else {
+                                alert('An error occurred during analysis. Please try again.');
+                                overlay.style.display = 'none';
+                            }
                         });
                 }, 100);
             };

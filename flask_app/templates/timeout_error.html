@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div style="max-width: 900px; margin: 0 auto;">
+
+        <!-- Timeout Error Display -->
+        <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 32px; border: 2px solid #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);">
+            <div style="display: flex; gap: 20px; margin-bottom: 24px;">
+                <i data-lucide="clock-alert" style="width: 64px; height: 64px; color: #dc2626; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h1 style="color: #dc2626; margin: 0 0 16px 0; font-size: 28px; font-weight: 700;">
+                        ⏱️ Analysis Timeout
+                    </h1>
+                    <p style="color: #991b1b; font-size: 18px; line-height: 1.6; margin: 0;">
+                        Your analysis job exceeded the processing time limit and was terminated.
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">
+                    What Happened?
+                </h2>
+                <p style="color: #6b7280; margin: 0 0 12px 0; font-size: 15px; line-height: 1.6;">
+                    Your job was processing <strong style="color: #dc2626;">{{ resume_count }} resumes</strong>, which requires significant AI processing time. Unfortunately, Cloudflare (our hosting provider) has a 100-second timeout limit for web requests, and your job exceeded this threshold.
+                </p>
+                <div style="background: #fef3c7; border-radius: 6px; padding: 16px; margin-top: 16px; border-left: 4px solid #f59e0b;">
+                    <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.6;">
+                        <strong>⭐ Good News:</strong> You have <strong>NOT been charged</strong> for this failed analysis. Your balance remains unchanged.
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: #dcfce7; border-radius: 8px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #22c55e;">
+                <h2 style="color: #166534; margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">
+                    ✅ How to Fix This
+                </h2>
+                <p style="color: #166534; margin: 0 0 16px 0; font-size: 15px; line-height: 1.6;">
+                    <strong>Recommended: Split into smaller batches</strong>
+                </p>
+                
+                <div style="background: white; border-radius: 6px; padding: 18px; margin-bottom: 12px;">
+                    <p style="color: #166534; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+                        Step 1: Return to Your Draft
+                    </p>
+                    <p style="color: #6b7280; margin: 0 0 12px 0; font-size: 14px; line-height: 1.6;">
+                        Your uploaded resumes and job criteria are still saved in your draft. You haven't lost any work.
+                    </p>
+                    <a href="{{ url_for('analysis.analyze', step='resumes') }}" 
+                       style="display: inline-block; background: #22c55e; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                        Go to Draft →
+                    </a>
+                </div>
+
+                <div style="background: white; border-radius: 6px; padding: 18px; margin-bottom: 12px;">
+                    <p style="color: #166534; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+                        Step 2: Remove Some Resumes
+                    </p>
+                    <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+                        • Keep your top <strong>{{ recommended_limit }}</strong> most promising candidates<br>
+                        • Delete the rest from this batch<br>
+                        • Each job processes reliably when under {{ recommended_limit }} resumes
+                    </p>
+                </div>
+
+                <div style="background: white; border-radius: 6px; padding: 18px;">
+                    <p style="color: #166534; margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+                        Step 3: Run Remaining Candidates Separately
+                    </p>
+                    <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+                        • Start a new job for the remaining candidates<br>
+                        • Use the same job description<br>
+                        • Compare results across both batches
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">
+                    💡 Pro Tips
+                </h2>
+                <ul style="color: #6b7280; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
+                    <li><strong>Optimal batch size:</strong> 50-{{ recommended_limit }} resumes per job</li>
+                    <li><strong>Pre-screen candidates:</strong> Review resumes manually first to reduce batch size</li>
+                    <li><strong>Use multiple jobs:</strong> Better to run 3 successful jobs than 1 failed large job</li>
+                    <li><strong>Check the limit:</strong> The admin has set the system limit to {{ max_allowed }} resumes per job</li>
+                </ul>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <h3 style="color: #6b7280; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">
+                    🔮 Future Improvement: Background Processing
+                </h3>
+                <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+                    We're planning to add background job processing, which will allow you to submit large batches that process asynchronously. You'll receive an email when complete. Contact your administrator if you need this feature urgently.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('analysis.analyze', step='resumes') }}" 
+                   style="display: inline-block; background: #22c55e; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s;">
+                    ← Back to Draft
+                </a>
+                <a href="{{ url_for('analysis.analyze', new=1) }}" 
+                   style="display: inline-block; background: #3b82f6; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s;">
+                    Start New Job
+                </a>
+                <a href="{{ url_for('dashboard.job_history') }}" 
+                   style="display: inline-block; background: #6b7280; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; transition: all 0.2s;">
+                    View History
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+</script>
+{% endblock %}

@@ -16,12 +16,15 @@ def send_email(subject, recipients, html_body, text_body=None):
         recipients (list): List of recipient email addresses
         html_body (str): HTML version of email
         text_body (str, optional): Plain text fallback
+    
+    Returns:
+        bool: True if sent successfully, False otherwise
     """
     # Check if SendGrid is configured
     api_key = current_app.config.get('SENDGRID_API_KEY')
     if not api_key:
         print("SendGrid not configured - skipping email send")
-        return
+        return False
     
     try:
         # Get sender from config
@@ -29,6 +32,7 @@ def send_email(subject, recipients, html_body, text_body=None):
         from_email = Email(sender_tuple[1], sender_tuple[0])
         
         # Send to each recipient
+        all_sent = True
         for recipient in recipients:
             to_email = To(recipient)
             
@@ -49,9 +53,13 @@ def send_email(subject, recipients, html_body, text_body=None):
                 print(f"✅ Email sent to {recipient}")
             else:
                 print(f"⚠️ SendGrid returned status {response.status_code} for {recipient}")
+                all_sent = False
+        
+        return all_sent
                 
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
+        return False
 
 def send_welcome_email(user):
     """

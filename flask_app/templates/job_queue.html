@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Background Jobs - Candidate Evaluator{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin-top: 2rem;">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">🔄 {% if (pending_jobs|length + processing_jobs|length) == 1 %}Your Analysis Job is in Progress!{% else %}Your Analysis Jobs{% endif %}</h1>
+            
+            <!-- Friendly Intro for First-Time Users -->
+            {% if pending_jobs or processing_jobs %}
+            <div class="alert alert-info" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                <h4 style="color: white; margin-bottom: 15px;">✨ Your analysis is running in the background!</h4>
+                <p style="font-size: 1.05rem; margin-bottom: 15px; line-height: 1.6;">
+                    We're analyzing your candidates right now using advanced AI. This typically takes <strong>3-5 minutes</strong> for your batch size.
+                    You don't need to keep this page open - we'll send you an email when it's ready.
+                </p>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <strong>📧 Email Notification:</strong> You'll receive an email with a direct link to your results as soon as processing completes.<br>
+                    <strong>🔄 This Page Auto-Updates:</strong> Stay on this page to watch real-time progress (refreshes every 5 seconds).<br>
+                    <strong>🚪 Feel Free to Leave:</strong> Close your browser and come back anytime - your job will keep running.<br>
+                    <strong>📁 After Completion:</strong> You can always find your completed analysis in the <a href="{{ url_for('dashboard.job_history') }}" style="color: white; text-decoration: underline;">Job History</a> page (top menu).
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Processing Jobs -->
+            {% if processing_jobs %}
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">⚙️ Currently Analyzing Your Candidates</h5>
+                </div>
+                <div class="card-body">
+                    {% for job in processing_jobs %}
+                    <div class="job-item mb-3 p-3 border rounded" data-job-id="{{ job.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <p class="text-muted mb-0" style="font-size: 0.95rem;">
+                                    <span class="job-created-time" data-utc="{{ job.created_at.isoformat() }}">Started: {{ job.created_at.strftime('%I:%M %p') }}</span> • 
+                                    Analyzing {{ job.total }} resumes using AI
+                                </p>
+                            </div>
+                            <span class="badge bg-primary" style="font-size: 1rem; padding: 8px 16px;">Processing</span>
+                        </div>
+                        
+                        <div class="progress mb-3" style="height: 30px; background: #e9ecef;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary job-progress" 
+                                 role="progressbar" 
+                                 style="width: {{ (job.progress / job.total * 100) if job.total > 0 else 0 }}%"
+                                 aria-valuenow="{{ job.progress }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ job.total }}">
+                                <span class="progress-text" style="font-size: 1rem; font-weight: 600; color: #1f2937;">{{ job.progress }} / {{ job.total }} resumes analyzed</span>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-light mb-0" style="background: #f8f9fa; border-left: 4px solid #667eea;">
+                            <strong>🤖 What's happening:</strong> Our AI is reading each resume, scoring candidates against your job description, 
+                            {% if job.insights_mode == 'deep' %}
+                            and generating detailed insights for your top candidates.
+                            {% else %}
+                            and generating justifications for each score.
+                            {% endif %}
+                            This page updates automatically every 5 seconds.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Pending Jobs -->
+            {% if pending_jobs %}
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📋 Queued & Waiting to Start</h5>
+                </div>
+                <div class="card-body">
+                    {% for job in pending_jobs %}
+                    <div class="job-item mb-3 p-3 border rounded" data-job-id="{{ job.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div style="flex: 1;">
+                                <h5 class="mb-2">Analysis Job #{{ job.id }}</h5>
+                                <p class="text-muted mb-2" style="font-size: 0.95rem;">
+                                    <span class="job-created-time" data-utc="{{ job.created_at.isoformat() }}">Submitted: {{ job.created_at.strftime('%I:%M %p') }}</span> • 
+                                    {{ job.total }} resumes{{ ' • Deep Insights Mode' if job.insights_mode == 'deep' else '' }}
+                                </p>
+                                
+                                {% set minutes = (job.total * 2.5 / 60) | int %}
+                                {% set hours = (minutes // 60) | int %}
+                                {% set remaining_mins = minutes % 60 %}
+                                
+                                <div class="alert alert-info mb-3" style="background: #e7f3ff; border-left: 4px solid #17a2b8;">
+                                    <strong>⏱️ Estimated Time:</strong> 
+                                    {% if hours > 0 %}
+                                        About {{ hours }} hour{{ 's' if hours > 1 else '' }} {{ remaining_mins }} minutes
+                                    {% else %}
+                                        About {{ minutes }} minutes
+                                    {% endif %}
+                                    <br>
+                                    <strong>📧 You'll be notified:</strong> We'll email you as soon as your results are ready. 
+                                    You can safely close this page and come back later!
+                                </div>
+                            </div>
+                            <span class="badge bg-info" style="font-size: 1rem; padding: 8px 16px;">Queued</span>
+                        </div>
+                        
+                        <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <strong>👀 Your job is in the queue.</strong> It will start processing automatically within a few seconds. 
+                            This page refreshes every 5 seconds to show you the latest status.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Completed Jobs -->
+            {% if completed_jobs %}
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">✅ Analysis Complete - Results Ready!</h5>
+                </div>
+                <div class="card-body">
+                    {% for job in completed_jobs %}
+                    <div class="job-item mb-4 p-4 border rounded" style="background: linear-gradient(to right, #d4edda, #f1f9f3);">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div style="flex: 1;">
+                                <h5 class="mb-2" style="color: #155724;">🎉 Your results are ready!</h5>
+                                <p class="mb-2" style="font-size: 0.95rem;">
+                                    Completed at <span class="job-completed-time" data-utc="{{ job.completed_at.isoformat() if job.completed_at else '' }}">{{ job.completed_at.strftime('%I:%M %p') if job.completed_at else 'N/A' }}</span><br>
+                                    Analyzed {{ job.total }} resumes{{ ' using Deep Insights Mode' if job.insights_mode == 'deep' else '' }}
+                                </p>
+                            </div>
+                            <span class="badge bg-success" style="font-size: 1rem; padding: 10px 20px;">✓ Complete</span>
+                        </div>
+                        
+                        <div class="alert alert-success mb-3" style="background: white; border: 2px solid #28a745; border-radius: 10px;">
+                            <h6 style="color: #155724; margin-bottom: 10px;">📊 What's inside your results:</h6>
+                            <ul style="margin-bottom: 0; padding-left: 20px;">
+                                <li>Ranked list of all {{ job.total }} candidates with AI-powered scores</li>
+                                <li>Detailed justifications explaining each candidate's strengths and weaknesses</li>
+                                {% if job.insights_mode == 'deep' %}
+                                <li><strong>Deep Insights:</strong> Comprehensive analysis of your top 3 candidates including interview questions and hiring recommendations</li>
+                                {% endif %}
+                                <li>Visual charts showing candidate distribution and top skills</li>
+                            </ul>
+                        </div>
+                        
+                        {% if job.analysis_id %}
+                        <a href="{{ url_for('analysis.results', analysis_id=job.analysis_id) }}" 
+                           class="btn btn-success btn-lg" 
+                           style="font-size: 1.1rem; padding: 15px 40px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);">
+                            📊 View Your Results Now →
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Failed Jobs -->
+            {% if failed_jobs %}
+            <div class="card mb-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">❌ Failed</h5>
+                </div>
+                <div class="card-body">
+                    {% for job in failed_jobs %}
+                    <div class="job-item mb-3 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">Analysis Job #{{ job.id }}</h6>
+                                <small class="text-muted">Failed: {{ job.completed_at.strftime('%Y-%m-%d %H:%M UTC') if job.completed_at else 'N/A' }}</small>
+                            </div>
+                            <span class="badge bg-danger">Failed</span>
+                        </div>
+                        
+                        <div class="small mb-2">
+                            <strong>Total Resumes:</strong> {{ job.total }} | 
+                            <strong>Mode:</strong> {{ 'Deep Insights' if job.insights_mode else 'Quick Scoring' }}
+                        </div>
+                        
+                        {% if job.error_message %}
+                        <div class="alert alert-danger mb-2">
+                            <strong>Error:</strong> {{ job.error_message }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- No Jobs -->
+            {% if not pending_jobs and not processing_jobs and not completed_jobs and not failed_jobs %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">📊</div>
+                    <h4 class="mb-3">No Background Jobs Yet</h4>
+                    <p class="text-muted mb-4" style="max-width: 600px; margin: 0 auto;">
+                        When you analyze large batches (more than 75 resumes), we automatically process them in the background 
+                        so you don't have to wait. You'll see those jobs here with real-time progress updates!
+                    </p>
+                    <a href="{{ url_for('analysis.analyze') }}" class="btn btn-primary btn-lg">
+                        ➕ Start New Analysis
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">← Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Convert UTC times to local time
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing time conversion...');
+    
+    // Convert all UTC timestamps to local time
+    document.querySelectorAll('[data-utc]').forEach(function(elem) {
+        const utcStr = elem.dataset.utc;
+        console.log('Converting time:', utcStr);
+        
+        if (utcStr) {
+            try {
+                // Python datetime is in UTC but doesn't have 'Z' suffix, so add it
+                const utcDateStr = utcStr.endsWith('Z') ? utcStr : utcStr + 'Z';
+                const utcDate = new Date(utcDateStr);
+                const localTime = utcDate.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                
+                console.log('Converted to:', localTime);
+                
+                // Replace the time portion
+                const currentText = elem.textContent;
+                if (currentText.includes('Submitted: ')) {
+                    elem.textContent = 'Submitted: ' + localTime;
+                } else if (currentText.includes('Started: ')) {
+                    elem.textContent = 'Started: ' + localTime;
+                } else if (currentText.includes('completed at ')) {
+                    elem.textContent = 'completed at ' + localTime;
+                } else {
+                    // Fallback - just replace the whole text
+                    elem.textContent = localTime;
+                }
+            } catch (e) {
+                console.error('Error converting time:', e);
+            }
+        }
+    });
+});
+
+// Auto-refresh for pending/processing jobs
+document.addEventListener('DOMContentLoaded', function() {
+    const hasPendingJobs = {{ 'true' if pending_jobs else 'false' }};
+    const hasProcessingJobs = {{ 'true' if processing_jobs else 'false' }};
+    
+    if (hasPendingJobs || hasProcessingJobs) {
+        console.log('Starting auto-refresh polling...');
+        
+        // Poll every 5 seconds
+        setInterval(function() {
+            const jobElements = document.querySelectorAll('[data-job-id]');
+            console.log(`Polling ${jobElements.length} jobs...`);
+            
+            jobElements.forEach(function(jobElement) {
+                const jobId = jobElement.dataset.jobId;
+                
+                fetch(`/api/job-status/${jobId}`)
+                    .then(response => {
+                        console.log(`Job ${jobId} API response status:`, response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(`Job ${jobId} status: ${data.status}`);
+                        
+                        // Update progress bar if it exists
+                        const progressBar = jobElement.querySelector('.job-progress');
+                        if (progressBar && data.total > 0) {
+                            const percent = (data.progress / data.total * 100).toFixed(1);
+                            progressBar.style.width = percent + '%';
+                            const progressText = progressBar.querySelector('.progress-text');
+                            if (progressText) {
+                                progressText.textContent = `${data.progress} / ${data.total} resumes`;
+                            }
+                        }
+                        
+                        // Get current status from the page badge
+                        const currentStatusBadge = jobElement.querySelector('.badge');
+                        const currentStatusText = currentStatusBadge ? currentStatusBadge.textContent.trim().toLowerCase() : 'unknown';
+                        console.log(`Job ${jobId} current badge text: "${currentStatusText}", API status: "${data.status}"`);
+                        
+                        // Reload if status has changed to a terminal state
+                        if (data.status === 'completed') {
+                            console.log(`Job ${jobId} completed - reloading page...`);
+                            location.reload();
+                        } else if (data.status === 'processing' && currentStatusText === 'queued') {
+                            console.log(`Job ${jobId} started processing - reloading page...`);
+                            location.reload();
+                        } else if (data.status === 'failed') {
+                            console.log(`Job ${jobId} failed - reloading page...`);
+                            location.reload();
+                        }
+                    })
+                    .catch(error => console.error(`Error polling job ${jobId}:`, error));
+            });
+        }, 5000);
+    }
+});
+</script>
+
+<style>
+.job-item {
+    background: #f8f9fa;
+    transition: all 0.2s;
+}
+
+.job-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.progress-text {
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}

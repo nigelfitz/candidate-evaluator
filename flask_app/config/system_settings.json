@@ -20,12 +20,22 @@
     "description": "Show warnings when JD or resumes exceed character limits. Disable to allow full-length documents without user confirmation."
   },
   "max_resumes_per_upload": {
-    "value": 200,
+    "value": 250,
     "label": "Maximum Resumes Per Upload",
-    "description": "Maximum number of resume files a user can upload in a single batch. Recommended: 50-200. Higher limits may cause longer processing times."
+    "description": "Hard limit on total number of resumes that can be uploaded. Protects against extreme batch sizes."
+  },
+  "background_queue_threshold": {
+    "value": 75,
+    "label": "Background Queue Threshold",
+    "description": "Jobs with MORE than this many resumes will process in background (user gets email when done). Jobs with FEWER process immediately (user waits 2-5 min). Lower = more reliable but slower. Higher = faster but riskier timeouts. Recommended: 50-100."
+  },
+  "api_concurrency_limit": {
+    "value": 10,
+    "label": "API Concurrency Limit (Semaphore)",
+    "description": "Maximum number of concurrent OpenAI API calls during AI analysis. Lower = slower but fewer rate limit errors. Higher = faster but more rate limits. Recommended: 5-15. Current: 10."
   },
   "_metadata": {
-    "last_updated": "2026-01-08 07:23:48 UTC",
+    "last_updated": "2026-01-16 04:20:59 UTC",
     "updated_by": "admin"
   }
 }

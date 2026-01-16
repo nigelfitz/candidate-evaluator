@@ -24,7 +24,7 @@ def get_client_ip():
 
 def check_brute_force(ip_address):
     """Check if IP is locked out due to failed attempts"""
-    cutoff_time = datetime.utcnow() - timedelta(minutes=15)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=15)
     recent_attempts = AdminLoginAttempt.query.filter(
         AdminLoginAttempt.ip_address == ip_address,
         AdminLoginAttempt.attempted_at > cutoff_time,
@@ -37,7 +37,7 @@ def record_login_attempt(ip_address, success):
     """Record admin login attempt"""
     attempt = AdminLoginAttempt(
         ip_address=ip_address,
-        attempted_at=datetime.utcnow(),
+        attempted_at=datetime.now(timezone.utc),
         success=success
     )
     db.session.add(attempt)
@@ -45,7 +45,7 @@ def record_login_attempt(ip_address, success):
 
 def clear_login_attempts(ip_address):
     """Clear failed login attempts after successful login"""
-    cutoff_time = datetime.utcnow() - timedelta(minutes=15)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=15)
     AdminLoginAttempt.query.filter(
         AdminLoginAttempt.ip_address == ip_address,
         AdminLoginAttempt.attempted_at > cutoff_time
@@ -401,7 +401,7 @@ def admin_analytics():
     override_rate = (overrides_chosen / warnings_shown * 100) if warnings_shown > 0 else 0
     
     # Jobs by day (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     jobs_by_day = db.session.query(
         func.date(Analysis.created_at).label('date'),
         func.count(Analysis.id).label('count')
@@ -814,10 +814,10 @@ def admin_users():
     
     # Online filter (users active in last 5 minutes)
     if online_filter == 'yes':
-        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
         query = query.filter(User.last_seen >= five_minutes_ago)
     elif online_filter == 'no':
-        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
         query = query.filter(
             db.or_(
                 User.last_seen < five_minutes_ago,
@@ -861,7 +861,7 @@ def admin_users():
     total_analyses = db.session.query(db.func.sum(User.total_analyses_count)).scalar() or 0
     
     # Count online users (active in last 5 minutes)
-    five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+    five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
     online_users = User.query.filter(User.last_seen >= five_minutes_ago).count()
     
     return render_template('admin_users.html', 
@@ -1278,7 +1278,7 @@ def admin_failed_jobs():
     ).order_by(db.desc(Analysis.failed_at)).limit(50).all()
     
     # Calculate stats
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     failed_last_24h = sum(1 for job in failed_jobs if job.failed_at and (now - job.failed_at).total_seconds() < 86400)
     affected_users = list(set(job.user_id for job in failed_jobs))
     
@@ -1321,6 +1321,7 @@ def admin_system_save():
     settings['max_file_size_mb']['value'] = int(request.form.get('max_file_size_mb', 10))
     settings['enable_document_length_warnings']['value'] = request.form.get('enable_document_length_warnings') == 'on'
     settings['max_resumes_per_upload']['value'] = int(request.form.get('max_resumes_per_upload', 200))
+    settings['background_queue_threshold']['value'] = int(request.form.get('background_queue_threshold', 75))
     
     # Update metadata
     settings['_metadata']['last_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')

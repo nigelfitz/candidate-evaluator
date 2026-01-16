@@ -66,6 +66,53 @@ def resume_length_warning_route():
                          truncated_resumes=truncated_resumes,
                          resume_limit=resume_limit)
 
+@analysis_bp.route('/batch-size-warning')
+@login_required
+def batch_size_warning_route():
+    """Show batch size warning when user tries to upload too many resumes"""
+    if not session.get('show_batch_size_warning') and not session.get('batch_size_error'):
+        flash('Invalid access to warning page', 'error')
+        return redirect(url_for('analysis.analyze', step='resumes'))
+    
+    # Get warning details from session
+    is_error = session.get('batch_size_error', False)
+    new_count = session.get('new_upload_count') or session.get('attempted_upload_count')
+    existing_count = session.get('existing_resume_count', 0)
+    total_count = session.get('total_after_upload', new_count)
+    max_allowed = session.get('max_allowed', 200)
+    
+    return render_template('batch_size_warning.html',
+                         is_error=is_error,
+                         new_upload_count=new_count,
+                         existing_resume_count=existing_count,
+                         total_after_upload=total_count,
+                         max_allowed=max_allowed)
+
+@analysis_bp.route('/timeout-error')
+@login_required
+def timeout_error_route():
+    """Show helpful timeout error page with recovery instructions"""
+    # Try to get resume count from query params or session
+    resume_count = request.args.get('resume_count', type=int) or session.get('timeout_resume_count', 0)
+    
+    # Also try to get from current draft if not provided
+    if not resume_count:
+        draft = Draft.query.filter_by(user_id=current_user.id).first()
+        if draft:
+            resume_count = DraftResume.query.filter_by(draft_id=draft.id).count()
+    
+    system_settings = load_system_settings()
+    max_allowed = system_settings.get('max_resumes_per_upload', {}).get('value', 200)
+    recommended_limit = max(50, max_allowed // 2)  # Half of max, minimum 50
+    
+    # Clear the timeout flag
+    session.pop('timeout_resume_count', None)
+    
+    return render_template('timeout_error.html',
+                         resume_count=resume_count,
+                         max_allowed=max_allowed,
+                         recommended_limit=recommended_limit)
+
 @analysis_bp.route('/document-warnings')
 @login_required
 def document_warnings_route():
@@ -142,9 +189,12 @@ def analyze():
         if request.args.get('new') == '1':
             draft = Draft.query.filter_by(user_id=current_user.id).first()
             if draft:
-                # Explicitly delete all associated draft resumes first
+                # First, clean up any job_queue records referencing this draft
+                from database import JobQueue
+                JobQueue.query.filter_by(draft_id=draft.id, user_id=current_user.id).delete()
+                # Explicitly delete all associated draft resumes
                 DraftResume.query.filter_by(draft_id=draft.id).delete()
-                db.session.flush()  # Ensure resumes are deleted first
+                db.session.flush()  # Ensure dependent records are deleted first
                 # Then delete the draft
                 db.session.delete(draft)
                 db.session.commit()
@@ -398,6 +448,36 @@ def analyze():
             if not resume_files or not resume_files[0].filename:
                 flash('Please select at least one resume file', 'error')
                 return redirect(url_for('analysis.analyze', step='resumes'))
+            
+            # Check batch size against admin setting
+            system_settings = load_system_settings()
+            max_resumes = system_settings.get('max_resumes_per_upload', {}).get('value', 200)
+            
+            # Count actual files (exclude empty entries)
+            actual_file_count = sum(1 for f in resume_files if f.filename)
+            
+            # Count existing resumes in draft
+            existing_count = DraftResume.query.filter_by(draft_id=draft.id).count()
+            total_after_upload = existing_count + actual_file_count
+            
+            # Check if this batch exceeds the limit
+            if actual_file_count > max_resumes:
+                # Hard limit: single upload exceeds max
+                session['batch_size_error'] = True
+                session['attempted_upload_count'] = actual_file_count
+                session['max_allowed'] = max_resumes
+                session.modified = True
+                return redirect(url_for('analysis.batch_size_warning_route'))
+            elif total_after_upload > max_resumes:
+                # Soft warning: would exceed when combined with existing
+                session['show_batch_size_warning'] = True
+                session['new_upload_count'] = actual_file_count
+                session['existing_resume_count'] = existing_count
+                session['total_after_upload'] = total_after_upload
+                session['max_allowed'] = max_resumes
+                session['files_to_process'] = True  # Flag that we need to process files after confirmation
+                session.modified = True
+                return redirect(url_for('analysis.batch_size_warning_route'))
             
             # Process and store resumes temporarily
             resumes_added = 0
@@ -700,6 +780,39 @@ def analyze():
             return redirect(url_for('analysis.analyze', step='resumes'))
             return redirect(url_for('analysis.analyze', step='resumes'))
     
+    elif action == 'proceed_large_batch':
+        # User acknowledged the large batch warning and wants to proceed anyway
+        try:
+            # Clear the warning flags
+            session.pop('show_batch_size_warning', None)
+            session.pop('batch_size_error', None)
+            session.pop('new_upload_count', None)
+            session.pop('existing_resume_count', None)
+            session.pop('total_after_upload', None)
+            session.pop('max_allowed', None)
+            session.modified = True
+            
+            # Check we have resumes to work with
+            draft = Draft.query.filter_by(user_id=current_user.id).first()
+            if not draft:
+                flash('Draft not found. Please start over.', 'error')
+                return redirect(url_for('analysis.analyze'))
+            
+            resume_count = DraftResume.query.filter_by(draft_id=draft.id).count()
+            if resume_count == 0:
+                flash('No resumes found. Please upload resumes first.', 'error')
+                return redirect(url_for('analysis.analyze', step='resumes'))
+            
+            # Warn them one more time
+            flash(f'⚠️ Proceeding with {resume_count} resumes. This may timeout. If it does, you will not be charged.', 'warning')
+            return redirect(url_for('analysis.run_analysis_route'))
+            
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'error')
+            import traceback
+            traceback.print_exc()
+            return redirect(url_for('analysis.analyze', step='resumes'))
+    
     elif action == 'run_analysis':
         # Legacy handler - redirect to proper flow
         flash('Please upload resumes first', 'info')
@@ -850,7 +963,7 @@ def analyze():
                 flash(f"ℹ️ Document length notice: {doc_list} exceed our limits and will be automatically trimmed to maintain optimal performance. Analysis quality remains high.", 'info')
             
             # Track start time for duration calculation
-            analysis_start_time = datetime.utcnow()
+            analysis_start_time = datetime.now(timezone.utc)
             
             # Check if user exceeded resume limit (for analytics)
             exceeded_limit = len(candidates) > 200
@@ -979,7 +1092,7 @@ def analyze():
             analysis.gpt_candidates = json.dumps(gpt_candidates_list)
             
             # Capture completion time and duration for analytics
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
             analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
             
             db.session.add(analysis)
@@ -1298,7 +1411,51 @@ def run_analysis_route():
                                  pricing=pricing)
         
         # ============================================
-        # NEW AI PIPELINE: Production-Grade Scoring
+        # HYBRID PROCESSING: Small=Sync, Large=Queue
+        # ============================================
+        from database import JobQueue
+        
+        # Check threshold from admin settings
+        system_settings = load_system_settings()
+        background_threshold = system_settings.get('background_queue_threshold', {}).get('value', 75)
+        
+        # Decide: Synchronous or Queue?
+        if num_candidates > background_threshold:
+            # LARGE JOB: Queue for background processing
+            print(f"📋 Queuing large job: {num_candidates} resumes (threshold: {background_threshold})")
+            
+            # Consume form token
+            session.pop('analysis_form_token', None)
+            
+            # Create job queue entry
+            job = JobQueue(
+                user_id=current_user.id,
+                draft_id=draft.id,
+                status='pending',
+                insights_mode=insights_mode,
+                total=num_candidates
+            )
+            db.session.add(job)
+            db.session.commit()
+            
+            # Calculate estimated time
+            minutes = int(num_candidates * 2.5 / 60)  # ~2.5 seconds per resume
+            hours = minutes // 60
+            remaining_mins = minutes % 60
+            
+            if hours > 0:
+                time_estimate = f"{hours}h {remaining_mins}m"
+            else:
+                time_estimate = f"{minutes} minutes"
+            
+            flash(f'📋 Analysis job submitted! Processing {num_candidates} resumes in background. Estimated time: {time_estimate}. You\'ll receive an email when complete.', 'success')
+            return redirect(url_for('dashboard.job_queue_status'))
+        
+        # SMALL JOB: Process synchronously (current fast experience)
+        print(f"⚡ Processing small job synchronously: {num_candidates} resumes (threshold: {background_threshold})")
+        
+        # ============================================
+        # SYNCHRONOUS PROCESSING: Production-Grade Scoring
         # ============================================
         import asyncio
         from ai_service import run_global_ranking, run_deep_insights
@@ -1314,7 +1471,7 @@ def run_analysis_route():
         session.pop('analysis_form_token', None)
         
         # Track start time for duration calculation
-        analysis_start_time = datetime.utcnow()
+        analysis_start_time = datetime.now(timezone.utc)
         
         # Check if user exceeded resume limit (for analytics)
         exceeded_limit = len(candidates) > 200
@@ -1493,7 +1650,7 @@ def run_analysis_route():
         analysis.gpt_candidates = json.dumps(gpt_candidates_list)
         
         # Capture completion time and duration for analytics
-        analysis.completed_at = datetime.utcnow()
+        analysis.completed_at = datetime.now(timezone.utc)
         analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
         
         # Store candidate files
@@ -1542,7 +1699,7 @@ def run_analysis_route():
         try:
             # Save error info to the analysis record before rollback
             analysis.error_message = f"{str(e)}\n\n{error_trace}"
-            analysis.failed_at = datetime.utcnow()
+            analysis.failed_at = datetime.now(timezone.utc)
             db.session.commit()  # Commit error details
             print(f"ERROR: Analysis #{analysis.id} failed. Error details saved.")
         except:
@@ -1730,7 +1887,7 @@ def submit_feedback():
             # Update existing feedback
             existing_feedback.vote = vote
             existing_feedback.improvement_note = improvement_note if improvement_note else None
-            existing_feedback.created_at = datetime.utcnow()  # Update timestamp
+            existing_feedback.created_at = datetime.now(timezone.utc)  # Update timestamp
         else:
             # Create new feedback
             feedback = Feedback(

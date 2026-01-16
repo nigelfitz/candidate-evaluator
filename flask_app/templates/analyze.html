@@ -184,22 +184,35 @@
 
 <!-- Resume Upload Loading Overlay -->
 <div id="resumeUploadOverlay"
-    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center;">
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 9999; justify-content: center; align-items: center;">
     <div
-        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 16px; padding: 48px 60px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); text-align: center; max-width: 500px;">
+        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 20px; padding: 60px 80px; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4); text-align: center; max-width: 600px; border: 3px solid rgba(255, 255, 255, 0.2);">
         <div
-            style="width: 80px; height: 80px; margin: 0 auto 24px; border: 4px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;">
+            style="width: 100px; height: 100px; margin: 0 auto 32px; border: 5px solid rgba(255, 255, 255, 0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;">
         </div>
-        <h3 style="color: white; font-size: 24px; font-weight: 600; margin-bottom: 12px;">Processing Resumes</h3>
-        <p id="resumeUploadCount" style="color: rgba(255, 255, 255, 0.9); font-size: 16px; margin-bottom: 8px;">
+        <h2 style="color: white; font-size: 32px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">📤 Processing Your Resumes</h2>
+        <p id="resumeUploadCount" style="color: rgba(255, 255, 255, 0.95); font-size: 20px; margin-bottom: 12px; font-weight: 600;">
             Uploading files...</p>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Please wait while we process your uploads</p>
+        <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin-bottom: 24px;">Please don't close this window while we process your uploads</p>
+        
+        <!-- Progress bar -->
+        <div style="background: rgba(255, 255, 255, 0.2); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
+            <div style="background: white; height: 100%; width: 100%; animation: progressPulse 3s ease-in-out infinite;"></div>
+        </div>
+        
         <p id="largeUploadWarning"
-            style="display: none; color: rgba(255, 255, 255, 0.85); font-size: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.2); font-style: italic;">
-            ⏱️ Please be patient, it could take a few minutes to process this many resumes. But we'll get it done for
-            you.</p>
+            style="display: none; color: rgba(255, 255, 255, 0.9); font-size: 15px; margin-top: 20px; padding: 20px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            ⏱️ <strong>Large batch detected!</strong><br>
+            Processing this many files takes a few minutes. Please be patient - we're working on it!</p>
     </div>
 </div>
+
+<style>
+@keyframes progressPulse {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+}
+</style>
 
 <!-- Resume Limit Warning Modal -->
 <div id="resumeLimitModal"
@@ -527,13 +540,13 @@ document.addEventListener('DOMContentLoaded', function() {
         updateContinueButtonHandler('resumeUploadForm');
     }
 
-    function removeFile(index) {
+    window.removeFile = function(index) {
         selectedFiles.splice(index, 1);
         updateResumesList();
     }
 
-    // Show resume upload overlay
-    function showResumeUploadOverlay() {
+    // Show resume upload overlay (make it global so workflow_bottom_bar can call it)
+    window.showResumeUploadOverlay = function() {
         const overlay = document.getElementById('resumeUploadOverlay');
         const countText = document.getElementById('resumeUploadCount');
         const largeUploadWarning = document.getElementById('largeUploadWarning');
@@ -572,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function removeAllFiles() {
+    window.removeAllFiles = function() {
         selectedFiles = [];
         updateResumesList();
     }

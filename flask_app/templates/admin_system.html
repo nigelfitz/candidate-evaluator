@@ -177,6 +177,64 @@ border-radius: 8px; font-size: 0.85rem; color: #666; box-shadow: 0 2px 8px rgba(
         </div>
     </div>
 
+    <!-- Background Queue Threshold -->
+    <div class="setting-item">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div class="setting-name">{{ settings.background_queue_threshold.label }}</div>
+                <div class="setting-desc">{{ settings.background_queue_threshold.description }}</div>
+                <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
+                    <input type="range" name="background_queue_threshold" id="queueThresholdSlider" class="form-range" min="25"
+                        max="150" step="25" value="{{ settings.background_queue_threshold.value }}"
+                        style="flex: 1; max-width: 300px;"
+                        oninput="document.getElementById('queueThresholdValue').textContent = this.value">
+                    <span id="queueThresholdValue"
+                        style="font-weight: 600; color: #8b5cf6; min-width: 80px; text-align: center; font-size: 1.1rem;">{{
+                        settings.background_queue_threshold.value }}</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 0.85rem; color: #64748b;">
+                    <span style="float: left;">25 (Conservative)</span>
+                    <span style="float: right;">150 (Aggressive)</span>
+                    <div style="clear: both;"></div>
+                </div>
+            </div>
+        </div>
+        <div
+            style="margin-top: 15px; padding: 12px; background: #e0e7ff; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #8b5cf6;">
+            <strong>🔄 Hybrid Processing:</strong> Jobs with ≤ this number of resumes process synchronously (fast, 2-5 min). 
+            Jobs exceeding this threshold queue for background processing (reliable, email notification). 
+            Default: 75 resumes (optimal for 100-second Cloudflare timeout).
+        </div>
+    </div>
+
+    <!-- API Concurrency Limit -->
+    <div class="setting-item">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div class="setting-name">{{ settings.api_concurrency_limit.label }}</div>
+                <div class="setting-desc">{{ settings.api_concurrency_limit.description }}</div>
+                <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
+                    <input type="range" name="api_concurrency_limit" id="apiConcurrencySlider" class="form-range" min="5"
+                        max="25" step="5" value="{{ settings.api_concurrency_limit.value }}"
+                        style="flex: 1; max-width: 300px;"
+                        oninput="document.getElementById('apiConcurrencyValue').textContent = this.value">
+                    <span id="apiConcurrencyValue"
+                        style="font-weight: 600; color: #f59e0b; min-width: 80px; text-align: center; font-size: 1.1rem;">{{
+                        settings.api_concurrency_limit.value }}</span>
+                </div>
+                <div style="margin-top: 8px; font-size: 0.85rem; color: #64748b;">
+                    <span style="float: left;">5 (Safe, Slow)</span>
+                    <span style="float: right;">25 (Fast, More Errors)</span>
+                    <div style="clear: both;"></div>
+                </div>
+            </div>
+        </div>
+        <div
+            style="margin-top: 15px; padding: 12px; background: #fef3c7; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid #f59e0b;">
+            <strong>⚡ Rate Limit Control:</strong> Controls how many OpenAI API calls happen simultaneously. Lower values reduce rate limit errors but increase processing time. Higher values speed up processing but may trigger rate limits. Restart worker after changing.
+        </div>
+    </div>
+
     <!-- Metadata -->
     <div class="setting-item">
         <div class="setting-name">Last Updated</div>

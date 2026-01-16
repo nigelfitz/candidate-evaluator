@@ -177,6 +177,40 @@ class CandidateFile(db.Model):
         return f'<CandidateFile {self.id}: {self.candidate_name}>'
 
 
+class JobQueue(db.Model):
+    """Background job queue for analysis processing"""
+    __tablename__ = 'job_queue'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    draft_id = db.Column(db.Integer, db.ForeignKey('drafts.id'), nullable=False)
+    
+    # Job configuration
+    insights_mode = db.Column(db.String(20))  # standard, deep_dive, full_radar
+    
+    # Status tracking
+    status = db.Column(db.String(20), default='pending', nullable=False, index=True)  # pending, processing, completed, failed, cancelled
+    progress = db.Column(db.Integer, default=0)  # Number of resumes processed
+    total = db.Column(db.Integer, default=0)  # Total resumes to process
+    
+    # Results
+    analysis_id = db.Column(db.Integer, db.ForeignKey('analyses.id'), nullable=True)
+    error_message = db.Column(db.Text)  # Error details if failed
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='queued_jobs')
+    draft = db.relationship('Draft', backref='queued_jobs')
+    analysis = db.relationship('Analysis', backref='source_job', foreign_keys=[analysis_id])
+    
+    def __repr__(self):
+        return f'<JobQueue {self.id}: {self.status}>'
+
+
 class Draft(db.Model):
     """Draft JD and criteria storage (before analysis runs)"""
     __tablename__ = 'drafts'
