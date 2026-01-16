@@ -281,10 +281,18 @@ def process_job(job):
     print(f"{'='*60}\n")
     
     try:
-        # Mark as processing
+        # CRITICAL: Check if job is already completed or processing
+        db.session.refresh(job)  # Get latest state from database
+        if job.status in ['completed', 'processing', 'failed']:
+            print(f"⏭️  Job #{job.id} already {job.status} - skipping")
+            return False
+        
+        # Mark as processing with atomic update to prevent race conditions
         job.status = 'processing'
         job.started_at = datetime.now(timezone.utc)
         db.session.commit()
+        
+        print(f"🔒 Job #{job.id} locked for processing")
         
         # Load draft data
         draft = job.draft
@@ -580,25 +588,50 @@ def main():
     print(f"{'='*60}")
     print(f"")
     
+    # Worker ID for logging (helps identify multiple workers)
+    import uuid
+    worker_id = str(uuid.uuid4())[:8]
+    print(f"   Worker ID: {worker_id}")
+    print(f"")
+    
     with app.app_context():
+        consecutive_empty_polls = 0
+        
         while True:
             try:
-                # Find next pending job
+                # Find next pending job (not processing, not completed, not failed)
                 job = JobQueue.query.filter_by(status='pending')\
                                    .order_by(JobQueue.created_at)\
                                    .first()
                 
                 if job:
-                    process_job(job)
+                    consecutive_empty_polls = 0
+                    print(f"[{worker_id}] Found pending job #{job.id}")
+                    
+                    success = process_job(job)
+                    
+                    if success:
+                        print(f"[{worker_id}] ✅ Job #{job.id} completed successfully")
+                    else:
+                        print(f"[{worker_id}] ⏭️  Job #{job.id} skipped (already processed)")
+                    
+                    # Small delay between jobs to prevent hammering
+                    time.sleep(2)
                 else:
                     # No pending jobs - sleep for a bit
+                    consecutive_empty_polls += 1
+                    
+                    # Only log every 12th empty poll (1 minute)
+                    if consecutive_empty_polls % 12 == 1:
+                        print(f"[{worker_id}] ⏸️  No pending jobs (waiting...)")
+                    
                     time.sleep(5)
                     
             except KeyboardInterrupt:
-                print(f"\n🛑 Worker shutting down...")
+                print(f"\n[{worker_id}] 🛑 Worker shutting down...")
                 break
             except Exception as e:
-                print(f"\n❌ Worker error: {str(e)}")
+                print(f"\n[{worker_id}] ❌ Worker error: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 time.sleep(5)
