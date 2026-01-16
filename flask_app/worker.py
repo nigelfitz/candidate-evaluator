@@ -53,12 +53,153 @@ def send_completion_email(user, analysis, job):
         sorted_candidates = sorted(coverage_data, key=lambda x: x.get('Overall', 0), reverse=True)
         top_3 = sorted_candidates[:3]
         
-        top_candidates_text = "\n".join([
-            f"{i+1}. {c['Candidate']} - {int(c.get('Overall', 0) * 100)}/100"
-            for i, c in enumerate(top_3)
-        ])
+        # Build HTML for top candidates
+        top_candidates_html = ""
+        for i, c in enumerate(top_3):
+            score = int(c.get('Overall', 0) * 100)
+            # Color based on score
+            if score >= 80:
+                color = "#10b981"  # Green
+                badge_bg = "#d1fae5"
+            elif score >= 60:
+                color = "#f59e0b"  # Orange
+                badge_bg = "#fef3c7"
+            else:
+                color = "#6b7280"  # Gray
+                badge_bg = "#f3f4f6"
+            
+            top_candidates_html += f"""
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                        <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">{i+1}. {c['Candidate']}</div>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">
+                        <span style="background: {badge_bg}; color: {color}; padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 14px;">{score}/100</span>
+                    </td>
+                </tr>
+            """
         
-        body = f"""Hi {user.name or user.email},
+        # HTML email body
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px; text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 8px;">✅</div>
+                            <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700;">Analysis Complete!</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 32px;">
+                            <p style="margin: 0 0 24px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                                Hi <strong>{user.name or user.email.split('@')[0]}</strong>,
+                            </p>
+                            <p style="margin: 0 0 24px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                                Your candidate analysis is ready to view! 🎉
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Job Details -->
+                    <tr>
+                        <td style="padding: 0 32px 24px 32px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; padding: 20px;">
+                                <tr>
+                                    <td style="padding: 8px 0;">
+                                        <span style="color: #6b7280; font-size: 14px;">Job Title</span><br>
+                                        <strong style="color: #1f2937; font-size: 16px;">{analysis.job_title}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td width="50%" style="padding-right: 10px;">
+                                                    <span style="color: #6b7280; font-size: 14px;">Candidates Analyzed</span><br>
+                                                    <strong style="color: #1f2937; font-size: 16px;">{analysis.num_candidates}</strong>
+                                                </td>
+                                                <td width="50%">
+                                                    <span style="color: #6b7280; font-size: 14px;">Processing Time</span><br>
+                                                    <strong style="color: #1f2937; font-size: 16px;">{processing_time}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0;">
+                                        <span style="color: #6b7280; font-size: 14px;">Cost</span><br>
+                                        <strong style="color: #1f2937; font-size: 16px;">${analysis.cost_usd:.2f}</strong>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Top Candidates -->
+                    <tr>
+                        <td style="padding: 0 32px 24px 32px;">
+                            <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 20px; font-weight: 700;">🏆 Top Candidates</h2>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                                {top_candidates_html}
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 0 32px 32px 32px; text-align: center;">
+                            <a href="https://candidateevaluator.com/analysis/results/{analysis.id}" 
+                               style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);">
+                                📊 View Full Results
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Balance Info -->
+                    <tr>
+                        <td style="padding: 0 32px 32px 32px;">
+                            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px;">
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                    💰 <strong>Your remaining balance:</strong> ${user.balance_usd:.2f}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 24px 32px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
+                                Thanks for using <strong style="color: #1f2937;">CandidateEvaluator</strong>!
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                Need help? Visit our <a href="https://candidateevaluator.com/help" style="color: #3b82f6; text-decoration: none;">Help Center</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+        
+        # Plain text fallback
+        text_body = f"""Hi {user.name or user.email},
 
 Your analysis is ready!
 
@@ -69,7 +210,7 @@ Job Details:
 - Cost: ${analysis.cost_usd:.2f}
 
 Top Candidates:
-{top_candidates_text}
+{chr(10).join([f"{i+1}. {c['Candidate']} - {int(c.get('Overall', 0) * 100)}/100" for i, c in enumerate(top_3)])}
 
 View full results: https://candidateevaluator.com/analysis/results/{analysis.id}
 
@@ -81,8 +222,8 @@ Thanks for using CandidateEvaluator!
         email_sent = send_email(
             subject=subject,
             recipients=[user.email],
-            html_body=body,
-            text_body=body
+            html_body=html_body,
+            text_body=text_body
         )
         
         if email_sent:
