@@ -304,63 +304,60 @@ def admin_settings():
 
 @admin_bp.route('/run-migrations/<secret>')
 def admin_run_migrations(secret):
-    """Emergency migration endpoint - run analytics migrations via HTTP"""
+    """Emergency migration endpoint - run cost breakdown migrations via HTTP"""
     # Security: require secret key
-    if secret != "migrate-analytics-2026":
+    if secret != "migrate-cost-breakdown-2026":
         return "Unauthorized", 403
     
     from sqlalchemy import text
     results = []
     
     try:
-        # Migration 1: Basic Analytics
-        results.append("=��� Running Basic Analytics Migration...")
-        basic_fields = [
-            ("completed_at", "TIMESTAMP"),
-            ("processing_duration_seconds", "INTEER"),
-            ("exceeded_resume_limit", "BOOLEAN DEFAULT FALSE"),
-            ("user_chose_override", "BOOLEAN DEFAULT FALSE"),
+        # Check existing columns first
+        inspector = db.inspect(db.engine)
+        existing_columns = [col['name'] for col in inspector.get_columns('analyses')]
+        results.append(f"=== Current columns: {len(existing_columns)}<br><br>")
+        
+        # Define all columns that need to exist
+        all_fields = [
+            ("openai_cost_usd", "NUMERIC(10, 4)", "Actual OpenAI API costs"),
+            ("ranker_cost_usd", "NUMERIC(10, 4)", "Cost for ranking calls"),
+            ("insight_cost_usd", "NUMERIC(10, 4)", "Cost for insight generation"),
+            ("retry_count", "INTEGER DEFAULT 0", "Number of API retries"),
+            ("json_fallback_count", "INTEGER DEFAULT 0", "JSON parsing fallbacks"),
+            ("api_calls_made", "INTEGER", "Total API calls"),
+            ("avg_api_response_ms", "INTEGER", "Average response time"),
         ]
         
-        for field_name, field_type in basic_fields:
-            try:
-                sql = f"ALTER TABLE analyses ADD COLUMN {field_name} {field_type}"
-                db.session.execute(text(sql))
-                db.session.commit()
-                results.append(f"�� Added: {field_name}")
-            except Exception as e:
-                if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
-                    results.append(f"š� Skipped: {field_name} (already exists)")
-                else:
-                    results.append(f"�� Error: {field_name}: {str(e)[:100]}")
+        added_count = 0
+        skipped_count = 0
         
-        # Migration 2: Document Metrics
-        results.append("<br><br>=��� Running Document Metrics Migration...")
-        doc_fields = [
-            ("jd_character_count", "INTEER"),
-            ("avg_resume_character_count", "INTEER"),
-            ("min_resume_character_count", "INTEER"),
-            ("max_resume_character_count", "INTEER"),
-        ]
+        for field_name, field_type, description in all_fields:
+            if field_name in existing_columns:
+                results.append(f"✓ Skipped: {field_name} (already exists)<br>")
+                skipped_count += 1
+            else:
+                try:
+                    sql = f"ALTER TABLE analyses ADD COLUMN {field_name} {field_type}"
+                    db.session.execute(text(sql))
+                    db.session.commit()
+                    results.append(f"✅ Added: {field_name} - {description}<br>")
+                    added_count += 1
+                except Exception as e:
+                    if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
+                        results.append(f"⚠️ Skipped: {field_name} (already exists)<br>")
+                        skipped_count += 1
+                    else:
+                        results.append(f"❌ Error: {field_name}: {str(e)[:200]}<br>")
         
-        for field_name, field_type in doc_fields:
-            try:
-                sql = f"ALTER TABLE analyses ADD COLUMN {field_name} {field_type}"
-                db.session.execute(text(sql))
-                db.session.commit()
-                results.append(f"�� Added: {field_name}")
-            except Exception as e:
-                if "already exists" in str(e).lower() or "duplicate column" in str(e).lower():
-                    results.append(f"š� Skipped: {field_name} (already exists)")
-                else:
-                    results.append(f"�� Error: {field_name}: {str(e)[:100]}")
-        
-        results.append("<br><br>�� Migrations Complete!")
-        return "<br>".join(results), 200
+        results.append(f"<br><br>🎉 Migration Complete!<br>")
+        results.append(f"✅ Added: {added_count} columns<br>")
+        results.append(f"⏭️ Skipped: {skipped_count} columns<br>")
+        return "".join(results), 200
         
     except Exception as e:
-        results.append(f"<br><br>�� CRITICAL ERROR: {str(e)}")
-        return "<br>".join(results), 500
+        results.append(f"<br><br>❌ CRITICAL ERROR: {str(e)}")
+        return "".join(results), 500
 
 
 @admin_bp.route('/health-monitor')
