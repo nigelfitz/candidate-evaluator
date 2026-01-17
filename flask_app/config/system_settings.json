@@ -7,7 +7,7 @@
   "maintenance_mode": {
     "value": false,
     "label": "Maintenance Mode",
-    "description": "Show maintenance page to all users except admins"
+    "description": "Show maintenance page to all users except admins. ⚠️ NOT FUNCTIONAL - Toggle requires implementation (no enforcement currently active)"
   },
   "max_file_size_mb": {
     "value": 10,
