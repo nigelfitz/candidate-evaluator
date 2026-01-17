@@ -71,6 +71,17 @@ class AIService:
         self.client = AsyncOpenAI(api_key=self.api_key)
         self.ranker_model = RANKER_AGENT
         self.insight_model = INSIGHT_AGENT
+        
+        # Performance tracking counters (reset per analysis run)
+        self.retry_count = 0
+        self.json_fallback_count = 0
+        self.api_call_count = 0
+        self.api_response_times_ms = []  # Track individual response times
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+        self.total_openai_cost_usd = 0.0
+        self.ranker_cost_usd = 0.0  # Cost for ranking calls (per-resume scoring)
+        self.insight_cost_usd = 0.0  # Cost for insight generation calls
     
     
     # ============================================
@@ -177,11 +188,14 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
         for attempt in range(max_retries):
             try:
                 if attempt > 0:
+                    self.retry_count += 1  # Track retries
                     print(f"⚠️  RETRY {attempt}/{max_retries-1} for criterion: {criterion[:50]}...")
                 
+                # Track API call timing
                 # Acquire semaphore before making OpenAI API call
                 if semaphore:
                     async with semaphore:
+                        start_time = time.time()
                         response = await self.client.chat.completions.create(
                             model=self.ranker_model,
                             messages=[
@@ -192,7 +206,9 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                             max_tokens=RANKER_MAX_TOKENS,
                             response_format={"type": "json_object"}
                         )
+                        elapsed_ms = int((time.time() - start_time) * 1000)
                 else:
+                    start_time = time.time()
                     response = await self.client.chat.completions.create(
                         model=self.ranker_model,
                         messages=[
@@ -203,6 +219,25 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                         max_tokens=RANKER_MAX_TOKENS,
                         response_format={"type": "json_object"}
                     )
+                    elapsed_ms = int((time.time() - start_time) * 1000)
+                
+                # Track response time
+                self.api_response_times_ms.append(elapsed_ms)
+                self.api_call_count += 1
+                
+                # Track token usage and calculate cost
+                if hasattr(response, 'usage') and response.usage:
+                    prompt_tokens = response.usage.prompt_tokens
+                    completion_tokens = response.usage.completion_tokens
+                    self.total_prompt_tokens += prompt_tokens
+                    self.total_completion_tokens += completion_tokens
+                    
+                    # GPT-4o pricing: $2.50 per 1M input tokens, $10.00 per 1M output tokens
+                    prompt_cost = (prompt_tokens / 1_000_000) * 2.50
+                    completion_cost = (completion_tokens / 1_000_000) * 10.00
+                    call_cost = prompt_cost + completion_cost
+                    self.total_openai_cost_usd += call_cost
+                    self.ranker_cost_usd += call_cost  # This is a ranking call
                 
                 result = json.loads(response.choices[0].message.content)
                 
@@ -337,6 +372,13 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
         
         for attempt in range(max_retries):
             try:
+                if attempt > 0:
+                    self.retry_count += 1  # Track retries for insights
+                    print(f"⚠️  INSIGHT RETRY {attempt}/{max_retries-1} for {candidate_name}...")
+                
+                import time
+                start_time = time.time()
+                
                 response = await self.client.chat.completions.create(
                     model=self.insight_model,
                     messages=[
@@ -349,6 +391,25 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                     frequency_penalty=FREQUENCY_PENALTY,
                     response_format={"type": "json_object"}
                 )
+                
+                # Track response time
+                elapsed_ms = int((time.time() - start_time) * 1000)
+                self.api_response_times_ms.append(elapsed_ms)
+                self.api_call_count += 1
+                
+                # Track token usage and calculate cost for INSIGHTS
+                if hasattr(response, 'usage') and response.usage:
+                    prompt_tokens = response.usage.prompt_tokens
+                    completion_tokens = response.usage.completion_tokens
+                    self.total_prompt_tokens += prompt_tokens
+                    self.total_completion_tokens += completion_tokens
+                    
+                    # GPT-4o pricing
+                    prompt_cost = (prompt_tokens / 1_000_000) * 2.50
+                    completion_cost = (completion_tokens / 1_000_000) * 10.00
+                    call_cost = prompt_cost + completion_cost
+                    self.total_openai_cost_usd += call_cost
+                    self.insight_cost_usd += call_cost  # This is an insight call
                 
                 # Parse JSON with aggressive error recovery
                 raw_content = response.choices[0].message.content
@@ -514,6 +575,7 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                         error_msg = f"Rate limit error after {max_retries} retries for {candidate_name}"
                         print(f"WARNING: {error_msg}")
                         print(f"FALLBACK: Using Phase 1 justifications due to rate limiting")
+                        self.json_fallback_count += 1  # Track fallback
                         
                         # Build fallback response using Phase 1 data
                         fallback_result = {
@@ -541,6 +603,7 @@ Identify which requirements are "anchors" (binary requirements like degrees, cer
                     print(f"WARNING: Insights generation failed for {candidate_name}")
                     print(f"ERROR: {error_str}")
                     print(f"FALLBACK: Using Phase 1 justifications due to unexpected error")
+                    self.json_fallback_count += 1  # Track fallback
                     
                     # Build fallback response using Phase 1 data
                     fallback_result = {
@@ -573,7 +636,7 @@ async def run_global_ranking(
     jd_text: str,
     criteria: List[Dict[str, Any]],
     progress_callback: Optional[callable] = None
-) -> List[CandidateEvaluation]:
+) -> Tuple[List[CandidateEvaluation], AIService]:
     """
     PHASE 1 ORCHESTRATOR: Score all candidates in parallel with progress tracking.
     
@@ -584,7 +647,7 @@ async def run_global_ranking(
         progress_callback: Optional callback(completed, total) for progress updates
     
     Returns:
-        List of CandidateEvaluation objects sorted by overall_score
+        Tuple of (List of CandidateEvaluation objects sorted by overall_score, AIService instance with metrics)
     """
     ai_service = AIService()
     
@@ -652,7 +715,7 @@ async def run_global_ranking(
     # Sort by overall score (descending)
     results.sort(key=lambda x: x.overall_score, reverse=True)
     
-    return results
+    return results, ai_service  # Return metrics with results
 
 
 async def run_deep_insights(
@@ -700,4 +763,4 @@ async def run_deep_insights(
         for eval, insights in zip(top_evaluations, insights_list)
     }
     
-    return insights_data
+    return insights_data, ai_service  # Return ai_service to capture insight costs

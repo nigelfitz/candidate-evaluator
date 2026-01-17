@@ -433,7 +433,8 @@ def process_job(job):
         
         criteria_for_ai = [c for c in criteria_list if c.get('use', True)]
         
-        evaluations = asyncio.run(
+        # Capture both results and AIService instance with metrics
+        evaluations, ai_service = asyncio.run(
             run_global_ranking(
                 candidates=candidate_tuples,
                 jd_text=jd_text[:jd_text_limit],
@@ -454,7 +455,7 @@ def process_job(job):
             analysis.analysis_size = 'phase2'
             db.session.commit()
             
-            insights_data = asyncio.run(
+            insights_data, insight_service = asyncio.run(
                 run_deep_insights(
                     candidates=candidate_tuples,
                     jd_text=jd_text,
@@ -511,6 +512,48 @@ def process_job(job):
         analysis.gpt_candidates = json.dumps(gpt_candidates_list)
         analysis.completed_at = datetime.now(timezone.utc)
         analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
+        
+        # ============================================
+        # Calculate and store performance metrics
+        # ============================================
+        # Calculate cost multiplier (actual vs expected)
+        # Expected: num_candidates × 3 criteria × $0.002 per call (ranker baseline)
+        expected_ranker_cost = analysis.num_candidates * 3 * 0.002
+        actual_cost = float(analysis.openai_cost_usd)
+        cost_multiplier = actual_cost / expected_ranker_cost if expected_ranker_cost > 0 else 1.0
+        
+        # Calculate average API response time (combined from both phases)
+        all_response_times = ai_service.api_response_times_ms + insight_service.api_response_times_ms
+        avg_response_ms = int(sum(all_response_times) / len(all_response_times)) if all_response_times else 0
+        
+        # Store metrics (combine from both phases)
+        analysis.retry_count = ai_service.retry_count + insight_service.retry_count
+        analysis.json_fallback_count = ai_service.json_fallback_count + insight_service.json_fallback_count
+        analysis.cost_multiplier = cost_multiplier
+        analysis.api_calls_made = ai_service.api_call_count + insight_service.api_call_count
+        analysis.avg_api_response_ms = avg_response_ms
+        
+        # Combine costs from Phase 1 (ranking) and Phase 2 (insights)
+        total_openai = ai_service.total_openai_cost_usd + insight_service.total_openai_cost_usd
+        analysis.openai_cost_usd = round(total_openai, 4)
+        analysis.ranker_cost_usd = round(ai_service.ranker_cost_usd, 4)
+        analysis.insight_cost_usd = round(insight_service.insight_cost_usd, 4)
+        
+        # Log performance summary
+        print(f"📊 Performance Metrics:")
+        print(f"   API Calls: {ai_service.api_call_count + insight_service.api_call_count}")
+        print(f"   Retries: {ai_service.retry_count}")
+        print(f"   JSON Fallbacks: {ai_service.json_fallback_count}")
+        print(f"   Cost Multiplier: {cost_multiplier:.2f}x")
+        print(f"   Avg API Response: {avg_response_ms}ms")
+        total = float(analysis.openai_cost_usd)
+        ranker = float(analysis.ranker_cost_usd)
+        insight = float(analysis.insight_cost_usd)
+        total_tokens = ai_service.total_prompt_tokens + ai_service.total_completion_tokens + insight_service.total_prompt_tokens + insight_service.total_completion_tokens
+        print(f"   OpenAI Cost: ${total:.4f} (tokens: {total_tokens})")
+        print(f"     - Ranker: ${ranker:.4f} ({len(candidates)} resumes × 3 criteria)")
+        print(f"     - Insights: ${insight:.4f} (top 5 candidates)")
+        print(f"")
         
         # Store candidate files
         for candidate in candidates:

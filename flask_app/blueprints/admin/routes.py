@@ -3,6 +3,7 @@ from flask_login import login_required, current_user, logout_user
 from database import db, User, Transaction, Analysis, Feedback, AdminLoginAttempt, AdminAuditLog, Draft
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from collections import defaultdict
 import json
 import os
 import pyotp
@@ -362,10 +363,243 @@ def admin_run_migrations(secret):
         return "<br>".join(results), 500
 
 
+@admin_bp.route('/health-monitor')
+@admin_required
+def admin_health_monitor():
+    """Display system health monitoring dashboard with performance metrics"""
+    from sqlalchemy import func, desc
+    from datetime import datetime, timedelta
+    
+    # ============================================
+    # SYSTEM HEALTH CALCULATION
+    # ============================================
+    
+    # Define alert thresholds
+    THRESHOLDS = {
+        'retry_count': 5,           # Alert if >5 retries in one job
+        'json_fallback_count': 3,   # Alert if >3 JSON failures  
+        'avg_api_response_ms': 5000,# Alert if avg API response >5s
+        'processing_time_per_resume': 5  # Alert if >5 seconds per resume
+    }
+    
+    # Get recent jobs (last 50) for health analysis
+    recent_analyses = Analysis.query.filter(
+        Analysis.completed_at.isnot(None)
+    ).order_by(desc(Analysis.completed_at)).limit(50).all()
+    
+    # Calculate health metrics
+    total_recent = len(recent_analyses)
+    healthy_count = 0
+    warning_count = 0
+    critical_count = 0
+    alerts = []
+    
+    for analysis in recent_analyses:
+        issues = []
+        severity = 'healthy'
+        
+        # Check retry count
+        if analysis.retry_count and analysis.retry_count > THRESHOLDS['retry_count']:
+            issues.append(f"{analysis.retry_count} retries")
+            severity = 'warning'
+        
+        # Check JSON fallbacks
+        if analysis.json_fallback_count and analysis.json_fallback_count > THRESHOLDS['json_fallback_count']:
+            issues.append(f"{analysis.json_fallback_count} JSON fallbacks")
+            severity = 'critical' if severity != 'critical' else severity
+        
+        # Check API response time
+        if analysis.avg_api_response_ms and analysis.avg_api_response_ms > THRESHOLDS['avg_api_response_ms']:
+            issues.append(f"{analysis.avg_api_response_ms}ms avg API response")
+            severity = 'warning' if severity == 'healthy' else severity
+        
+        # Check processing time per resume
+        if analysis.processing_duration_seconds and analysis.num_candidates:
+            time_per_resume = analysis.processing_duration_seconds / analysis.num_candidates
+            if time_per_resume > THRESHOLDS['processing_time_per_resume']:
+                issues.append(f"{time_per_resume:.1f}s per resume")
+                severity = 'warning' if severity == 'healthy' else severity
+        
+        # Count by severity
+        if severity == 'healthy':
+            healthy_count += 1
+        elif severity == 'warning':
+            warning_count += 1
+        else:
+            critical_count += 1
+        
+        # Add to alerts if has issues
+        if issues:
+            alerts.append({
+                'analysis_id': analysis.id,
+                'job_title': analysis.job_title or 'Untitled',
+                'num_candidates': analysis.num_candidates,
+                'severity': severity,
+                'issues': issues,
+                'completed_at': analysis.completed_at,
+                'openai_cost_usd': float(analysis.openai_cost_usd) if analysis.openai_cost_usd else 0.0,
+                'retry_count': analysis.retry_count or 0,
+                'json_fallback_count': analysis.json_fallback_count or 0,
+                'avg_api_response_ms': analysis.avg_api_response_ms or 0,
+                'processing_duration_seconds': analysis.processing_duration_seconds
+            })
+    
+    # Calculate overall system health score (0-100)
+    if total_recent > 0:
+        health_score = int((healthy_count / total_recent) * 100)
+        health_status = 'healthy' if health_score >= 80 else ('warning' if health_score >= 60 else 'critical')
+    else:
+        health_score = 100
+        health_status = 'healthy'
+    
+    # ============================================
+    # PERFORMANCE TRENDS
+    # ============================================
+    
+    # Cost breakdown trends (last 30 days)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    
+    # Get all jobs with cost breakdown data
+    recent_jobs_for_trend = Analysis.query.filter(
+        Analysis.completed_at >= thirty_days_ago,
+        Analysis.completed_at.isnot(None),
+        Analysis.num_candidates > 0,
+        Analysis.ranker_cost_usd.isnot(None),
+        Analysis.insight_cost_usd.isnot(None)
+    ).all()
+    
+    # Group by date for ranker cost per resume
+    daily_ranker_costs = defaultdict(lambda: {'total_cost_per_resume': 0, 'count': 0})
+    # Group by date for insight cost per job
+    daily_insight_costs = defaultdict(lambda: {'total_cost': 0, 'count': 0})
+    
+    for job in recent_jobs_for_trend:
+        date_key = job.completed_at.date().strftime('%Y-%m-%d')
+        
+        # Ranker cost per resume (this is the per-resume metric)
+        ranker_cost_per_resume = float(job.ranker_cost_usd) / float(job.num_candidates)
+        daily_ranker_costs[date_key]['total_cost_per_resume'] += ranker_cost_per_resume
+        daily_ranker_costs[date_key]['count'] += 1
+        
+        # Insight cost per job (fixed cost regardless of batch size)
+        daily_insight_costs[date_key]['total_cost'] += float(job.insight_cost_usd)
+        daily_insight_costs[date_key]['count'] += 1
+    
+    # Ranker cost trend (per resume)
+    cost_trend_labels = []
+    cost_trend_data = []
+    for date_str in sorted(daily_ranker_costs.keys()):
+        cost_trend_labels.append(date_str[5:].replace('-', '/'))
+        avg = daily_ranker_costs[date_str]['total_cost_per_resume'] / daily_ranker_costs[date_str]['count']
+        cost_trend_data.append(round(avg, 4))
+    
+    # Insight cost trend (per job)
+    insight_trend_labels = []
+    insight_trend_data = []
+    for date_str in sorted(daily_insight_costs.keys()):
+        insight_trend_labels.append(date_str[5:].replace('-', '/'))
+        avg = daily_insight_costs[date_str]['total_cost'] / daily_insight_costs[date_str]['count']
+        insight_trend_data.append(round(avg, 4))
+    
+    # ============================================
+    # KEY PERFORMANCE INDICATORS
+    # ============================================
+    
+    # Average metrics across all completed jobs
+    avg_cost_multiplier = db.session.query(func.avg(Analysis.cost_multiplier)).filter(
+        Analysis.cost_multiplier.isnot(None)
+    ).scalar() or 1.0
+    
+    avg_retry_count = db.session.query(func.avg(Analysis.retry_count)).filter(
+        Analysis.retry_count.isnot(None)
+    ).scalar() or 0
+    
+    avg_json_fallbacks = db.session.query(func.avg(Analysis.json_fallback_count)).filter(
+        Analysis.json_fallback_count.isnot(None)
+    ).scalar() or 0
+    
+    avg_api_response = db.session.query(func.avg(Analysis.avg_api_response_ms)).filter(
+        Analysis.avg_api_response_ms.isnot(None)
+    ).scalar() or 0
+    
+    # Job success rate
+    total_jobs = Analysis.query.count()
+    successful_jobs = Analysis.query.filter(Analysis.completed_at.isnot(None)).count()
+    failed_jobs = Analysis.query.filter(Analysis.failed_at.isnot(None)).count()
+    success_rate = (successful_jobs / total_jobs * 100) if total_jobs > 0 else 100
+    
+    # Recent jobs with full metrics for table
+    recent_jobs_full = db.session.query(
+        Analysis,
+        User.email.label('user_email')
+    ).join(
+        User, Analysis.user_id == User.id
+    ).filter(
+        Analysis.completed_at.isnot(None)
+    ).order_by(
+        desc(Analysis.completed_at)
+    ).limit(20).all()
+    
+    recent_jobs_data = []
+    for analysis, user_email in recent_jobs_full:
+        # Determine status color
+        status = 'success'
+        if (analysis.retry_count and analysis.retry_count > 5) or (analysis.json_fallback_count and analysis.json_fallback_count > 3):
+            status = 'warning'
+        
+        recent_jobs_data.append({
+            'id': analysis.id,
+            'user_email': user_email,
+            'job_title': analysis.job_title or 'Untitled',
+            'num_candidates': analysis.num_candidates,
+            'openai_cost_usd': float(analysis.openai_cost_usd) if analysis.openai_cost_usd else 0.0,
+            'ranker_cost_usd': float(analysis.ranker_cost_usd) if analysis.ranker_cost_usd else 0.0,
+            'insight_cost_usd': float(analysis.insight_cost_usd) if analysis.insight_cost_usd else 0.0,
+            'retry_count': analysis.retry_count or 0,
+            'json_fallback_count': analysis.json_fallback_count or 0,
+            'api_calls_made': analysis.api_calls_made or 0,
+            'avg_api_response_ms': analysis.avg_api_response_ms or 0,
+            'processing_duration_seconds': analysis.processing_duration_seconds,
+            'completed_at': analysis.completed_at,
+            'status': status
+        })
+    
+    # Package all stats
+    stats = {
+        # System Health
+        'health_score': health_score,
+        'health_status': health_status,
+        'healthy_count': healthy_count,
+        'warning_count': warning_count,
+        'critical_count': critical_count,
+        'total_recent': total_recent,
+        'alerts': alerts[:10],  # Top 10 most recent alerts
+        'thresholds': THRESHOLDS,
+        
+        # Performance Trends
+        'cost_trend': {'labels': cost_trend_labels, 'data': cost_trend_data},
+        'insight_trend': {'labels': insight_trend_labels, 'data': insight_trend_data},
+        
+        # KPIs
+        'avg_retry_count': float(avg_retry_count),
+        'avg_json_fallbacks': float(avg_json_fallbacks),
+        'avg_api_response_ms': int(avg_api_response),
+        'success_rate': float(success_rate),
+        'total_jobs': total_jobs,
+        'successful_jobs': successful_jobs,
+        'failed_jobs': failed_jobs,
+        
+        # Recent Jobs
+        'recent_jobs': recent_jobs_data
+    }
+    
+    return render_template('admin_health_monitor.html', stats=stats, active_tab='health')
+
+
 @admin_bp.route('/analytics')
 @admin_required
 def admin_analytics():
-    """Display analytics dashboard with system metrics"""
+    """Display analytics dashboard with business metrics - revenue, users, job history"""
     from sqlalchemy import func, desc
     from datetime import datetime, timedelta
     
@@ -401,7 +635,7 @@ def admin_analytics():
     override_rate = (overrides_chosen / warnings_shown * 100) if warnings_shown > 0 else 0
     
     # Jobs by day (last 30 days)
-    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     jobs_by_day = db.session.query(
         func.date(Analysis.created_at).label('date'),
         func.count(Analysis.id).label('count')
@@ -413,7 +647,6 @@ def admin_analytics():
     jobs_labels = []
     for row in jobs_by_day:
         if isinstance(row.date, str):
-            # SQLite returns string like '2026-01-01'
             jobs_labels.append(row.date[5:].replace('-', '/'))
         else:
             jobs_labels.append(row.date.strftime('%m/%d'))
@@ -431,7 +664,6 @@ def admin_analytics():
     revenue_labels = []
     for row in revenue_by_day:
         if isinstance(row.date, str):
-            # SQLite returns string like '2026-01-01'
             revenue_labels.append(row.date[5:].replace('-', '/'))
         else:
             revenue_labels.append(row.date.strftime('%m/%d'))
@@ -461,10 +693,9 @@ def admin_analytics():
         Analysis.jd_character_count.isnot(None)
     ).scalar() or 0
     
-    # et all resume character counts for bell curve
+    # Get all resume character counts for bell curve
     all_resume_chars = []
     for analysis in Analysis.query.filter(Analysis.avg_resume_character_count.isnot(None)).all():
-        # Approximate: use avg, min, max to estimate distribution
         if analysis.avg_resume_character_count:
             all_resume_chars.append(analysis.avg_resume_character_count)
     
@@ -522,12 +753,12 @@ def admin_analytics():
         'user_email': user_email,
         'job_title': analysis.job_title or 'Untitled',
         'num_candidates': analysis.num_candidates,
-        'cost_usd': analysis.cost_usd,
+        'cost_usd': float(analysis.cost_usd) if analysis.cost_usd else 0.0,
         'processing_duration_seconds': analysis.processing_duration_seconds,
-        'created_at': analysis.created_at,
         'completed_at': analysis.completed_at,
-        'exceeded_resume_limit': analysis.exceeded_resume_limit or False,
-        'user_chose_override': analysis.user_chose_override or False
+        'created_at': analysis.created_at,
+        'exceeded_resume_limit': analysis.exceeded_resume_limit,
+        'user_chose_override': analysis.user_chose_override
     } for analysis, user_email in recent_jobs]
     
     stats = {
@@ -536,7 +767,7 @@ def admin_analytics():
         'total_candidates': total_candidates,
         'total_revenue': total_revenue,
         'avg_candidates_per_job': avg_candidates,
-        'median_candidates': int(median_candidates),
+        'median_candidates': median_candidates,
         'max_candidates': max_candidates,
         'avg_processing_time': int(avg_time),
         'min_processing_time': int(min_time),
@@ -550,8 +781,8 @@ def admin_analytics():
         'time_vs_candidates': time_vs_candidates,
         'avg_jd_chars': int(avg_jd_chars),
         'avg_resume_chars': avg_resume_chars,
-        'min_resume_chars': min_resume_chars,
-        'max_resume_chars': max_resume_chars,
+        'min_resume_chars': int(min_resume_chars),
+        'max_resume_chars': int(max_resume_chars),
         'resume_size_labels': resume_size_labels,
         'resume_size_distribution': resume_size_distribution,
         'top_users': top_users_data,

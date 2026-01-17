@@ -1,0 +1,514 @@
+{% extends "admin_base.html" %}
+
+{% block title %}System Health Monitor - Admin Panel{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_styles %}
+.health-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.health-score-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width: 250px;
+}
+
+.health-score-large {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.health-score-large.healthy { color: #10b981; }
+.health-score-large.warning { color: #f59e0b; }
+.health-score-large.critical { color: #ef4444; }
+
+.health-breakdown {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.health-chip {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.health-chip.healthy { background: #d1fae5; color: #065f46; }
+.health-chip.warning { background: #fef3c7; color: #92400e; }
+.health-chip.critical { background: #fee2e2; color: #991b1b; }
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-value.good { color: #10b981; }
+.kpi-value.warn { color: #f59e0b; }
+.kpi-value.bad { color: #ef4444; }
+
+.kpi-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.kpi-detail {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.5rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-card h3 {
+    color: #1f2937;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.alerts-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.alert-item {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid;
+}
+
+.alert-item.warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+}
+
+.alert-item.critical {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.5rem;
+}
+
+.alert-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.alert-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.alert-badge.warning { background: #fef3c7; color: #92400e; }
+.alert-badge.critical { background: #fee2e2; color: #991b1b; }
+
+.alert-issues {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.alert-issues ul {
+    margin: 0.5rem 0 0 1.5rem;
+    padding: 0;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-table th {
+    background: #f9fafb;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+}
+
+.data-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table tr:hover {
+    background: #f9fafb;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-badge.success { background: #d1fae5; color: #065f46; }
+.status-badge.warning { background: #fef3c7; color: #92400e; }
+.status-badge.danger { background: #fee2e2; color: #991b1b; }
+
+.threshold-info {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.threshold-info strong {
+    color: #1e40af;
+}
+
+.no-alerts {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+}
+
+.no-alerts .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="health-container">
+    <div class="health-header">
+        <div>
+            <h1>🏥 System Health Monitor</h1>
+            <p style="color: #666; margin-top: 0.5rem;">Real-time performance tracking and anomaly detection</p>
+        </div>
+        
+        <!-- System Health Score -->
+        <div class="health-score-card">
+            <div class="health-score-large {{ stats.health_status }}">{{ stats.health_score }}</div>
+            <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem;">Health Score</div>
+            <div class="health-breakdown">
+                <span class="health-chip healthy">{{ stats.healthy_count }} 🟢</span>
+                <span class="health-chip warning">{{ stats.warning_count }} 🟡</span>
+                <span class="health-chip critical">{{ stats.critical_count }} 🔴</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.75rem; color: #9ca3af;">
+                Based on last {{ stats.total_recent }} jobs
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-value {% if stats.avg_retry_count <= 2 %}good{% elif stats.avg_retry_count <= 5 %}warn{% else %}bad{% endif %}">
+                {{ "%.1f"|format(stats.avg_retry_count) }}
+            </div>
+            <div class="kpi-label">Avg Retries per Job</div>
+            <div class="kpi-detail">Expected: 0-2 | Alert: >5</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value {% if stats.avg_json_fallbacks == 0 %}good{% elif stats.avg_json_fallbacks <= 3 %}warn{% else %}bad{% endif %}">
+                {{ "%.1f"|format(stats.avg_json_fallbacks) }}
+            </div>
+            <div class="kpi-label">Avg JSON Fallbacks</div>
+            <div class="kpi-detail">Expected: 0 | Alert: >3</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value {% if stats.avg_api_response_ms <= 2000 %}good{% elif stats.avg_api_response_ms <= 3000 %}warn{% else %}bad{% endif %}">
+                {{ stats.avg_api_response_ms }}ms
+            </div>
+            <div class="kpi-label">Avg API Response</div>
+            <div class="kpi-detail">Expected: <2s | Alert: >3s</div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-value {% if stats.success_rate >= 95 %}good{% elif stats.success_rate >= 90 %}warn{% else %}bad{% endif %}">
+                {{ "%.1f"|format(stats.success_rate) }}%
+            </div>
+            <div class="kpi-label">Job Success Rate</div>
+            <div class="kpi-detail">{{ stats.successful_jobs }} / {{ stats.total_jobs }} completed</div>
+        </div>
+    </div>
+
+    <!-- Performance Trends -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>💰 Ranker Cost Per Resume (30 Days)</h3>
+            <canvas id="costTrendChart"></canvas>
+            <div style="margin-top: 1rem; font-size: 0.85rem; color: #6b7280;">
+                📊 Cost for scoring resumes (3 criteria per resume). Monitor for API efficiency issues.
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>💎 Insight Cost Per Job (30 Days)</h3>
+            <canvas id="insightCostChart"></canvas>
+            <div style="margin-top: 1rem; font-size: 0.85rem; color: #6b7280;">
+                📈 Cost for deep insights (top 5 candidates). Most expensive part of analysis.
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="alerts-section">
+        <h3 style="margin-bottom: 1.5rem;">🚨 Recent Alerts (Last 10)</h3>
+        
+        {% if stats.alerts %}
+            {% for alert in stats.alerts %}
+            <div class="alert-item {{ alert.severity }}">
+                <div class="alert-header">
+                    <div>
+                        <div class="alert-title">
+                            Job #{{ alert.analysis_id }}: {{ alert.job_title[:50] }}
+                            {% if alert.job_title|length > 50 %}...{% endif %}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">
+                            {{ alert.num_candidates }} candidates • 
+                            ${{ "%.4f"|format(alert.openai_cost_usd) }} OpenAI cost • 
+                            {{ alert.completed_at.strftime('%Y-%m-%d %H:%M') if alert.completed_at else 'N/A' }}
+                        </div>
+                    </div>
+                    <span class="alert-badge {{ alert.severity }}">
+                        {% if alert.severity == 'critical' %}🔴 Critical{% else %}🟡 Warning{% endif %}
+                    </span>
+                </div>
+                <div class="alert-issues">
+                    <strong>Issues detected:</strong>
+                    <ul>
+                        {% for issue in alert.issues %}
+                        <li>{{ issue }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="threshold-info">
+                <strong>Alert Thresholds:</strong>
+                Retries >{{ stats.thresholds.retry_count }} | 
+                JSON Fallbacks >{{ stats.thresholds.json_fallback_count }} | 
+                API Response >{{ stats.thresholds.avg_api_response_ms }}ms | 
+                Time per Resume >{{ stats.thresholds.processing_time_per_resume }}s
+            </div>
+        {% else %}
+            <div class="no-alerts">
+                <div class="icon">✅</div>
+                <div><strong>All Systems Healthy</strong></div>
+                <div style="color: #9ca3af; margin-top: 0.5rem;">No alerts in the last {{ stats.total_recent }} jobs</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Jobs Table -->
+    <div class="chart-card" style="overflow-x: auto;">
+        <h3>📋 Recent Jobs with Performance Metrics</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Job Title</th>
+                    <th>Candidates</th>
+                    <th>Ranker Cost</th>
+                    <th>Insight Cost</th>
+                    <th>Retries</th>
+                    <th>Fallbacks</th>
+                    <th>API Calls</th>
+                    <th>Avg Response</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in stats.recent_jobs %}
+                <tr>
+                    <td>#{{ job.id }}</td>
+                    <td>{{ job.job_title[:30] }}{% if job.job_title|length > 30 %}...{% endif %}</td>
+                    <td>{{ job.num_candidates }}</td>
+                    <td>${{ "%.4f"|format(job.ranker_cost_usd) }}</td>
+                    <td>${{ "%.4f"|format(job.insight_cost_usd) }}</td>
+                    <td>
+                        <span style="{% if job.retry_count > 5 %}color: #ef4444; font-weight: 600;{% elif job.retry_count > 2 %}color: #f59e0b;{% endif %}">
+                            {{ job.retry_count }}
+                        </span>
+                    </td>
+                    <td>
+                        <span style="{% if job.json_fallback_count > 3 %}color: #ef4444; font-weight: 600;{% elif job.json_fallback_count > 0 %}color: #f59e0b;{% endif %}">
+                            {{ job.json_fallback_count }}
+                        </span>
+                    </td>
+                    <td>{{ job.api_calls_made or '-' }}</td>
+                    <td>
+                        <span style="{% if job.avg_api_response_ms > 5000 %}color: #ef4444; font-weight: 600;{% elif job.avg_api_response_ms > 3000 %}color: #f59e0b;{% endif %}">
+                            {% if job.avg_api_response_ms %}{{ job.avg_api_response_ms }}ms{% else %}-{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if job.processing_duration_seconds %}
+                            {{ job.processing_duration_seconds }}s
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-badge {{ job.status }}">
+                            {% if job.status == 'success' %}✓{% elif job.status == 'warning' %}⚠{% else %}✗{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Ranker Cost Per Resume Chart
+const costCtx = document.getElementById('costTrendChart').getContext('2d');
+new Chart(costCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.cost_trend.labels|tojson }},
+        datasets: [{
+            label: 'Ranker Cost per Resume',
+            data: {{ stats.cost_trend.data|tojson }},
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Cost ($)'
+                },
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toFixed(4);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Insight Cost Per Job Chart
+const insightCtx = document.getElementById('insightCostChart').getContext('2d');
+new Chart(insightCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.insight_trend.labels|tojson }},
+        datasets: [{
+            label: 'Avg Insight Cost per Job',
+            data: {{ stats.insight_trend.data|tojson }},
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Cost ($)'
+                },
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toFixed(4);
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+

@@ -1015,7 +1015,8 @@ def analyze():
             print("Phase 1: AI scoring all candidates...")
             candidate_tuples = [(c.name, c.text) for c in candidates]
             
-            evaluations = asyncio.run(
+            # Capture both results and AIService instance with metrics
+            evaluations, ai_service = asyncio.run(
                 run_global_ranking(
                     candidates=candidate_tuples,
                     jd_text=jd_text,
@@ -1033,7 +1034,7 @@ def analyze():
             if num_insights > 0:
                 print(f"Phase 2: Generating deep insights for top {num_insights}...")
                 
-                insights_data = asyncio.run(
+                insights_data, insight_service = asyncio.run(
                     run_deep_insights(
                         candidates=candidate_tuples,
                         jd_text=jd_text,
@@ -1094,6 +1095,23 @@ def analyze():
             # Capture completion time and duration for analytics
             analysis.completed_at = datetime.now(timezone.utc)
             analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
+            
+            # ============================================
+            # Calculate and store performance metrics
+            # ============================================
+            # Calculate cost multiplier (actual vs expected)
+            expected_cost = len(candidates) * 3 * 0.0015
+            cost_multiplier = float(total_cost) / expected_cost if expected_cost > 0 else 1.0
+            
+            # Calculate average API response time
+            avg_response_ms = int(sum(ai_service.api_response_times_ms) / len(ai_service.api_response_times_ms)) if ai_service.api_response_times_ms else 0
+            
+            # Store metrics
+            analysis.retry_count = ai_service.retry_count
+            analysis.json_fallback_count = ai_service.json_fallback_count
+            analysis.cost_multiplier = cost_multiplier
+            analysis.api_calls_made = ai_service.api_call_count
+            analysis.avg_api_response_ms = avg_response_ms
             
             db.session.add(analysis)
             
@@ -1547,7 +1565,8 @@ def run_analysis_route():
         # This prevents coverage DataFrame from having columns for unchecked criteria
         criteria_for_ai = [c for c in criteria_list if c.get('use', True)]
         
-        evaluations = asyncio.run(
+        # Capture both results and AIService instance with metrics
+        evaluations, ai_service = asyncio.run(
             run_global_ranking(
                 candidates=candidate_tuples,
                 jd_text=jd_text[:jd_text_limit],  # Respect admin setting, not hardcoded limit
@@ -1569,7 +1588,7 @@ def run_analysis_route():
             analysis.analysis_size = 'phase2'
             db.session.commit()
             
-            insights_data = asyncio.run(
+            insights_data, insight_service = asyncio.run(
                 run_deep_insights(
                     candidates=candidate_tuples,
                     jd_text=jd_text,
@@ -1652,6 +1671,32 @@ def run_analysis_route():
         # Capture completion time and duration for analytics
         analysis.completed_at = datetime.now(timezone.utc)
         analysis.processing_duration_seconds = int((analysis.completed_at - analysis_start_time).total_seconds())
+        
+        # ============================================
+        # Calculate and store performance metrics
+        # ============================================
+        # Calculate cost multiplier (actual vs expected)
+        # Expected: num_candidates × 3 criteria × $0.002 per call (ranker baseline)
+        expected_ranker_cost = analysis.num_candidates * 3 * 0.002
+        actual_cost = float(analysis.openai_cost_usd)
+        cost_multiplier = actual_cost / expected_ranker_cost if expected_ranker_cost > 0 else 1.0
+        
+        # Calculate average API response time (combined from both phases)
+        all_response_times = ai_service.api_response_times_ms + insight_service.api_response_times_ms
+        avg_response_ms = int(sum(all_response_times) / len(all_response_times)) if all_response_times else 0
+        
+        # Store metrics (combine from both phases)
+        analysis.retry_count = ai_service.retry_count + insight_service.retry_count
+        analysis.json_fallback_count = ai_service.json_fallback_count + insight_service.json_fallback_count
+        analysis.cost_multiplier = cost_multiplier
+        analysis.api_calls_made = ai_service.api_call_count + insight_service.api_call_count
+        analysis.avg_api_response_ms = avg_response_ms
+        
+        # Combine costs from Phase 1 (ranking) and Phase 2 (insights)
+        total_openai = ai_service.total_openai_cost_usd + insight_service.total_openai_cost_usd
+        analysis.openai_cost_usd = round(total_openai, 4)
+        analysis.ranker_cost_usd = round(ai_service.ranker_cost_usd, 4)
+        analysis.insight_cost_usd = round(insight_service.insight_cost_usd, 4)
         
         # Store candidate files
         from database import CandidateFile

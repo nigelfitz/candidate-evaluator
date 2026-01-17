@@ -130,7 +130,10 @@ class Analysis(db.Model):
     gpt_candidates = db.Column(db.Text)  # JSON: list of candidates analyzed with GPT
     
     # Cost
-    cost_usd = db.Column(db.Numeric(10, 2), nullable=False)
+    cost_usd = db.Column(db.Numeric(10, 2), nullable=False)  # What customer paid
+    openai_cost_usd = db.Column(db.Numeric(10, 4))  # Total OpenAI API cost from token usage
+    ranker_cost_usd = db.Column(db.Numeric(10, 4))  # Cost for ranking/scoring (3 calls per resume)
+    insight_cost_usd = db.Column(db.Numeric(10, 4))  # Cost for deep insights (5 candidates)
     
     # Analysis metadata
     analysis_size = db.Column(db.String(20))  # 'small', 'medium', 'large'
@@ -153,6 +156,13 @@ class Analysis(db.Model):
     avg_resume_character_count = db.Column(db.Integer)  # Average resume length
     min_resume_character_count = db.Column(db.Integer)  # Shortest resume
     max_resume_character_count = db.Column(db.Integer)  # Longest resume
+    
+    # Performance tracking metrics (for monitoring system health)
+    retry_count = db.Column(db.Integer, default=0)  # Number of API retries during analysis
+    json_fallback_count = db.Column(db.Integer, default=0)  # Times gpt-4o-mini was used instead of gpt-4o
+    cost_multiplier = db.Column(db.Float)  # Actual cost / expected cost ratio
+    api_calls_made = db.Column(db.Integer)  # Total OpenAI API calls for this analysis
+    avg_api_response_ms = db.Column(db.Integer)  # Average API response time in milliseconds
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
