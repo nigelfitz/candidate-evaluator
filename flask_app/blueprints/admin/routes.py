@@ -325,6 +325,7 @@ def admin_run_migrations(secret):
             ("insight_cost_usd", "NUMERIC(10, 4)", "Cost for insight generation"),
             ("retry_count", "INTEGER DEFAULT 0", "Number of API retries"),
             ("json_fallback_count", "INTEGER DEFAULT 0", "JSON parsing fallbacks"),
+            ("cost_multiplier", "NUMERIC(6, 4) DEFAULT 1.0", "Cost adjustment multiplier"),
             ("api_calls_made", "INTEGER", "Total API calls"),
             ("avg_api_response_ms", "INTEGER", "Average response time"),
         ]
