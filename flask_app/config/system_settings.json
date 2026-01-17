@@ -10,7 +10,7 @@
     "description": "Show maintenance page to all users except admins. ⚠️ NOT FUNCTIONAL - Toggle requires implementation (no enforcement currently active)"
   },
   "max_file_size_mb": {
-    "value": 10,
+    "value": 25,
     "label": "Maximum File Size (MB)",
     "description": "Maximum size for uploaded CV/resume files"
   },

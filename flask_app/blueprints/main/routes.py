@@ -99,6 +99,18 @@ def support():
     
     return render_template('support.html')
 
+@main_bp.route('/sitemap.xml')
+def sitemap():
+    """Serve the sitemap.xml file"""
+    from flask import send_from_directory
+    return send_from_directory(os.path.join(current_app.root_path, 'static'), 'sitemap.xml', mimetype='application/xml')
+
+@main_bp.route('/robots.txt')
+def robots():
+    """Serve the robots.txt file"""
+    from flask import send_from_directory
+    return send_from_directory(os.path.join(current_app.root_path, 'static'), 'robots.txt', mimetype='text/plain')
+
 @main_bp.route('/favicon.ico')
 def favicon():
     """Return 204 No Content for favicon requests to avoid 404s"""

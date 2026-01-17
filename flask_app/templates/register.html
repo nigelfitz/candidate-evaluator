@@ -5,7 +5,8 @@
 {% block content %}
 <div class="card" style="max-width: 500px; margin: 4rem auto;">
     <h1 class="card-header">Create Account</h1>
-    <p style="color: #666; margin-bottom: 2rem;">Get started with Candidate Evaluator</p>
+    <p style="color: #666;">Get started with Candidate Evaluator</p>
+    <p style="color: #666; margin-bottom: 2rem;">Generate your first Full Ranking of all candidates today</p>    
 
     <form method="POST" action="{{ url_for('auth.register') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
