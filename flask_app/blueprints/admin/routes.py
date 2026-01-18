@@ -1485,7 +1485,7 @@ def admin_refund(user_id):
 def admin_system():
     settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'system_settings.json')
     
-    with open(settings_path, 'r') as f:
+    with open(settings_path, 'r', encoding='utf-8') as f:
         settings = json.load(f)
     
     message = request.args.get('message')
@@ -1541,7 +1541,7 @@ def admin_system_save():
     settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'system_settings.json')
     
     # Load current settings
-    with open(settings_path, 'r') as f:
+    with open(settings_path, 'r', encoding='utf-8') as f:
         settings = json.load(f)
     
     # Update values from form
@@ -1557,10 +1557,10 @@ def admin_system_save():
     settings['_metadata']['updated_by'] = 'admin'
     
     # Save back to file
-    with open(settings_path, 'w') as f:
-        json.dump(settings, f, indent=2)
+    with open(settings_path, 'w', encoding='utf-8') as f:
+        json.dump(settings, f, indent=2, ensure_ascii=False)
     
-    flash('�� System settings saved successfully!', 'admin')
+    flash('✅ System settings saved successfully!', 'admin')
     return redirect(url_for('admin.admin_system'))
 
 

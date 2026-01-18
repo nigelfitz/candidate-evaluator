@@ -1,6 +1,6 @@
 {
   "registration_enabled": {
-    "value": false,
+    "value": true,
     "label": "Enable New User Registration",
     "description": "Allow new users to create accounts. Disable during testing or maintenance."
   },
@@ -35,7 +35,7 @@
     "description": "Maximum number of concurrent OpenAI API calls during AI analysis. Lower = slower but fewer rate limit errors. Higher = faster but more rate limits. Recommended: 5-15. Current: 10."
   },
   "_metadata": {
-    "last_updated": "2026-01-16 04:20:59 UTC",
+    "last_updated": "2026-01-17 09:18:20 UTC",
     "updated_by": "admin"
   }
 }
